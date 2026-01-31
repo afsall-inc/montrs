@@ -24,7 +24,7 @@ The workspace includes:
 -   `packages/core`: The architectural engine.
 -   `packages/cli`: The command-line interface.
 -   `packages/agent`: The Agent-First sidecar.
--   `packages/schema`: Procedural macros for validation.
+-   `packages/validator`: Procedural macros for validation.
 -   `packages/orm`: The database layer.
 -   `packages/fmt`: The custom formatter.
 

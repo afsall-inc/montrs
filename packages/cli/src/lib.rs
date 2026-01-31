@@ -413,7 +413,7 @@ pub fn main_entry() {
             
             // Try to find if it's a CliError or other AgentError
             if let Some(agent_err) = e.downcast_ref::<error::CliError>() {
-                eprintln!("{} {}: {}", style("✘").red().bold(), style(agent_err.error_code()).yellow().bold(), agent_err);
+                eprintln!("{}[{}]: {}", style("error").red().bold(), style(agent_err.error_code()).yellow().bold(), style(agent_err).bold());
                 eprintln!("  {} {}", style("help:").cyan().bold(), agent_err.explanation());
                 
                 let fixes = agent_err.suggested_fixes();
@@ -426,7 +426,7 @@ pub fn main_entry() {
 
                 let docs = agent_err.documentation_refs();
                 if !docs.is_empty() {
-                    eprintln!("  {} related rules:", style("rules:").magenta().bold());
+                    eprintln!("  {} related framework rules:", style("rules:").magenta().bold());
                     for doc in docs {
                         eprintln!("    - {}", style(doc).underlined());
                     }

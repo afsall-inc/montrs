@@ -20,7 +20,7 @@ While we provide an ORM, we don't hide SQL. We believe SQL is the most powerful 
 
 ## 5. Explicit Boundaries
 
-Data entering or leaving the application must be validated. The `montrs-schema` package ensures that boundaries between the frontend, backend, and database are clearly defined and enforced.
+Data entering or leaving the application must be validated. The `montrs-validator` package ensures that boundaries between the frontend, backend, and database are clearly defined and enforced.
 
 ## 6. Agents as First-Class Users
 

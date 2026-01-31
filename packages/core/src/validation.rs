@@ -1,7 +1,7 @@
 use crate::AgentError;
 use std::fmt;
 
-/// Errors that can occur during schema validation.
+/// Errors that can occur during validation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationError {
     /// Field length is less than the required minimum.
@@ -84,9 +84,13 @@ impl AgentError for ValidationError {
     fn subsystem(&self) -> &'static str {
         "validation"
     }
+
+    fn documentation_refs(&self) -> Vec<String> {
+        vec!["packages/validator/docs/agent-guide".to_string()]
+    }
 }
 
-/// Trait for types that can be validated against a schema.
+/// Trait for types that can be validated.
 pub trait Validate {
     /// Validates the struct and returns a list of all validation errors found.
     fn validate(&self) -> Result<(), Vec<ValidationError>>;

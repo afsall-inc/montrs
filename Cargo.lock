@@ -3780,8 +3780,8 @@ dependencies = [
  "montrs-cli",
  "montrs-core",
  "montrs-orm",
- "montrs-schema",
  "montrs-test",
+ "montrs-validator",
 ]
 
 [[package]]
@@ -3919,19 +3919,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "montrs-schema"
-version = "0.1.0"
-dependencies = [
- "montrs-core",
- "proc-macro2",
- "quote",
- "regex",
- "serde",
- "syn 2.0.114",
- "thiserror 1.0.69",
-]
-
-[[package]]
 name = "montrs-test"
 version = "0.1.0"
 dependencies = [
@@ -3949,6 +3936,19 @@ dependencies = [
 [[package]]
 name = "montrs-utils"
 version = "0.1.0"
+
+[[package]]
+name = "montrs-validator"
+version = "0.1.0"
+dependencies = [
+ "montrs-core",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "serde",
+ "syn 2.0.114",
+ "thiserror 1.0.69",
+]
 
 [[package]]
 name = "nalgebra"

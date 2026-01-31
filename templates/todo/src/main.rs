@@ -8,7 +8,7 @@ use montrs_core::{
     RouteLoader, RouteParams, RouteView, Router, Target,
 };
 use montrs_orm::{DbBackend, FromRow, SqliteBackend};
-use montrs_schema::Schema;
+use montrs_validator::Validator;
 use serde::{Deserialize, Serialize};
 
 // [REQUIRED] 1. Define the Application Error Type.
@@ -42,10 +42,10 @@ impl AppConfig for MyConfig {
     type Env = MyEnv;
 }
 
-// [OPTIONAL] 4. Data Models & Schema
-#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
+// [OPTIONAL] 4. Data Models & Validation
+#[derive(Debug, Clone, Serialize, Deserialize, Validator)]
 pub struct CreateTodo {
-    #[schema(min_len = 3)]
+    #[validator(min_len = 3)]
     pub title: String,
 }
 

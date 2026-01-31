@@ -15,7 +15,7 @@ pub const CORE_INVARIANTS: &str = include_str!("../../../packages/core/docs/inva
 pub const AGENT_INVARIANTS: &str = include_str!("../../../packages/agent/docs/invariants.md");
 pub const CLI_INVARIANTS: &str = include_str!("../../../packages/cli/docs/invariants.md");
 pub const ORM_INVARIANTS: &str = include_str!("../../../packages/orm/docs/invariants.md");
-pub const SCHEMA_INVARIANTS: &str = include_str!("../../../packages/schema/docs/invariants.md");
+pub const VALIDATOR_INVARIANTS: &str = include_str!("../../../packages/validator/docs/invariants.md");
 pub const TEST_INVARIANTS: &str = include_str!("../../../packages/test/docs/invariants.md");
 pub const UTILS_INVARIANTS: &str = include_str!("../../../packages/utils/docs/invariants.md");
 pub const FMT_INVARIANTS: &str = include_str!("../../../packages/fmt/docs/invariants.md");
@@ -34,7 +34,7 @@ pub fn get_framework_invariants() -> std::collections::HashMap<&'static str, &'s
     m.insert("agent", AGENT_INVARIANTS);
     m.insert("cli", CLI_INVARIANTS);
     m.insert("orm", ORM_INVARIANTS);
-    m.insert("schema", SCHEMA_INVARIANTS);
+    m.insert("validator", VALIDATOR_INVARIANTS);
     m.insert("test", TEST_INVARIANTS);
     m.insert("utils", UTILS_INVARIANTS);
     m.insert("fmt", FMT_INVARIANTS);

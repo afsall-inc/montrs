@@ -1,15 +1,15 @@
 use montrs_core::{Validate, ValidationError};
-use montrs_schema::Schema;
+use montrs_validator::Validator;
 
-#[derive(Schema)]
+#[derive(Validator)]
 struct User {
-    #[schema(min_len = 3)]
+    #[validator(min_len = 3)]
     username: String,
-    #[schema(email)]
+    #[validator(email)]
     email: String,
-    #[schema(regex = r"^\d{4}-\d{2}-\d{2}$")]
+    #[validator(regex = r"^\d{4}-\d{2}-\d{2}$")]
     birth_date: String,
-    #[schema(custom = "validate_custom")]
+    #[validator(custom = "validate_custom")]
     status: String,
 }
 

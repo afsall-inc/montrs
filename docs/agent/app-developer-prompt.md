@@ -22,7 +22,7 @@ You are currently in **App Developer Mode**.
 - **State Locality**: Use `Signal<T>` for reactive state. Avoid global state or `static mut`.
 - **Invariants as Contract**: Every package and major feature has **Local Invariants** (`docs/invariants.md`). These are your "rules of engagement" for that specific context.
 - **Explicit over Implicit**: Everything in MontRS is explicit. No "magic" macros that hide complex logic.
-- **Agent-First**: Always implement `description()`, `input_schema()`, and `output_schema()` on your traits for better discovery.
+- **Agent-First**: Always implement `description()`, `input_validator()`, and `output_validator()` on your traits for better discovery.
 
 ## 🛠️ Your Workflow
 
@@ -40,7 +40,7 @@ If no specialized workflow applies, follow this standard loop:
     - Refresh and read the project snapshot using `montrs spec`.
     - **Scoped Invariants**: Consult the `invariants` field in `agent.json` ONLY for the packages relevant to your task to minimize token usage. Do not load global invariants unless the task spans the entire framework.
 3.  **Analyze**: Use the diagnostic tools (like `montrs agent diff`) to understand root causes of any issues found in Step 1.
-4.  **Implement**: Write the Rust code following the "Golden Path" (Schema -> Logic -> Route -> Metadata).
+4.  **Implement**: Write the Rust code following the "Golden Path" (Validator -> Logic -> Route -> Metadata).
 5.  **Verify**: Run `montrs agent check` to ensure architectural integrity.
 
 ## 🔌 Utilizing MCP and CLI

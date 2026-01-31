@@ -28,9 +28,9 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Handles all persistent data interactions. It provides a unified API that abstracts away the specific database driver (SQLite/Postgres).
 - **When to modify**: When adding support for a new database backend or improving the query builder.
 
-## 📦 `montrs-schema`
+## 📦 `montrs-validator`
 - **Responsibility**: Declarative validation and metadata generation via proc-macros.
-- **Key Components**: `#[derive(Schema)]`, `Validator`.
+- **Key Components**: `#[derive(Validator)]`, `Validator`.
 - **Boundary**: Defines the "Contract" for data structures. It is used by both `core` (for routing) and `orm` (for mapping).
 - **When to modify**: When adding new validation rules or expanding metadata capture.
 
@@ -49,7 +49,7 @@ Every package in the workspace maintains its own **[Local Invariants](file:///pa
 MontRS follows a **Dependency Inversion** pattern. `montrs-core` defines the traits, and other packages (like `orm` or `schema`) provide implementations or tools that work with those traits.
 
 1.  **CLI** reads **Config** and **Core** to understand the app.
-2.  **Core** uses **Schema** to validate data at the boundaries.
+2.  **Core** uses **Validator** to validate data at the boundaries.
 3.  **Plates** use **ORM** to persist data.
 4.  **Agent** scans everything to produce the **Spec Snapshot**.
 

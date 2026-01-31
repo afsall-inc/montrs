@@ -27,7 +27,7 @@ Every `Loader` and `Action` receives a `Context`. This object is the "glue" that
 - **Request Info**: Headers, parameters, and user session (if applicable).
 
 ### 3. Execution Flow
-1.  **Validation**: `montrs-schema` validates the input before it reaches your logic.
+1.  **Validation**: `montrs-validator` validates the input before it reaches your logic.
 2.  **Logic**: Your `Loader` or `Action` implementation executes.
 3.  **Persistence**: The logic interacts with the `Database` via the `Context`.
 4.  **Response**: The output is serialized and returned to the caller.
@@ -54,8 +54,8 @@ impl Loader for MyLoader {
         Some("Fetches user profile data by ID".to_string())
     }
     
-    fn input_schema(&self) -> Option<Schema> {
-        Some(UserId::schema())
+    fn input_validator(&self) -> Option<Validator> {
+        Some(UserId::validator())
     }
 }
 ```

@@ -1,10 +1,10 @@
-# Agent Guide: montrs-schema
+# Agent Guide: montrs-validator
 
 This guide helps agents use the declarative validation system of MontRS.
 
 ## Core Concepts
 
-### 1. `#[derive(Schema)]`
+### 1. `#[derive(Validator)]`
 The primary macro for defining validation rules. It generates a `validate(&self) -> Result<(), Vec<ValidationError>>` method.
 
 ### 2. Validation Attributes
@@ -18,11 +18,11 @@ The primary macro for defining validation rules. It generates a `validate(&self)
 ### Defining a Validated Struct
 When generating data models, always include validation attributes to ensure data integrity.
 ```rust
-#[derive(Schema, Serialize, Deserialize)]
+#[derive(Validator, Serialize, Deserialize)]
 pub struct ProjectConfig {
-    #[schema(min_len = 3)]
+    #[validator(min_len = 3)]
     pub name: String,
-    #[schema(email)]
+    #[validator(email)]
     pub contact_email: String,
 }
 ```

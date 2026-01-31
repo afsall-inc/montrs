@@ -185,14 +185,6 @@
       }
     },
     {
-      "description": "Capability provided by package schema. MUST follow invariants defined in agent.json under packages['schema'].invariants",
-      "name": "montrs_pkg_schema",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
       "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
       "name": "montrs_pkg_test",
       "parameters": {
@@ -211,6 +203,14 @@
     {
       "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
       "name": "montrs_pkg_utils",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package validator. MUST follow invariants defined in agent.json under packages['validator'].invariants",
+      "name": "montrs_pkg_validator",
       "parameters": {
         "properties": {},
         "type": "object"

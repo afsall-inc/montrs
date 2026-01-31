@@ -5,8 +5,8 @@ pub use montrs_core as core;
 #[cfg(feature = "orm")]
 pub use montrs_orm as orm;
 
-#[cfg(feature = "schema")]
-pub use montrs_schema as schema;
+#[cfg(feature = "validator")]
+pub use montrs_validator as validator;
 
 #[cfg(feature = "test")]
 pub use montrs_test as test;
@@ -18,7 +18,7 @@ pub mod prelude {
     #[cfg(feature = "orm")]
     pub use montrs_orm::*;
     
-    // montrs_schema is a proc-macro crate, we re-export its main macro
-    #[cfg(feature = "schema")]
-    pub use montrs_schema::Schema;
+    // montrs_validator is a proc-macro crate, we re-export its main macro
+    #[cfg(feature = "validator")]
+    pub use montrs_validator::Validator;
 }

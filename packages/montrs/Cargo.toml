@@ -10,7 +10,7 @@ description = "The main entry point for the MontRS framework."
 [dependencies]
 montrs-core = { path = "../core", version = "0.1.0" }
 montrs-orm = { path = "../orm", version = "0.1.0", optional = true }
-montrs-schema = { path = "../schema", version = "0.1.0", optional = true }
+montrs-validator = { path = "../validator", version = "0.1.0", optional = true }
 montrs-test = { path = "../test", version = "0.1.0", optional = true }
 montrs-cli = { path = "../cli", version = "0.1.0", optional = true }
 
@@ -28,11 +28,11 @@ required-features = ["cli"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "schema", "test", "cli"]
+full = ["orm", "validator", "test", "cli"]
 
 # Basic package activation
 orm = ["dep:montrs-orm"]
-schema = ["dep:montrs-schema"]
+validator = ["dep:montrs-validator"]
 test = ["dep:montrs-test"]
 cli = ["dep:montrs-cli"]
 

@@ -1,5 +1,5 @@
-//! montrs-schema: Procedural macros for schema validation in MontRS.
-//! This crate provides the `#[derive(Schema)]` macro which generates
+//! montrs-validator: Procedural macros for validation in MontRS.
+//! This crate provides the `#[derive(Validator)]` macro which generates
 //! compile-time validation logic for structs based on field attributes.
 
 extern crate proc_macro;
@@ -9,70 +9,74 @@ use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
 use montrs_core::AgentError;
 use thiserror::Error;
 
-/// Errors that can occur during schema derivation or validation setup.
+/// Errors that can occur during validator derivation or validation setup.
 #[derive(Error, Debug)]
-pub enum SchemaError {
+pub enum ValidatorError {
     #[error("Invalid struct type: {0}")]
     InvalidStructType(String),
     #[error("Missing field identifier: {0}")]
     MissingFieldIdent(String),
     #[error("Invalid regex pattern: {0}")]
     InvalidRegexPattern(String),
-    #[error("Unsupported schema attribute: {0}")]
+    #[error("Unsupported validator attribute: {0}")]
     UnsupportedAttribute(String),
 }
 
-impl AgentError for SchemaError {
+impl AgentError for ValidatorError {
     fn error_code(&self) -> &'static str {
         match self {
-            SchemaError::InvalidStructType(_) => "SCHEMA_INVALID_STRUCT_TYPE",
-            SchemaError::MissingFieldIdent(_) => "SCHEMA_MISSING_FIELD_IDENT",
-            SchemaError::InvalidRegexPattern(_) => "SCHEMA_INVALID_REGEX_PATTERN",
-            SchemaError::UnsupportedAttribute(_) => "SCHEMA_UNSUPPORTED_ATTRIBUTE",
+            ValidatorError::InvalidStructType(_) => "VALIDATOR_INVALID_STRUCT_TYPE",
+            ValidatorError::MissingFieldIdent(_) => "VALIDATOR_MISSING_FIELD_IDENT",
+            ValidatorError::InvalidRegexPattern(_) => "VALIDATOR_INVALID_REGEX_PATTERN",
+            ValidatorError::UnsupportedAttribute(_) => "VALIDATOR_UNSUPPORTED_ATTRIBUTE",
         }
     }
 
     fn explanation(&self) -> String {
         match self {
-            SchemaError::InvalidStructType(t) => format!("The struct type '{}' is not supported for schema derivation. Only named-field structs are allowed.", t),
-            SchemaError::MissingFieldIdent(f) => format!("The field '{}' is missing an identifier. Only named fields are allowed for schema derivation.", f),
-            SchemaError::InvalidRegexPattern(p) => format!("The regex pattern '{}' is invalid. Please provide a valid regex pattern.", p),
-            SchemaError::UnsupportedAttribute(a) => format!("The schema attribute '{}' is not supported. Supported attributes are min_len, email, regex, custom.", a),
+            ValidatorError::InvalidStructType(t) => format!("The struct type '{}' is not supported for validator derivation. Only named-field structs are allowed.", t),
+            ValidatorError::MissingFieldIdent(f) => format!("The field '{}' is missing an identifier. Only named fields are allowed for validator derivation.", f),
+            ValidatorError::InvalidRegexPattern(p) => format!("The regex pattern '{}' is invalid. Please provide a valid regex pattern.", p),
+            ValidatorError::UnsupportedAttribute(a) => format!("The validator attribute '{}' is not supported. Supported attributes are min_len, email, regex, custom.", a),
         }
     }
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
-            SchemaError::InvalidStructType(_) => vec![
-                "Use a struct with named fields for schema derivation.".to_string(),
+            ValidatorError::InvalidStructType(_) => vec![
+                "Use a struct with named fields for validator derivation.".to_string(),
             ],
-            SchemaError::MissingFieldIdent(_) => vec![
-                "Use named fields for schema derivation.".to_string(),
+            ValidatorError::MissingFieldIdent(_) => vec![
+                "Use named fields for validator derivation.".to_string(),
             ],
-            SchemaError::InvalidRegexPattern(_) => vec![
+            ValidatorError::InvalidRegexPattern(_) => vec![
                 "Provide a valid regex pattern.".to_string(),
                 "Check the regex pattern for syntax errors.".to_string(),
             ],
-            SchemaError::UnsupportedAttribute(_) => vec![
-                "Use only supported schema attributes (min_len, email, regex, custom).".to_string(),
-                "Check the schema attribute documentation for valid options.".to_string(),
+            ValidatorError::UnsupportedAttribute(_) => vec![
+                "Use only supported validator attributes (min_len, email, regex, custom).".to_string(),
+                "Check the validator attribute documentation for valid options.".to_string(),
             ],
         }
     }
 
     fn subsystem(&self) -> &'static str {
-        "schema"
+        "validator"
+    }
+
+    fn documentation_refs(&self) -> Vec<String> {
+        vec!["packages/validator/docs/invariants".to_string()]
     }
 }
 
 /// Procedural macro to derive validation logic for a struct.
 /// Supported attributes:
-/// - `#[schema(min_len = N)]`: Validates that a string has at least N characters.
-/// - `#[schema(email)]`: Basic check for the presence of an '@' character.
-/// - `#[schema(regex = "pattern")]`: Placeholder for regex-based validation.
-/// - `#[schema(custom = "fn_name")]`: Calls a custom validation method on the struct.
-#[proc_macro_derive(Schema, attributes(schema))]
-pub fn derive_schema(input: TokenStream) -> TokenStream {
+/// - `#[validator(min_len = N)]`: Validates that a string has at least N characters.
+/// - `#[validator(email)]`: Basic check for the presence of an '@' character.
+/// - `#[validator(regex = "pattern")]`: Placeholder for regex-based validation.
+/// - `#[validator(custom = "fn_name")]`: Calls a custom validation method on the struct.
+#[proc_macro_derive(Validator, attributes(validator))]
+pub fn derive_validator(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
 
@@ -91,7 +95,7 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
 
             // Iterate over attributes on each field.
             for attr in f.attrs {
-                if attr.path().is_ident("schema") {
+                if attr.path().is_ident("validator") {
                     let _ = attr.parse_nested_meta(|meta| {
                         if meta.path.is_ident("min_len") {
                             let value = meta.value()?;
