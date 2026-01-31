@@ -118,6 +118,7 @@ pub struct AgentErrorMetadata {
     pub explanation: String,
     pub suggested_fixes: Vec<String>,
     pub rustc_error: Option<String>,
+    pub documentation_refs: Vec<String>,
 }
 
 pub struct AgentManager {
@@ -326,6 +327,27 @@ impl AgentManager {
             agent_metadata: None,
         })?;
         Ok(())
+    }
+
+    pub fn report_agent_error(&self, err: &dyn montrs_core::AgentError) -> Result<String> {
+        let metadata = AgentErrorMetadata {
+            error_code: err.error_code().to_string(),
+            explanation: err.explanation(),
+            suggested_fixes: err.suggested_fixes(),
+            rustc_error: err.rustc_error(),
+            documentation_refs: err.documentation_refs(),
+        };
+
+        self.report_project_error(ProjectError {
+            package: None,
+            file: "unknown".to_string(),
+            line: 0,
+            column: 0,
+            message: err.to_string(),
+            code_context: "".to_string(),
+            level: "Error".to_string(),
+            agent_metadata: Some(metadata),
+        })
     }
 
     fn determine_package(&self, file_path: &str) -> Option<String> {

@@ -47,6 +47,12 @@ pub trait AgentError: StdError {
     fn rustc_error(&self) -> Option<String> {
         None
     }
+
+    /// References to specific rules or documentation sections.
+    /// Returns a list of keys that can be looked up in documentation_snippets.
+    fn documentation_refs(&self) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 /// The execution environment context for the application.

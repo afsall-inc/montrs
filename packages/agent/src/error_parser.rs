@@ -30,6 +30,7 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
                 explanation: format!("Rust compiler error {}: {}", code, message),
                 suggested_fixes: Vec::new(),
                 rustc_error: Some(output.to_string()),
+                documentation_refs: Vec::new(),
             }),
         });
     }
