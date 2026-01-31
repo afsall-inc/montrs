@@ -6,6 +6,7 @@ pub mod error;
 pub mod mcp;
 
 use clap::{Parser, Subcommand};
+use montrs_core::AgentError;
 
 #[derive(Parser, Debug)]
 #[command(name = "cargo")]
@@ -195,6 +196,9 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: McpSubcommand,
     },
+    /// Test diagnostic output (Internal use only).
+    #[command(hide = true)]
+    TestError,
 }
 
 #[derive(Subcommand, Debug)]
@@ -336,6 +340,9 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         Commands::Mcp { subcommand } => {
             command::mcp::run(subcommand).await
         }
+        Commands::TestError => {
+            Err(error::CliError::Config("Simulated configuration error for testing diagnostics".to_string()).into())
+        }
     }
 }
 
@@ -398,13 +405,46 @@ pub fn main_entry() {
 
     if let Err(e) = rt.block_on(run(cli)) {
         use console::style;
-        eprintln!("{} Error: {:?}", style("✘").red().bold(), e);
         
-        // Agent: Report error to .agent/errorfile.json
+        // Check if the error implements AgentError
+        let mut reported = false;
         if let Ok(cwd) = std::env::current_dir() {
             let agent_manager = montrs_agent::AgentManager::new(&cwd);
-            // Try to downcast to AgentError if possible (this is simplified for now)
-            let _ = agent_manager.report_error(format!("{:?}", e));
+            
+            // Try to find if it's a CliError or other AgentError
+            if let Some(agent_err) = e.downcast_ref::<error::CliError>() {
+                eprintln!("{} {}: {}", style("✘").red().bold(), style(agent_err.error_code()).yellow().bold(), agent_err);
+                eprintln!("  {} {}", style("help:").cyan().bold(), agent_err.explanation());
+                
+                let fixes = agent_err.suggested_fixes();
+                if !fixes.is_empty() {
+                    eprintln!("  {} suggested fixes:", style("hint:").green().bold());
+                    for fix in fixes {
+                        eprintln!("    - {}", fix);
+                    }
+                }
+
+                let docs = agent_err.documentation_refs();
+                if !docs.is_empty() {
+                    eprintln!("  {} related rules:", style("rules:").magenta().bold());
+                    for doc in docs {
+                        eprintln!("    - {}", style(doc).underlined());
+                    }
+                }
+                
+                let _ = agent_manager.report_agent_error(agent_err);
+                reported = true;
+            }
+        }
+
+        if !reported {
+            eprintln!("{} Error: {:?}", style("✘").red().bold(), e);
+            
+            // Agent: Report error to .agent/errorfile.json
+            if let Ok(cwd) = std::env::current_dir() {
+                let agent_manager = montrs_agent::AgentManager::new(&cwd);
+                let _ = agent_manager.report_error(format!("{:?}", e));
+            }
         }
         
         std::process::exit(1);

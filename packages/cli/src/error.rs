@@ -54,4 +54,13 @@ impl AgentError for CliError {
     fn subsystem(&self) -> &'static str {
         "cli"
     }
+
+    fn documentation_refs(&self) -> Vec<String> {
+        match self {
+            CliError::Config(_) => vec!["packages/cli/docs/invariants".to_string()],
+            CliError::Io(_) => vec!["packages/cli/docs/invariants".to_string()],
+            CliError::Task(_) => vec!["packages/cli/docs/invariants".to_string()],
+            CliError::Build(_) => vec!["packages/cli/docs/invariants".to_string()],
+        }
+    }
 }
