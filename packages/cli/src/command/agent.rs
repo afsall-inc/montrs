@@ -28,12 +28,21 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             Ok(output)
         }
         AgentSubcommand::Doctor { package } => {
-            if let Some(pkg) = package {
+            if let Some(ref pkg) = package {
                 output.push_str(&format!("Running agent doctor for package {}...\n", pkg));
             } else {
                 output.push_str("Running agent doctor for the entire project...\n");
             }
-            // TODO: Implement health diagnostics
+            
+            let cwd = std::env::current_dir()?;
+            let manager = montrs_agent::AgentManager::new(cwd);
+            
+            let diagnostics = manager.run_doctor(package.as_deref())?;
+            
+            for report in diagnostics {
+                output.push_str(&format!("  {}\n", report));
+            }
+            
             Ok(output)
         }
         AgentSubcommand::Diff { path } => {

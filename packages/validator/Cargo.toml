@@ -13,10 +13,9 @@ proc-macro = true
 syn = { version = "2.0", features = ["full", "derive"] }
 quote = "1.0"
 proc-macro2 = "1.0"
-serde.workspace = true
-thiserror.workspace = true
-regex.workspace = true
+regex = "1.10"
+# montrs-core is not a dependency here anymore because we use it in generated code via full path
+# or we don't import it in the proc-macro crate itself to avoid unlinked crate issues during compilation.
 
 [dev-dependencies]
 montrs-core = { path = "../core" }
-regex.workspace = true

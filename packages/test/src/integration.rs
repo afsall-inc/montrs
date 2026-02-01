@@ -22,7 +22,7 @@
 //! // let runtime = TestRuntime::new(spec);
 //! ```
 
-use montrs_core::{AppConfig, AppSpec};
+use montrs_core::{AppConfig, AppSpec, Owner, provide_context};
 use async_trait::async_trait;
 use montrs_core::env::EnvError;
 use montrs_core::EnvConfig;
@@ -219,9 +219,15 @@ impl<C: AppConfig> TestRuntime<C> {
     where
         F: FnOnce(&AppSpec<C>) -> R,
     {
-        // In a real implementation, this would set up the reactive context,
-        // potentially a tokio task local for the runtime, etc.
-        f(&self.spec)
+        // Set up the Leptos reactive context for the test execution
+        let owner = Owner::new();
+        owner.with(|| {
+            // Provide the AppSpec as a global context during test execution
+            provide_context(self.spec.clone());
+            
+            // Execute the test logic
+            f(&self.spec)
+        })
     }
 }
 

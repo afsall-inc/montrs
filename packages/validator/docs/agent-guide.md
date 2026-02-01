@@ -5,10 +5,13 @@ This guide helps agents use the declarative validation system of MontRS.
 ## Core Concepts
 
 ### 1. `#[derive(Validator)]`
-The primary macro for defining validation rules. It generates a `validate(&self) -> Result<(), Vec<ValidationError>>` method.
+The primary macro for defining validation rules. It generates a `validate(&self) -> Result<(), Vec<ValidatorError>>` method.
 
 ### 2. Validation Attributes
 - `min_len = N`: Validates string length.
+- `max_len = N`: Validates string length.
+- `min = N`: Validates numeric value.
+- `max = N`: Validates numeric value.
 - `email`: Validates email format.
 - `regex = "..."`: Validates against a regular expression.
 - `custom = "method"`: Delegates to a custom method returning `Result<(), String>`.
@@ -28,8 +31,11 @@ pub struct ProjectConfig {
 ```
 
 ### Handling Validation Errors
-If `validate()` returns an error, it will contain a list of `ValidationError` variants. Use these to prompt the user or self-correct the input data.
+If `validate()` returns an error, it will contain a list of `ValidatorError` variants. Use these to prompt the user or self-correct the input data.
 - `MinLength { field, min, actual }`
+- `MaxLength { field, max, actual }`
+- `Min { field, min, actual }`
+- `Max { field, max, actual }`
 - `InvalidEmail { field }`
 - `RegexMismatch { field, pattern }`
 - `Custom { field, message }`

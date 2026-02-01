@@ -1,4 +1,4 @@
-use montrs_core::{Validate, ValidationError};
+use montrs_core::{Validator, ValidatorError};
 use montrs_validator::Validator;
 
 #[derive(Validator)]
@@ -11,6 +11,14 @@ struct User {
     birth_date: String,
     #[validator(custom = "validate_custom")]
     status: String,
+}
+
+#[derive(Validator)]
+struct Product {
+    #[validator(min_len = 2, max_len = 10)]
+    name: String,
+    #[validator(min = 1, max = 100)]
+    price: i32,
 }
 
 impl User {
@@ -52,7 +60,7 @@ fn test_validation_failure_multiple_errors() {
 
     assert!(matches!(
         errors[0],
-        ValidationError::MinLength {
+        ValidatorError::MinLength {
             field: "username",
             min: 3,
             actual: 2
@@ -60,18 +68,18 @@ fn test_validation_failure_multiple_errors() {
     ));
     assert!(matches!(
         errors[1],
-        ValidationError::InvalidEmail { field: "email" }
+        ValidatorError::InvalidEmail { field: "email" }
     ));
     assert!(matches!(
         errors[2],
-        ValidationError::RegexMismatch {
+        ValidatorError::RegexMismatch {
             field: "birth_date",
             ..
         }
     ));
     assert!(matches!(
         errors[3],
-        ValidationError::Custom {
+        ValidatorError::Custom {
             field: "status",
             ..
         }
@@ -91,4 +99,31 @@ fn test_regex_lazy_initialization() {
     assert!(user.validate().is_ok());
     // Second call uses already initialized regex
     assert!(user.validate().is_ok());
+}
+
+#[test]
+fn test_product_validation() {
+    let p = Product {
+        name: "A".to_string(), // too short
+        price: 0,              // too small
+    };
+    let errors = p.validate().unwrap_err();
+    assert_eq!(errors.len(), 2);
+    assert!(matches!(errors[0], ValidatorError::MinLength { .. }));
+    assert!(matches!(errors[1], ValidatorError::Min { .. }));
+
+    let p = Product {
+        name: "Very long product name".to_string(), // too long
+        price: 101,                                 // too large
+    };
+    let errors = p.validate().unwrap_err();
+    assert_eq!(errors.len(), 2);
+    assert!(matches!(errors[0], ValidatorError::MaxLength { .. }));
+    assert!(matches!(errors[1], ValidatorError::Max { .. }));
+
+    let p = Product {
+        name: "Valid".to_string(),
+        price: 50,
+    };
+    assert!(p.validate().is_ok());
 }

@@ -7,6 +7,7 @@ use crate::AppConfig;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use leptos::prelude::*;
 
 /// Trait for route parameters. Must be serializable and deserializable.
@@ -109,8 +110,9 @@ pub struct ActionResponse {
 }
 
 /// The Application Router which maintains the static route graph.
+#[derive(Clone)]
 pub struct Router<C: AppConfig> {
-    routes: HashMap<&'static str, Box<dyn RouteInfo<C>>>,
+    routes: HashMap<&'static str, Arc<dyn RouteInfo<C>>>,
 }
 
 /// Internal trait to erase the associated types of a Route for storage in the Router.
@@ -172,7 +174,7 @@ impl<C: AppConfig> Router<C> {
     }
 
     pub fn register<R: Route<C>>(&mut self, route: R) {
-        self.routes.insert(R::path(), Box::new(route));
+        self.routes.insert(R::path(), Arc::new(route));
     }
 
     pub fn spec(&self) -> RouterSpec {

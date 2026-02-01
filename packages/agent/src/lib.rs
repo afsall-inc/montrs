@@ -956,4 +956,63 @@ impl AgentManager {
 
         Ok(violations)
     }
+
+    /// Runs health diagnostics on the project or a specific package.
+    pub fn run_doctor(&self, package: Option<&str>) -> Result<Vec<String>> {
+        let mut reports = Vec::new();
+
+        // 1. Check Cargo.toml presence and validity
+        let cargo_toml = self.root_path.join("Cargo.toml");
+        if !cargo_toml.exists() {
+            reports.push("❌ Root Cargo.toml not found. Is this a Rust project?".to_string());
+        } else {
+            reports.push("✅ Root Cargo.toml found.".to_string());
+        }
+
+        // 2. Check for .agent directory
+        if !self.agent_dir().exists() {
+            reports.push("⚠️ .agent directory not found. Run 'agent check' to initialize.".to_string());
+        } else {
+            reports.push("✅ .agent directory exists.".to_string());
+        }
+
+        // 3. Check for error tracking file
+        if !self.tracking_file().exists() {
+            reports.push("ℹ️ No error tracking file found. No errors currently tracked.".to_string());
+        } else {
+            let tracking = self.load_tracking()?;
+            let active_count = tracking.errors.iter().filter(|e| e.status == "Active").count();
+            if active_count > 0 {
+                reports.push(format!("⚠️ Found {} active errors in tracking.", active_count));
+            } else {
+                reports.push("✅ All tracked errors are resolved.".to_string());
+            }
+        }
+
+        // 4. Package specific checks
+        if let Some(pkg_name) = package {
+            let pkg_path = self.root_path.join("packages").join(pkg_name);
+            if !pkg_path.exists() {
+                reports.push(format!("❌ Package '{}' not found in packages/ directory.", pkg_name));
+            } else {
+                reports.push(format!("✅ Package '{}' directory exists.", pkg_name));
+                let pkg_cargo = pkg_path.join("Cargo.toml");
+                if !pkg_cargo.exists() {
+                    reports.push(format!("❌ Package '{}' is missing Cargo.toml.", pkg_name));
+                }
+            }
+        }
+
+        // 5. Check toolchain (basic)
+        let rustc = std::process::Command::new("rustc").arg("--version").output();
+        match rustc {
+            Ok(output) if output.status.success() => {
+                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                reports.push(format!("✅ Rust toolchain available: {}", version));
+            }
+            _ => reports.push("❌ rustc not found in PATH.".to_string()),
+        }
+
+        Ok(reports)
+    }
 }

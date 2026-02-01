@@ -19,11 +19,12 @@ pub use router::{
     ActionResponse, LoaderResponse, Route, RouteAction, RouteContext, RouteError, RouteLoader,
     RouteParams, RouteView, Router,
 };
-pub use validation::{Validate, ValidationError};
+pub use validation::{Validator, ValidatorError};
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::error::Error as StdError;
+use std::sync::Arc;
 
 /// A trait for errors that provide agent-accessible metadata.
 pub trait AgentError: StdError {
@@ -146,11 +147,12 @@ pub trait AppConfig: Sized + Send + Sync + Clone + 'static {
 /// `AppSpec` contains everything needed to boot the application: configuration,
 /// registered plates, the environment, and the routing table. It is the single
 /// source of truth for the application's structure.
+#[derive(Clone)]
 pub struct AppSpec<C: AppConfig> {
     /// Global application configuration.
     pub config: C,
     /// List of registered functional plates.
-    pub plates: Vec<Box<dyn Plate<C>>>,
+    pub plates: Vec<Arc<dyn Plate<C>>>,
     /// Resolved environment configuration.
     pub env: C::Env,
     /// The centralized routing table.
@@ -204,8 +206,8 @@ impl<C: AppConfig> AppSpec<C> {
     }
 
     /// Builder method to add a plate to the specification.
-    pub fn with_plate(mut self, plate: Box<dyn Plate<C>>) -> Self {
-        self.plates.push(plate);
+    pub fn with_plate(mut self, plate: impl Plate<C>) -> Self {
+        self.plates.push(Arc::new(plate));
         self
     }
 
