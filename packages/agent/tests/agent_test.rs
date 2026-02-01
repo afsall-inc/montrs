@@ -1,4 +1,4 @@
-use montrs_agent::{AgentManager, AgentSnapshot};
+use montrs_agent::AgentManager;
 use tempfile::tempdir;
 use std::fs;
 
@@ -11,7 +11,7 @@ async fn test_agent_generation() {
     fs::write(root.join("test.rs"), "fn main() {}").unwrap();
     
     let manager = AgentManager::new(root);
-    let snapshot = manager.generate_snapshot("test-project".to_string()).unwrap();
+    let snapshot = manager.generate_snapshot("test-project").unwrap();
     
     assert_eq!(snapshot.project_name, "test-project");
     assert!(snapshot.structure.iter().any(|f| f.path == "test.rs"));
@@ -27,21 +27,23 @@ async fn test_error_reporting() {
     let root = dir.path();
     
     let manager = AgentManager::new(root);
-    manager.report_error("Something went wrong".to_string()).unwrap();
+    let error_id = manager.report_project_error(montrs_agent::ProjectError {
+        package: None,
+        file: "unknown".to_string(),
+        line: 0,
+        column: 0,
+        message: "Something went wrong".to_string(),
+        code_context: "".to_string(),
+        level: "Error".to_string(),
+        agent_metadata: None,
+    }).unwrap();
     
-    assert!(root.join(".agent/errorfiles/v1").exists());
-    let error_dir = root.join(".agent/errorfiles/v1");
-    let entries = fs::read_dir(error_dir).unwrap();
-    let mut found = false;
-    for entry in entries {
-        let path = entry.unwrap().path();
-        let content = fs::read_to_string(path).unwrap();
-        if content.contains("Something went wrong") {
-            found = true;
-            break;
-        }
-    }
-    assert!(found);
+    let error_group_dir = root.join(".agent/errorfiles").join(&error_id);
+    assert!(error_group_dir.exists());
+    assert!(error_group_dir.join("v1.json").exists());
+    
+    let content = fs::read_to_string(error_group_dir.join("v1.json")).unwrap();
+    assert!(content.contains("Something went wrong"));
 }
 
 #[tokio::test]

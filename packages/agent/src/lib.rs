@@ -168,13 +168,13 @@ impl AgentManager {
 
     pub fn write_error_record(&self, record: &ErrorRecord) -> Result<()> {
         self.ensure_dir()?;
-        let version_dir = self.errorfiles_dir().join(format!("v{}", record.version));
-        if !version_dir.exists() {
-            fs::create_dir_all(&version_dir)?;
+        let error_group_dir = self.errorfiles_dir().join(&record.id);
+        if !error_group_dir.exists() {
+            fs::create_dir_all(&error_group_dir)?;
         }
         
         let content = serde_json::to_string_pretty(record)?;
-        fs::write(version_dir.join(format!("{}.json", record.id)), content)?;
+        fs::write(error_group_dir.join(format!("v{}.json", record.version)), content)?;
         
         // Update consolidated tracking
         self.update_consolidated_tracking(record)?;
