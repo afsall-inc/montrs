@@ -37,6 +37,10 @@ pub const APP_DEVELOPER_PROMPT: &str =
     include_str!("../../../docs/agent/app-developer-prompt.md");
 pub const FRAMEWORK_CONTRIBUTOR_PROMPT: &str =
     include_str!("../../../docs/agent/framework-contributor-prompt.md");
+pub const APP_DEVELOPER_RULE: &str =
+    include_str!("../../../.trae/rules/app-developer.md");
+pub const FRAMEWORK_CONTRIBUTOR_RULE: &str =
+    include_str!("../../../.trae/rules/framework-contributor.md");
 pub const FIXING_ERRORS_WORKFLOW: &str =
     include_str!("../../../docs/agent/workflows/fixing-errors.md");
 pub const ADDING_FEATURES_WORKFLOW: &str =

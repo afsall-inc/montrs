@@ -223,6 +223,17 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         status: Option<String>,
     },
+    /// Manage agent rules and IDE integration.
+    Rules {
+        #[command(subcommand)]
+        subcommand: RulesSubcommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RulesSubcommand {
+    /// Scaffold IDE rules (.trae/rules and .cursorrules) for the current project.
+    Setup,
 }
 
 #[derive(Subcommand, Debug)]

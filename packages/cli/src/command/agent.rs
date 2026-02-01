@@ -1,8 +1,16 @@
-use crate::AgentSubcommand;
+use crate::{AgentSubcommand, RulesSubcommand};
 
 pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
     let mut output = String::new();
     match subcommand {
+        AgentSubcommand::Rules { subcommand } => match subcommand {
+            RulesSubcommand::Setup => {
+                let cwd = std::env::current_dir()?;
+                let manager = montrs_agent::AgentManager::new(cwd);
+                let result = manager.setup_ide_rules()?;
+                Ok(result)
+            }
+        },
         AgentSubcommand::Check { path } => {
             output.push_str(&format!(
                 "Checking MontRS invariants at {}...\n",

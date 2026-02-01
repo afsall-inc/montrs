@@ -138,6 +138,59 @@ impl AgentManager {
         self.agent_dir().join("errorfiles")
     }
 
+    /// Scaffolds IDE rules (.trae/rules and .cursorrules) for the project.
+    pub fn setup_ide_rules(&self) -> Result<String> {
+        let trae_dir = self.root_path.join(".trae").join("rules");
+        if !trae_dir.exists() {
+            fs::create_dir_all(&trae_dir)?;
+        }
+
+        let cursorrules_path = self.root_path.join(".cursorrules");
+
+        // 1. Write Trae Rules
+        fs::write(
+            trae_dir.join("app-developer.md"),
+            framework::APP_DEVELOPER_RULE,
+        )?;
+        fs::write(
+            trae_dir.join("framework-contributor.md"),
+            framework::FRAMEWORK_CONTRIBUTOR_RULE,
+        )?;
+
+        // 2. Write Cursor Rules (.cursorrules)
+        // By default, we use the App Developer prompt for general project guidance
+        fs::write(
+            cursorrules_path,
+            framework::APP_DEVELOPER_PROMPT,
+        )?;
+
+        Ok("Successfully scaffolded .trae/rules/ and .cursorrules".to_string())
+    }
+
+    pub fn report_agent_error(
+        &self,
+        err: &dyn montrs_core::AgentError,
+    ) -> Result<String> {
+        let metadata = AgentErrorMetadata {
+            error_code: err.error_code().to_string(),
+            explanation: err.explanation(),
+            suggested_fixes: err.suggested_fixes(),
+            rustc_error: err.rustc_error(),
+            documentation_refs: err.documentation_refs(),
+        };
+
+        self.report_project_error(ProjectError {
+            package: None,
+            file: "unknown".to_string(),
+            line: 0,
+            column: 0,
+            message: err.to_string(),
+            code_context: "".to_string(),
+            level: "Error".to_string(),
+            agent_metadata: Some(metadata),
+        })
+    }
+
     pub fn tracking_file(&self) -> PathBuf {
         self.errorfiles_dir().join("error_tracking.json")
     }
@@ -386,30 +439,6 @@ impl AgentManager {
             agent_metadata: None,
         })?;
         Ok(())
-    }
-
-    pub fn report_agent_error(
-        &self,
-        err: &dyn montrs_core::AgentError,
-    ) -> Result<String> {
-        let metadata = AgentErrorMetadata {
-            error_code: err.error_code().to_string(),
-            explanation: err.explanation(),
-            suggested_fixes: err.suggested_fixes(),
-            rustc_error: err.rustc_error(),
-            documentation_refs: err.documentation_refs(),
-        };
-
-        self.report_project_error(ProjectError {
-            package: None,
-            file: "unknown".to_string(),
-            line: 0,
-            column: 0,
-            message: err.to_string(),
-            code_context: "".to_string(),
-            level: "Error".to_string(),
-            agent_metadata: Some(metadata),
-        })
     }
 
     fn determine_package(&self, file_path: &str) -> Option<String> {
