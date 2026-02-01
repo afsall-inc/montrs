@@ -8,6 +8,7 @@ use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+pub use montrs_runner::TaskConfig;
 use montrs_fmt::FormatterSettings;
 
 pub mod tailwind;
@@ -199,29 +200,7 @@ pub struct E2eConfig {
 }
 
 /// Configuration for custom tasks.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(untagged)]
-pub enum TaskConfig {
-    /// A simple command string.
-    Simple(String),
-    /// A detailed task definition.
-    Detailed {
-        /// The command to execute.
-        command: String,
-        /// Description of the task.
-        #[serde(default)]
-        description: Option<String>,
-        /// Category for grouping tasks.
-        #[serde(default)]
-        category: Option<String>,
-        /// List of dependent tasks to run before this one.
-        #[serde(default)]
-        dependencies: Vec<String>,
-        /// Environment variables to set for this task.
-        #[serde(default)]
-        env: HashMap<String, String>,
-    },
-}
+// Moved to montrs-tasks crate
 
 impl MontrsConfig {
     /// Loads configuration from a specific file.

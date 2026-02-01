@@ -3845,6 +3845,7 @@ dependencies = [
  "montrs-bench",
  "montrs-core",
  "montrs-fmt",
+ "montrs-runner",
  "montrs-utils",
  "proc-macro2",
  "quick-xml",
@@ -3919,6 +3920,25 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio-postgres",
  "tracing",
+]
+
+[[package]]
+name = "montrs-runner"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cargo_metadata 0.18.1",
+ "chrono",
+ "console 0.15.11",
+ "ignore",
+ "montrs-fmt",
+ "montrs-utils",
+ "serde",
+ "thiserror 1.0.69",
+ "tokio",
+ "toml 0.8.23",
+ "uuid",
+ "walkdir",
 ]
 
 [[package]]

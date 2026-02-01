@@ -482,6 +482,25 @@ impl AgentManager {
                     },
                     "required": ["path"]
                 }
+            }),
+            serde_json::json!({
+                "name": "montrs_run",
+                "description": "Runs a custom task defined in montrs.toml.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": { "type": "string", "description": "Name of the task to run" }
+                    },
+                    "required": ["task"]
+                }
+            }),
+            serde_json::json!({
+                "name": "montrs_runner",
+                "description": "Lists available custom tasks from montrs.toml.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
             })
         ];
 

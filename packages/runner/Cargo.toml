@@ -1,0 +1,24 @@
+[package]
+name = "montrs-runner"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+anyhow.workspace = true
+console = "0.15"
+thiserror.workspace = true
+toml = "0.8"
+montrs-utils = { path = "../utils" }
+montrs-fmt = { path = "../fmt" }
+cargo_metadata = "0.18"
+walkdir = "2.4"
+ignore = "0.4"
+uuid = { version = "1.6", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }

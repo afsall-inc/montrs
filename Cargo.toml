@@ -12,6 +12,7 @@ members = [
     "packages/validator",
     "packages/test",
     "packages/utils",
+    "packages/runner",
 ]
 
 [workspace.package]
