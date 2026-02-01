@@ -2,7 +2,11 @@ use crate::config::MontrsConfig;
 use anyhow::{Result, anyhow};
 use clap::Parser;
 
-pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig) -> Result<()> {
+pub async fn run_cargo_leptos(
+    cmd: &str,
+    args: &[String],
+    config: &MontrsConfig,
+) -> Result<()> {
     // Build arguments for cargo-leptos
     let mut args_list = vec!["cargo-leptos".to_string(), cmd.to_string()];
 
@@ -30,8 +34,10 @@ pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig)
         }
     }
 
-    let cli = cargo_leptos::config::Cli::try_parse_from(args_list)
-        .map_err(|e| anyhow!("Failed to parse cargo-leptos arguments: {}", e))?;
+    let cli =
+        cargo_leptos::config::Cli::try_parse_from(args_list).map_err(|e| {
+            anyhow!("Failed to parse cargo-leptos arguments: {}", e)
+        })?;
 
     match cargo_leptos::run(cli).await {
         Ok(_) => {
@@ -39,7 +45,10 @@ pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig)
             if let Ok(cwd) = std::env::current_dir() {
                 let agent_manager = montrs_agent::AgentManager::new(cwd);
                 let diff = agent_manager.generate_diff();
-                let _ = agent_manager.auto_resolve_active_errors("Build/Command succeeded".to_string(), diff);
+                let _ = agent_manager.auto_resolve_active_errors(
+                    "Build/Command succeeded".to_string(),
+                    diff,
+                );
             }
             Ok(())
         }
@@ -47,9 +56,10 @@ pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig)
             if let Ok(cwd) = std::env::current_dir() {
                 let agent_manager = montrs_agent::AgentManager::new(cwd);
                 let error_msg = format!("{:?}", e);
-                
+
                 // Try to parse structured errors
-                let parsed_errors = montrs_agent::error_parser::parse_rustc_errors(&error_msg);
+                let parsed_errors =
+                    montrs_agent::error_parser::parse_rustc_errors(&error_msg);
                 if parsed_errors.is_empty() {
                     let _ = agent_manager.report_error(error_msg);
                 } else {

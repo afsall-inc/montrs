@@ -17,7 +17,7 @@ pub type CommentMap = BTreeMap<usize, Vec<Comment>>;
 pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
     let mut comments = Vec::new();
     let rope = Rope::from(source);
-    
+
     let mut chars = source.char_indices().peekable();
     let mut line = 1;
     let mut col = 0;
@@ -34,7 +34,10 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
             if let Some(&(_, next_c)) = chars.peek() {
                 if next_c == '/' {
                     // Line comment
-                    let start = LineColumn { line, column: col - 1 };
+                    let start = LineColumn {
+                        line,
+                        column: col - 1,
+                    };
                     let mut text = String::from("//");
                     chars.next(); // consume second /
                     col += 1;
@@ -50,7 +53,8 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
                     }
                     let end = LineColumn { line, column: col };
                     comments.push(Comment {
-                        is_doc: text.starts_with("///") || text.starts_with("//!"),
+                        is_doc: text.starts_with("///")
+                            || text.starts_with("//!"),
                         is_agent_tool: text.contains("@agent-tool"),
                         text,
                         start,
@@ -58,7 +62,10 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
                     });
                 } else if next_c == '*' {
                     // Block comment
-                    let start = LineColumn { line, column: col - 1 };
+                    let start = LineColumn {
+                        line,
+                        column: col - 1,
+                    };
                     let mut text = String::from("/*");
                     chars.next(); // consume *
                     col += 1;
@@ -84,7 +91,8 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
                     }
                     let end = LineColumn { line, column: col };
                     comments.push(Comment {
-                        is_doc: text.starts_with("/**") || text.starts_with("/*!"),
+                        is_doc: text.starts_with("/**")
+                            || text.starts_with("/*!"),
                         is_agent_tool: text.contains("@agent-tool"),
                         text,
                         start,
@@ -105,9 +113,9 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
     }
 
     let mut result = String::new();
-    
+
     // 1. Separate agent tools to ensure they are at the very top if they were at the start
-    let (agent_tools, other_comments): (Vec<Comment>, Vec<Comment>) = 
+    let (agent_tools, other_comments): (Vec<Comment>, Vec<Comment>) =
         comments.into_iter().partition(|c| c.is_agent_tool);
 
     // 2. Add agent tools that were at the beginning of the file
@@ -123,13 +131,15 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
     let formatted_lines: Vec<&str> = formatted.lines().collect();
     let mut current_comment_idx = 0;
     let comments = other_comments;
-    
+
     // 3. Re-insert remaining comments based on relative line numbers
     for (i, line) in formatted_lines.iter().enumerate() {
         let line_num = i + 1;
-        
+
         // Check for comments that should be BEFORE or ON this line
-        while current_comment_idx < comments.len() && comments[current_comment_idx].start.line <= line_num {
+        while current_comment_idx < comments.len()
+            && comments[current_comment_idx].start.line <= line_num
+        {
             let comment = &comments[current_comment_idx];
             if !formatted.contains(&comment.text) {
                 result.push_str(&comment.text);
@@ -139,7 +149,7 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
             }
             current_comment_idx += 1;
         }
-        
+
         result.push_str(line);
         result.push('\n');
     }
@@ -196,7 +206,10 @@ mod tests {
         let comments = vec![Comment {
             text: "// comment".to_string(),
             start: LineColumn { line: 1, column: 0 },
-            end: LineColumn { line: 1, column: 10 },
+            end: LineColumn {
+                line: 1,
+                column: 10,
+            },
             is_doc: false,
             is_agent_tool: false,
         }];
@@ -207,8 +220,14 @@ mod tests {
 }
 
 /// Helper to get text between two spans
-pub fn get_text_between_spans(source: &Rope, start: LineColumn, end: LineColumn) -> String {
-    if start.line > end.line || (start.line == end.line && start.column > end.column) {
+pub fn get_text_between_spans(
+    source: &Rope,
+    start: LineColumn,
+    end: LineColumn,
+) -> String {
+    if start.line > end.line
+        || (start.line == end.line && start.column > end.column)
+    {
         return String::new();
     }
 
@@ -217,11 +236,22 @@ pub fn get_text_between_spans(source: &Rope, start: LineColumn, end: LineColumn)
         if line_idx < source.line_len() {
             let line = source.line(line_idx);
             let line_str = line.to_string();
-            let start_col = if line_idx == start.line - 1 { start.column } else { 0 };
-            let end_col = if line_idx == end.line - 1 { end.column } else { line_str.len() };
-            
+            let start_col = if line_idx == start.line - 1 {
+                start.column
+            } else {
+                0
+            };
+            let end_col = if line_idx == end.line - 1 {
+                end.column
+            } else {
+                line_str.len()
+            };
+
             if start_col < line_str.len() {
-                result.push_str(&line_str[start_col..std::cmp::min(end_col, line_str.len())]);
+                result.push_str(
+                    &line_str
+                        [start_col..std::cmp::min(end_col, line_str.len())],
+                );
             }
             if line_idx < end.line - 1 {
                 result.push('\n');

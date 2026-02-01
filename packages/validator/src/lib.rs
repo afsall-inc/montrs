@@ -151,7 +151,7 @@ pub fn derive_validator(input: TokenStream) -> TokenStream {
         impl ::montrs_core::Validator for #name {
             fn validate(&self) -> ::std::result::Result<(), ::std::vec::Vec<::montrs_core::ValidatorError>> {
                 let mut errors = ::std::vec::Vec::new();
-                
+
                 #(#all_field_validations)*
 
                 if errors.is_empty() {

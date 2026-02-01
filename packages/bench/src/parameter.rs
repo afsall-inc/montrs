@@ -1,7 +1,6 @@
 use crate::BenchCase;
 use async_trait::async_trait;
-use std::future::Future;
-use std::ops::RangeInclusive;
+use std::{future::Future, ops::RangeInclusive};
 
 /// Represents a benchmark parameter with a range of values.
 ///

@@ -11,8 +11,8 @@
 //! # Example
 //!
 //! ```rust
-//! use montrs_test::integration::{TestEnv, TestRuntime};
 //! use montrs_core::{AppSpec, EnvConfig};
+//! use montrs_test::integration::{TestEnv, TestRuntime};
 //!
 //! // Mock the environment
 //! let env = TestEnv::new();
@@ -22,15 +22,16 @@
 //! // let runtime = TestRuntime::new(spec);
 //! ```
 
-use montrs_core::{AppConfig, AppSpec, Owner, provide_context};
-use async_trait::async_trait;
-use montrs_core::env::EnvError;
-use montrs_core::EnvConfig;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-
 #[cfg(feature = "e2e")]
 use crate::e2e;
+use async_trait::async_trait;
+use montrs_core::{
+    AppConfig, AppSpec, EnvConfig, Owner, env::EnvError, provide_context,
+};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 /// A mock environment configuration provider for testing.
 ///
@@ -40,8 +41,8 @@ use crate::e2e;
 /// # Example
 ///
 /// ```rust
-/// use montrs_test::integration::TestEnv;
 /// use montrs_core::EnvConfig;
+/// use montrs_test::integration::TestEnv;
 ///
 /// let env = TestEnv::new();
 /// env.set("API_KEY", "test-secret");
@@ -98,8 +99,8 @@ impl EnvConfig for TestEnv {
 /// # Example
 ///
 /// ```rust
-/// use montrs_test::integration::Fixture;
 /// use async_trait::async_trait;
+/// use montrs_test::integration::Fixture;
 ///
 /// struct TempFileFixture;
 ///
@@ -111,7 +112,10 @@ impl EnvConfig for TestEnv {
 ///         Ok(std::env::temp_dir().join("test_file"))
 ///     }
 ///
-///     async fn teardown(&self, path: &mut Self::Context) -> anyhow::Result<()> {
+///     async fn teardown(
+///         &self,
+///         path: &mut Self::Context,
+///     ) -> anyhow::Result<()> {
 ///         if path.exists() {
 ///             std::fs::remove_file(path)?;
 ///         }
@@ -134,7 +138,10 @@ pub trait Fixture {
     ///
     /// This method is called after the test execution, regardless of whether
     /// the test passed or failed.
-    async fn teardown(&self, _context: &mut Self::Context) -> anyhow::Result<()> {
+    async fn teardown(
+        &self,
+        _context: &mut Self::Context,
+    ) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -152,8 +159,8 @@ pub trait Fixture {
 /// # Example
 ///
 /// ```rust
-/// use montrs_test::integration::{Fixture, run_fixture_test};
 /// use async_trait::async_trait;
+/// use montrs_test::integration::{Fixture, run_fixture_test};
 ///
 /// struct MyFixture;
 ///
@@ -170,10 +177,14 @@ pub trait Fixture {
 ///     run_fixture_test(MyFixture, |ctx| async move {
 ///         assert_eq!(ctx, "hello");
 ///         Ok(())
-///     }).await
+///     })
+///     .await
 /// }
 /// ```
-pub async fn run_fixture_test<F, T, Fut>(fixture: F, test: T) -> anyhow::Result<()>
+pub async fn run_fixture_test<F, T, Fut>(
+    fixture: F,
+    test: T,
+) -> anyhow::Result<()>
 where
     F: Fixture + Send + Sync,
     F::Context: Send,
@@ -181,9 +192,9 @@ where
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send,
 {
     let mut context = fixture.setup().await?;
-    
+
     let result = test(&mut context).await;
-    
+
     // Always run teardown
     let teardown_result = fixture.teardown(&mut context).await;
 
@@ -224,7 +235,7 @@ impl<C: AppConfig> TestRuntime<C> {
         owner.with(|| {
             // Provide the AppSpec as a global context during test execution
             provide_context(self.spec.clone());
-            
+
             // Execute the test logic
             f(&self.spec)
         })

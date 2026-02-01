@@ -37,7 +37,8 @@ impl BenchStats {
 
     /// Calculates statistics with optional parameter values for regression.
     pub fn with_params(durations: &[Duration], params: Option<&[u32]>) -> Self {
-        let mut data: Vec<f64> = durations.iter().map(|d| d.as_secs_f64()).collect();
+        let mut data: Vec<f64> =
+            durations.iter().map(|d| d.as_secs_f64()).collect();
         let mut stats_data = Data::new(&mut data);
 
         let mean = stats_data.mean().unwrap_or(0.0);
@@ -58,11 +59,12 @@ impl BenchStats {
                 // Simple linear regression calculation
                 let x: Vec<f64> = p_vals.iter().map(|&v| v as f64).collect();
                 let y: Vec<f64> = data;
-                
+
                 let n = x.len() as f64;
                 let sum_x: f64 = x.iter().sum();
                 let sum_y: f64 = y.iter().sum();
-                let sum_xy: f64 = x.iter().zip(y.iter()).map(|(xi, yi)| xi * yi).sum();
+                let sum_xy: f64 =
+                    x.iter().zip(y.iter()).map(|(xi, yi)| xi * yi).sum();
                 let sum_xx: f64 = x.iter().map(|xi| xi * xi).sum();
 
                 let denom = n * sum_xx - sum_x * sum_x;
@@ -73,9 +75,9 @@ impl BenchStats {
                     intercept = Some(b);
                 }
             } else {
-                 // data was moved into y if params exists but validation fails, but here we don't strictly need it back
+                // data was moved into y if params exists but validation fails, but here we don't strictly need it back
             }
-        } 
+        }
 
         Self {
             mean,

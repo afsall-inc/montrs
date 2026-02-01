@@ -1,12 +1,17 @@
 use anyhow::Result;
-use montrs_fmt::{format_source, FormatterSettings};
+use colored::Colorize;
+use montrs_fmt::{FormatterSettings, format_source};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use colored::Colorize;
 
-pub async fn run(settings: FormatterSettings, check: bool, path: String, verbose: bool) -> Result<()> {
+pub async fn run(
+    settings: FormatterSettings,
+    check: bool,
+    path: String,
+    verbose: bool,
+) -> Result<()> {
     let input_path = PathBuf::from(path);
-    
+
     let mut exit_code = 0;
     let mut files_checked = 0;
     let mut files_formatted = 0;
@@ -35,12 +40,18 @@ pub async fn run(settings: FormatterSettings, check: bool, path: String, verbose
         if exit_code == 0 {
             println!("{}", "All files are correctly formatted.".green());
         } else {
-            println!("{}", format!("{} files need formatting.", files_formatted).red());
+            println!(
+                "{}",
+                format!("{} files need formatting.", files_formatted).red()
+            );
             anyhow::bail!("Formatting check failed");
         }
     } else {
         if verbose {
-            println!("Checked {} files, formatted {} files.", files_checked, files_formatted);
+            println!(
+                "Checked {} files, formatted {} files.",
+                files_checked, files_formatted
+            );
         }
     }
 

@@ -11,20 +11,18 @@ pub mod limiter;
 pub mod router;
 pub mod validation;
 
+use async_trait::async_trait;
 pub use env::{EnvConfig, EnvConfigExt, EnvError, FromEnv, TypedEnv};
 pub use features::{FeatureFlag, FeatureManager, Rule, Segment, UserContext};
 pub use leptos::prelude::*;
 pub use limiter::{GovernorLimiter, Limiter};
 pub use router::{
-    ActionResponse, LoaderResponse, Route, RouteAction, RouteContext, RouteError, RouteLoader,
-    RouteParams, RouteView, Router,
+    ActionResponse, LoaderResponse, Route, RouteAction, RouteContext,
+    RouteError, RouteLoader, RouteParams, RouteView, Router,
 };
-pub use validation::{Validator, ValidatorError};
-
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::error::Error as StdError;
-use std::sync::Arc;
+use std::{error::Error as StdError, sync::Arc};
+pub use validation::{Validator, ValidatorError};
 
 /// A trait for errors that provide agent-accessible metadata.
 pub trait AgentError: StdError {
@@ -107,8 +105,10 @@ pub trait Plate<C: AppConfig>: Send + Sync + 'static {
     /// 1. Initialize local resources (database connections, etc.)
     /// 2. Provide Leptos contexts using `provide_context`.
     /// 3. Perform any required async setup.
-    async fn init(&self, ctx: &mut PlateContext<C>)
-    -> Result<(), Box<dyn StdError + Send + Sync>>;
+    async fn init(
+        &self,
+        ctx: &mut PlateContext<C>,
+    ) -> Result<(), Box<dyn StdError + Send + Sync>>;
 
     /// Register routes for this plate.
     ///
@@ -184,12 +184,20 @@ impl<C: AppConfig> AppSpec<C> {
         AppSpecExport {
             name: app_name.to_string(),
             target: self.target,
-            plates: self.plates.iter().map(|m| PlateMetadata {
-                name: m.name().to_string(),
-                description: m.description().to_string(),
-                dependencies: m.dependencies().iter().map(|s| s.to_string()).collect(),
-                metadata: m.metadata(),
-            }).collect(),
+            plates: self
+                .plates
+                .iter()
+                .map(|m| PlateMetadata {
+                    name: m.name().to_string(),
+                    description: m.description().to_string(),
+                    dependencies: m
+                        .dependencies()
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect(),
+                    metadata: m.metadata(),
+                })
+                .collect(),
             router: self.router.spec(),
         }
     }

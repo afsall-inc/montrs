@@ -97,38 +97,70 @@ impl AgentError for ValidatorError {
 
     fn explanation(&self) -> String {
         match self {
-            ValidatorError::MinLength { field, min, actual } => format!("The field '{}' has a length of {}, which is less than the required minimum of {}.", field, actual, min),
-            ValidatorError::MaxLength { field, max, actual } => format!("The field '{}' has a length of {}, which exceeds the allowed maximum of {}.", field, actual, max),
-            ValidatorError::Min { field, min, actual } => format!("The field '{}' has a value of {}, which is less than the required minimum of {}.", field, actual, min),
-            ValidatorError::Max { field, max, actual } => format!("The field '{}' has a value of {}, which exceeds the allowed maximum of {}.", field, actual, max),
-            ValidatorError::InvalidEmail { field } => format!("The field '{}' does not contain a valid email address.", field),
-            ValidatorError::RegexMismatch { field, pattern } => format!("The field '{}' does not match the required pattern: {}.", field, pattern),
-            ValidatorError::Custom { field, message } => format!("Validation failed for field '{}': {}.", field, message),
+            ValidatorError::MinLength { field, min, actual } => format!(
+                "The field '{}' has a length of {}, which is less than the \
+                 required minimum of {}.",
+                field, actual, min
+            ),
+            ValidatorError::MaxLength { field, max, actual } => format!(
+                "The field '{}' has a length of {}, which exceeds the allowed \
+                 maximum of {}.",
+                field, actual, max
+            ),
+            ValidatorError::Min { field, min, actual } => format!(
+                "The field '{}' has a value of {}, which is less than the \
+                 required minimum of {}.",
+                field, actual, min
+            ),
+            ValidatorError::Max { field, max, actual } => format!(
+                "The field '{}' has a value of {}, which exceeds the allowed \
+                 maximum of {}.",
+                field, actual, max
+            ),
+            ValidatorError::InvalidEmail { field } => format!(
+                "The field '{}' does not contain a valid email address.",
+                field
+            ),
+            ValidatorError::RegexMismatch { field, pattern } => format!(
+                "The field '{}' does not match the required pattern: {}.",
+                field, pattern
+            ),
+            ValidatorError::Custom { field, message } => {
+                format!("Validation failed for field '{}': {}.", field, message)
+            }
         }
     }
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
-            ValidatorError::MinLength { min, .. } => vec![
-                format!("Provide a value with at least {} characters.", min),
-            ],
-            ValidatorError::MaxLength { max, .. } => vec![
-                format!("Provide a value with at most {} characters.", max),
-            ],
-            ValidatorError::Min { min, .. } => vec![
-                format!("Provide a value greater than or equal to {}.", min),
-            ],
-            ValidatorError::Max { max, .. } => vec![
-                format!("Provide a value less than or equal to {}.", max),
-            ],
+            ValidatorError::MinLength { min, .. } => vec![format!(
+                "Provide a value with at least {} characters.",
+                min
+            )],
+            ValidatorError::MaxLength { max, .. } => vec![format!(
+                "Provide a value with at most {} characters.",
+                max
+            )],
+            ValidatorError::Min { min, .. } => vec![format!(
+                "Provide a value greater than or equal to {}.",
+                min
+            )],
+            ValidatorError::Max { max, .. } => {
+                vec![format!("Provide a value less than or equal to {}.", max)]
+            }
             ValidatorError::InvalidEmail { .. } => vec![
-                "Check the email address for typos and ensure it follows the standard format (e.g., user@example.com).".to_string(),
+                "Check the email address for typos and ensure it follows the \
+                 standard format (e.g., user@example.com)."
+                    .to_string(),
             ],
-            ValidatorError::RegexMismatch { pattern, .. } => vec![
-                format!("Ensure the input matches the pattern: {}.", pattern),
-            ],
+            ValidatorError::RegexMismatch { pattern, .. } => vec![format!(
+                "Ensure the input matches the pattern: {}.",
+                pattern
+            )],
             ValidatorError::Custom { .. } => vec![
-                "Review the custom validation logic or the input data to ensure it meets the requirements.".to_string(),
+                "Review the custom validation logic or the input data to \
+                 ensure it meets the requirements."
+                    .to_string(),
             ],
         }
     }

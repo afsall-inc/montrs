@@ -1,7 +1,6 @@
-use crate::config::BenchConfig;
-use crate::report::Report;
-use crate::stats::BenchStats;
-use crate::BenchCase;
+use crate::{
+    BenchCase, config::BenchConfig, report::Report, stats::BenchStats,
+};
 use colored::*;
 use std::time::Instant;
 
@@ -98,7 +97,10 @@ impl BenchRunner {
         let mut report = Report::new();
 
         println!("{}", "Running MontRS Benchmarks".bold().green());
-        println!("System: {} ({})", report.system.os_name, report.system.cpu_brand);
+        println!(
+            "System: {} ({})",
+            report.system.os_name, report.system.cpu_brand
+        );
         if let Some(size) = report.system.binary_size_bytes {
             let size_mb = size as f64 / 1024.0 / 1024.0;
             println!("Binary Size: {:.2} MB", size_mb);
@@ -129,9 +131,13 @@ impl BenchRunner {
     }
 
     /// Internal method to run a single benchmark case.
-    async fn run_single_bench(&self, bench: &dyn BenchCase, report: &mut Report) -> anyhow::Result<()> {
+    async fn run_single_bench(
+        &self,
+        bench: &dyn BenchCase,
+        report: &mut Report,
+    ) -> anyhow::Result<()> {
         print!("Running {}... ", bench.name().cyan());
-        
+
         bench.setup().await?;
 
         // Warmup
@@ -149,14 +155,20 @@ impl BenchRunner {
         if let Some(param) = &param_info {
             // Parametric mode: Iterate through parameter values
             let values = param.values();
-            let runs_per_val = std::cmp::max(1, self.config.iterations / values.len() as u32);
-            
-            println!("  Parameter: {} ({} values, {} runs/val)", param.name, values.len(), runs_per_val);
+            let runs_per_val =
+                std::cmp::max(1, self.config.iterations / values.len() as u32);
+
+            println!(
+                "  Parameter: {} ({} values, {} runs/val)",
+                param.name,
+                values.len(),
+                runs_per_val
+            );
 
             for &val in &values {
                 bench.set_parameter(val);
                 // Mini-warmup for new param
-                bench.run().await?; 
+                bench.run().await?;
 
                 for _ in 0..runs_per_val {
                     let start = Instant::now();
@@ -184,12 +196,17 @@ impl BenchRunner {
         bench.teardown().await?;
 
         let stats = if !params_used.is_empty() {
-             BenchStats::with_params(&durations, Some(&params_used))
+            BenchStats::with_params(&durations, Some(&params_used))
         } else {
-             BenchStats::new(&durations)
+            BenchStats::new(&durations)
         };
-        
-        report.add_result(bench.name().to_string(), stats.clone(), durations.len() as u32, total_duration.as_secs_f64());
+
+        report.add_result(
+            bench.name().to_string(),
+            stats.clone(),
+            durations.len() as u32,
+            total_duration.as_secs_f64(),
+        );
 
         println!("{}", "Done".green());
         println!("  Mean:    {:.4} µs", stats.mean * 1_000_000.0);
@@ -210,7 +227,7 @@ impl BenchRunner {
 }
 
 /// A convenience wrapper to define benchmarks using the `BenchCase` trait.
-pub struct Benchmark<F, Fut> 
+pub struct Benchmark<F, Fut>
 where
     F: Fn() -> Fut + Send + Sync,
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send,
@@ -219,7 +236,7 @@ where
     func: F,
 }
 
-impl<F, Fut> Benchmark<F, Fut> 
+impl<F, Fut> Benchmark<F, Fut>
 where
     F: Fn() -> Fut + Send + Sync,
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send,
@@ -233,7 +250,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<F, Fut> BenchCase for Benchmark<F, Fut> 
+impl<F, Fut> BenchCase for Benchmark<F, Fut>
 where
     F: Fn() -> Fut + Send + Sync,
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send,

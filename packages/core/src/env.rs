@@ -3,8 +3,7 @@
 //! variables in a type-safe and mockable manner.
 
 use crate::AgentError;
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 /// Errors that can occur when retrieving or parsing environment variables.
 #[derive(Debug)]
@@ -16,8 +15,12 @@ pub enum EnvError {
 impl fmt::Display for EnvError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EnvError::MissingKey(k) => write!(f, "Missing environment variable: {}", k),
-            EnvError::InvalidType(k) => write!(f, "Invalid type for environment variable: {}", k),
+            EnvError::MissingKey(k) => {
+                write!(f, "Missing environment variable: {}", k)
+            }
+            EnvError::InvalidType(k) => {
+                write!(f, "Invalid type for environment variable: {}", k)
+            }
         }
     }
 }
@@ -34,20 +37,37 @@ impl AgentError for EnvError {
 
     fn explanation(&self) -> String {
         match self {
-            EnvError::MissingKey(k) => format!("The application expected the environment variable '{}' to be set, but it was not found.", k),
-            EnvError::InvalidType(k) => format!("The environment variable '{}' was found, but its value could not be parsed into the expected type.", k),
+            EnvError::MissingKey(k) => format!(
+                "The application expected the environment variable '{}' to be \
+                 set, but it was not found.",
+                k
+            ),
+            EnvError::InvalidType(k) => format!(
+                "The environment variable '{}' was found, but its value could \
+                 not be parsed into the expected type.",
+                k
+            ),
         }
     }
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
             EnvError::MissingKey(k) => vec![
-                format!("Set the '{}' environment variable in your shell or .env file.", k),
-                format!("Check if '{}' is correctly spelled in your configuration.", k),
+                format!(
+                    "Set the '{}' environment variable in your shell or .env \
+                     file.",
+                    k
+                ),
+                format!(
+                    "Check if '{}' is correctly spelled in your configuration.",
+                    k
+                ),
             ],
-            EnvError::InvalidType(k) => vec![
-                format!("Ensure the value of '{}' matches the expected format (e.g., a number, boolean, or valid string).", k),
-            ],
+            EnvError::InvalidType(k) => vec![format!(
+                "Ensure the value of '{}' matches the expected format (e.g., \
+                 a number, boolean, or valid string).",
+                k
+            )],
         }
     }
 

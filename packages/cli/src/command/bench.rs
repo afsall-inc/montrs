@@ -7,11 +7,8 @@
 //!    to the underlying benchmarking harness.
 
 use anyhow::{Context, Result};
-use std::path::Path;
-use std::process::Command;
-use std::fs;
-use std::time::Instant;
 use colored::Colorize;
+use std::{fs, path::Path, process::Command, time::Instant};
 
 pub async fn run(
     target: Option<String>,
@@ -26,14 +23,29 @@ pub async fn run(
     if simple {
         if let Some(target_path) = &target {
             // Handle explicit targets without cargo project overhead
-            return run_native_bench(target_path, iterations, warmup, generate_weights).await;
+            return run_native_bench(
+                target_path,
+                iterations,
+                warmup,
+                generate_weights,
+            )
+            .await;
         } else {
-             anyhow::bail!("--simple mode requires a target file or directory.");
+            anyhow::bail!("--simple mode requires a target file or directory.");
         }
     }
 
     // Default behavior: run cargo bench
-    run_cargo_bench(target, iterations, warmup, timeout, filter, json_output, generate_weights).await
+    run_cargo_bench(
+        target,
+        iterations,
+        warmup,
+        timeout,
+        filter,
+        json_output,
+        generate_weights,
+    )
+    .await
 }
 
 async fn run_native_bench(
@@ -51,23 +63,27 @@ async fn run_native_bench(
     let metadata = fs::metadata(path)?;
     let size_bytes = metadata.len();
     let size_mb = size_bytes as f64 / 1024.0 / 1024.0;
-    
+
     println!("Target: {}", target_path);
     println!("Size:   {:.2} MB ({} bytes)", size_mb, size_bytes);
 
     // 2. Identify Target Type
-    if path.is_dir() || path.file_name() == Some(std::ffi::OsStr::new("montrs.toml")) {
+    if path.is_dir()
+        || path.file_name() == Some(std::ffi::OsStr::new("montrs.toml"))
+    {
         // AppSpec or Application Directory
         println!("Type:   AppSpec / Application");
         println!("Action: Benchmarking internal config load speed...");
-        return bench_appspec_load(path, iterations, warmup, generate_weights).await;
-    } 
-    
+        return bench_appspec_load(path, iterations, warmup, generate_weights)
+            .await;
+    }
+
     if path.extension().map_or(false, |e| e == "rs") {
         // Rust Source File
         println!("Type:   Rust Source");
         println!("Action: Compiling and benchmarking execution...");
-        return bench_rust_source(path, iterations, warmup, generate_weights).await;
+        return bench_rust_source(path, iterations, warmup, generate_weights)
+            .await;
     }
 
     // Assume Binary / Executable
@@ -77,11 +93,15 @@ async fn run_native_bench(
 }
 
 /// Benchmarks loading of an AppSpec (montrs.toml).
-/// 
+///
 /// This is an internal benchmark that measures how fast `montrs` can parse the configuration.
-async fn bench_appspec_load(path: &Path, iterations: u32, warmup: u32, generate_weights: Option<String>) -> Result<()> {
-    use montrs_bench::stats::BenchStats;
-    use montrs_bench::report::Report;
+async fn bench_appspec_load(
+    path: &Path,
+    iterations: u32,
+    warmup: u32,
+    generate_weights: Option<String>,
+) -> Result<()> {
+    use montrs_bench::{report::Report, stats::BenchStats};
 
     // Determine the montrs.toml path
     let config_path = if path.is_dir() {
@@ -119,23 +139,37 @@ async fn bench_appspec_load(path: &Path, iterations: u32, warmup: u32, generate_
 
     if let Some(weight_path) = generate_weights {
         let mut report = Report::new();
-        report.add_result("appspec_load".to_string(), stats, iterations, total_duration.as_secs_f64());
+        report.add_result(
+            "appspec_load".to_string(),
+            stats,
+            iterations,
+            total_duration.as_secs_f64(),
+        );
         report.save_weights(&weight_path)?;
         println!("Weights generated at {}", weight_path.blue());
     }
-    
+
     Ok(())
 }
 
-async fn bench_rust_source(path: &Path, iterations: u32, warmup: u32, generate_weights: Option<String>) -> Result<()> {
+async fn bench_rust_source(
+    path: &Path,
+    iterations: u32,
+    warmup: u32,
+    generate_weights: Option<String>,
+) -> Result<()> {
     // Attempt to compile using rustc to a temp binary
     // Note: This only works for standalone files without external crate dependencies (except std)
     // If the file relies on `montrs_bench`, this will fail unless we link it manually.
     // Given the constraint "no project creation", we rely on simple `rustc`.
-    
+
     let temp_dir = std::env::temp_dir();
     let file_stem = path.file_stem().unwrap().to_string_lossy();
-    let binary_name = if cfg!(windows) { format!("{}.exe", file_stem) } else { file_stem.to_string() };
+    let binary_name = if cfg!(windows) {
+        format!("{}.exe", file_stem)
+    } else {
+        file_stem.to_string()
+    };
     let binary_path = temp_dir.join(&binary_name);
 
     println!("Compiling {}...", path.display());
@@ -148,8 +182,14 @@ async fn bench_rust_source(path: &Path, iterations: u32, warmup: u32, generate_w
         .context("Failed to invoke rustc")?;
 
     if !status.success() {
-        println!("Standard compilation failed. If this file uses external crates (like montrs_bench),");
-        println!("please run `cargo bench` within a project, or compile it manually first.");
+        println!(
+            "Standard compilation failed. If this file uses external crates \
+             (like montrs_bench),"
+        );
+        println!(
+            "please run `cargo bench` within a project, or compile it \
+             manually first."
+        );
         anyhow::bail!("Compilation failed");
     }
 
@@ -157,9 +197,13 @@ async fn bench_rust_source(path: &Path, iterations: u32, warmup: u32, generate_w
     bench_executable(&binary_path, iterations, warmup, generate_weights).await
 }
 
-async fn bench_executable(path: &Path, iterations: u32, warmup: u32, generate_weights: Option<String>) -> Result<()> {
-    use montrs_bench::stats::BenchStats;
-    use montrs_bench::report::Report;
+async fn bench_executable(
+    path: &Path,
+    iterations: u32,
+    warmup: u32,
+    generate_weights: Option<String>,
+) -> Result<()> {
+    use montrs_bench::{report::Report, stats::BenchStats};
 
     println!("Benchmarking execution speed...");
     // Warmup
@@ -191,14 +235,18 @@ async fn bench_executable(path: &Path, iterations: u32, warmup: u32, generate_we
     if let Some(weight_path) = generate_weights {
         let mut report = Report::new();
         let name = path.file_name().unwrap().to_string_lossy().to_string();
-        report.add_result(name, stats, iterations, total_duration.as_secs_f64());
+        report.add_result(
+            name,
+            stats,
+            iterations,
+            total_duration.as_secs_f64(),
+        );
         report.save_weights(&weight_path)?;
         println!("Weights generated at {}", weight_path.blue());
     }
 
     Ok(())
 }
-
 
 async fn run_cargo_bench(
     target: Option<String>,
@@ -220,20 +268,20 @@ async fn run_cargo_bench(
 
     // Arguments passed to the benchmark binary
     let mut harness_args = Vec::new();
-    
+
     if let Some(f) = filter {
         cmd.arg(&f);
     }
-    
+
     cmd.arg("--");
 
     harness_args.push(format!("--iterations={}", iterations));
     harness_args.push(format!("--warmup={}", warmup));
-    
+
     if let Some(t) = timeout {
         harness_args.push(format!("--timeout={}", t));
     }
-    
+
     if let Some(json) = &json_output {
         harness_args.push(format!("--json-output={}", json));
     }

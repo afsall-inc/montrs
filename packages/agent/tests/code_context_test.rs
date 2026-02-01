@@ -6,7 +6,7 @@ use tempfile::tempdir;
 fn test_code_context_reading() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("main.rs");
-    
+
     let content = r#"fn main() {
     let x = 5;
     println!("{}", x)
@@ -22,12 +22,16 @@ fn test_code_context_reading() {
     );
 
     let errors = parse_rustc_errors(&rustc_output);
-    
+
     assert_eq!(errors.len(), 1);
     let error = &errors[0];
-    
+
     // Check that code context was read and includes the line number and marker
-    assert!(error.code_context.contains(">    3 |     println!(\"{}\", x)"));
+    assert!(
+        error
+            .code_context
+            .contains(">    3 |     println!(\"{}\", x)")
+    );
     assert!(error.code_context.contains("     2 |     let x = 5;"));
     assert!(error.code_context.contains("     4 |     let y = 10;"));
 }

@@ -23,7 +23,8 @@ impl Weight {
 
     /// Calculates the total cost for a given parameter value.
     pub fn calc(&self, n: u32) -> u64 {
-        self.base_ns.saturating_add(self.slope_ns.saturating_mul(n as u64))
+        self.base_ns
+            .saturating_add(self.slope_ns.saturating_mul(n as u64))
     }
 
     /// Returns the base overhead in nanoseconds.

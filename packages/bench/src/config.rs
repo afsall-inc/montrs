@@ -1,7 +1,6 @@
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use std::env;
-use std::time::Duration;
+use std::{env, time::Duration};
 
 /// Parses a duration from a string (in seconds).
 fn parse_duration(arg: &str) -> Result<Duration, std::num::ParseIntError> {
@@ -131,17 +130,17 @@ impl BenchConfig {
             })
             .or(Some(Duration::from_secs(5)));
 
-        let filter = args
-            .filter
-            .or_else(|| Self::fetch_env_string("MONTRS_BENCH_FILTER", &env_loader));
+        let filter = args.filter.or_else(|| {
+            Self::fetch_env_string("MONTRS_BENCH_FILTER", &env_loader)
+        });
 
-        let json_output = args
-            .json_output
-            .or_else(|| Self::fetch_env_string("MONTRS_BENCH_JSON_OUTPUT", &env_loader));
+        let json_output = args.json_output.or_else(|| {
+            Self::fetch_env_string("MONTRS_BENCH_JSON_OUTPUT", &env_loader)
+        });
 
-        let generate_weights = args
-            .generate_weights
-            .or_else(|| Self::fetch_env_string("MONTRS_BENCH_GENERATE_WEIGHTS", &env_loader));
+        let generate_weights = args.generate_weights.or_else(|| {
+            Self::fetch_env_string("MONTRS_BENCH_GENERATE_WEIGHTS", &env_loader)
+        });
 
         Self {
             warmup_iterations,
@@ -153,7 +152,10 @@ impl BenchConfig {
         }
     }
 
-    fn fetch_env<T: std::str::FromStr, F>(key: &str, env_loader: &F) -> Option<T>
+    fn fetch_env<T: std::str::FromStr, F>(
+        key: &str,
+        env_loader: &F,
+    ) -> Option<T>
     where
         F: Fn(&str) -> Option<String>,
     {

@@ -1,5 +1,8 @@
-use montrs_core::{Loader, Action, AppConfig, LoaderCtx, ActionCtx, LoaderResponse, ActionResponse};
 use async_trait::async_trait;
+use montrs_core::{
+    Action, ActionCtx, ActionResponse, AppConfig, Loader, LoaderCtx,
+    LoaderResponse,
+};
 
 #[derive(Clone)]
 struct TestConfig;
@@ -20,8 +23,13 @@ struct TestLoader;
 
 #[async_trait]
 impl Loader<TestConfig> for TestLoader {
-    async fn call(&self, _ctx: LoaderCtx<TestConfig>) -> Result<LoaderResponse, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(LoaderResponse { data: serde_json::json!({}) })
+    async fn call(
+        &self,
+        _ctx: LoaderCtx<TestConfig>,
+    ) -> Result<LoaderResponse, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(LoaderResponse {
+            data: serde_json::json!({}),
+        })
     }
 
     fn description(&self) -> &'static str {
@@ -33,8 +41,14 @@ struct TestAction;
 
 #[async_trait]
 impl Action<TestConfig> for TestAction {
-    async fn call(&self, _input: serde_json::Value, _ctx: ActionCtx<TestConfig>) -> Result<ActionResponse, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(ActionResponse { data: serde_json::json!({}) })
+    async fn call(
+        &self,
+        _input: serde_json::Value,
+        _ctx: ActionCtx<TestConfig>,
+    ) -> Result<ActionResponse, Box<dyn std::error::Error + Send + Sync>> {
+        Ok(ActionResponse {
+            data: serde_json::json!({}),
+        })
     }
 
     fn description(&self) -> &'static str {

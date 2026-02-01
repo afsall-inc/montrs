@@ -1,8 +1,6 @@
-use crate::{ProjectError, AgentErrorMetadata};
+use crate::{AgentErrorMetadata, ProjectError};
 use regex::Regex;
-use std::sync::OnceLock;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path, sync::OnceLock};
 
 static ERROR_REGEX: OnceLock<Regex> = OnceLock::new();
 
@@ -13,14 +11,32 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
 
     let mut errors = Vec::new();
     for cap in re.captures_iter(output) {
-        let code = cap.name("code").map(|m| m.as_str().to_string()).unwrap_or_default();
-        let message = cap.name("msg").map(|m| m.as_str().to_string()).unwrap_or_default();
-        let file = cap.name("file").map(|m| m.as_str().to_string()).unwrap_or_default();
-        let line = cap.name("line").and_then(|m| m.as_str().parse::<usize>().ok()).unwrap_or(0);
-        let column = cap.name("col").and_then(|m| m.as_str().parse::<usize>().ok()).unwrap_or(0);
+        let code = cap
+            .name("code")
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default();
+        let message = cap
+            .name("msg")
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default();
+        let file = cap
+            .name("file")
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default();
+        let line = cap
+            .name("line")
+            .and_then(|m| m.as_str().parse::<usize>().ok())
+            .unwrap_or(0);
+        let column = cap
+            .name("col")
+            .and_then(|m| m.as_str().parse::<usize>().ok())
+            .unwrap_or(0);
 
-        let mut docs = vec![format!("https://doc.rust-lang.org/error-index.html#{}", code)];
-        
+        let mut docs = vec![format!(
+            "https://doc.rust-lang.org/error-index.html#{}",
+            code
+        )];
+
         // Map common errors to MontRS framework invariants if applicable
         match code.as_str() {
             "E0433" | "E0432" => {
@@ -42,12 +58,16 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
                     let lines: Vec<&str> = content.lines().collect();
                     let start = line.saturating_sub(3);
                     let end = (line + 2).min(lines.len());
-                    
+
                     let mut context = String::new();
                     for i in start..end {
                         let line_num = i + 1;
-                        let indicator = if line_num == line { "> " } else { "  " };
-                        context.push_str(&format!("{}{:4} | {}\n", indicator, line_num, lines[i]));
+                        let indicator =
+                            if line_num == line { "> " } else { "  " };
+                        context.push_str(&format!(
+                            "{}{:4} | {}\n",
+                            indicator, line_num, lines[i]
+                        ));
                     }
                     context
                 }
@@ -67,7 +87,10 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
             level: "Error".to_string(),
             agent_metadata: Some(AgentErrorMetadata {
                 error_code: code.clone(),
-                explanation: format!("Rust compiler error {}: {}", code, message),
+                explanation: format!(
+                    "Rust compiler error {}: {}",
+                    code, message
+                ),
                 suggested_fixes: Vec::new(),
                 rustc_error: Some(output.to_string()),
                 documentation_refs: docs,

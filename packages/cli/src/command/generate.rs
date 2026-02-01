@@ -1,20 +1,20 @@
 use anyhow::{Result, anyhow};
 use console::style;
-use std::fs;
-use std::path::Path;
 use montrs_utils::{to_pascal_case, to_snake_case};
+use std::{fs, path::Path};
 
 pub async fn plate(name: String) -> Result<()> {
     let name_pascal = to_pascal_case(&name);
     let name_snake = to_snake_case(&name);
-    
+
     println!(
         "{} Generating plate: {}",
         style("🔨").bold(),
         style(&name_pascal).cyan().bold()
     );
 
-    let content = format!(r#"use montrs_core::{{Plate, PlateContext, Router, AppConfig}};
+    let content = format!(
+        r#"use montrs_core::{{Plate, PlateContext, Router, AppConfig}};
 use async_trait::async_trait;
 
 pub struct {name_pascal}Plate;
@@ -38,7 +38,8 @@ impl<C: AppConfig> Plate<C> for {name_pascal}Plate {{
         // _router.register({name_pascal}Route);
     }}
 }}
-"#);
+"#
+    );
 
     let dir = Path::new("src/plates");
     if !dir.exists() {
@@ -58,7 +59,9 @@ impl<C: AppConfig> Plate<C> for {name_pascal}Plate {{
         style(file_path.display()).underlined()
     );
     println!(
-        "Next steps:\n  1. Add `pub mod {};` to `src/plates/mod.rs`\n  2. Register the plate in `src/main.rs` using `.with_plate(Box::new({}Plate))`",
+        "Next steps:\n  1. Add `pub mod {};` to `src/plates/mod.rs`\n  2. \
+         Register the plate in `src/main.rs` using \
+         `.with_plate(Box::new({}Plate))`",
         name_snake, name_pascal
     );
 
@@ -67,9 +70,17 @@ impl<C: AppConfig> Plate<C> for {name_pascal}Plate {{
 
 pub async fn route(path: String, plate: String) -> Result<()> {
     let plate_snake = to_snake_case(&plate);
-    let route_name = path.replace('/', "_").replace(':', "").trim_matches('_').to_string();
-    let route_name_pascal = if route_name.is_empty() { "Index".to_string() } else { to_pascal_case(&route_name) };
-    
+    let route_name = path
+        .replace('/', "_")
+        .replace(':', "")
+        .trim_matches('_')
+        .to_string();
+    let route_name_pascal = if route_name.is_empty() {
+        "Index".to_string()
+    } else {
+        to_pascal_case(&route_name)
+    };
+
     println!(
         "{} Generated route {} for plate {}",
         style("🛣️").bold(),
@@ -77,7 +88,8 @@ pub async fn route(path: String, plate: String) -> Result<()> {
         style(&plate).cyan().bold()
     );
 
-    let content = format!(r#"use montrs_core::{{Route, RouteParams, RouteLoader, RouteAction, RouteView, RouteContext, RouteError, AppConfig}};
+    let content = format!(
+        r#"use montrs_core::{{Route, RouteParams, RouteLoader, RouteAction, RouteView, RouteContext, RouteError, AppConfig}};
 use async_trait::async_trait;
 use leptos::prelude::*;
 use serde::{{Deserialize, Serialize}};
@@ -126,16 +138,24 @@ impl<C: AppConfig> Route<C> for {route_name_pascal}Route {{
     fn action(&self) -> Self::Action {{ {route_name_pascal}Action }}
     fn view(&self) -> Self::View {{ {route_name_pascal}View }}
 }}
-"#);
+"#
+    );
 
     let dir = Path::new("src/plates").join(&plate_snake).join("routes");
     if !dir.exists() {
         fs::create_dir_all(&dir)?;
     }
 
-    let file_name = format!("{}.rs", if route_name.is_empty() { "index".to_string() } else { route_name.to_lowercase() });
+    let file_name = format!(
+        "{}.rs",
+        if route_name.is_empty() {
+            "index".to_string()
+        } else {
+            route_name.to_lowercase()
+        }
+    );
     let file_path = dir.join(&file_name);
-    
+
     if file_path.exists() {
         return Err(anyhow!("Route file already exists: {:?}", file_path));
     }
@@ -148,11 +168,16 @@ impl<C: AppConfig> Route<C> for {route_name_pascal}Route {{
         style(file_path.display()).underlined()
     );
     println!(
-        "Next steps:\n  1. Add `pub mod {};` to `src/plates/{}/mod.rs`\n  2. Register the route in `{}Plate::register_routes`",
-        if route_name.is_empty() { "index".to_string() } else { route_name.to_lowercase() }, plate_snake, to_pascal_case(&plate)
+        "Next steps:\n  1. Add `pub mod {};` to `src/plates/{}/mod.rs`\n  2. \
+         Register the route in `{}Plate::register_routes`",
+        if route_name.is_empty() {
+            "index".to_string()
+        } else {
+            route_name.to_lowercase()
+        },
+        plate_snake,
+        to_pascal_case(&plate)
     );
 
     Ok(())
 }
-
-

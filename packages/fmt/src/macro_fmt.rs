@@ -1,10 +1,12 @@
 use crate::{FormatError, FormatterSettings};
 use crop::Rope;
 use montrs_utils::to_kebab_case;
-use rstml::node::{Node, NodeAttribute, NodeElement};
-use syn::visit::{self, Visit};
-use syn::{File, Macro};
 use quote::ToTokens;
+use rstml::node::{Node, NodeAttribute, NodeElement};
+use syn::{
+    File, Macro,
+    visit::{self, Visit},
+};
 
 #[derive(Debug)]
 pub struct MacroEdit {
@@ -47,7 +49,7 @@ impl<'ast> Visit<'ast> for MacroVisitor<'_> {
             match self.format_macro(i) {
                 Ok(formatted) => {
                     let span = i.delimiter.span().join();
-                    
+
                     self.edits.push(MacroEdit {
                         start_line: span.start().line,
                         start_col: span.start().column,
@@ -67,16 +69,22 @@ impl<'ast> Visit<'ast> for MacroVisitor<'_> {
 
 impl MacroVisitor<'_> {
     fn is_view_macro(&self, mac: &Macro) -> bool {
-        let name = mac.path.segments.last().map(|s| s.ident.to_string()).unwrap_or_default();
+        let name = mac
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default();
         self.settings.view.macro_names.contains(&name)
     }
 
     fn format_macro(&self, mac: &Macro) -> Result<String, FormatError> {
         let tokens = mac.tokens.clone();
-        
+
         // rstml 0.12.x provides a top-level parse2 function
-        let nodes = rstml::parse2(tokens).map_err(|e| FormatError::Macro(e.to_string()))?;
-        
+        let nodes = rstml::parse2(tokens)
+            .map_err(|e| FormatError::Macro(e.to_string()))?;
+
         let mut printer = RstmlPrinter {
             settings: self.settings,
             indent: self.settings.tab_spaces, // Start with one level of indentation
@@ -84,9 +92,9 @@ impl MacroVisitor<'_> {
         };
 
         printer.print_nodes(&nodes);
-        
+
         let result = printer.result.trim_end();
-        
+
         // Return only the contents of the braces, with the braces themselves
         Ok(format!("{{\n{}\n}}", result))
     }
@@ -99,24 +107,25 @@ struct RstmlPrinter<'a> {
 }
 
 impl RstmlPrinter<'_> {
-    fn print_nodes<C>(&mut self, nodes: &[Node<C>]) 
-    where 
-        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug 
+    fn print_nodes<C>(&mut self, nodes: &[Node<C>])
+    where
+        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug,
     {
         for node in nodes {
             self.print_node(node);
         }
     }
 
-    fn print_node<C>(&mut self, node: &Node<C>) 
-    where 
-        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug 
+    fn print_node<C>(&mut self, node: &Node<C>)
+    where
+        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug,
     {
         match node {
             Node::Element(el) => self.print_element(el),
             Node::Text(text) => {
                 self.add_indent();
-                self.result.push_str(&text.value.to_token_stream().to_string());
+                self.result
+                    .push_str(&text.value.to_token_stream().to_string());
                 self.result.push('\n');
             }
             Node::Block(block) => {
@@ -129,13 +138,18 @@ impl RstmlPrinter<'_> {
         }
     }
 
-    fn print_element<C>(&mut self, el: &NodeElement<C>) 
-    where 
-        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug 
+    fn print_element<C>(&mut self, el: &NodeElement<C>)
+    where
+        C: rstml::node::CustomNode + ToTokens + std::fmt::Debug,
     {
         self.add_indent();
         let original_name = el.name().to_string();
-        let name = if original_name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+        let name = if original_name
+            .chars()
+            .next()
+            .map(|c| c.is_uppercase())
+            .unwrap_or(false)
+        {
             // Component: Force PascalCase
             montrs_utils::to_pascal_case(&original_name)
         } else {
@@ -150,7 +164,10 @@ impl RstmlPrinter<'_> {
             self.print_attribute(attr);
         }
 
-        if el.children.is_empty() && self.settings.view.closing_tag_style == crate::config::ClosingTagStyle::SelfClosing {
+        if el.children.is_empty()
+            && self.settings.view.closing_tag_style
+                == crate::config::ClosingTagStyle::SelfClosing
+        {
             self.result.push_str(" />\n");
         } else {
             self.result.push_str(">\n");
@@ -197,16 +214,22 @@ pub fn apply_edits(source: &mut Rope, edits: Vec<MacroEdit>) {
     });
 
     for edit in sorted_edits {
-        let start_offset = line_col_to_byte_offset(source, edit.start_line, edit.start_col);
-        let end_offset = line_col_to_byte_offset(source, edit.end_line, edit.end_col);
-        
+        let start_offset =
+            line_col_to_byte_offset(source, edit.start_line, edit.start_col);
+        let end_offset =
+            line_col_to_byte_offset(source, edit.end_line, edit.end_col);
+
         if let (Some(start), Some(end)) = (start_offset, end_offset) {
             source.replace(start..end, &edit.new_content);
         }
     }
 }
 
-fn line_col_to_byte_offset(source: &Rope, line: usize, col: usize) -> Option<usize> {
+fn line_col_to_byte_offset(
+    source: &Rope,
+    line: usize,
+    col: usize,
+) -> Option<usize> {
     if line == 0 || line > source.line_len() {
         return None;
     }

@@ -1,8 +1,10 @@
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
 use anyhow::{Context, Result};
 use console::style;
-use std::process::Command;
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{HashMap, HashSet},
+    process::Command,
+};
 
 /// Configuration for custom tasks.
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -40,7 +42,8 @@ impl TaskRunner {
 
     pub async fn run(&self, task_name: &str) -> Result<()> {
         let mut executed = HashSet::new();
-        self.execute_task_recursive(task_name, &mut executed).await?;
+        self.execute_task_recursive(task_name, &mut executed)
+            .await?;
         Ok(())
     }
 
@@ -53,9 +56,9 @@ impl TaskRunner {
             return Ok(());
         }
 
-        let task = self.tasks
-            .get(name)
-            .ok_or_else(|| anyhow::anyhow!("Task '{}' not found in configuration", name))?;
+        let task = self.tasks.get(name).ok_or_else(|| {
+            anyhow::anyhow!("Task '{}' not found in configuration", name)
+        })?;
 
         // 1. Run dependencies first
         if let TaskConfig::Detailed { dependencies, .. } = task {
@@ -92,7 +95,11 @@ impl TaskRunner {
         Ok(())
     }
 
-    fn run_shell_cmd(&self, cmd_str: &str, env_vars: &HashMap<String, String>) -> Result<()> {
+    fn run_shell_cmd(
+        &self,
+        cmd_str: &str,
+        env_vars: &HashMap<String, String>,
+    ) -> Result<()> {
         #[cfg(windows)]
         let mut cmd = Command::new("powershell");
         #[cfg(windows)]
@@ -124,7 +131,8 @@ impl TaskRunner {
 
         println!("{}", style("Available Tasks:").bold());
 
-        let mut categories: HashMap<String, Vec<(&String, &TaskConfig)>> = HashMap::new();
+        let mut categories: HashMap<String, Vec<(&String, &TaskConfig)>> =
+            HashMap::new();
         for (name, task) in &self.tasks {
             let cat = match task {
                 TaskConfig::Detailed { category, .. } => {
@@ -150,7 +158,11 @@ impl TaskRunner {
                     }
                     _ => String::new(),
                 };
-                println!("    {:<15} {}", style(name).cyan(), style(desc).dim());
+                println!(
+                    "    {:<15} {}",
+                    style(name).cyan(),
+                    style(desc).dim()
+                );
             }
         }
 

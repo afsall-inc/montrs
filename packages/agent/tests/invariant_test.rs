@@ -1,7 +1,7 @@
-use montrs_agent::{AgentManager, PlateSummary, AgentSnapshot};
-use tempfile::tempdir;
-use std::collections::HashMap;
 use chrono::Utc;
+use montrs_agent::{AgentManager, AgentSnapshot, PlateSummary};
+use std::collections::HashMap;
+use tempfile::tempdir;
 
 #[test]
 fn test_invariant_dependencies() {
@@ -14,23 +14,19 @@ fn test_invariant_dependencies() {
         timestamp: Utc::now(),
         framework_version: "0.1.0".to_string(),
         structure: Vec::new(),
-        plates: vec![
-            PlateSummary {
-                name: "PlateA".to_string(),
-                description: "A".to_string(),
-                dependencies: vec!["PlateB".to_string()],
-                metadata: HashMap::new(),
-            },
-        ],
+        plates: vec![PlateSummary {
+            name: "PlateA".to_string(),
+            description: "A".to_string(),
+            dependencies: vec!["PlateB".to_string()],
+            metadata: HashMap::new(),
+        }],
         routes: Vec::new(),
-        packages: vec![
-            montrs_agent::PackageSummary {
-                name: "test-pkg".to_string(),
-                path: "packages/test-pkg".to_string(),
-                invariants: Some("Must be fast".to_string()),
-                description: None,
-            }
-        ],
+        packages: vec![montrs_agent::PackageSummary {
+            name: "test-pkg".to_string(),
+            path: "packages/test-pkg".to_string(),
+            invariants: Some("Must be fast".to_string()),
+            description: None,
+        }],
         agent_entry_point: Some("docs/agent/index.md".to_string()),
         documentation_snippets: HashMap::new(),
     };
@@ -77,18 +73,20 @@ fn test_invariant_cycles() {
             },
         ],
         routes: Vec::new(),
-        packages: vec![
-            montrs_agent::PackageSummary {
-                name: "test-pkg".to_string(),
-                path: "packages/test-pkg".to_string(),
-                invariants: Some("Must be fast".to_string()),
-                description: None,
-            }
-        ],
+        packages: vec![montrs_agent::PackageSummary {
+            name: "test-pkg".to_string(),
+            path: "packages/test-pkg".to_string(),
+            invariants: Some("Must be fast".to_string()),
+            description: None,
+        }],
         agent_entry_point: Some("docs/agent/index.md".to_string()),
         documentation_snippets: HashMap::new(),
     };
 
     let violations = manager.check_invariants(&snapshot).unwrap();
-    assert!(violations.iter().any(|v| v.contains("Circular dependency detected")));
+    assert!(
+        violations
+            .iter()
+            .any(|v| v.contains("Circular dependency detected"))
+    );
 }

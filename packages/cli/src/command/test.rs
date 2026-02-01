@@ -5,10 +5,12 @@
 //! automated environment setup.
 
 use crate::config::MontrsConfig;
+use quick_xml::{
+    Writer,
+    events::{BytesDecl, BytesStart, Event},
+};
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use quick_xml::events::{BytesDecl, BytesStart, Event};
-use quick_xml::Writer;
 
 /// Runs the test suite for the current project.
 ///
@@ -40,13 +42,13 @@ pub async fn run(
     let _ = MontrsConfig::load()?;
 
     println!("Running MontRS Unit Tests...");
-    
+
     let mut args = vec!["test".to_string(), "--workspace".to_string()];
-    
+
     if let Some(f) = filter {
         args.push(f);
     }
-    
+
     if let Some(j) = jobs {
         args.push("-j".to_string());
         args.push(j.to_string());
@@ -63,8 +65,10 @@ pub async fn run(
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::inherit()); // Let build logs show up on stderr
 
-    let mut child = cmd.spawn().map_err(|e| anyhow::anyhow!("Failed to spawn cargo test: {}", e))?;
-    
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| anyhow::anyhow!("Failed to spawn cargo test: {}", e))?;
+
     if !use_json_internal {
         // Just wait for it
         let status = child.wait().await?;
@@ -77,31 +81,42 @@ pub async fn run(
     // Process JSON output
     let stdout = child.stdout.take().unwrap();
     let mut reader = BufReader::new(stdout).lines();
-    
+
     let mut test_suites = Vec::new();
     let mut current_suite = TestSuite::default();
-    
+
     // Simple parser for cargo test json
     while let Some(line) = reader.next_line().await? {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
-            if let Some(type_field) = json.get("type").and_then(|v| v.as_str()) {
+            if let Some(type_field) = json.get("type").and_then(|v| v.as_str())
+            {
                 if type_field == "test" {
                     // Handle test event
-                    let event = json.get("event").and_then(|v| v.as_str()).unwrap_or("");
-                    let name = json.get("name").and_then(|v| v.as_str()).unwrap_or("unknown");
-                    
+                    let event = json
+                        .get("event")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
+                    let name = json
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown");
+
                     match event {
                         "ok" => {
                             current_suite.tests.push(TestCase {
                                 name: name.to_string(),
                                 status: TestStatus::Pass,
                                 message: None,
-                                duration: json.get("exec_time").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                                duration: json
+                                    .get("exec_time")
+                                    .and_then(|v| v.as_f64())
+                                    .unwrap_or(0.0),
                             });
                             println!("PASS: {}", name);
-                        },
+                        }
                         "failed" => {
-                            let stdout = json.get("stdout").and_then(|v| v.as_str());
+                            let stdout =
+                                json.get("stdout").and_then(|v| v.as_str());
                             current_suite.tests.push(TestCase {
                                 name: name.to_string(),
                                 status: TestStatus::Fail,
@@ -109,32 +124,35 @@ pub async fn run(
                                 duration: 0.0,
                             });
                             println!("FAIL: {}", name);
-                        },
+                        }
                         _ => {}
                     }
                 } else if type_field == "suite" {
-                    let event = json.get("event").and_then(|v| v.as_str()).unwrap_or("");
-                     if event == "started" {
-                         // New suite? cargo test often runs multiple binaries
-                         if !current_suite.tests.is_empty() {
-                             test_suites.push(current_suite);
-                             current_suite = TestSuite::default();
-                         }
-                         // Try to get suite name from artifact? hard with just stream
-                     } else if event == "ok" || event == "failed" {
-                         // Suite finished
-                     }
+                    let event = json
+                        .get("event")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
+                    if event == "started" {
+                        // New suite? cargo test often runs multiple binaries
+                        if !current_suite.tests.is_empty() {
+                            test_suites.push(current_suite);
+                            current_suite = TestSuite::default();
+                        }
+                        // Try to get suite name from artifact? hard with just stream
+                    } else if event == "ok" || event == "failed" {
+                        // Suite finished
+                    }
                 }
             }
         }
     }
-    
+
     if !current_suite.tests.is_empty() {
         test_suites.push(current_suite);
     }
 
     let status = child.wait().await?;
-    
+
     if report == "junit" {
         let output_path = output.unwrap_or_else(|| "report.xml".to_string());
         generate_junit_report(&test_suites, &output_path)?;
@@ -176,11 +194,19 @@ enum TestStatus {
 }
 
 /// Generates a JUnit XML report from the test results.
-fn generate_junit_report(suites: &[TestSuite], path: &str) -> anyhow::Result<()> {
-    let mut writer = Writer::new_with_indent(std::fs::File::create(path)?, b' ', 4);
-    
-    writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
-    
+fn generate_junit_report(
+    suites: &[TestSuite],
+    path: &str,
+) -> anyhow::Result<()> {
+    let mut writer =
+        Writer::new_with_indent(std::fs::File::create(path)?, b' ', 4);
+
+    writer.write_event(Event::Decl(BytesDecl::new(
+        "1.0",
+        Some("UTF-8"),
+        None,
+    )))?;
+
     let root = BytesStart::new("testsuites");
     writer.write_event(Event::Start(root.clone()))?;
 
@@ -188,32 +214,43 @@ fn generate_junit_report(suites: &[TestSuite], path: &str) -> anyhow::Result<()>
         let mut elem = BytesStart::new("testsuite");
         elem.push_attribute(("name", format!("suite-{}", i).as_str()));
         elem.push_attribute(("tests", suite.tests.len().to_string().as_str()));
-        elem.push_attribute(("failures", suite.tests.iter().filter(|t| matches!(t.status, TestStatus::Fail)).count().to_string().as_str()));
-        
+        elem.push_attribute((
+            "failures",
+            suite
+                .tests
+                .iter()
+                .filter(|t| matches!(t.status, TestStatus::Fail))
+                .count()
+                .to_string()
+                .as_str(),
+        ));
+
         writer.write_event(Event::Start(elem.clone()))?;
 
         for test in &suite.tests {
             let mut t = BytesStart::new("testcase");
             t.push_attribute(("name", test.name.as_str()));
             t.push_attribute(("time", test.duration.to_string().as_str()));
-            
+
             if let TestStatus::Fail = test.status {
                 writer.write_event(Event::Start(t.clone()))?;
-                
+
                 let mut failure = BytesStart::new("failure");
                 failure.push_attribute(("message", "Test failed"));
                 writer.write_event(Event::Start(failure.clone()))?;
                 if let Some(msg) = &test.message {
-                    writer.write_event(Event::Text(quick_xml::events::BytesText::new(msg)))?;
+                    writer.write_event(Event::Text(
+                        quick_xml::events::BytesText::new(msg),
+                    ))?;
                 }
                 writer.write_event(Event::End(failure.to_end()))?;
-                
+
                 writer.write_event(Event::End(t.to_end()))?;
             } else {
                 writer.write_event(Event::Empty(t))?;
             }
         }
-        
+
         writer.write_event(Event::End(elem.to_end()))?;
     }
 
