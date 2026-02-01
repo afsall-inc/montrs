@@ -1,0 +1,21 @@
+[tools]
+rust = "1.84"
+
+[env]
+RUST_BACKTRACE = "1"
+MONTRS_LOG = "info"
+
+[tasks]
+build = "cargo build --workspace"
+test = "cargo test --workspace"
+fmt = "cargo fmt --all"
+clippy = "cargo clippy --workspace -- -D warnings"
+bench = "cargo run --package montrs-cli -- bench"
+
+[tasks.dev]
+description = "Start the development server"
+run = "cargo run --package montrs-cli -- serve"
+
+[tasks.ci]
+description = "Run all CI checks"
+depends_on = ["fmt", "clippy", "test"]

@@ -19,7 +19,9 @@ port = 8080
 addr = "127.0.0.1"
 
 [tasks]
-# Simple shell command
+# Note: MontRS now supports Mise (https://mise.jdx.dev/). 
+# If a mise.toml is present, 'montrs run' will delegate to it.
+# These tasks are kept as a fallback for the internal runner.
 hello = "echo 'Hello from MontRS!'"
 
 # Build & Development

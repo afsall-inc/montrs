@@ -58,12 +58,36 @@ impl AgentError for EnvError {
 
 /// Trait for types that can be initialized from an environment variable string.
 pub trait FromEnv: Sized {
-    fn from_env(val: String) -> Result<Self, EnvError>;
+    fn from_env(val: String) -> Result<Self, String>;
 }
 
 impl FromEnv for String {
-    fn from_env(val: String) -> Result<Self, EnvError> {
+    fn from_env(val: String) -> Result<Self, String> {
         Ok(val)
+    }
+}
+
+impl FromEnv for bool {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "bool".to_string())
+    }
+}
+
+impl FromEnv for u16 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "u16".to_string())
+    }
+}
+
+impl FromEnv for u32 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "u32".to_string())
+    }
+}
+
+impl FromEnv for i32 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "i32".to_string())
     }
 }
 
@@ -83,7 +107,8 @@ pub trait EnvConfig: Send + Sync + 'static {
 pub trait EnvConfigExt: EnvConfig {
     /// Retrieves and parses an environment variable into the desired type T.
     fn get<T: FromEnv>(&self, key: &str) -> Result<T, EnvError> {
-        self.get_var(key).and_then(T::from_env)
+        let val = self.get_var(key)?;
+        T::from_env(val).map_err(|_| EnvError::InvalidType(key.to_string()))
     }
 }
 
