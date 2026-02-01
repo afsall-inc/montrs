@@ -139,7 +139,7 @@ impl AgentManager {
     }
 
     pub fn tracking_file(&self) -> PathBuf {
-        self.agent_dir().join("error_tracking.json")
+        self.errorfiles_dir().join("error_tracking.json")
     }
 
     pub fn ensure_dir(&self) -> Result<()> {

@@ -70,7 +70,7 @@ async fn test_consolidated_error_tracking() {
         agent_metadata: None,
     }).unwrap();
     
-    assert!(root.join(".agent/error_tracking.json").exists());
+    assert!(root.join(".agent/errorfiles/error_tracking.json").exists());
     let tracking = manager.load_tracking().unwrap();
     assert_eq!(tracking.errors.len(), 1);
     assert_eq!(tracking.errors[0].package, Some("test-pkg".to_string()));
