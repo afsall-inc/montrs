@@ -33,7 +33,7 @@ The workspace includes:
 When adding new features or packages, you **must** ensure they are Agent-ready:
 
 1.  **Implement `AgentError`**: All new error types should implement the `AgentError` trait with descriptive codes and suggested fixes.
-2.  **Add Metadata**: Provide `description()` and schema information for all new traits or plates.
+2.  **Add Metadata**: Provide `description()` and validation information for all new traits or plates.
 3.  **Update READMEs**: Follow the mandatory section structure for any new package README.
 4.  **Local Invariants**: Every package must maintain a `docs/invariants.md` file that defines its specific "rules of engagement" and architectural boundaries.
 5.  **Annotate Tools**: Use the `@agent-tool` marker in comments for any public function or struct that should be exposed to agents.

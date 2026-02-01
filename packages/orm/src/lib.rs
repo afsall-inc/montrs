@@ -56,7 +56,7 @@ impl AgentError for DbError {
             ],
             DbError::Migration(_) => vec![
                 "Check for conflicts in migration files.".to_string(),
-                "Ensure the database user has sufficient permissions to modify the schema.".to_string(),
+                "Ensure the database user has sufficient permissions to modify the structure.".to_string(),
                 "Verify that the migration scripts are compatible with the target database backend.".to_string(),
             ],
         }

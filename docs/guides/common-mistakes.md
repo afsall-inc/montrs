@@ -39,11 +39,11 @@ MontRS introduces a paradigm shift that can be counter-intuitive for those comin
 - **Why it breaks MontRS**: It hides data requirements from the Router and Agent. The application spec (`agent.json`) will be incomplete, and SSR will fail to pre-fetch the data.
 - **Correct Approach**: Always use a `Loader`. Let the Router provide the data to your view.
 
-### ❌ Skipping Schema Validation
+### ❌ Skipping Validator Validation
 - **What people do**: Using raw `Value` or unvalidated structs for API inputs.
-- **Why it feels reasonable**: "The input is simple, I don't need a full schema."
+- **Why it feels reasonable**: "The input is simple, I don't need a full validator."
 - **Why it breaks MontRS**: Breaks data integrity and deprives agents of the metadata needed to understand valid inputs.
-- **Correct Approach**: Always use `#[derive(Schema)]` for all input and output types.
+- **Correct Approach**: Always use `#[derive(Validator)]` for all input and output types.
 
 ### ❌ Over-Flattening Routes
 - **What people do**: Putting all route logic into a single large file or avoiding nested directories.

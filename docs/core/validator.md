@@ -102,14 +102,14 @@ fn validate_confirm_password(input: &PasswordResetInput) -> Result<(), Validatio
 
 ---
 
-## 🤖 Agents and Schemas
+## 🤖 Agents and Validators
 
-Schemas are the **API Contract**. In the `AppSpec`, every `Loader` and `Action` can specify its input and output schemas.
+Validators are the **API Contract**. In the `AppSpec`, every `Loader` and `Action` can specify its input and output validators.
 
 ### Common Agent Failure Modes
-- **Anti-Pattern**: Forgetting `#[derive(Schema)]` on a new input struct.
-  - *Fix*: Agents must ensure every struct used in `ctx.input()` implements `Schema`.
+- **Anti-Pattern**: Forgetting `#[derive(Validator)]` on a new input struct.
+  - *Fix*: Agents must ensure every struct used in `ctx.input()` implements `Validator`.
 - **Anti-Pattern**: Using `String` for data that has a known format (like email).
-  - *Fix*: Use `#[schema(email)]` to provide better hints to the validation engine and the agent.
-- **Anti-Pattern**: Complex logic inside the `Schema` definition.
+  - *Fix*: Use `#[validator(email)]` to provide better hints to the validation engine and the agent.
+- **Anti-Pattern**: Complex logic inside the `Validator` definition.
   - *Fix*: Use `custom` validation functions for complex logic to keep the struct definition clean and readable.

@@ -43,7 +43,7 @@ Your app will be available at `http://localhost:3000`.
 
 ## 🤖 Agent-first development
 
-MontRS is designed to work with agents. Every time you run a CLI command, it updates `.agent/agent.json`. This file gives your agent coding partner a perfect understanding of your project's routes, schemas, and state.
+MontRS is designed to work with agents. Every time you run a CLI command, it updates `.agent/agent.json`. This file gives your agent coding partner a perfect understanding of your project's routes, validators, and state.
 
 ## 🛠️ Troubleshooting
 

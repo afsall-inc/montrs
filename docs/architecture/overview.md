@@ -7,7 +7,7 @@ MontRS is built on the principle that a framework should be a **specification** 
 ## 🏗️ The Layered Cake
 
 1.  **The Engine (`montrs-core`)**: Defines the foundational traits (`Plate`, `Loader`, `Action`, `AgentError`). It is the "grammar" of the framework.
-2.  **The Blueprint (`AppSpec`)**: A serializable representation of the entire application. It knows about every route, every plate, and every data schema.
+2.  **The Blueprint (`AppSpec`)**: A serializable representation of the entire application. It knows about every route, every plate, and every data validator.
 3.  **The Orchestrator (`montrs-cli`)**: The primary interface for developers. It uses the `AppSpec` to build, serve, and test the app.
 4.  **The Sidecar (`montrs-agent`)**: An agent-facing layer that consumes the `AppSpec` and produces machine-optimized context (`agent.json`, `tools.json`).
 

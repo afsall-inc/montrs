@@ -45,4 +45,4 @@ This command initializes a JSON-RPC 2.0 server over stdio (standard for MCP), al
 ## Human vs Agent Outputs
 
 - **Human**: CLI output is optimized for terminal readability (colors, progress bars, tables).
-- **Agent**: MCP response is optimized for token efficiency and structural parsing (JSON, minimal filler, explicit schema).
+- **Agent**: MCP response is optimized for token efficiency and structural parsing (JSON, minimal filler, explicit structure).

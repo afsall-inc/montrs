@@ -71,7 +71,7 @@ async fn handle_request(req: JsonRpcRequest) -> anyhow::Result<JsonRpcResponse> 
                 Tool {
                     name: "agent_check".to_string(),
                     description: "Validate structural correctness and project invariants.".to_string(),
-                    input_schema: json!({
+                    input_validator: json!({
                         "type": "object",
                         "properties": {
                             "path": { "type": "string", "description": "Path to check" }
@@ -81,7 +81,7 @@ async fn handle_request(req: JsonRpcRequest) -> anyhow::Result<JsonRpcResponse> 
                 Tool {
                     name: "agent_doctor".to_string(),
                     description: "Assess project health and agent-readability.".to_string(),
-                    input_schema: json!({
+                    input_validator: json!({
                         "type": "object",
                         "properties": {
                             "package": { "type": "string", "description": "Optional package to focus on" }
@@ -91,7 +91,7 @@ async fn handle_request(req: JsonRpcRequest) -> anyhow::Result<JsonRpcResponse> 
                 Tool {
                     name: "agent_diff".to_string(),
                     description: "Analyze error file and generate fix suggestions.".to_string(),
-                    input_schema: json!({
+                    input_validator: json!({
                         "type": "object",
                         "properties": {
                             "path": { "type": "string", "description": "Path to error file" }
@@ -100,24 +100,25 @@ async fn handle_request(req: JsonRpcRequest) -> anyhow::Result<JsonRpcResponse> 
                     }),
                 },
                 Tool {
-                    name: "get_project_snapshot".to_string(),
-                    description: "Get a comprehensive snapshot of the project structure and metadata.".to_string(),
-                    input_schema: json!({
+                    name: "list_router_structure".to_string(),
+                    description: "Retrieve the full routing tree of the application.".to_string(),
+                    input_validator: json!({
                         "type": "object",
-                        "properties": {
-                            "include_docs": { "type": "boolean", "description": "Whether to include documentation in the snapshot" }
-                        }
+                        "properties": {}
                     }),
                 },
                 Tool {
-                    name: "list_router_structure".to_string(),
-                    description: "List all routes and their associated plates/actions/loaders.".to_string(),
-                    input_schema: json!({ "type": "object", "properties": {} }),
+                    name: "get_project_snapshot".to_string(),
+                    description: "Get the full agent.json specification for the project.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {}
+                    }),
                 },
                 Tool {
                     name: "agent_list_errors".to_string(),
                     description: "List all active and resolved errors tracked by the agent.".to_string(),
-                    input_schema: json!({
+                    input_validator: json!({
                         "type": "object",
                         "properties": {
                             "status": { "type": "string", "enum": ["Pending", "Fixed"], "description": "Filter by status" }
@@ -127,7 +128,7 @@ async fn handle_request(req: JsonRpcRequest) -> anyhow::Result<JsonRpcResponse> 
                 Tool {
                     name: "get_agent_entry_point".to_string(),
                     description: "Get the unified entry point for agent operations, mapping tasks to guides.".to_string(),
-                    input_schema: json!({ "type": "object", "properties": {} }),
+                    input_validator: json!({ "type": "object", "properties": {} }),
                 },
             ];
             Some(serde_json::to_value(ListToolsResult { tools })?)

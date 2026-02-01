@@ -45,6 +45,6 @@ A curated list of CLI commands and framework capabilities that the agent can inv
 ## 🤖 Why Not Just Read the Code?
 
 While models *can* read source code, `agent.json` provides:
-- **Pre-computed Metadata**: Descriptions and schemas are extracted and ready to use.
+- **Pre-computed Metadata**: Descriptions and validators are extracted and ready to use.
 - **Unified View**: It bridges the gap between different files and packages.
-- **Standardization**: It follows a consistent schema regardless of how the underlying code is structured.
+- **Standardization**: It follows a consistent structure regardless of how the underlying code is structured.

@@ -73,7 +73,7 @@ pub struct ListToolsResult {
 pub struct Tool {
     pub name: String,
     pub description: String,
-    pub input_schema: Value,
+    pub input_validator: Value,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

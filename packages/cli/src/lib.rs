@@ -195,10 +195,7 @@ pub enum Commands {
     Mcp {
         #[command(subcommand)]
         subcommand: McpSubcommand,
-    },
-    /// Test diagnostic output (Internal use only).
-    #[command(hide = true)]
-    TestError,
+    }
 }
 
 #[derive(Subcommand, Debug)]
@@ -340,9 +337,6 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         Commands::Mcp { subcommand } => {
             command::mcp::run(subcommand).await
         }
-        Commands::TestError => {
-            Err(error::CliError::Config("Simulated configuration error for testing diagnostics".to_string()).into())
-        }
     }
 }
 
@@ -378,9 +372,6 @@ pub fn main_entry() {
                     Ok(snapshot) => {
                         if let Err(e) = agent_manager.write_snapshot(&snapshot, "json") {
                             eprintln!("Agent: Failed to write JSON snapshot: {}", e);
-                        }
-                        if let Err(e) = agent_manager.write_snapshot(&snapshot, "txt") {
-                            eprintln!("Agent: Failed to write TXT snapshot: {}", e);
                         }
                     }
                     Err(_) => {

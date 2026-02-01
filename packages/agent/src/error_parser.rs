@@ -17,6 +17,22 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
         let line = cap.name("line").and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
         let column = cap.name("col").and_then(|m| m.as_str().parse().ok()).unwrap_or(0);
 
+        let mut docs = vec![format!("https://doc.rust-lang.org/error-index.html#{}", code)];
+        
+        // Map common errors to MontRS framework invariants if applicable
+        match code.as_str() {
+            "E0433" | "E0432" => {
+                // Missing import/crate - often related to missing dependencies in Cargo.toml
+                docs.push("docs/architecture/packages.md".to_string());
+            }
+            "E0277" | "E0599" => {
+                // Trait bounds not met - often related to missing Plate or Route implementation
+                docs.push("docs/core/plates.md".to_string());
+                docs.push("docs/core/router.md".to_string());
+            }
+            _ => {}
+        }
+
         errors.push(ProjectError {
             package: None, // Will be filled by AgentManager if possible
             file,
@@ -30,7 +46,7 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
                 explanation: format!("Rust compiler error {}: {}", code, message),
                 suggested_fixes: Vec::new(),
                 rustc_error: Some(output.to_string()),
-                documentation_refs: vec![format!("https://doc.rust-lang.org/error-index.html#{}", code)],
+                documentation_refs: docs,
             }),
         });
     }

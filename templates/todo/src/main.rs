@@ -1,5 +1,5 @@
 //! todo-example: A comprehensive example demonstrating MontRS features.
-//! This application integrates signals, schema validation, and the ORM layer
+//! This application integrates signals, validator validation, and the ORM layer
 //! to build a simple but functional Todo management system.
 
 use leptos::prelude::*;
@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
 
     println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());
 
-    // [EXPLICIT] Demonstrate Schema Validation
+    // [EXPLICIT] Demonstrate Validator Validation
     let valid_todo = CreateTodo {
         title: "Build with Leptos".to_string(),
     };

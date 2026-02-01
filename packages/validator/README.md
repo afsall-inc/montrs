@@ -5,12 +5,12 @@ Procedural macros for validation in MontRS.
 **Target Audiences:** Application Developers, Framework Contributors, Agents.
 
 ## 1. What this package is
-`montrs-validator` provides the `#[derive(Validator)]` macro, which enables declarative, type-safe validation of data structures. It is the primary tool for defining the "shape" and constraints of data in a MontRS application. It is our schema validation tool.
+`montrs-validator` provides the `#[derive(Validator)]` macro, which enables declarative, type-safe validation of data structures. It is the primary tool for defining the "shape" and constraints of data in a MontRS application. It is our validator tool.
 
 ## 2. What problems it solves
 - **Validation Boilerplate**: Replaces repetitive `if` statements with concise, readable attributes.
 - **Data Integrity**: Ensures that only valid data enters your `Action`s and `Plate`s.
-- **Machine Readability**: The validator attributes are not just for validation; they also serve as metadata that agents can use to generate valid inputs.
+- **Machine Readability**: The `#[validator]` attributes are not just for validation; they also serve as metadata that agents can use to generate valid inputs.
 
 ## 3. What it intentionally does NOT do
 - **Data Parsing**: It validates data that is already in a Rust struct; it does not handle the initial parsing from JSON or other formats (use `serde` for that).

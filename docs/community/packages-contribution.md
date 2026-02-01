@@ -53,7 +53,7 @@ When you update, upgrade, or improve an existing package, you must document the 
 ## 🤖 Alignment with Agent-First Strategy
 
 Contributors are responsible for maintaining the "Agent Source of Truth":
-- **Run `montrs spec`**: After making changes to traits or schemas, run the spec generator to ensure `.agent/agent.json` reflects your changes correctly.
+- **Run `montrs spec`**: After making changes to traits or validators, run the spec generator to ensure `.agent/agent.json` reflects your changes correctly.
 - **Versioned Errors**: If you add new error types, ensure they follow the stable error code format in `montrs-core` so they are machine-actionable.
 - **Metadata Standards**: Check **[metadata.md](../agent/metadata.md)** to ensure your new components provide the required info for AI coding partners.
 

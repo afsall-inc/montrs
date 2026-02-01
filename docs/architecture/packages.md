@@ -20,7 +20,7 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Responsibility**: Agent-first logic, snapshot generation (`agent.json`), and versioned error tracking.
 - **Key Components**: `AgentManager`, `ErrorRecord`, `ToolScanner`.
 - **Boundary**: Acts as a "Sidecar." It scans the codebase (using `core` metadata) to produce machine-optimized context.
-- **When to modify**: When improving agent discoverability or changing the `agent.json` schema.
+- **When to modify**: When improving agent discoverability or changing the `agent.json` structure.
 
 ## 📦 `montrs-orm`
 - **Responsibility**: Database abstraction, SQL execution, and row mapping.
@@ -46,7 +46,7 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 
 Every package in the workspace maintains its own **[Local Invariants](file:///packages/*/docs/invariants.md)**. These documents define the specific "rules of engagement" and architectural boundaries for that package, providing immediate context for both human contributors and AI agents.
 
-MontRS follows a **Dependency Inversion** pattern. `montrs-core` defines the traits, and other packages (like `orm` or `schema`) provide implementations or tools that work with those traits.
+MontRS follows a **Dependency Inversion** pattern. `montrs-core` defines the traits, and other packages (like `orm` or `validator`) provide implementations or tools that work with those traits.
 
 1.  **CLI** reads **Config** and **Core** to understand the app.
 2.  **Core** uses **Validator** to validate data at the boundaries.

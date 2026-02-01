@@ -9,7 +9,7 @@ This example showcases how to combine the various crates within the MontRS ecosy
 ## Features Demonstrated
 
 - **Signal Reactivity**: Using the `Signal` type for thread-safe, reactive state.
-- **Schema Validation**: Using `#[derive(Schema)]` to enforce data constraints (like minimum title length).
+- **Validator Validation**: Using `#[derive(Validator)]` to enforce data constraints (like minimum title length).
 - **ORM Integration**: Performing asynchronous database operations using `SqliteBackend`.
 - **Composition**: Structuring the application using the `Plate` trait and `AppSpec`.
 

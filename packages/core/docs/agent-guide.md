@@ -14,7 +14,7 @@ Every MontRS component is a `Plate`. When building an app, you should define you
 ### 2. The Unified Route Trait
 - **Consolidation**: A `Route` implementation unifies `Params`, `Loader`, `Action`, and `View`.
 - **Registration**: Use `router.register(MyRoute)` inside `Plate::register_routes`.
-- **Type Safety**: The `Route` trait ensures that the output of a `Loader` matches what the `View` expects, and that `Actions` have clearly defined input/output schemas.
+- **Type Safety**: The `Route` trait ensures that the output of a `Loader` matches what the `View` expects, and that `Actions` have clearly defined input/output validators.
 
 ### 3. Loaders and Actions
 - **RouteLoader**: Read-only operations that fetch data. They should be deterministic and idempotent.

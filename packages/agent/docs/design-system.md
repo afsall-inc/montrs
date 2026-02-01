@@ -15,13 +15,13 @@ This document defines the structured way MontRS articulates information, documen
 
 ## 2. Metadata Structure
 
-All framework components (Plates, Loaders, Actions) must expose metadata via the following schema:
+All framework components (Plates, Loaders, Actions) must expose metadata via the following structure:
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `description` | String | A high-level summary of the component's purpose. |
-| `input_schema` | JSON | (Optional) Validated schema for input data. |
-| `output_schema`| JSON | (Optional) Validated schema for output data. |
+| `input_validator` | JSON | (Optional) Validated structure for input data. |
+| `output_validator`| JSON | (Optional) Validated structure for output data. |
 | `tags` | Array | Categorical tags (e.g., "auth", "db", "ui"). |
 
 ## 3. Error Articulation (AgentError)

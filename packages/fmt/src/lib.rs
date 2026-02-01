@@ -49,7 +49,7 @@ impl AgentError for FormatError {
             ],
             FormatError::Macro(_) => vec![
                 "Check the syntax within the view! or other MontRS macros.".to_string(),
-                "Ensure that the macro contents follow the expected MontRS schema.".to_string(),
+                "Ensure that the macro contents follow the expected MontRS specification.".to_string(),
             ],
         }
     }
