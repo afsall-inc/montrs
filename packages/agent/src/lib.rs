@@ -159,10 +159,7 @@ impl AgentManager {
 
         // 2. Write Cursor Rules (.cursorrules)
         // By default, we use the App Developer prompt for general project guidance
-        fs::write(
-            cursorrules_path,
-            framework::APP_DEVELOPER_PROMPT,
-        )?;
+        fs::write(cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
 
         Ok("Successfully scaffolded .trae/rules/ and .cursorrules".to_string())
     }
