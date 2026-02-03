@@ -47,11 +47,15 @@ Once you receive these prompts, you are no longer a general-purpose assistant. Y
 To use these prompts effectively in your IDE:
 
 ### 1. Automated Setup (CLI)
-The fastest way to set up project-specific rules is via the MontRS CLI:
+The fastest way to set up project-specific rules for both **Trae** and **Cursor** is via the MontRS CLI:
 ```bash
 # Scaffolds .trae/rules and .cursorrules for your project
 montrs agent rules setup
 ```
+
+This command will:
+1. Create `.trae/rules/` and populate it with multiple specialized rule files (best for Trae's multi-rule support).
+2. Create `.cursorrules` in the root (best for Cursor's single-file system).
 
 ### 2. Manual Project Rules
 If you prefer manual setup, copy the relevant prompt content into your project's rule folder:
