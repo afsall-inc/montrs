@@ -193,6 +193,12 @@ impl<C: AppConfig, R: Route<C>> RouteInfo<C> for R {
     }
 }
 
+impl<C: AppConfig> Default for Router<C> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<C: AppConfig> Router<C> {
     pub fn new() -> Self {
         Self {

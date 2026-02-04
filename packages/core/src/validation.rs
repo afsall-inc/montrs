@@ -56,25 +56,25 @@ impl fmt::Display for ValidatorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ValidatorError::MinLength { field, min, actual } => {
-                write!(f, "{} is too short: {} (min {})", field, actual, min)
+                write!(f, "{field} is too short: {actual} (min {min})")
             }
             ValidatorError::MaxLength { field, max, actual } => {
-                write!(f, "{} is too long: {} (max {})", field, actual, max)
+                write!(f, "{field} is too long: {actual} (max {max})")
             }
             ValidatorError::Min { field, min, actual } => {
-                write!(f, "{} is too small: {} (min {})", field, actual, min)
+                write!(f, "{field} is too small: {actual} (min {min})")
             }
             ValidatorError::Max { field, max, actual } => {
-                write!(f, "{} is too large: {} (max {})", field, actual, max)
+                write!(f, "{field} is too large: {actual} (max {max})")
             }
             ValidatorError::InvalidEmail { field } => {
-                write!(f, "{} must be a valid email", field)
+                write!(f, "{field} must be a valid email")
             }
             ValidatorError::RegexMismatch { field, pattern } => {
-                write!(f, "{} does not match pattern: {}", field, pattern)
+                write!(f, "{field} does not match pattern: {pattern}")
             }
             ValidatorError::Custom { field, message } => {
-                write!(f, "{}: {}", field, message)
+                write!(f, "{field}: {message}")
             }
         }
     }
@@ -98,35 +98,29 @@ impl AgentError for ValidatorError {
     fn explanation(&self) -> String {
         match self {
             ValidatorError::MinLength { field, min, actual } => format!(
-                "The field '{}' has a length of {}, which is less than the \
-                 required minimum of {}.",
-                field, actual, min
+                "The field '{field}' has a length of {actual}, which is less than the \
+                 required minimum of {min}."
             ),
             ValidatorError::MaxLength { field, max, actual } => format!(
-                "The field '{}' has a length of {}, which exceeds the allowed \
-                 maximum of {}.",
-                field, actual, max
+                "The field '{field}' has a length of {actual}, which exceeds the allowed \
+                 maximum of {max}."
             ),
             ValidatorError::Min { field, min, actual } => format!(
-                "The field '{}' has a value of {}, which is less than the \
-                 required minimum of {}.",
-                field, actual, min
+                "The field '{field}' has a value of {actual}, which is less than the \
+                 required minimum of {min}."
             ),
             ValidatorError::Max { field, max, actual } => format!(
-                "The field '{}' has a value of {}, which exceeds the allowed \
-                 maximum of {}.",
-                field, actual, max
+                "The field '{field}' has a value of {actual}, which exceeds the allowed \
+                 maximum of {max}."
             ),
             ValidatorError::InvalidEmail { field } => format!(
-                "The field '{}' does not contain a valid email address.",
-                field
+                "The field '{field}' does not contain a valid email address."
             ),
             ValidatorError::RegexMismatch { field, pattern } => format!(
-                "The field '{}' does not match the required pattern: {}.",
-                field, pattern
+                "The field '{field}' does not match the required pattern: {pattern}."
             ),
             ValidatorError::Custom { field, message } => {
-                format!("Validation failed for field '{}': {}.", field, message)
+                format!("Validation failed for field '{field}': {message}.")
             }
         }
     }
@@ -134,19 +128,16 @@ impl AgentError for ValidatorError {
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
             ValidatorError::MinLength { min, .. } => vec![format!(
-                "Provide a value with at least {} characters.",
-                min
+                "Provide a value with at least {min} characters."
             )],
             ValidatorError::MaxLength { max, .. } => vec![format!(
-                "Provide a value with at most {} characters.",
-                max
+                "Provide a value with at most {max} characters."
             )],
             ValidatorError::Min { min, .. } => vec![format!(
-                "Provide a value greater than or equal to {}.",
-                min
+                "Provide a value greater than or equal to {min}."
             )],
             ValidatorError::Max { max, .. } => {
-                vec![format!("Provide a value less than or equal to {}.", max)]
+                vec![format!("Provide a value less than or equal to {max}.")]
             }
             ValidatorError::InvalidEmail { .. } => vec![
                 "Check the email address for typos and ensure it follows the \
@@ -154,8 +145,7 @@ impl AgentError for ValidatorError {
                     .to_string(),
             ],
             ValidatorError::RegexMismatch { pattern, .. } => vec![format!(
-                "Ensure the input matches the pattern: {}.",
-                pattern
+                "Ensure the input matches the pattern: {pattern}."
             )],
             ValidatorError::Custom { .. } => vec![
                 "Review the custom validation logic or the input data to \

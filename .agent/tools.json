@@ -89,6 +89,30 @@
       }
     },
     {
+      "description": "Runs a custom task defined in montrs.toml.",
+      "name": "montrs_run",
+      "parameters": {
+        "properties": {
+          "task": {
+            "description": "Name of the task to run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Lists available custom tasks from montrs.toml.",
+      "name": "montrs_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package agent. MUST follow invariants defined in agent.json under packages['agent'].invariants",
       "name": "montrs_pkg_agent",
       "parameters": {
@@ -179,6 +203,14 @@
     {
       "description": "Executes a SQL query on the configured database backend.",
       "name": "db_query",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package runner. Refer to its README for details.",
+      "name": "montrs_pkg_runner",
       "parameters": {
         "properties": {},
         "type": "object"

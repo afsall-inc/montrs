@@ -5,6 +5,7 @@
 //! // @agent-tool: name="db_query" desc="Executes a SQL query on the configured database backend."
 
 use async_trait::async_trait;
+use std::sync::{Arc, Mutex};
 #[cfg(feature = "postgres")]
 use deadpool_postgres::{Config, Pool, Runtime};
 use montrs_core::AgentError;

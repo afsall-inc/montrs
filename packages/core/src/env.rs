@@ -16,10 +16,10 @@ impl fmt::Display for EnvError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             EnvError::MissingKey(k) => {
-                write!(f, "Missing environment variable: {}", k)
+                write!(f, "Missing environment variable: {k}")
             }
             EnvError::InvalidType(k) => {
-                write!(f, "Invalid type for environment variable: {}", k)
+                write!(f, "Invalid type for environment variable: {k}")
             }
         }
     }
@@ -38,14 +38,12 @@ impl AgentError for EnvError {
     fn explanation(&self) -> String {
         match self {
             EnvError::MissingKey(k) => format!(
-                "The application expected the environment variable '{}' to be \
-                 set, but it was not found.",
-                k
+                "The application expected the environment variable '{k}' to be \
+                 set, but it was not found."
             ),
             EnvError::InvalidType(k) => format!(
-                "The environment variable '{}' was found, but its value could \
-                 not be parsed into the expected type.",
-                k
+                "The environment variable '{k}' was found, but its value could \
+                 not be parsed into the expected type."
             ),
         }
     }
@@ -54,19 +52,14 @@ impl AgentError for EnvError {
         match self {
             EnvError::MissingKey(k) => vec![
                 format!(
-                    "Set the '{}' environment variable in your shell or .env \
-                     file.",
-                    k
+                    "Set the '{k}' environment variable in your shell or .env \
+                     file."
                 ),
-                format!(
-                    "Check if '{}' is correctly spelled in your configuration.",
-                    k
-                ),
+                format!("Check if '{k}' is correctly spelled in your configuration."),
             ],
             EnvError::InvalidType(k) => vec![format!(
-                "Ensure the value of '{}' matches the expected format (e.g., \
-                 a number, boolean, or valid string).",
-                k
+                "Ensure the value of '{k}' matches the expected format (e.g., \
+                 a number, boolean, or valid string)."
             )],
         }
     }

@@ -140,14 +140,15 @@ impl AgentManager {
 
     /// Scaffolds IDE rules (.trae/rules and .cursorrules) for the project.
     pub fn setup_ide_rules(&self) -> Result<String> {
+        println!("Setting up IDE rules in: {:?}", self.root_path);
+
+        // 1. Setup Trae (.trae/rules/)
         let trae_dir = self.root_path.join(".trae").join("rules");
         if !trae_dir.exists() {
+            println!("Creating Trae directory: {:?}", trae_dir);
             fs::create_dir_all(&trae_dir)?;
         }
 
-        let cursorrules_path = self.root_path.join(".cursorrules");
-
-        // 1. Write Trae Rules
         fs::write(
             trae_dir.join("app-developer.md"),
             framework::APP_DEVELOPER_RULE,
@@ -157,9 +158,11 @@ impl AgentManager {
             framework::FRAMEWORK_CONTRIBUTOR_RULE,
         )?;
 
-        // 2. Write Cursor Rules (.cursorrules)
-        // By default, we use the App Developer prompt for general project guidance
-        fs::write(cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
+        // 2. Setup Cursor (.cursorrules)
+        // Cursor uses a single root file. We default it to the App Developer prompt.
+        let cursorrules_path = self.root_path.join(".cursorrules");
+        println!("Writing .cursorrules to: {:?}", cursorrules_path);
+        fs::write(&cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
 
         Ok("Successfully scaffolded .trae/rules/ and .cursorrules".to_string())
     }

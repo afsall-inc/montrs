@@ -102,12 +102,12 @@ pub fn derive_validator(input: TokenStream) -> TokenStream {
 
                             // Compile-time validation of the regex pattern.
                             if let Err(e) = regex::Regex::new(&regex_str) {
-                                return Err(meta.error(format!("Invalid regex pattern: {}", e)));
+                                return Err(meta.error(format!("Invalid regex pattern: {e}")));
                             }
 
                             // Generate a unique identifier for the static regex.
                             let static_ident = syn::Ident::new(
-                                &format!("__REGEX_{}_{}", name, field_name).to_uppercase(),
+                                &format!("__REGEX_{name}_{field_name}").to_uppercase(),
                                 proc_macro2::Span::call_site(),
                             );
 
