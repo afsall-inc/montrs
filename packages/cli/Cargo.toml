@@ -6,9 +6,9 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
-[[bin]]
-name = "montrs"
-path = "src/bin/montrs.rs"
+# [[bin]]
+# name = "montrs"
+# path = "src/bin/montrs.rs"
 
 [[bin]]
 name = "cargo-montrs"
