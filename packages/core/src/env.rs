@@ -34,20 +34,33 @@ impl AgentError for EnvError {
 
     fn explanation(&self) -> String {
         match self {
-            EnvError::MissingKey(k) => format!("The application expected the environment variable '{}' to be set, but it was not found.", k),
-            EnvError::InvalidType(k) => format!("The environment variable '{}' was found, but its value could not be parsed into the expected type.", k),
+            EnvError::MissingKey(k) => format!(
+                "The application expected the environment variable '{}' to be set, but it was not found.",
+                k
+            ),
+            EnvError::InvalidType(k) => format!(
+                "The environment variable '{}' was found, but its value could not be parsed into the expected type.",
+                k
+            ),
         }
     }
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
             EnvError::MissingKey(k) => vec![
-                format!("Set the '{}' environment variable in your shell or .env file.", k),
-                format!("Check if '{}' is correctly spelled in your configuration.", k),
+                format!(
+                    "Set the '{}' environment variable in your shell or .env file.",
+                    k
+                ),
+                format!(
+                    "Check if '{}' is correctly spelled in your configuration.",
+                    k
+                ),
             ],
-            EnvError::InvalidType(k) => vec![
-                format!("Ensure the value of '{}' matches the expected format (e.g., a number, boolean, or valid string).", k),
-            ],
+            EnvError::InvalidType(k) => vec![format!(
+                "Ensure the value of '{}' matches the expected format (e.g., a number, boolean, or valid string).",
+                k
+            )],
         }
     }
 

@@ -86,6 +86,7 @@ impl BenchConfig {
     }
 
     /// Parses configuration from an iterator (useful for testing).
+    #[allow(clippy::should_implement_trait)]
     pub fn from_iter<I, T>(itr: I) -> Self
     where
         I: IntoIterator<Item = T>,
@@ -157,10 +158,10 @@ impl BenchConfig {
     where
         F: Fn(&str) -> Option<String>,
     {
-        if let Some(val) = env_loader(key) {
-            if let Ok(parsed) = val.parse() {
-                return Some(parsed);
-            }
+        if let Some(val) = env_loader(key)
+            && let Ok(parsed) = val.parse()
+        {
+            return Some(parsed);
         }
         None
     }

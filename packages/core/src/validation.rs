@@ -57,10 +57,21 @@ impl AgentError for ValidationError {
 
     fn explanation(&self) -> String {
         match self {
-            ValidationError::MinLength { field, min, actual } => format!("The field '{}' has a length of {}, which is less than the required minimum of {}.", field, actual, min),
-            ValidationError::InvalidEmail { field } => format!("The field '{}' does not contain a valid email address.", field),
-            ValidationError::RegexMismatch { field, pattern } => format!("The field '{}' does not match the required pattern: {}.", field, pattern),
-            ValidationError::Custom { field, message } => format!("Validation failed for field '{}': {}.", field, message),
+            ValidationError::MinLength { field, min, actual } => format!(
+                "The field '{}' has a length of {}, which is less than the required minimum of {}.",
+                field, actual, min
+            ),
+            ValidationError::InvalidEmail { field } => format!(
+                "The field '{}' does not contain a valid email address.",
+                field
+            ),
+            ValidationError::RegexMismatch { field, pattern } => format!(
+                "The field '{}' does not match the required pattern: {}.",
+                field, pattern
+            ),
+            ValidationError::Custom { field, message } => {
+                format!("Validation failed for field '{}': {}.", field, message)
+            }
         }
     }
 

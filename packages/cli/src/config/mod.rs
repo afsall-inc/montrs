@@ -6,9 +6,9 @@
 
 use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
+use montrs_fmt::FormatterSettings;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use montrs_fmt::FormatterSettings;
 
 pub mod tailwind;
 
@@ -232,12 +232,11 @@ impl MontrsConfig {
             .with_context(|| format!("Failed to parse config file: {}", path.as_ref().display()))?;
 
         // Try to resolve project name if it's default
-        if config.project.name == "app" {
-            if let Ok(metadata) = MetadataCommand::new().exec() {
-                if let Some(root) = metadata.root_package() {
-                    config.project.name = root.name.clone();
-                }
-            }
+        if config.project.name == "app"
+            && let Ok(metadata) = MetadataCommand::new().exec()
+            && let Some(root) = metadata.root_package()
+        {
+            config.project.name = root.name.clone();
         }
 
         Ok(config)
@@ -263,14 +262,13 @@ impl MontrsConfig {
         }
 
         // Try to resolve project name if still default
-        if config.project.name == "app" {
-            if let Ok(metadata) = MetadataCommand::new().exec() {
-                if let Some(root) = metadata.root_package() {
-                    config.project.name = root.name.clone();
-                }
-            }
+        if config.project.name == "app"
+            && let Ok(metadata) = MetadataCommand::new().exec()
+            && let Some(root) = metadata.root_package()
+        {
+            config.project.name = root.name.clone();
         }
-        
+
         Ok(config)
     }
 

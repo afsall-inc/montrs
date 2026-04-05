@@ -17,7 +17,9 @@ pub async fn run(headless: bool, keep_alive: bool, browser: Option<String>) -> a
 
     // Determine final configuration (CLI > Config > Default)
     let final_headless = headless || config.e2e.headless.unwrap_or(false);
-    let final_browser = browser.or(config.e2e.browser.clone()).unwrap_or_else(|| "chromium".to_string());
+    let final_browser = browser
+        .or(config.e2e.browser.clone())
+        .unwrap_or_else(|| "chromium".to_string());
 
     // Set environment variables for runtime configuration
     unsafe {
@@ -43,8 +45,8 @@ pub async fn run(headless: bool, keep_alive: bool, browser: Option<String>) -> a
     // We use "end-to-end" command of cargo-leptos.
     // This command requires configuration in Cargo.toml (or env vars) for "end2end-cmd"
     // and "end2end-dir".
-    
+
     // Ensure we pass necessary flags via args if supported, or rely on env vars set above.
-    
+
     run_cargo_leptos("end-to-end", &[], &config).await
 }

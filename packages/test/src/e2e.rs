@@ -22,10 +22,10 @@
 //! }
 //! ```
 
+use playwright::Playwright;
+use playwright::api::{Browser, BrowserContext, BrowserType, Page};
 use std::env;
 use std::time::Duration;
-use playwright::Playwright;
-use playwright::api::{Browser, BrowserContext, Page, BrowserType};
 
 // Re-export playwright so users don't need to add it separately if they don't want to
 pub use playwright;
@@ -59,7 +59,9 @@ impl Default for E2EConfig {
             .unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
 
         Self {
-            headless: env::var("MONTRS_E2E_HEADLESS").map(|v| v != "false").unwrap_or(true),
+            headless: env::var("MONTRS_E2E_HEADLESS")
+                .map(|v| v != "false")
+                .unwrap_or(true),
             base_url,
             timeout: 30000,
             browser: env::var("MONTRS_E2E_BROWSER").unwrap_or_else(|_| "chromium".to_string()),
@@ -120,13 +122,13 @@ impl MontrsDriver {
         };
 
         let launcher = browser_type.launcher();
-        
+
         let browser = launcher
             .headless(config.headless)
             .timeout(config.timeout as f64)
             .launch()
             .await?;
-            
+
         let context = browser.context_builder().build().await?;
         let page = context.new_page().await?;
 
@@ -166,7 +168,7 @@ impl MontrsDriver {
             let path = path.trim_start_matches('/');
             format!("{}/{}", base, path)
         };
-        
+
         self.page.goto_builder(&url).goto().await?;
         Ok(())
     }
@@ -188,7 +190,8 @@ impl MontrsDriver {
     ///
     /// * `path` - The file path to save the screenshot to.
     pub async fn screenshot(&self, path: &str) -> anyhow::Result<()> {
-        self.page.screenshot_builder()
+        self.page
+            .screenshot_builder()
             .path(std::path::Path::new(path))
             .screenshot()
             .await?;
@@ -220,7 +223,11 @@ pub mod assertions {
     pub async fn assert_title_contains(page: &Page, text: &str) -> anyhow::Result<()> {
         let title = page.title().await?;
         if !title.contains(text) {
-            anyhow::bail!("Expected title to contain '{}', but found '{}'", text, title);
+            anyhow::bail!(
+                "Expected title to contain '{}', but found '{}'",
+                text,
+                title
+            );
         }
         Ok(())
     }

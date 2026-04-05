@@ -39,7 +39,8 @@ pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig)
             if let Ok(cwd) = std::env::current_dir() {
                 let agent_manager = montrs_agent::AgentManager::new(cwd);
                 let diff = agent_manager.generate_diff();
-                let _ = agent_manager.auto_resolve_active_errors("Build/Command succeeded".to_string(), diff);
+                let _ = agent_manager
+                    .auto_resolve_active_errors("Build/Command succeeded".to_string(), diff);
             }
             Ok(())
         }
@@ -47,7 +48,7 @@ pub async fn run_cargo_leptos(cmd: &str, args: &[String], config: &MontrsConfig)
             if let Ok(cwd) = std::env::current_dir() {
                 let agent_manager = montrs_agent::AgentManager::new(cwd);
                 let error_msg = format!("{:?}", e);
-                
+
                 // Try to parse structured errors
                 let parsed_errors = montrs_agent::error_parser::parse_rustc_errors(&error_msg);
                 if parsed_errors.is_empty() {

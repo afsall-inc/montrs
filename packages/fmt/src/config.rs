@@ -64,21 +64,19 @@ impl FormatterSettings {
     /// 3. Default settings
     pub fn load() -> Self {
         // Try montrs-fmt.toml first
-        if let Ok(content) = std::fs::read_to_string("montrs-fmt.toml") {
-            if let Ok(settings) = toml::from_str(&content) {
-                return settings;
-            }
+        if let Ok(content) = std::fs::read_to_string("montrs-fmt.toml")
+            && let Ok(settings) = toml::from_str(&content)
+        {
+            return settings;
         }
 
         // Try [fmt] section in montrs.toml
-        if let Ok(content) = std::fs::read_to_string("montrs.toml") {
-            if let Ok(value) = toml::from_str::<toml::Value>(&content) {
-                if let Some(fmt_value) = value.get("fmt") {
-                    if let Ok(settings) = fmt_value.clone().try_into() {
-                        return settings;
-                    }
-                }
-            }
+        if let Ok(content) = std::fs::read_to_string("montrs.toml")
+            && let Ok(value) = toml::from_str::<toml::Value>(&content)
+            && let Some(fmt_value) = value.get("fmt")
+            && let Ok(settings) = fmt_value.clone().try_into()
+        {
+            return settings;
         }
 
         Self::default()

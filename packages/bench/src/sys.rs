@@ -1,5 +1,5 @@
-use sysinfo::{System, CpuRefreshKind, MemoryRefreshKind, RefreshKind};
 use serde::{Deserialize, Serialize};
+use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 
 /// Captures system information for the benchmark report.
 ///
@@ -31,7 +31,6 @@ pub struct SystemInfo {
     /// Size of the benchmark binary in bytes.
     pub binary_size_bytes: Option<u64>,
 }
-
 
 impl SystemInfo {
     /// Collects system information from the current environment.

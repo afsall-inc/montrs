@@ -5,9 +5,9 @@
 
 use crate::AppConfig;
 use async_trait::async_trait;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use leptos::prelude::*;
 
 /// Trait for route parameters. Must be serializable and deserializable.
 pub trait RouteParams: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static {}
@@ -18,11 +18,7 @@ pub trait RouteParams: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'st
 pub trait RouteLoader<P: RouteParams, C: AppConfig>: Send + Sync + 'static {
     type Output: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static;
 
-    async fn load(
-        &self,
-        ctx: RouteContext<'_, C>,
-        params: P,
-    ) -> Result<Self::Output, RouteError>;
+    async fn load(&self, ctx: RouteContext<'_, C>, params: P) -> Result<Self::Output, RouteError>;
 
     /// Returns a description of what this loader fetches.
     fn description(&self) -> &'static str {
@@ -118,8 +114,17 @@ pub struct Router<C: AppConfig> {
 #[allow(dead_code)]
 trait RouteInfo<C: AppConfig>: Send + Sync + 'static {
     fn path(&self) -> &'static str;
-    async fn handle_load(&self, ctx: RouteContext<'_, C>, params: serde_json::Value) -> Result<serde_json::Value, RouteError>;
-    async fn handle_act(&self, ctx: RouteContext<'_, C>, params: serde_json::Value, input: serde_json::Value) -> Result<serde_json::Value, RouteError>;
+    async fn handle_load(
+        &self,
+        ctx: RouteContext<'_, C>,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, RouteError>;
+    async fn handle_act(
+        &self,
+        ctx: RouteContext<'_, C>,
+        params: serde_json::Value,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, RouteError>;
     fn render(&self) -> Box<dyn Fn() -> AnyView + Send + Sync>;
     fn metadata(&self) -> RouteMetadata;
 }
@@ -130,16 +135,25 @@ impl<C: AppConfig, R: Route<C>> RouteInfo<C> for R {
         R::path()
     }
 
-    async fn handle_load(&self, ctx: RouteContext<'_, C>, params: serde_json::Value) -> Result<serde_json::Value, RouteError> {
+    async fn handle_load(
+        &self,
+        ctx: RouteContext<'_, C>,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, RouteError> {
         let params: R::Params = serde_json::from_value(params)
             .map_err(|e| RouteError::ValidationFailed(e.to_string()))?;
-        
+
         let loader = self.loader();
         let output = loader.load(ctx, params).await?;
         serde_json::to_value(output).map_err(|e| RouteError::InternalError(e.to_string()))
     }
 
-    async fn handle_act(&self, ctx: RouteContext<'_, C>, params: serde_json::Value, input: serde_json::Value) -> Result<serde_json::Value, RouteError> {
+    async fn handle_act(
+        &self,
+        ctx: RouteContext<'_, C>,
+        params: serde_json::Value,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, RouteError> {
         let params: R::Params = serde_json::from_value(params)
             .map_err(|e| RouteError::ValidationFailed(e.to_string()))?;
         let input: <R::Action as RouteAction<R::Params, C>>::Input = serde_json::from_value(input)
@@ -161,6 +175,12 @@ impl<C: AppConfig, R: Route<C>> RouteInfo<C> for R {
             loader_description: self.loader().description().to_string(),
             action_description: self.action().description().to_string(),
         }
+    }
+}
+
+impl<C: AppConfig> Default for Router<C> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

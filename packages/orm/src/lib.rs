@@ -5,9 +5,9 @@
 //! // @agent-tool: name="db_query" desc="Executes a SQL query on the configured database backend."
 
 use async_trait::async_trait;
-use montrs_core::AgentError;
 #[cfg(feature = "postgres")]
 use deadpool_postgres::{Config, Pool, Runtime};
+use montrs_core::AgentError;
 #[cfg(feature = "sqlite")]
 use rusqlite::Connection;
 use thiserror::Error;
@@ -36,7 +36,9 @@ impl AgentError for DbError {
 
     fn explanation(&self) -> String {
         match self {
-            DbError::Connection(e) => format!("Failed to establish a connection to the database: {}.", e),
+            DbError::Connection(e) => {
+                format!("Failed to establish a connection to the database: {}.", e)
+            }
             DbError::Query(e) => format!("An error occurred while executing a SQL query: {}.", e),
             DbError::Migration(e) => format!("Database migration failed: {}.", e),
         }

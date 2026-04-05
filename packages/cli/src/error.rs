@@ -25,7 +25,9 @@ impl AgentError for CliError {
 
     fn explanation(&self) -> String {
         match self {
-            CliError::Config(e) => format!("Failed to load or parse the MontRS configuration: {}.", e),
+            CliError::Config(e) => {
+                format!("Failed to load or parse the MontRS configuration: {}.", e)
+            }
             CliError::Io(e) => format!("An I/O error occurred during CLI operation: {}.", e),
             CliError::Task(e) => format!("A custom task failed to execute: {}.", e),
             CliError::Build(e) => format!("The project build process failed: {}.", e),
@@ -38,12 +40,8 @@ impl AgentError for CliError {
                 "Check montrs.toml for syntax errors.".to_string(),
                 "Ensure all required configuration fields are present.".to_string(),
             ],
-            CliError::Io(_) => vec![
-                "Verify file permissions and paths.".to_string(),
-            ],
-            CliError::Task(e) => vec![
-                format!("Debug the task logic: {}.", e),
-            ],
+            CliError::Io(_) => vec!["Verify file permissions and paths.".to_string()],
+            CliError::Task(e) => vec![format!("Debug the task logic: {}.", e)],
             CliError::Build(_) => vec![
                 "Check the compiler output for detailed error messages.".to_string(),
                 "Ensure all dependencies are correctly specified in Cargo.toml.".to_string(),

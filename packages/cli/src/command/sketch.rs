@@ -1,8 +1,8 @@
 use anyhow::{Result, anyhow};
 use console::style;
+use montrs_utils::{to_pascal_case, to_snake_case};
 use std::fs;
 use std::path::Path;
-use montrs_utils::{to_pascal_case, to_snake_case};
 
 pub async fn run(name: String, kind: String) -> Result<()> {
     println!(
@@ -16,7 +16,12 @@ pub async fn run(name: String, kind: String) -> Result<()> {
         "plate" => generate_plate_sketch(&name),
         "route" => generate_route_sketch(&name),
         "app" => generate_app_sketch(&name),
-        _ => return Err(anyhow!("Unknown component kind: {}. Use plate, route, or app.", kind)),
+        _ => {
+            return Err(anyhow!(
+                "Unknown component kind: {}. Use plate, route, or app.",
+                kind
+            ));
+        }
     };
 
     let file_name = format!("{}.sketch.rs", name.to_lowercase().replace(' ', "_"));
@@ -44,7 +49,8 @@ pub async fn run(name: String, kind: String) -> Result<()> {
 fn generate_plate_sketch(name: &str) -> String {
     let pascal = to_pascal_case(name);
     let snake = to_snake_case(name);
-    format!(r#"//! MontRS Plate Sketch: {name}
+    format!(
+        r#"//! MontRS Plate Sketch: {name}
 //! This file contains an explicit, deterministic, single-file plate definition.
 //! Run `montrs expand` to move this into src/plates/{snake}.rs
 
@@ -80,12 +86,14 @@ impl<C: AppConfig> Plate<C> for {pascal}Plate {{
 // [OPTIONAL] Example Route inside sketch
 // pub struct {pascal}Route;
 // ... (implement Route trait explicitly here)
-"#)
+"#
+    )
 }
 
 fn generate_route_sketch(name: &str) -> String {
     let pascal = to_pascal_case(name);
-    format!(r#"//! MontRS Route Sketch: {name}
+    format!(
+        r#"//! MontRS Route Sketch: {name}
 //! This file contains an explicit, deterministic, single-file route definition.
 
 use montrs_core::{{Route, RouteParams, RouteLoader, RouteAction, RouteView, RouteContext, RouteError, AppConfig}};
@@ -147,12 +155,14 @@ impl<C: AppConfig> Route<C> for {pascal}Route {{
     fn action(&self) -> Self::Action {{ {pascal}Action }}
     fn view(&self) -> Self::View {{ {pascal}View }}
 }}
-"#)
+"#
+    )
 }
 
 fn generate_app_sketch(name: &str) -> String {
     let pascal = to_pascal_case(name);
-    format!(r#"//! MontRS App Sketch: {name}
+    format!(
+        r#"//! MontRS App Sketch: {name}
 //! A complete, single-file application blueprint.
 
 use montrs_core::{{AppConfig, AppSpec, EnvConfig, Target}};
@@ -197,5 +207,6 @@ pub fn create_app() -> AppSpec<{pascal}Config> {{
         .with_target(Target::Server)
         // .with_plate(Box::new(MyPlate))
 }}
-"#)
+"#
+    )
 }

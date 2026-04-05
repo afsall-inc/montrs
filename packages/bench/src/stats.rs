@@ -58,7 +58,7 @@ impl BenchStats {
                 // Simple linear regression calculation
                 let x: Vec<f64> = p_vals.iter().map(|&v| v as f64).collect();
                 let y: Vec<f64> = data;
-                
+
                 let n = x.len() as f64;
                 let sum_x: f64 = x.iter().sum();
                 let sum_y: f64 = y.iter().sum();
@@ -73,9 +73,9 @@ impl BenchStats {
                     intercept = Some(b);
                 }
             } else {
-                 // data was moved into y if params exists but validation fails, but here we don't strictly need it back
+                // data was moved into y if params exists but validation fails, but here we don't strictly need it back
             }
-        } 
+        }
 
         Self {
             mean,

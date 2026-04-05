@@ -1,13 +1,13 @@
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::fs;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
 
-pub mod guides;
 pub mod error_parser;
 pub mod framework;
+pub mod guides;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
@@ -127,7 +127,9 @@ pub struct AgentManager {
 
 impl AgentManager {
     pub fn new(root: impl Into<PathBuf>) -> Self {
-        Self { root_path: root.into() }
+        Self {
+            root_path: root.into(),
+        }
     }
 
     pub fn agent_dir(&self) -> PathBuf {
@@ -161,7 +163,13 @@ impl AgentManager {
             "txt" => format!("{:#?}", snapshot),
             _ => serde_json::to_string_pretty(snapshot)?,
         };
-        let ext = if format == "yaml" { "yaml" } else if format == "txt" { "txt" } else { "json" };
+        let ext = if format == "yaml" {
+            "yaml"
+        } else if format == "txt" {
+            "txt"
+        } else {
+            "json"
+        };
         fs::write(self.agent_dir().join(format!("agent.{}", ext)), content)?;
         Ok(())
     }
@@ -172,13 +180,13 @@ impl AgentManager {
         if !version_dir.exists() {
             fs::create_dir_all(&version_dir)?;
         }
-        
+
         let content = serde_json::to_string_pretty(record)?;
         fs::write(version_dir.join(format!("{}.json", record.id)), content)?;
-        
+
         // Update consolidated tracking
         self.update_consolidated_tracking(record)?;
-        
+
         Ok(())
     }
 
@@ -191,31 +199,51 @@ impl AgentManager {
                 return Ok(tracking);
             }
             // Fallback to manual parsing if needed or try to adapt legacy
-            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&content) {
-                if let Some(active_issues) = value.get("active_issues").and_then(|v| v.as_array()) {
-                    let mut errors = Vec::new();
-                    for issue in active_issues {
-                        if let (Some(id), Some(msg)) = (issue.get("id").and_then(|v| v.as_str()), issue.get("message").and_then(|v| v.as_str())) {
-                            let status = issue.get("status").and_then(|v| v.as_str()).unwrap_or("Pending").to_string();
-                            errors.push(ConsolidatedError {
-                                id: id.to_string(),
-                                package: issue.get("package").and_then(|v| v.as_str()).map(|s| s.to_string()),
-                                file: issue.get("file").and_then(|v| v.as_str()).unwrap_or("unknown").to_string(),
-                                line: issue.get("line").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                                column: issue.get("column").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                                level: issue.get("type").and_then(|v| v.as_str()).unwrap_or("Error").to_string(),
-                                message: msg.to_string(),
-                                status,
-                                timestamp: issue.get("timestamp")
-                                    .and_then(|v| v.as_str())
-                                    .and_then(|s| s.parse().ok())
-                                    .unwrap_or_else(Utc::now),
-                            });
-                        }
+            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&content)
+                && let Some(active_issues) = value.get("active_issues").and_then(|v| v.as_array())
+            {
+                let mut errors = Vec::new();
+                for issue in active_issues {
+                    if let (Some(id), Some(msg)) = (
+                        issue.get("id").and_then(|v| v.as_str()),
+                        issue.get("message").and_then(|v| v.as_str()),
+                    ) {
+                        let status = issue
+                            .get("status")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("Pending")
+                            .to_string();
+                        errors.push(ConsolidatedError {
+                            id: id.to_string(),
+                            package: issue
+                                .get("package")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            file: issue
+                                .get("file")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("unknown")
+                                .to_string(),
+                            line: issue.get("line").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
+                            column: issue.get("column").and_then(|v| v.as_u64()).unwrap_or(0)
+                                as u32,
+                            level: issue
+                                .get("type")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("Error")
+                                .to_string(),
+                            message: msg.to_string(),
+                            status,
+                            timestamp: issue
+                                .get("timestamp")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| s.parse().ok())
+                                .unwrap_or_else(Utc::now),
+                        });
                     }
-                    if !errors.is_empty() {
-                        return Ok(ErrorTracking { errors });
-                    }
+                }
+                if !errors.is_empty() {
+                    return Ok(ErrorTracking { errors });
                 }
             }
         }
@@ -230,11 +258,14 @@ impl AgentManager {
     }
 
     fn update_consolidated_tracking(&self, record: &ErrorRecord) -> Result<()> {
-        let mut tracking = self.load_tracking().unwrap_or(ErrorTracking { errors: Vec::new() });
+        let mut tracking = self
+            .load_tracking()
+            .unwrap_or(ErrorTracking { errors: Vec::new() });
         let status = match record.status {
             ErrorStatus::Active => "Pending",
             ErrorStatus::Resolved => "Fixed",
-        }.to_string();
+        }
+        .to_string();
 
         let consolidated = ConsolidatedError {
             id: record.id.clone(),
@@ -260,18 +291,20 @@ impl AgentManager {
     /// Reports a new error to the agent, creating or updating errorfile.json.
     pub fn report_project_error(&self, mut error: ProjectError) -> Result<String> {
         // Try to determine package from file path if not provided
-        if error.package.is_none() && error.file != "unknown" {
-            if let Some(pkg) = self.determine_package(&error.file) {
-                error.package = Some(pkg);
-            }
+        if error.package.is_none()
+            && error.file != "unknown"
+            && let Some(pkg) = self.determine_package(&error.file)
+        {
+            error.package = Some(pkg);
         }
 
         // Check if a similar active error already exists
         if let Ok(active_errors) = self.list_active_errors() {
             for existing in active_errors {
-                if existing.detail.file == error.file && 
-                   existing.detail.line == error.line && 
-                   existing.detail.message == error.message {
+                if existing.detail.file == error.file
+                    && existing.detail.line == error.line
+                    && existing.detail.message == error.message
+                {
                     return Ok(existing.id);
                 }
             }
@@ -300,14 +333,12 @@ impl AgentManager {
         for entry in fs::read_dir(error_dir)?.flatten() {
             if entry.path().is_dir() {
                 for file in fs::read_dir(entry.path())?.flatten() {
-                    if file.path().extension().and_then(|s| s.to_str()) == Some("json") {
-                        if let Ok(content) = fs::read_to_string(file.path()) {
-                            if let Ok(record) = serde_json::from_str::<ErrorRecord>(&content) {
-                                if let ErrorStatus::Active = record.status {
-                                    active.push(record);
-                                }
-                            }
-                        }
+                    if file.path().extension().and_then(|s| s.to_str()) == Some("json")
+                        && let Ok(content) = fs::read_to_string(file.path())
+                        && let Ok(record) = serde_json::from_str::<ErrorRecord>(&content)
+                        && let ErrorStatus::Active = record.status
+                    {
+                        active.push(record);
                     }
                 }
             }
@@ -355,10 +386,14 @@ impl AgentManager {
         // Look for "packages/NAME" or "apps/NAME"
         let components: Vec<_> = path.components().collect();
         for i in 0..components.len() {
-            if let Some(c) = components[i].as_os_str().to_str() {
-                if (c == "packages" || c == "apps") && i + 1 < components.len() {
-                    return components[i+1].as_os_str().to_str().map(|s| s.to_string());
-                }
+            if let Some(c) = components[i].as_os_str().to_str()
+                && (c == "packages" || c == "apps")
+                && i + 1 < components.len()
+            {
+                return components[i + 1]
+                    .as_os_str()
+                    .to_str()
+                    .map(|s| s.to_string());
             }
         }
         None
@@ -380,15 +415,19 @@ impl AgentManager {
             })
     }
 
-    pub fn auto_resolve_active_errors(&self, fix_message: String, diff: Option<String>) -> Result<()> {
+    pub fn auto_resolve_active_errors(
+        &self,
+        fix_message: String,
+        diff: Option<String>,
+    ) -> Result<()> {
         let walker = walkdir::WalkDir::new(self.errorfiles_dir()).into_iter();
         for entry in walker.filter_map(|e| e.ok()) {
             if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
                 let content = fs::read_to_string(entry.path())?;
-                if let Ok(record) = serde_json::from_str::<ErrorRecord>(&content) {
-                    if let ErrorStatus::Active = record.status {
-                        self.resolve_error(&record.id, fix_message.clone(), diff.clone())?;
-                    }
+                if let Ok(record) = serde_json::from_str::<ErrorRecord>(&content)
+                    && let ErrorStatus::Active = record.status
+                {
+                    self.resolve_error(&record.id, fix_message.clone(), diff.clone())?;
                 }
             }
         }
@@ -482,7 +521,7 @@ impl AgentManager {
                     },
                     "required": ["path"]
                 }
-            })
+            }),
         ];
 
         // Scan for package-specific tools/capabilities from READMEs and source comments
@@ -492,21 +531,32 @@ impl AgentManager {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.is_dir() {
-                        let pkg_name = path.file_name().map(|f| f.to_string_lossy()).unwrap_or_default();
-                        
+                        let pkg_name = path
+                            .file_name()
+                            .map(|f| f.to_string_lossy())
+                            .unwrap_or_default();
+
                         // 1. Scan README and docs/invariants.md for high-level capabilities
                         let readme_path = path.join("README.md");
                         let invariants_path = path.join("docs").join("invariants.md");
-                        let mut description = format!("Capability provided by package {}. Refer to its README for details.", pkg_name);
-                        
+                        let mut description = format!(
+                            "Capability provided by package {}. Refer to its README for details.",
+                            pkg_name
+                        );
+
                         if invariants_path.exists() {
-                            description = format!("Capability provided by package {}. MUST follow invariants defined in agent.json under packages['{}'].invariants", pkg_name, pkg_name);
-                        } else if readme_path.exists() {
-                            if let Ok(content) = fs::read_to_string(&readme_path) {
-                                if content.contains("Agent Usage Guide") || content.contains("Key Features") || content.contains("Key Components") || content.contains("Agent") {
-                                    // Keep default description or refine if needed
-                                }
-                            }
+                            description = format!(
+                                "Capability provided by package {}. MUST follow invariants defined in agent.json under packages['{}'].invariants",
+                                pkg_name, pkg_name
+                            );
+                        } else if readme_path.exists()
+                            && let Ok(content) = fs::read_to_string(&readme_path)
+                            && (content.contains("Agent Usage Guide")
+                                || content.contains("Key Features")
+                                || content.contains("Key Components")
+                                || content.contains("Agent"))
+                        {
+                            // Keep default description or refine if needed
                         }
 
                         tools.push(serde_json::json!({
@@ -520,17 +570,22 @@ impl AgentManager {
                         if src_dir.exists() {
                             let walker = walkdir::WalkDir::new(&src_dir).into_iter();
                             for entry in walker.filter_map(|e| e.ok()) {
-                                if entry.path().is_file() && entry.path().extension().and_then(|s| s.to_str()) == Some("rs") {
-                                    if let Ok(content) = fs::read_to_string(entry.path()) {
-                                        for line in content.lines() {
-                                            if line.contains("@agent-tool:") {
-                                                // Simple extraction: // @agent-tool: name="tool_name" desc="description"
-                                                if let Some(tool_meta) = self.parse_agent_tool_marker(line) {
-                                                    // Avoid duplicates
-                                                    let name = tool_meta["name"].as_str().unwrap_or_default();
-                                                    if !tools.iter().any(|t| t["name"] == name) {
-                                                        tools.push(tool_meta);
-                                                    }
+                                if entry.path().is_file()
+                                    && entry.path().extension().and_then(|s| s.to_str())
+                                        == Some("rs")
+                                    && let Ok(content) = fs::read_to_string(entry.path())
+                                {
+                                    for line in content.lines() {
+                                        if line.contains("@agent-tool:") {
+                                            // Simple extraction: // @agent-tool: name="tool_name" desc="description"
+                                            if let Some(tool_meta) =
+                                                self.parse_agent_tool_marker(line)
+                                            {
+                                                // Avoid duplicates
+                                                let name =
+                                                    tool_meta["name"].as_str().unwrap_or_default();
+                                                if !tools.iter().any(|t| t["name"] == name) {
+                                                    tools.push(tool_meta);
                                                 }
                                             }
                                         }
@@ -548,16 +603,17 @@ impl AgentManager {
             if src_dir.exists() {
                 let walker = walkdir::WalkDir::new(&src_dir).into_iter();
                 for entry in walker.filter_map(|e| e.ok()) {
-                    if entry.path().is_file() && entry.path().extension().and_then(|s| s.to_str()) == Some("rs") {
-                        if let Ok(content) = fs::read_to_string(entry.path()) {
-                            for line in content.lines() {
-                                if line.contains("@agent-tool:") {
-                                    if let Some(tool_meta) = self.parse_agent_tool_marker(line) {
-                                        let name = tool_meta["name"].as_str().unwrap_or_default();
-                                        if !tools.iter().any(|t| t["name"] == name) {
-                                            tools.push(tool_meta);
-                                        }
-                                    }
+                    if entry.path().is_file()
+                        && entry.path().extension().and_then(|s| s.to_str()) == Some("rs")
+                        && let Ok(content) = fs::read_to_string(entry.path())
+                    {
+                        for line in content.lines() {
+                            if line.contains("@agent-tool:")
+                                && let Some(tool_meta) = self.parse_agent_tool_marker(line)
+                            {
+                                let name = tool_meta["name"].as_str().unwrap_or_default();
+                                if !tools.iter().any(|t| t["name"] == name) {
+                                    tools.push(tool_meta);
                                 }
                             }
                         }
@@ -571,9 +627,11 @@ impl AgentManager {
 
     fn parse_agent_tool_marker(&self, line: &str) -> Option<serde_json::Value> {
         // Expected format: @agent-tool: name="name" desc="description"
-        let re = regex::Regex::new(r#"@agent-tool:\s+name="(?P<name>[^"]+)"\s+desc="(?P<desc>[^"]+)""#).ok()?;
+        let re =
+            regex::Regex::new(r#"@agent-tool:\s+name="(?P<name>[^"]+)"\s+desc="(?P<desc>[^"]+)""#)
+                .ok()?;
         let caps = re.captures(line)?;
-        
+
         Some(serde_json::json!({
             "name": caps.name("name")?.as_str(),
             "description": caps.name("desc")?.as_str(),
@@ -586,7 +644,10 @@ impl AgentManager {
         for line in content.lines() {
             let line = line.trim();
             if line.starts_with("//!") || line.starts_with("///") {
-                let desc = line.trim_start_matches("//!").trim_start_matches("///").trim();
+                let desc = line
+                    .trim_start_matches("//!")
+                    .trim_start_matches("///")
+                    .trim();
                 if !desc.is_empty() {
                     return Some(desc.to_string());
                 }
@@ -601,23 +662,23 @@ impl AgentManager {
 
         // Scan root src, packages/*/src, and templates/*/src
         let mut scan_dirs = vec![self.root_path.join("src")];
-        
+
         for dir_name in &["packages", "templates"] {
             let base_dir = self.root_path.join(dir_name);
-            if base_dir.exists() {
-                if let Ok(entries) = fs::read_dir(base_dir) {
-                    for entry in entries.flatten() {
-                        if entry.path().is_dir() {
-                            let src = entry.path().join("src");
-                            if src.exists() {
-                                println!("Agent: Scanning for plates in {:?}", src);
-                                scan_dirs.push(src);
-                            }
-                            let tests = entry.path().join("tests");
-                            if tests.exists() {
-                                println!("Agent: Scanning for plates in {:?}", tests);
-                                scan_dirs.push(tests);
-                            }
+            if base_dir.exists()
+                && let Ok(entries) = fs::read_dir(base_dir)
+            {
+                for entry in entries.flatten() {
+                    if entry.path().is_dir() {
+                        let src = entry.path().join("src");
+                        if src.exists() {
+                            println!("Agent: Scanning for plates in {:?}", src);
+                            scan_dirs.push(src);
+                        }
+                        let tests = entry.path().join("tests");
+                        if tests.exists() {
+                            println!("Agent: Scanning for plates in {:?}", tests);
+                            scan_dirs.push(tests);
                         }
                     }
                 }
@@ -628,43 +689,48 @@ impl AgentManager {
         let route_re = regex::Regex::new(r"impl\s+Route(?:<[^>]+>)?\s+for\s+(\w+)").unwrap();
 
         for src_dir in scan_dirs {
-            if !src_dir.exists() { continue; }
+            if !src_dir.exists() {
+                continue;
+            }
             let walker = walkdir::WalkDir::new(&src_dir).into_iter();
             for entry in walker.filter_map(|e| e.ok()) {
-                if entry.path().is_file() && entry.path().extension().and_then(|s| s.to_str()) == Some("rs") {
-                    if let Ok(content) = fs::read_to_string(entry.path()) {
-                        println!("Agent: Checking file {:?}", entry.path());
-                        // Discover Plates
-                        for caps in plate_re.captures_iter(&content) {
-                            let name = caps[1].to_string();
-                            println!("Agent: Found plate implementation: {}", name);
-                            if !plates.iter().any(|m: &PlateSummary| m.name == name) {
-                                plates.push(PlateSummary {
-                                    name,
-                                    description: self.get_file_description(entry.path()).unwrap_or_else(|| "Discovered plate".to_string()),
-                                    dependencies: Vec::new(),
-                                    metadata: HashMap::new(),
-                                });
-                            }
-                        }
-
-                        // Discover Routes
-                        for caps in route_re.captures_iter(&content) {
-                            let name = caps[1].to_string();
-                            println!("Agent: Found route implementation: {}", name);
-                            routes.push(RouteSummary {
-                                path: format!("(impl) {}", name),
-                                kind: "Route".to_string(),
-                                description: format!("Heuristically discovered Route: {}", name),
-                                input_schema: None,
-                                output_schema: None,
-                                params_schema: None,
-                                loader_output_schema: None,
-                                action_input_schema: None,
-                                action_output_schema: None,
+                if entry.path().is_file()
+                    && entry.path().extension().and_then(|s| s.to_str()) == Some("rs")
+                    && let Ok(content) = fs::read_to_string(entry.path())
+                {
+                    println!("Agent: Checking file {:?}", entry.path());
+                    // Discover Plates
+                    for caps in plate_re.captures_iter(&content) {
+                        let name = caps[1].to_string();
+                        println!("Agent: Found plate implementation: {}", name);
+                        if !plates.iter().any(|m: &PlateSummary| m.name == name) {
+                            plates.push(PlateSummary {
+                                name,
+                                description: self
+                                    .get_file_description(entry.path())
+                                    .unwrap_or_else(|| "Discovered plate".to_string()),
+                                dependencies: Vec::new(),
                                 metadata: HashMap::new(),
                             });
                         }
+                    }
+
+                    // Discover Routes
+                    for caps in route_re.captures_iter(&content) {
+                        let name = caps[1].to_string();
+                        println!("Agent: Found route implementation: {}", name);
+                        routes.push(RouteSummary {
+                            path: format!("(impl) {}", name),
+                            kind: "Route".to_string(),
+                            description: format!("Heuristically discovered Route: {}", name),
+                            input_schema: None,
+                            output_schema: None,
+                            params_schema: None,
+                            loader_output_schema: None,
+                            action_input_schema: None,
+                            action_output_schema: None,
+                            metadata: HashMap::new(),
+                        });
                     }
                 }
             }
@@ -690,11 +756,23 @@ impl AgentManager {
     /// Useful for global reference or when not in a MontRS project.
     pub fn generate_framework_snapshot(&self) -> AgentSnapshot {
         let mut documentation_snippets = HashMap::new();
-        documentation_snippets.insert("architecture".to_string(), guides::ARCHITECTURE_GUIDE.to_string());
+        documentation_snippets.insert(
+            "architecture".to_string(),
+            guides::ARCHITECTURE_GUIDE.to_string(),
+        );
         documentation_snippets.insert("debugging".to_string(), guides::DEBUGGING_GUIDE.to_string());
-        documentation_snippets.insert("agent/index".to_string(), framework::AGENT_INDEX.to_string());
-        documentation_snippets.insert("workflows/fixing-errors".to_string(), framework::FIXING_ERRORS_WORKFLOW.to_string());
-        documentation_snippets.insert("workflows/adding-features".to_string(), framework::ADDING_FEATURES_WORKFLOW.to_string());
+        documentation_snippets.insert(
+            "agent/index".to_string(),
+            framework::AGENT_INDEX.to_string(),
+        );
+        documentation_snippets.insert(
+            "workflows/fixing-errors".to_string(),
+            framework::FIXING_ERRORS_WORKFLOW.to_string(),
+        );
+        documentation_snippets.insert(
+            "workflows/adding-features".to_string(),
+            framework::ADDING_FEATURES_WORKFLOW.to_string(),
+        );
 
         let framework_invariants = framework::get_framework_invariants();
         let mut packages = Vec::new();
@@ -720,7 +798,11 @@ impl AgentManager {
         }
     }
 
-    pub fn generate_snapshot_with_spec(&self, project_name: &str, spec: Option<montrs_core::AppSpecExport>) -> Result<AgentSnapshot> {
+    pub fn generate_snapshot_with_spec(
+        &self,
+        project_name: &str,
+        spec: Option<montrs_core::AppSpecExport>,
+    ) -> Result<AgentSnapshot> {
         let mut structure = Vec::new();
         let walker = ignore::WalkBuilder::new(&self.root_path)
             .hidden(false)
@@ -731,49 +813,67 @@ impl AgentManager {
             })
             .build();
 
-        for entry in walker {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_file() {
-                    let relative_path = path.strip_prefix(&self.root_path)?
-                        .to_string_lossy()
-                        .into_owned();
-                    let description = if path.extension().and_then(|s| s.to_str()) == Some("rs") {
-                        self.get_file_description(path)
-                    } else {
-                        None
-                    };
+        for entry in walker.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                let relative_path = path
+                    .strip_prefix(&self.root_path)?
+                    .to_string_lossy()
+                    .into_owned();
+                let description = if path.extension().and_then(|s| s.to_str()) == Some("rs") {
+                    self.get_file_description(path)
+                } else {
+                    None
+                };
 
-                    structure.push(FileEntry {
-                        path: relative_path,
-                        description,
-                    });
-                }
+                structure.push(FileEntry {
+                    path: relative_path,
+                    description,
+                });
             }
         }
 
         let mut documentation_snippets = HashMap::new();
-        documentation_snippets.insert("architecture".to_string(), guides::ARCHITECTURE_GUIDE.to_string());
+        documentation_snippets.insert(
+            "architecture".to_string(),
+            guides::ARCHITECTURE_GUIDE.to_string(),
+        );
         documentation_snippets.insert("debugging".to_string(), guides::DEBUGGING_GUIDE.to_string());
-        
+
         // Add embedded workflows and prompts
-        documentation_snippets.insert("workflows/fixing-errors".to_string(), framework::FIXING_ERRORS_WORKFLOW.to_string());
-        documentation_snippets.insert("workflows/adding-features".to_string(), framework::ADDING_FEATURES_WORKFLOW.to_string());
-        documentation_snippets.insert("agent/index".to_string(), framework::AGENT_INDEX.to_string());
-        documentation_snippets.insert("agent/app-developer-prompt".to_string(), framework::APP_DEVELOPER_PROMPT.to_string());
-        documentation_snippets.insert("agent/framework-contributor-prompt".to_string(), framework::FRAMEWORK_CONTRIBUTOR_PROMPT.to_string());
+        documentation_snippets.insert(
+            "workflows/fixing-errors".to_string(),
+            framework::FIXING_ERRORS_WORKFLOW.to_string(),
+        );
+        documentation_snippets.insert(
+            "workflows/adding-features".to_string(),
+            framework::ADDING_FEATURES_WORKFLOW.to_string(),
+        );
+        documentation_snippets.insert(
+            "agent/index".to_string(),
+            framework::AGENT_INDEX.to_string(),
+        );
+        documentation_snippets.insert(
+            "agent/app-developer-prompt".to_string(),
+            framework::APP_DEVELOPER_PROMPT.to_string(),
+        );
+        documentation_snippets.insert(
+            "agent/framework-contributor-prompt".to_string(),
+            framework::FRAMEWORK_CONTRIBUTOR_PROMPT.to_string(),
+        );
 
         // Scan global docs directory
         let docs_dir = self.root_path.join("docs");
         if docs_dir.exists() {
             let walker = walkdir::WalkDir::new(&docs_dir).into_iter();
             for entry in walker.filter_map(|e| e.ok()) {
-                if entry.path().is_file() && entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
-                    if let Ok(relative_path) = entry.path().strip_prefix(&docs_dir) {
-                        let key = relative_path.to_string_lossy().to_string();
-                        if let Ok(content) = fs::read_to_string(entry.path()) {
-                            documentation_snippets.insert(format!("docs/{}", key), content);
-                        }
+                if entry.path().is_file()
+                    && entry.path().extension().and_then(|s| s.to_str()) == Some("md")
+                    && let Ok(relative_path) = entry.path().strip_prefix(&docs_dir)
+                {
+                    let key = relative_path.to_string_lossy().to_string();
+                    if let Ok(content) = fs::read_to_string(entry.path()) {
+                        documentation_snippets.insert(format!("docs/{}", key), content);
                     }
                 }
             }
@@ -782,48 +882,58 @@ impl AgentManager {
         // Discover packages and their invariants/internal docs
         let mut packages = Vec::new();
         let packages_dir = self.root_path.join("packages");
-        
+
         // Use embedded framework invariants as a base/fallback
         let framework_invariants = framework::get_framework_invariants();
 
-        if packages_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&packages_dir) {
-                for entry in entries.flatten() {
-                    if entry.path().is_dir() {
-                        let name = entry.file_name().to_string_lossy().to_string();
-                        let relative_path = entry.path().strip_prefix(&self.root_path)?.to_string_lossy().to_string();
-                        
-                        let pkg_docs_dir = entry.path().join("docs");
-                        let invariants_path = pkg_docs_dir.join("invariants.md");
-                        let invariants = if invariants_path.exists() {
-                            fs::read_to_string(invariants_path).ok()
-                        } else {
-                            // Fallback to embedded framework invariant if it matches a core package
-                            framework_invariants.get(name.as_str()).map(|s| s.to_string())
-                        };
+        if packages_dir.exists()
+            && let Ok(entries) = fs::read_dir(&packages_dir)
+        {
+            for entry in entries.flatten() {
+                if entry.path().is_dir() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let relative_path = entry
+                        .path()
+                        .strip_prefix(&self.root_path)?
+                        .to_string_lossy()
+                        .to_string();
 
-                        // Also scan for other package-specific docs
-                        if pkg_docs_dir.exists() {
-                            let walker = walkdir::WalkDir::new(&pkg_docs_dir).into_iter();
-                            for doc_entry in walker.filter_map(|e| e.ok()) {
-                                if doc_entry.path().is_file() && doc_entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
-                                    if let Ok(rel_doc_path) = doc_entry.path().strip_prefix(&pkg_docs_dir) {
-                                        let key = rel_doc_path.to_string_lossy().to_string();
-                                        if let Ok(content) = fs::read_to_string(doc_entry.path()) {
-                                            documentation_snippets.insert(format!("packages/{}/docs/{}", name, key), content);
-                                        }
-                                    }
+                    let pkg_docs_dir = entry.path().join("docs");
+                    let invariants_path = pkg_docs_dir.join("invariants.md");
+                    let invariants = if invariants_path.exists() {
+                        fs::read_to_string(invariants_path).ok()
+                    } else {
+                        // Fallback to embedded framework invariant if it matches a core package
+                        framework_invariants
+                            .get(name.as_str())
+                            .map(|s| s.to_string())
+                    };
+
+                    // Also scan for other package-specific docs
+                    if pkg_docs_dir.exists() {
+                        let walker = walkdir::WalkDir::new(&pkg_docs_dir).into_iter();
+                        for doc_entry in walker.filter_map(|e| e.ok()) {
+                            if doc_entry.path().is_file()
+                                && doc_entry.path().extension().and_then(|s| s.to_str())
+                                    == Some("md")
+                                && let Ok(rel_doc_path) =
+                                    doc_entry.path().strip_prefix(&pkg_docs_dir)
+                            {
+                                let key = rel_doc_path.to_string_lossy().to_string();
+                                if let Ok(content) = fs::read_to_string(doc_entry.path()) {
+                                    documentation_snippets
+                                        .insert(format!("packages/{}/docs/{}", name, key), content);
                                 }
                             }
                         }
-
-                        packages.push(PackageSummary {
-                            name,
-                            path: relative_path,
-                            invariants,
-                            description: None,
-                        });
                     }
+
+                    packages.push(PackageSummary {
+                        name,
+                        path: relative_path,
+                        invariants,
+                        description: None,
+                    });
                 }
             }
         }
@@ -849,7 +959,7 @@ impl AgentManager {
                     metadata: plate_spec.metadata,
                 });
             }
-            
+
             for (path, meta) in s.router.routes {
                 routes.push(RouteSummary {
                     path: path.clone(),
@@ -902,19 +1012,26 @@ impl AgentManager {
         for plate in &snapshot.plates {
             let mut visited = std::collections::HashSet::new();
             let mut stack = vec![(&plate.name, 0)];
-            
+
             while let Some((current_name, depth)) = stack.pop() {
-                if depth > 10 { // Limit depth to avoid infinite loops in complex cycles
-                    violations.push(format!("Potential deep dependency cycle involving plate '{}'.", plate.name));
+                if depth > 10 {
+                    // Limit depth to avoid infinite loops in complex cycles
+                    violations.push(format!(
+                        "Potential deep dependency cycle involving plate '{}'.",
+                        plate.name
+                    ));
                     break;
                 }
-                
+
                 if visited.contains(current_name) {
-                    violations.push(format!("Circular dependency detected involving plate '{}'.", current_name));
+                    violations.push(format!(
+                        "Circular dependency detected involving plate '{}'.",
+                        current_name
+                    ));
                     break;
                 }
                 visited.insert(current_name);
-                
+
                 if let Some(p) = snapshot.plates.iter().find(|p| &p.name == current_name) {
                     for dep in &p.dependencies {
                         stack.push((dep, depth + 1));
@@ -932,7 +1049,9 @@ impl AgentManager {
 
         // 4. Check for unified entry point
         if snapshot.agent_entry_point.is_none() {
-            violations.push("Project is missing a unified agent entry point (docs/agent/index.md).".to_string());
+            violations.push(
+                "Project is missing a unified agent entry point (docs/agent/index.md).".to_string(),
+            );
         }
 
         Ok(violations)

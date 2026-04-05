@@ -4,66 +4,9 @@
 
 extern crate proc_macro;
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, LitInt, parse_macro_input};
-use montrs_core::AgentError;
-use thiserror::Error;
-
-/// Errors that can occur during schema derivation or validation setup.
-#[derive(Error, Debug)]
-pub enum SchemaError {
-    #[error("Invalid struct type: {0}")]
-    InvalidStructType(String),
-    #[error("Missing field identifier: {0}")]
-    MissingFieldIdent(String),
-    #[error("Invalid regex pattern: {0}")]
-    InvalidRegexPattern(String),
-    #[error("Unsupported schema attribute: {0}")]
-    UnsupportedAttribute(String),
-}
-
-impl AgentError for SchemaError {
-    fn error_code(&self) -> &'static str {
-        match self {
-            SchemaError::InvalidStructType(_) => "SCHEMA_INVALID_STRUCT_TYPE",
-            SchemaError::MissingFieldIdent(_) => "SCHEMA_MISSING_FIELD_IDENT",
-            SchemaError::InvalidRegexPattern(_) => "SCHEMA_INVALID_REGEX_PATTERN",
-            SchemaError::UnsupportedAttribute(_) => "SCHEMA_UNSUPPORTED_ATTRIBUTE",
-        }
-    }
-
-    fn explanation(&self) -> String {
-        match self {
-            SchemaError::InvalidStructType(t) => format!("The struct type '{}' is not supported for schema derivation. Only named-field structs are allowed.", t),
-            SchemaError::MissingFieldIdent(f) => format!("The field '{}' is missing an identifier. Only named fields are allowed for schema derivation.", f),
-            SchemaError::InvalidRegexPattern(p) => format!("The regex pattern '{}' is invalid. Please provide a valid regex pattern.", p),
-            SchemaError::UnsupportedAttribute(a) => format!("The schema attribute '{}' is not supported. Supported attributes are min_len, email, regex, custom.", a),
-        }
-    }
-
-    fn suggested_fixes(&self) -> Vec<String> {
-        match self {
-            SchemaError::InvalidStructType(_) => vec![
-                "Use a struct with named fields for schema derivation.".to_string(),
-            ],
-            SchemaError::MissingFieldIdent(_) => vec![
-                "Use named fields for schema derivation.".to_string(),
-            ],
-            SchemaError::InvalidRegexPattern(_) => vec![
-                "Provide a valid regex pattern.".to_string(),
-                "Check the regex pattern for syntax errors.".to_string(),
-            ],
-            SchemaError::UnsupportedAttribute(_) => vec![
-                "Use only supported schema attributes (min_len, email, regex, custom).".to_string(),
-                "Check the schema attribute documentation for valid options.".to_string(),
-            ],
-        }
-    }
-
-    fn subsystem(&self) -> &'static str {
-        "schema"
-    }
-}
 
 /// Procedural macro to derive validation logic for a struct.
 /// Supported attributes:
@@ -74,6 +17,13 @@ impl AgentError for SchemaError {
 #[proc_macro_derive(Schema, attributes(schema))]
 pub fn derive_schema(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
+    match derive_schema_inner(input) {
+        Ok(ts) => ts.into(),
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
+fn derive_schema_inner(input: DeriveInput) -> syn::Result<TokenStream2> {
     let name = input.ident;
 
     let mut all_field_validations = Vec::new();
@@ -92,7 +42,7 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
             // Iterate over attributes on each field.
             for attr in f.attrs {
                 if attr.path().is_ident("schema") {
-                    let _ = attr.parse_nested_meta(|meta| {
+                    attr.parse_nested_meta(|meta| {
                         if meta.path.is_ident("min_len") {
                             let value = meta.value()?;
                             let lit: LitInt = value.parse()?;
@@ -157,7 +107,7 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
                             });
                         }
                         Ok(())
-                    });
+                    })?;
                 }
             }
         }
@@ -182,5 +132,5 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
         }
     };
 
-    TokenStream::from(expanded)
+    Ok(expanded)
 }

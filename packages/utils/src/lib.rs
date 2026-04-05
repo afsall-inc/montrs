@@ -30,7 +30,7 @@ pub fn to_snake_case(s: &str) -> String {
             res.push(c);
         }
     }
-    res.replace('-', "_").replace(' ', "_")
+    res.replace(['-', ' '], "_")
 }
 
 /// Converts a string to kebab-case.

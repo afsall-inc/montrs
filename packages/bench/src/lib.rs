@@ -54,8 +54,13 @@ impl AgentError for BenchError {
             BenchError::Setup(e) => format!("The benchmark setup phase failed: {}.", e),
             BenchError::Run(e) => format!("The benchmark execution phase failed: {}.", e),
             BenchError::Teardown(e) => format!("The benchmark teardown phase failed: {}.", e),
-            BenchError::Io(e) => format!("An I/O error occurred while writing the benchmark report: {}.", e),
-            BenchError::Serialization(e) => format!("Failed to serialize the benchmark report: {}.", e),
+            BenchError::Io(e) => format!(
+                "An I/O error occurred while writing the benchmark report: {}.",
+                e
+            ),
+            BenchError::Serialization(e) => {
+                format!("Failed to serialize the benchmark report: {}.", e)
+            }
         }
     }
 
@@ -69,15 +74,15 @@ impl AgentError for BenchError {
                 "Debug the workload code for logic errors.".to_string(),
                 "Check for race conditions if the benchmark is multi-threaded.".to_string(),
             ],
-            BenchError::Teardown(_) => vec![
-                "Check the teardown code for resource cleanup errors.".to_string(),
-            ],
-            BenchError::Io(_) => vec![
-                "Verify that the output directory exists and is writable.".to_string(),
-            ],
-            BenchError::Serialization(_) => vec![
-                "Ensure that all data in the report is serializable to JSON.".to_string(),
-            ],
+            BenchError::Teardown(_) => {
+                vec!["Check the teardown code for resource cleanup errors.".to_string()]
+            }
+            BenchError::Io(_) => {
+                vec!["Verify that the output directory exists and is writable.".to_string()]
+            }
+            BenchError::Serialization(_) => {
+                vec!["Ensure that all data in the report is serializable to JSON.".to_string()]
+            }
         }
     }
 

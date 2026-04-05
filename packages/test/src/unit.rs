@@ -55,6 +55,7 @@ impl<T> Expectation<T> {
     /// use montrs_test::unit::expect;
     /// expect(1).not().to_equal(2);
     /// ```
+    #[allow(clippy::should_implement_trait)]
     pub fn not(mut self) -> Self {
         self.negated = !self.negated;
         self
@@ -66,10 +67,7 @@ impl<T: Debug + PartialEq> Expectation<T> {
     pub fn to_equal(&self, other: T) {
         if self.negated {
             if self.value == other {
-                panic!(
-                    "Expected value NOT to equal {:?}, but it did.",
-                    other
-                );
+                panic!("Expected value NOT to equal {:?}, but it did.", other);
             }
         } else if self.value != other {
             panic!(
@@ -83,10 +81,13 @@ impl<T: Debug + PartialEq> Expectation<T> {
     /// Alias for `.not().to_equal()`.
     pub fn to_not_equal(&self, other: T) {
         if self.negated {
-             // double negation -> assert equal
-             if self.value != other {
-                panic!("Expected value to equal {:?}, but found {:?}.", other, self.value);
-             }
+            // double negation -> assert equal
+            if self.value != other {
+                panic!(
+                    "Expected value to equal {:?}, but found {:?}.",
+                    other, self.value
+                );
+            }
         } else if self.value == other {
             panic!("Expected value NOT to equal {:?}, but it did.", other);
         }
@@ -114,21 +115,21 @@ impl Expectation<bool> {
 impl<T: Debug, E: Debug> Expectation<Result<T, E>> {
     pub fn to_be_ok(&self) {
         if self.negated {
-            if self.value.is_ok() {
-                panic!("Expected Err, but found Ok({:?})", self.value.as_ref().unwrap());
+            if let Ok(v) = &self.value {
+                panic!("Expected Err, but found Ok({:?})", v);
             }
-        } else if self.value.is_err() {
-            panic!("Expected Ok, but found Err({:?})", self.value.as_ref().err().unwrap());
+        } else if let Err(e) = &self.value {
+            panic!("Expected Ok, but found Err({:?})", e);
         }
     }
 
     pub fn to_be_err(&self) {
         if self.negated {
-            if self.value.is_err() {
-                panic!("Expected Ok, but found Err({:?})", self.value.as_ref().err().unwrap());
+            if let Err(e) = &self.value {
+                panic!("Expected Ok, but found Err({:?})", e);
             }
-        } else if self.value.is_ok() {
-            panic!("Expected Err, but found Ok({:?})", self.value.as_ref().unwrap());
+        } else if let Ok(v) = &self.value {
+            panic!("Expected Err, but found Ok({:?})", v);
         }
     }
 }
@@ -136,8 +137,8 @@ impl<T: Debug, E: Debug> Expectation<Result<T, E>> {
 impl<T: Debug> Expectation<Option<T>> {
     pub fn to_be_some(&self) {
         if self.negated {
-            if self.value.is_some() {
-                panic!("Expected None, but found Some({:?})", self.value.as_ref().unwrap());
+            if let Some(v) = &self.value {
+                panic!("Expected None, but found Some({:?})", v);
             }
         } else if self.value.is_none() {
             panic!("Expected Some, but found None");
@@ -150,7 +151,10 @@ impl<T: Debug> Expectation<Option<T>> {
                 panic!("Expected Some, but found None");
             }
         } else if self.value.is_some() {
-            panic!("Expected None, but found Some({:?})", self.value.as_ref().unwrap());
+            panic!(
+                "Expected None, but found Some({:?})",
+                self.value.as_ref().unwrap()
+            );
         }
     }
 }
@@ -159,7 +163,10 @@ impl<T: Debug + PartialOrd> Expectation<T> {
     pub fn to_be_greater_than(&self, other: T) {
         if self.negated {
             if self.value > other {
-                panic!("Expected {:?} NOT to be greater than {:?}", self.value, other);
+                panic!(
+                    "Expected {:?} NOT to be greater than {:?}",
+                    self.value, other
+                );
             }
         } else if self.value <= other {
             panic!("Expected {:?} to be greater than {:?}", self.value, other);
@@ -188,14 +195,18 @@ impl<T: Debug + PartialEq> Expectation<Vec<T>> {
             panic!("Expected list to contain {:?}, but it did not.", item);
         }
     }
-    
+
     pub fn to_have_length(&self, length: usize) {
         if self.negated {
             if self.value.len() == length {
                 panic!("Expected list NOT to have length {}, but it did.", length);
             }
         } else if self.value.len() != length {
-             panic!("Expected list to have length {}, but found {}.", length, self.value.len());
+            panic!(
+                "Expected list to have length {}, but found {}.",
+                length,
+                self.value.len()
+            );
         }
     }
 }
@@ -277,8 +288,9 @@ impl<Args: Clone + Send, Ret: Clone + Send> Mock<Args, Ret> {
         self.return_value.lock().unwrap().clone()
     }
 
-    pub fn called_with(&self, args: &Args) -> bool 
-    where Args: PartialEq 
+    pub fn called_with(&self, args: &Args) -> bool
+    where
+        Args: PartialEq,
     {
         self.calls.lock().unwrap().contains(args)
     }
@@ -292,9 +304,9 @@ impl<Args: Clone + Send, Ret: Clone + Send> Mock<Args, Ret> {
 //  Benchmarking
 // =============================================================================
 
-pub use montrs_bench::{Benchmark, BenchConfig};
+pub use montrs_bench::{BenchConfig, Benchmark};
 
-// Re-export old simple bench for backward compatibility if needed, 
+// Re-export old simple bench for backward compatibility if needed,
 // or deprecate it. For now, we assume the user wants the new power.
 // We can wrap montrs-bench here if we want a simpler API surface.
 
@@ -306,13 +318,15 @@ where
     F: Fn() -> Fut + Send + Sync + 'static,
     Fut: std::future::Future<Output = ()> + Send + 'static,
 {
-    use montrs_bench::{BenchRunner, SimpleBench, BenchConfig};
-    
-    let mut config = BenchConfig::default();
-    config.iterations = iterations;
+    use montrs_bench::{BenchConfig, BenchRunner, SimpleBench};
+
+    let config = BenchConfig {
+        iterations,
+        ..Default::default()
+    };
 
     let mut runner = BenchRunner::with_config(config);
-    
+
     let bench = SimpleBench::new(name, move || {
         let f = func();
         async move {
@@ -322,7 +336,7 @@ where
     });
 
     runner.add(bench);
-    
+
     if let Err(e) = runner.run().await {
         eprintln!("Benchmark failed: {}", e);
     }

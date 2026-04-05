@@ -22,10 +22,10 @@
 //! // let runtime = TestRuntime::new(spec);
 //! ```
 
-use montrs_core::{AppConfig, AppSpec};
 use async_trait::async_trait;
-use montrs_core::env::EnvError;
 use montrs_core::EnvConfig;
+use montrs_core::env::EnvError;
+use montrs_core::{AppConfig, AppSpec};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -181,9 +181,9 @@ where
     Fut: std::future::Future<Output = anyhow::Result<()>> + Send,
 {
     let mut context = fixture.setup().await?;
-    
+
     let result = test(&mut context).await;
-    
+
     // Always run teardown
     let teardown_result = fixture.teardown(&mut context).await;
 

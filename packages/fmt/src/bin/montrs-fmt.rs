@@ -21,7 +21,7 @@ struct Args {
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    
+
     // Load settings using the Cascade of Truth
     let settings = FormatterSettings::load();
 
@@ -36,7 +36,7 @@ fn main() -> anyhow::Result<()> {
             for entry in WalkDir::new(input_path)
                 .into_iter()
                 .filter_map(|e| e.ok())
-                .filter(|e| e.path().extension().map_or(false, |ext| ext == "rs"))
+                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 if format_one_file(entry.path(), &settings, args.check, args.verbose)? {
                     exit_code = 1;
