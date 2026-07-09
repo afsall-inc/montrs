@@ -18,4 +18,4 @@ run = "cargo run --package montrs-cli -- serve"
 
 [tasks.ci]
 description = "Run all CI checks"
-depends_on = ["fmt", "clippy", "test"]
+depends = ["fmt", "clippy", "test"]

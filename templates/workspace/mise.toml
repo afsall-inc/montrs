@@ -14,4 +14,4 @@ lint = "cargo clippy --workspace -- -D warnings"
 
 [tasks.ci]
 description = "Run all CI checks"
-depends_on = ["fmt", "lint", "test"]
+depends = ["fmt", "lint", "test"]
