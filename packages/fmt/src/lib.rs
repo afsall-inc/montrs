@@ -32,14 +32,13 @@ impl AgentError for FormatError {
     fn explanation(&self) -> String {
         match self {
             FormatError::Parse(e) => {
-                format!("Failed to parse Rust source code: {}.", e)
+                format!("Failed to parse Rust source code: {e}.")
             }
             FormatError::Io(e) => {
-                format!("An I/O error occurred during formatting: {}.", e)
+                format!("An I/O error occurred during formatting: {e}.")
             }
             FormatError::Macro(e) => format!(
-                "An error occurred while formatting a MontRS macro: {}.",
-                e
+                "An error occurred while formatting a MontRS macro: {e}.",
             ),
         }
     }
@@ -144,13 +143,12 @@ fn normalize_scaffold_headers(source: &str) -> String {
     for line in lines.iter_mut().take(3) {
         if line.contains("MontRS")
             && (line.contains("Sketch") || line.contains("Blueprint"))
+            && !line.starts_with("//!")
         {
-            if !line.starts_with("//!") {
-                *line = format!(
-                    "//! {}",
-                    line.trim_start_matches(|c: char| !c.is_alphabetic())
-                );
-            }
+            *line = format!(
+                "//! {}",
+                line.trim_start_matches(|c: char| !c.is_alphabetic())
+            );
         }
     }
 

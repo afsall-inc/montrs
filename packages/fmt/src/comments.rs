@@ -30,75 +30,72 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
         }
         col += 1;
 
-        if c == '/' {
-            if let Some(&(_, next_c)) = chars.peek() {
-                if next_c == '/' {
-                    // Line comment
-                    let start = LineColumn {
-                        line,
-                        column: col - 1,
-                    };
-                    let mut text = String::from("//");
-                    chars.next(); // consume second /
-                    col += 1;
+        if c == '/'
+            && let Some(&(_, next_c)) = chars.peek()
+        {
+            if next_c == '/' {
+                // Line comment
+                let start = LineColumn {
+                    line,
+                    column: col - 1,
+                };
+                let mut text = String::from("//");
+                chars.next(); // consume second /
+                col += 1;
 
-                    while let Some((_, c)) = chars.next() {
-                        text.push(c);
-                        if c == '\n' {
-                            line += 1;
-                            col = 0;
-                            break;
-                        }
+                for (_, c) in chars.by_ref() {
+                    text.push(c);
+                    if c == '\n' {
+                        line += 1;
+                        col = 0;
+                        break;
+                    }
+                    col += 1;
+                }
+                let end = LineColumn { line, column: col };
+                comments.push(Comment {
+                    is_doc: text.starts_with("///") || text.starts_with("//!"),
+                    is_agent_tool: text.contains("@agent-tool"),
+                    text,
+                    start,
+                    end,
+                });
+            } else if next_c == '*' {
+                // Block comment
+                let start = LineColumn {
+                    line,
+                    column: col - 1,
+                };
+                let mut text = String::from("/*");
+                chars.next(); // consume *
+                col += 1;
+
+                while let Some((_, c)) = chars.next() {
+                    text.push(c);
+                    if c == '\n' {
+                        line += 1;
+                        col = 0;
+                    } else {
                         col += 1;
                     }
-                    let end = LineColumn { line, column: col };
-                    comments.push(Comment {
-                        is_doc: text.starts_with("///")
-                            || text.starts_with("//!"),
-                        is_agent_tool: text.contains("@agent-tool"),
-                        text,
-                        start,
-                        end,
-                    });
-                } else if next_c == '*' {
-                    // Block comment
-                    let start = LineColumn {
-                        line,
-                        column: col - 1,
-                    };
-                    let mut text = String::from("/*");
-                    chars.next(); // consume *
-                    col += 1;
-
-                    while let Some((_, c)) = chars.next() {
-                        text.push(c);
-                        if c == '\n' {
-                            line += 1;
-                            col = 0;
-                        } else {
-                            col += 1;
-                        }
-                        if c == '*' {
-                            if let Some(&(_, next_c)) = chars.peek() {
-                                if next_c == '/' {
-                                    text.push('/');
-                                    chars.next();
-                                    col += 1;
-                                    break;
-                                }
-                            }
-                        }
+                    if c == '*'
+                        && let Some(&(_, next_c)) = chars.peek()
+                        && next_c == '/'
+                    {
+                        text.push('/');
+                        chars.next();
+                        col += 1;
+                        break;
                     }
-                    let end = LineColumn { line, column: col };
-                    comments.push(Comment {
-                        is_doc: text.starts_with("/**")
-                            || text.starts_with("/*!"),
-                        is_agent_tool: text.contains("@agent-tool"),
-                        text,
-                        start,
-                        end,
-                    });
                 }
+                let end = LineColumn { line, column: col };
+                comments.push(Comment {
+                    is_doc: text.starts_with("/**") || text.starts_with("/*!"),
+                    is_agent_tool: text.contains("@agent-tool"),
+                    text,
+                    start,
+                    end,
+                });
             }
         }
     }

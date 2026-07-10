@@ -96,7 +96,7 @@ impl MacroVisitor<'_> {
         let result = printer.result.trim_end();
 
         // Return only the contents of the braces, with the braces themselves
-        Ok(format!("{{\n{}\n}}", result))
+        Ok(format!("{{\n{result}\n}}"))
     }
 }
 
