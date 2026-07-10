@@ -38,12 +38,12 @@ impl AgentError for EnvError {
     fn explanation(&self) -> String {
         match self {
             EnvError::MissingKey(k) => format!(
-                "The application expected the environment variable '{k}' to be \
-                 set, but it was not found."
+                "The application expected the environment variable '{k}' to \
+                 be set, but it was not found."
             ),
             EnvError::InvalidType(k) => format!(
-                "The environment variable '{k}' was found, but its value could \
-                 not be parsed into the expected type."
+                "The environment variable '{k}' was found, but its value \
+                 could not be parsed into the expected type."
             ),
         }
     }
@@ -55,7 +55,10 @@ impl AgentError for EnvError {
                     "Set the '{k}' environment variable in your shell or .env \
                      file."
                 ),
-                format!("Check if '{k}' is correctly spelled in your configuration."),
+                format!(
+                    "Check if '{k}' is correctly spelled in your \
+                     configuration."
+                ),
             ],
             EnvError::InvalidType(k) => vec![format!(
                 "Ensure the value of '{k}' matches the expected format (e.g., \

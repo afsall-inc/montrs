@@ -98,26 +98,27 @@ impl AgentError for ValidatorError {
     fn explanation(&self) -> String {
         match self {
             ValidatorError::MinLength { field, min, actual } => format!(
-                "The field '{field}' has a length of {actual}, which is less than the \
-                 required minimum of {min}."
+                "The field '{field}' has a length of {actual}, which is less \
+                 than the required minimum of {min}."
             ),
             ValidatorError::MaxLength { field, max, actual } => format!(
-                "The field '{field}' has a length of {actual}, which exceeds the allowed \
-                 maximum of {max}."
+                "The field '{field}' has a length of {actual}, which exceeds \
+                 the allowed maximum of {max}."
             ),
             ValidatorError::Min { field, min, actual } => format!(
-                "The field '{field}' has a value of {actual}, which is less than the \
-                 required minimum of {min}."
+                "The field '{field}' has a value of {actual}, which is less \
+                 than the required minimum of {min}."
             ),
             ValidatorError::Max { field, max, actual } => format!(
-                "The field '{field}' has a value of {actual}, which exceeds the allowed \
-                 maximum of {max}."
+                "The field '{field}' has a value of {actual}, which exceeds \
+                 the allowed maximum of {max}."
             ),
             ValidatorError::InvalidEmail { field } => format!(
                 "The field '{field}' does not contain a valid email address."
             ),
             ValidatorError::RegexMismatch { field, pattern } => format!(
-                "The field '{field}' does not match the required pattern: {pattern}."
+                "The field '{field}' does not match the required pattern: \
+                 {pattern}."
             ),
             ValidatorError::Custom { field, message } => {
                 format!("Validation failed for field '{field}': {message}.")
@@ -127,15 +128,15 @@ impl AgentError for ValidatorError {
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
-            ValidatorError::MinLength { min, .. } => vec![format!(
-                "Provide a value with at least {min} characters."
-            )],
-            ValidatorError::MaxLength { max, .. } => vec![format!(
-                "Provide a value with at most {max} characters."
-            )],
-            ValidatorError::Min { min, .. } => vec![format!(
-                "Provide a value greater than or equal to {min}."
-            )],
+            ValidatorError::MinLength { min, .. } => {
+                vec![format!("Provide a value with at least {min} characters.")]
+            }
+            ValidatorError::MaxLength { max, .. } => {
+                vec![format!("Provide a value with at most {max} characters.")]
+            }
+            ValidatorError::Min { min, .. } => {
+                vec![format!("Provide a value greater than or equal to {min}.")]
+            }
             ValidatorError::Max { max, .. } => {
                 vec![format!("Provide a value less than or equal to {max}.")]
             }
