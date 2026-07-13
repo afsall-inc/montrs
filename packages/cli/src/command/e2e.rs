@@ -8,11 +8,14 @@
 //! It delegates the heavy lifting to `cargo-leptos` but ensures the
 //! MontRS configuration is correctly mapped.
 
-use crate::config::MontrsConfig;
-use crate::utils::run_cargo_leptos;
+use crate::{config::MontrsConfig, utils::run_cargo_leptos};
 
 /// Executes the E2E tests.
-pub async fn run(headless: bool, keep_alive: bool, browser: Option<String>) -> anyhow::Result<()> {
+pub async fn run(
+    headless: bool,
+    keep_alive: bool,
+    browser: Option<String>,
+) -> anyhow::Result<()> {
     let config = MontrsConfig::load()?;
 
     // Determine final configuration (CLI > Config > Default)

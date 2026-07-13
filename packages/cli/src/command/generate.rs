@@ -1,8 +1,7 @@
 use anyhow::{Result, anyhow};
 use console::style;
 use montrs_utils::{to_pascal_case, to_snake_case};
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 pub async fn plate(name: String) -> Result<()> {
     let name_pascal = to_pascal_case(&name);
@@ -60,7 +59,9 @@ impl<C: AppConfig> Plate<C> for {name_pascal}Plate {{
         style(file_path.display()).underlined()
     );
     println!(
-        "Next steps:\n  1. Add `pub mod {};` to `src/plates/mod.rs`\n  2. Register the plate in `src/main.rs` using `.with_plate(Box::new({}Plate))`",
+        "Next steps:\n  1. Add `pub mod {};` to `src/plates/mod.rs`\n  2. \
+         Register the plate in `src/main.rs` using \
+         `.with_plate(Box::new({}Plate))`",
         name_snake, name_pascal
     );
 
@@ -167,7 +168,8 @@ impl<C: AppConfig> Route<C> for {route_name_pascal}Route {{
         style(file_path.display()).underlined()
     );
     println!(
-        "Next steps:\n  1. Add `pub mod {};` to `src/plates/{}/mod.rs`\n  2. Register the route in `{}Plate::register_routes`",
+        "Next steps:\n  1. Add `pub mod {};` to `src/plates/{}/mod.rs`\n  2. \
+         Register the route in `{}Plate::register_routes`",
         if route_name.is_empty() {
             "index".to_string()
         } else {

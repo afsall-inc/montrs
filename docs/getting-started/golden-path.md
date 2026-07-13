@@ -2,14 +2,14 @@
 
 The "Golden Path" represents the most effective, idiomatic way to build applications with MontRS. Following these patterns ensures your app remains deterministic, testable, and agent-friendly.
 
-## 1. Start with the Schema
+## 1. Start with the Validator
 
-Before writing any logic, define the data shape. Use `#[derive(Schema)]` for all inputs and outputs.
+Before writing any logic, define the data shape. Use `#[derive(Validator)]` for all inputs and outputs.
 
 ```rust
-#[derive(Schema, Serialize, Deserialize)]
+#[derive(Validator, Serialize, Deserialize)]
 pub struct CreateTodoInput {
-    #[schema(min_len = 1)]
+    #[validator(min_len = 1)]
     pub title: String,
 }
 ```

@@ -1,8 +1,7 @@
 use anyhow::{Result, anyhow};
 use console::style;
 use montrs_utils::{to_pascal_case, to_snake_case};
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 pub async fn run(name: String, kind: String) -> Result<()> {
     println!(
@@ -24,7 +23,8 @@ pub async fn run(name: String, kind: String) -> Result<()> {
         }
     };
 
-    let file_name = format!("{}.sketch.rs", name.to_lowercase().replace(' ', "_"));
+    let file_name =
+        format!("{}.sketch.rs", name.to_lowercase().replace(' ', "_"));
     let file_path = Path::new(&file_name);
 
     if file_path.exists() {
@@ -39,7 +39,9 @@ pub async fn run(name: String, kind: String) -> Result<()> {
         style(file_path.display()).underlined()
     );
     println!(
-        "\nThis is a 'Scaffolded Explicit' sketch. You can edit it freely.\nRun `montrs expand {}` to convert it into a full project structure.",
+        "\nThis is a 'Scaffolded Explicit' sketch. You can edit it \
+         freely.\nRun `montrs expand {}` to convert it into a full project \
+         structure.",
         file_path.display()
     );
 

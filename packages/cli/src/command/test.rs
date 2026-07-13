@@ -5,8 +5,10 @@
 //! automated environment setup.
 
 use crate::config::MontrsConfig;
-use quick_xml::Writer;
-use quick_xml::events::{BytesDecl, BytesStart, Event};
+use quick_xml::{
+    Writer,
+    events::{BytesDecl, BytesStart, Event},
+};
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
@@ -85,53 +87,62 @@ pub async fn run(
 
     // Simple parser for cargo test json
     while let Some(line) = reader.next_line().await? {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line)
-            && let Some(type_field) = json.get("type").and_then(|v| v.as_str())
-        {
-            if type_field == "test" {
-                // Handle test event
-                let event = json.get("event").and_then(|v| v.as_str()).unwrap_or("");
-                let name = json
-                    .get("name")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("unknown");
+        #[allow(clippy::collapsible_if)]
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
+            if let Some(type_field) = json.get("type").and_then(|v| v.as_str())
+            {
+                if type_field == "test" {
+                    // Handle test event
+                    let event = json
+                        .get("event")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
+                    let name = json
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("unknown");
 
-                match event {
-                    "ok" => {
-                        current_suite.tests.push(TestCase {
-                            name: name.to_string(),
-                            status: TestStatus::Pass,
-                            message: None,
-                            duration: json
-                                .get("exec_time")
-                                .and_then(|v| v.as_f64())
-                                .unwrap_or(0.0),
-                        });
-                        println!("PASS: {}", name);
+                    match event {
+                        "ok" => {
+                            current_suite.tests.push(TestCase {
+                                name: name.to_string(),
+                                status: TestStatus::Pass,
+                                message: None,
+                                duration: json
+                                    .get("exec_time")
+                                    .and_then(|v| v.as_f64())
+                                    .unwrap_or(0.0),
+                            });
+                            println!("PASS: {}", name);
+                        }
+                        "failed" => {
+                            let stdout =
+                                json.get("stdout").and_then(|v| v.as_str());
+                            current_suite.tests.push(TestCase {
+                                name: name.to_string(),
+                                status: TestStatus::Fail,
+                                message: stdout.map(|s| s.to_string()),
+                                duration: 0.0,
+                            });
+                            println!("FAIL: {}", name);
+                        }
+                        _ => {}
                     }
-                    "failed" => {
-                        let stdout = json.get("stdout").and_then(|v| v.as_str());
-                        current_suite.tests.push(TestCase {
-                            name: name.to_string(),
-                            status: TestStatus::Fail,
-                            message: stdout.map(|s| s.to_string()),
-                            duration: 0.0,
-                        });
-                        println!("FAIL: {}", name);
+                } else if type_field == "suite" {
+                    let event = json
+                        .get("event")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("");
+                    if event == "started" {
+                        // New suite? cargo test often runs multiple binaries
+                        if !current_suite.tests.is_empty() {
+                            test_suites.push(current_suite);
+                            current_suite = TestSuite::default();
+                        }
+                        // Try to get suite name from artifact? hard with just stream
+                    } else if event == "ok" || event == "failed" {
+                        // Suite finished
                     }
-                    _ => {}
-                }
-            } else if type_field == "suite" {
-                let event = json.get("event").and_then(|v| v.as_str()).unwrap_or("");
-                if event == "started" {
-                    // New suite? cargo test often runs multiple binaries
-                    if !current_suite.tests.is_empty() {
-                        test_suites.push(current_suite);
-                        current_suite = TestSuite::default();
-                    }
-                    // Try to get suite name from artifact? hard with just stream
-                } else if event == "ok" || event == "failed" {
-                    // Suite finished
                 }
             }
         }
@@ -184,10 +195,18 @@ enum TestStatus {
 }
 
 /// Generates a JUnit XML report from the test results.
-fn generate_junit_report(suites: &[TestSuite], path: &str) -> anyhow::Result<()> {
-    let mut writer = Writer::new_with_indent(std::fs::File::create(path)?, b' ', 4);
+fn generate_junit_report(
+    suites: &[TestSuite],
+    path: &str,
+) -> anyhow::Result<()> {
+    let mut writer =
+        Writer::new_with_indent(std::fs::File::create(path)?, b' ', 4);
 
-    writer.write_event(Event::Decl(BytesDecl::new("1.0", Some("UTF-8"), None)))?;
+    writer.write_event(Event::Decl(BytesDecl::new(
+        "1.0",
+        Some("UTF-8"),
+        None,
+    )))?;
 
     let root = BytesStart::new("testsuites");
     writer.write_event(Event::Start(root.clone()))?;
@@ -221,7 +240,9 @@ fn generate_junit_report(suites: &[TestSuite], path: &str) -> anyhow::Result<()>
                 failure.push_attribute(("message", "Test failed"));
                 writer.write_event(Event::Start(failure.clone()))?;
                 if let Some(msg) = &test.message {
-                    writer.write_event(Event::Text(quick_xml::events::BytesText::new(msg)))?;
+                    writer.write_event(Event::Text(
+                        quick_xml::events::BytesText::new(msg),
+                    ))?;
                 }
                 writer.write_event(Event::End(failure.to_end()))?;
 

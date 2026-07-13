@@ -7,7 +7,10 @@ pub async fn run(include_docs: bool, format: String) -> Result<()> {
     Ok(())
 }
 
-pub async fn run_to_string(include_docs: bool, format: String) -> Result<String> {
+pub async fn run_to_string(
+    include_docs: bool,
+    format: String,
+) -> Result<String> {
     let cwd = std::env::current_dir()?;
     let manager = AgentManager::new(&cwd);
 
@@ -19,7 +22,8 @@ pub async fn run_to_string(include_docs: bool, format: String) -> Result<String>
     let mut snapshot = manager.generate_snapshot("unknown")?;
 
     // Try to load basic project info from Cargo.toml
-    if let Ok(cargo_toml_content) = std::fs::read_to_string(cwd.join("Cargo.toml"))
+    if let Ok(cargo_toml_content) =
+        std::fs::read_to_string(cwd.join("Cargo.toml"))
         && let Ok(value) = cargo_toml_content.parse::<toml::Value>()
     {
         if let Some(package) = value.get("package") {

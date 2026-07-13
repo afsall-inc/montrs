@@ -14,7 +14,7 @@ A trait-driven, async-first ORM layer for MontRS.
 
 ## 3. What it intentionally does NOT do
 - **Query DSL**: It does not force a complex, non-SQL DSL (like Diesel). It prefers clean SQL or simple builder patterns.
-- **Migration Management**: It does not handle complex schema migrations (use external tools like `sqlx-cli` or `sea-orm-cli` as recommended in our docs).
+- **Migration Management**: It does not handle complex database migrations (use external tools like `sqlx-cli` or `sea-orm-cli` as recommended in our docs).
 - **Auto-Caching**: It does not implement implicit query caching.
 
 ## 4. How it fits into the MontRS system
@@ -32,6 +32,6 @@ It provides the **persistence layer** for `Plate`s. It implements the traits def
 
 ## 7. Notes for Agents
 - **SQL Preference**: Prefer writing raw SQL queries using the provided backend execute methods over complex abstractions.
-- **Schema Discovery**: Read the struct definitions that implement `FromRow` to understand the database schema.
+- **Table Discovery**: Read the struct definitions that implement `FromRow` to understand the database structure.
 - **Error Mapping**: This package implements `AgentError` for `DbError`, providing specific codes for constraint violations, connection failures, etc.
 - **Constraints**: Assume all database operations are `async` and must be awaited within an `Action` or `Loader`.

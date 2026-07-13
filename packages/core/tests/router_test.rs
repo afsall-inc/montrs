@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use leptos::prelude::*;
 use montrs_core::{
-    AppConfig, EnvConfig, Route, RouteAction, RouteContext, RouteError, RouteLoader, RouteParams,
-    RouteView, Router,
+    AppConfig, EnvConfig, Route, RouteAction, RouteContext, RouteError,
+    RouteLoader, RouteParams, RouteView, Router,
 };
 use serde::{Deserialize, Serialize};
 
@@ -90,18 +90,19 @@ async fn test_router_registration_and_handling() {
 
     let config = TestConfig;
     let env = TestEnv;
-    let ctx = RouteContext {
+    let _ctx = RouteContext {
         config: &config,
         env: &env,
     };
 
-    let params = serde_json::json!({ "id": 123 });
+    let _params = serde_json::json!({ "id": 123 });
 
     // Test load
-    let load_res = router.spec().routes.get("/users/:id").unwrap();
+    let spec = router.spec();
+    let load_res = spec.routes.get("/users/:id").unwrap();
     assert_eq!(load_res.path, "/users/:id");
 
     // In a real scenario, we'd call handle_load on the RouteInfo, but it's internal.
     // However, we can verify the spec is correct.
-    assert_eq!(router.spec().routes.len(), 1);
+    assert_eq!(spec.routes.len(), 1);
 }

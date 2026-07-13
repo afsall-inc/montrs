@@ -9,9 +9,10 @@ members = [
     "packages/agent",
     "packages/montrs",
     "packages/orm",
-    "packages/schema",
+    "packages/validator",
     "packages/test",
     "packages/utils",
+    "packages/runner",
 ]
 
 [workspace.package]

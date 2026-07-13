@@ -4,7 +4,7 @@ inputs:
   toolchain:
     description: 'Rust toolchain version'
     required: true
-    default: 'stable'
+    default: 'nightly'
 runs:
   using: "composite"
   steps:

@@ -41,7 +41,7 @@ The MCP server (`montrs mcp serve`) allows agents to interact with the framework
 ## 📝 Best Practices for Agents
 
 -   **Refresh Often**: Always run `montrs spec` after significant structural changes.
--   **Trust the Metadata**: Use `description()` and `schema` info from `agent.json` instead of guessing function signatures.
+-   **Trust the Metadata**: Use `description()` and `validator` info from `agent.json` instead of guessing function signatures.
 -   **Incremental Fixes**: Use `agent check` after every file modification to catch regressions early.
 -   **Document Fixes**: When fixing an error, ensure your commit message or internal logs reference the Error ID (e.g., `ERR-AGENT-001`).
 

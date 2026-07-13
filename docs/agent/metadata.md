@@ -23,9 +23,9 @@ impl Loader for MyLoader {
 }
 ```
 
-## 🧬 Schema Definitions
+## 🧬 Validator Definitions
 
-Use `#[derive(Schema)]` on all input and output structs. This provides the agent with the exact data shape and validation rules required for interaction.
+Use `#[derive(Validator)]` on all input and output structs. This provides the agent with the exact data shape and validation rules required for interaction.
 
 ## 🔄 The Curation Process
 

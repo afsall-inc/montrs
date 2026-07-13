@@ -22,6 +22,7 @@
 //! ## Example
 //!
 //! ```rust
+//! use montrs_core::env::EnvConfig;
 //! use montrs_test::TestEnv;
 //!
 //! let env = TestEnv::new();
@@ -36,10 +37,9 @@ pub mod unit;
 pub mod e2e;
 
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
-pub use unit::{Mock, Spy, expect, simple_bench};
-
 use montrs_core::AgentError;
 use thiserror::Error;
+pub use unit::{Mock, Spy, expect, simple_bench};
 
 /// Errors that can occur during testing.
 #[derive(Error, Debug)]
@@ -69,38 +69,58 @@ impl AgentError for TestError {
 
     fn explanation(&self) -> String {
         match self {
-            TestError::Setup(e) => format!("A test fixture failed to set up: {}.", e),
-            TestError::Teardown(e) => format!("A test fixture failed to tear down: {}.", e),
-            TestError::E2e(e) => {
-                format!("An error occurred in the E2E driver (Playwright): {}.", e)
+            TestError::Setup(e) => {
+                format!("A test fixture failed to set up: {}.", e)
             }
-            TestError::Expectation(e) => format!("A test expectation was not met: {}.", e),
-            TestError::Io(e) => format!("An I/O error occurred during the test execution: {}.", e),
+            TestError::Teardown(e) => {
+                format!("A test fixture failed to tear down: {}.", e)
+            }
+            TestError::E2e(e) => format!(
+                "An error occurred in the E2E driver (Playwright): {}.",
+                e
+            ),
+            TestError::Expectation(e) => {
+                format!("A test expectation was not met: {}.", e)
+            }
+            TestError::Io(e) => format!(
+                "An I/O error occurred during the test execution: {}.",
+                e
+            ),
         }
     }
 
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
             TestError::Setup(_) => vec![
-                "Check the setup method of your fixture for errors.".to_string(),
-                "Ensure that any required external services (e.g., databases) are available."
+                "Check the setup method of your fixture for errors."
+                    .to_string(),
+                "Ensure that any required external services (e.g., databases) \
+                 are available."
                     .to_string(),
             ],
             TestError::Teardown(_) => vec![
-                "Check the teardown method of your fixture for errors.".to_string(),
-                "Ensure that resources are being properly released.".to_string(),
+                "Check the teardown method of your fixture for errors."
+                    .to_string(),
+                "Ensure that resources are being properly released."
+                    .to_string(),
             ],
             TestError::E2e(_) => vec![
-                "Verify that Playwright is correctly installed and configured.".to_string(),
-                "Check if the browser can be launched and the target URL is accessible."
+                "Verify that Playwright is correctly installed and configured."
+                    .to_string(),
+                "Check if the browser can be launched and the target URL is \
+                 accessible."
                     .to_string(),
             ],
             TestError::Expectation(_) => vec![
-                "Review the test logic and the actual vs. expected values.".to_string(),
-                "Debug the code being tested to find the cause of the discrepancy.".to_string(),
+                "Review the test logic and the actual vs. expected values."
+                    .to_string(),
+                "Debug the code being tested to find the cause of the \
+                 discrepancy."
+                    .to_string(),
             ],
             TestError::Io(_) => vec![
-                "Check if the file system is accessible and you have the necessary permissions."
+                "Check if the file system is accessible and you have the \
+                 necessary permissions."
                     .to_string(),
             ],
         }

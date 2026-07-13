@@ -22,13 +22,13 @@
 //! }
 //! ```
 
-use playwright::Playwright;
-use playwright::api::{Browser, BrowserContext, BrowserType, Page};
-use std::env;
-use std::time::Duration;
-
 // Re-export playwright so users don't need to add it separately if they don't want to
 pub use playwright;
+use playwright::{
+    Playwright,
+    api::{Browser, BrowserContext, BrowserType, Page},
+};
+use std::{env, time::Duration};
 
 /// Configuration for the E2E test session.
 ///
@@ -55,7 +55,10 @@ pub struct E2EConfig {
 impl Default for E2EConfig {
     fn default() -> Self {
         let base_url = env::var("MONTRS_SITE_URL")
-            .or_else(|_| env::var("LEPTOS_SITE_ADDR").map(|addr| format!("http://{}", addr)))
+            .or_else(|_| {
+                env::var("LEPTOS_SITE_ADDR")
+                    .map(|addr| format!("http://{}", addr))
+            })
             .unwrap_or_else(|_| "http://127.0.0.1:8080".to_string());
 
         Self {
@@ -64,7 +67,8 @@ impl Default for E2EConfig {
                 .unwrap_or(true),
             base_url,
             timeout: 30000,
-            browser: env::var("MONTRS_E2E_BROWSER").unwrap_or_else(|_| "chromium".to_string()),
+            browser: env::var("MONTRS_E2E_BROWSER")
+                .unwrap_or_else(|_| "chromium".to_string()),
         }
     }
 }
@@ -146,7 +150,10 @@ impl MontrsDriver {
     /// # Arguments
     ///
     /// * `plugin` - The plugin to execute.
-    pub async fn use_plugin<P: MontrsPlugin>(&self, plugin: P) -> anyhow::Result<&Self> {
+    pub async fn use_plugin<P: MontrsPlugin>(
+        &self,
+        plugin: P,
+    ) -> anyhow::Result<&Self> {
         plugin.on_init(self).await?;
         Ok(self)
     }
@@ -160,7 +167,8 @@ impl MontrsDriver {
     ///
     /// * `path` - The URL path or absolute URL.
     pub async fn goto(&self, path: &str) -> anyhow::Result<()> {
-        let url = if path.starts_with("http://") || path.starts_with("https://") {
+        let url = if path.starts_with("http://") || path.starts_with("https://")
+        {
             path.to_string()
         } else {
             // Ensure proper slash handling
@@ -220,7 +228,10 @@ pub mod assertions {
     ///
     /// * `page` - The Playwright Page object.
     /// * `text` - The text to search for in the title.
-    pub async fn assert_title_contains(page: &Page, text: &str) -> anyhow::Result<()> {
+    pub async fn assert_title_contains(
+        page: &Page,
+        text: &str,
+    ) -> anyhow::Result<()> {
         let title = page.title().await?;
         if !title.contains(text) {
             anyhow::bail!(
@@ -238,7 +249,10 @@ pub mod assertions {
     ///
     /// * `page` - The Playwright Page object.
     /// * `selector` - The CSS selector of the element.
-    pub async fn assert_element_exists(page: &Page, selector: &str) -> anyhow::Result<()> {
+    pub async fn assert_element_exists(
+        page: &Page,
+        selector: &str,
+    ) -> anyhow::Result<()> {
         match page.query_selector(selector).await? {
             Some(_) => Ok(()),
             None => anyhow::bail!("Element '{}' not found", selector),

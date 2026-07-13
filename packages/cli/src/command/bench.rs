@@ -8,10 +8,7 @@
 
 use anyhow::{Context, Result};
 use colored::Colorize;
-use std::fs;
-use std::path::Path;
-use std::process::Command;
-use std::time::Instant;
+use std::{fs, path::Path, process::Command, time::Instant};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn run(
@@ -27,7 +24,13 @@ pub async fn run(
     if simple {
         if let Some(target_path) = &target {
             // Handle explicit targets without cargo project overhead
-            return run_native_bench(target_path, iterations, warmup, generate_weights).await;
+            return run_native_bench(
+                target_path,
+                iterations,
+                warmup,
+                generate_weights,
+            )
+            .await;
         } else {
             anyhow::bail!("--simple mode requires a target file or directory.");
         }
@@ -66,18 +69,22 @@ async fn run_native_bench(
     println!("Size:   {:.2} MB ({} bytes)", size_mb, size_bytes);
 
     // 2. Identify Target Type
-    if path.is_dir() || path.file_name() == Some(std::ffi::OsStr::new("montrs.toml")) {
+    if path.is_dir()
+        || path.file_name() == Some(std::ffi::OsStr::new("montrs.toml"))
+    {
         // AppSpec or Application Directory
         println!("Type:   AppSpec / Application");
         println!("Action: Benchmarking internal config load speed...");
-        return bench_appspec_load(path, iterations, warmup, generate_weights).await;
+        return bench_appspec_load(path, iterations, warmup, generate_weights)
+            .await;
     }
 
     if path.extension().is_some_and(|e| e == "rs") {
         // Rust Source File
         println!("Type:   Rust Source");
         println!("Action: Compiling and benchmarking execution...");
-        return bench_rust_source(path, iterations, warmup, generate_weights).await;
+        return bench_rust_source(path, iterations, warmup, generate_weights)
+            .await;
     }
 
     // Assume Binary / Executable
@@ -95,8 +102,7 @@ async fn bench_appspec_load(
     warmup: u32,
     generate_weights: Option<String>,
 ) -> Result<()> {
-    use montrs_bench::report::Report;
-    use montrs_bench::stats::BenchStats;
+    use montrs_bench::{report::Report, stats::BenchStats};
 
     // Determine the montrs.toml path
     let config_path = if path.is_dir() {
@@ -178,9 +184,13 @@ async fn bench_rust_source(
 
     if !status.success() {
         println!(
-            "Standard compilation failed. If this file uses external crates (like montrs_bench),"
+            "Standard compilation failed. If this file uses external crates \
+             (like montrs_bench),"
         );
-        println!("please run `cargo bench` within a project, or compile it manually first.");
+        println!(
+            "please run `cargo bench` within a project, or compile it \
+             manually first."
+        );
         anyhow::bail!("Compilation failed");
     }
 
@@ -194,8 +204,7 @@ async fn bench_executable(
     warmup: u32,
     generate_weights: Option<String>,
 ) -> Result<()> {
-    use montrs_bench::report::Report;
-    use montrs_bench::stats::BenchStats;
+    use montrs_bench::{report::Report, stats::BenchStats};
 
     println!("Benchmarking execution speed...");
     // Warmup
@@ -227,7 +236,12 @@ async fn bench_executable(
     if let Some(weight_path) = generate_weights {
         let mut report = Report::new();
         let name = path.file_name().unwrap().to_string_lossy().to_string();
-        report.add_result(name, stats, iterations, total_duration.as_secs_f64());
+        report.add_result(
+            name,
+            stats,
+            iterations,
+            total_duration.as_secs_f64(),
+        );
         report.save_weights(&weight_path)?;
         println!("Weights generated at {}", weight_path.blue());
     }

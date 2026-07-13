@@ -196,9 +196,6 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: McpSubcommand,
     },
-    /// Test diagnostic output (Internal use only).
-    #[command(hide = true)]
-    TestError,
 }
 
 #[derive(Subcommand, Debug)]
@@ -226,6 +223,17 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         status: Option<String>,
     },
+    /// Manage agent rules and IDE integration.
+    Rules {
+        #[command(subcommand)]
+        subcommand: RulesSubcommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RulesSubcommand {
+    /// Scaffold IDE rules (.trae/rules and .cursorrules) for the current project.
+    Setup,
 }
 
 #[derive(Subcommand, Debug)]
@@ -319,44 +327,53 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             keep_alive,
             browser,
         } => command::e2e::run(headless, keep_alive, browser).await,
-        Commands::New { name, template } => command::new::run(name, template).await,
+        Commands::New { name, template } => {
+            command::new::run(name, template).await
+        }
         Commands::Run { task } => command::run::run(task).await,
         Commands::Tasks => command::run::list().await,
         Commands::Completions { shell } => {
             use clap::CommandFactory;
             let mut cmd = MontrsCli::command();
             let name = cmd.get_name().to_string();
-            clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+            clap_complete::generate(
+                shell,
+                &mut cmd,
+                name,
+                &mut std::io::stdout(),
+            );
             Ok(())
         }
         Commands::Spec {
             include_docs,
             format,
         } => command::spec::run(include_docs, format).await,
-        Commands::Sketch { name, kind } => command::sketch::run(name, kind).await,
+        Commands::Sketch { name, kind } => {
+            command::sketch::run(name, kind).await
+        }
         Commands::Expand { path } => command::expand::run(path).await,
         Commands::Upgrade => command::upgrade::run().await,
         Commands::Generate { subcommand } => match subcommand {
-            GenerateSubcommand::Plate { name } => command::generate::plate(name).await,
+            GenerateSubcommand::Plate { name } => {
+                command::generate::plate(name).await
+            }
             GenerateSubcommand::Route { path, plate } => {
                 command::generate::route(path, plate).await
             }
         },
-        Commands::Agent { subcommand } => match command::agent::run(subcommand).await {
-            Ok(output) => {
-                println!("{}", output);
-                Ok(())
+        Commands::Agent { subcommand } => {
+            match command::agent::run(subcommand).await {
+                Ok(output) => {
+                    println!("{}", output);
+                    Ok(())
+                }
+                Err(e) => {
+                    eprintln!("Error running agent command: {}", e);
+                    Err(e)
+                }
             }
-            Err(e) => {
-                eprintln!("Error running agent command: {}", e);
-                Err(e)
-            }
-        },
+        }
         Commands::Mcp { subcommand } => command::mcp::run(subcommand).await,
-        Commands::TestError => Err(error::CliError::Config(
-            "Simulated configuration error for testing diagnostics".to_string(),
-        )
-        .into()),
     }
 }
 
@@ -388,18 +405,22 @@ pub fn main_entry() {
         // Agent: Update tools and snapshot if we are in an existing project
         if args.len() > 1 && args[1] != "new" {
             // Check if we're in a MontRS project before doing agent work
-            if cwd.join("montrs.toml").exists() || cwd.join("Cargo.toml").exists() {
+            if cwd.join("montrs.toml").exists()
+                || cwd.join("Cargo.toml").exists()
+            {
                 if let Err(e) = agent_manager.write_tools_spec() {
                     eprintln!("Warning: Failed to update tools spec: {}", e);
                 }
 
                 match agent_manager.generate_snapshot(&app_name) {
                     Ok(snapshot) => {
-                        if let Err(e) = agent_manager.write_snapshot(&snapshot, "json") {
-                            eprintln!("Agent: Failed to write JSON snapshot: {}", e);
-                        }
-                        if let Err(e) = agent_manager.write_snapshot(&snapshot, "txt") {
-                            eprintln!("Agent: Failed to write TXT snapshot: {}", e);
+                        if let Err(e) =
+                            agent_manager.write_snapshot(&snapshot, "json")
+                        {
+                            eprintln!(
+                                "Agent: Failed to write JSON snapshot: {}",
+                                e
+                            );
                         }
                     }
                     Err(_) => {
@@ -433,10 +454,10 @@ pub fn main_entry() {
             // Try to find if it's a CliError or other AgentError
             if let Some(agent_err) = e.downcast_ref::<error::CliError>() {
                 eprintln!(
-                    "{} {}: {}",
-                    style("✘").red().bold(),
+                    "{}[{}]: {}",
+                    style("error").red().bold(),
                     style(agent_err.error_code()).yellow().bold(),
-                    agent_err
+                    style(agent_err).bold()
                 );
                 eprintln!(
                     "  {} {}",
@@ -446,7 +467,10 @@ pub fn main_entry() {
 
                 let fixes = agent_err.suggested_fixes();
                 if !fixes.is_empty() {
-                    eprintln!("  {} suggested fixes:", style("hint:").green().bold());
+                    eprintln!(
+                        "  {} suggested fixes:",
+                        style("hint:").green().bold()
+                    );
                     for fix in fixes {
                         eprintln!("    - {}", fix);
                     }
@@ -454,7 +478,10 @@ pub fn main_entry() {
 
                 let docs = agent_err.documentation_refs();
                 if !docs.is_empty() {
-                    eprintln!("  {} related rules:", style("rules:").magenta().bold());
+                    eprintln!(
+                        "  {} related framework rules:",
+                        style("rules:").magenta().bold()
+                    );
                     for doc in docs {
                         eprintln!("    - {}", style(doc).underlined());
                     }
@@ -481,9 +508,10 @@ pub fn main_entry() {
         if let Ok(cwd) = std::env::current_dir() {
             let agent_manager = montrs_agent::AgentManager::new(&cwd);
             let diff = agent_manager.generate_diff();
-            if let Err(err) = agent_manager
-                .auto_resolve_active_errors("Build/Command succeeded".to_string(), diff)
-            {
+            if let Err(err) = agent_manager.auto_resolve_active_errors(
+                "Build/Command succeeded".to_string(),
+                diff,
+            ) {
                 eprintln!("Agent: Failed to resolve active errors: {}", err);
             }
         }

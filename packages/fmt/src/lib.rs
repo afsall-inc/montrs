@@ -31,11 +31,15 @@ impl AgentError for FormatError {
 
     fn explanation(&self) -> String {
         match self {
-            FormatError::Parse(e) => format!("Failed to parse Rust source code: {}.", e),
-            FormatError::Io(e) => format!("An I/O error occurred during formatting: {}.", e),
-            FormatError::Macro(e) => {
-                format!("An error occurred while formatting a MontRS macro: {}.", e)
+            FormatError::Parse(e) => {
+                format!("Failed to parse Rust source code: {e}.")
             }
+            FormatError::Io(e) => {
+                format!("An I/O error occurred during formatting: {e}.")
+            }
+            FormatError::Macro(e) => format!(
+                "An error occurred while formatting a MontRS macro: {e}.",
+            ),
         }
     }
 
@@ -46,12 +50,16 @@ impl AgentError for FormatError {
                 "Ensure that all macros are properly closed.".to_string(),
             ],
             FormatError::Io(_) => vec![
-                "Verify that the file path is correct and accessible.".to_string(),
+                "Verify that the file path is correct and accessible."
+                    .to_string(),
                 "Check for file system permissions.".to_string(),
             ],
             FormatError::Macro(_) => vec![
-                "Check the syntax within the view! or other MontRS macros.".to_string(),
-                "Ensure that the macro contents follow the expected MontRS schema.".to_string(),
+                "Check the syntax within the view! or other MontRS macros."
+                    .to_string(),
+                "Ensure that the macro contents follow the expected MontRS \
+                 specification."
+                    .to_string(),
             ],
         }
     }
@@ -71,7 +79,10 @@ pub fn format_file(
 }
 
 /// Formats a Rust source string.
-pub fn format_source(source: &str, settings: &FormatterSettings) -> Result<String, FormatError> {
+pub fn format_source(
+    source: &str,
+    settings: &FormatterSettings,
+) -> Result<String, FormatError> {
     // 0. Normalize Scaffolded headers
     let source = normalize_scaffold_headers(source);
 
@@ -83,7 +94,12 @@ pub fn format_source(source: &str, settings: &FormatterSettings) -> Result<Strin
 
     // 3. Collect and format view! macros
     let mut edits = Vec::new();
-    macro_fmt::collect_and_format_macros(&file, &source_rope, settings, &mut edits)?;
+    macro_fmt::collect_and_format_macros(
+        &file,
+        &source_rope,
+        settings,
+        &mut edits,
+    )?;
 
     // 4. Format the file using prettyplease
     // Note: prettyplease will format the macros too, but we will overwrite them
@@ -110,13 +126,15 @@ pub fn format_source(source: &str, settings: &FormatterSettings) -> Result<Strin
     macro_fmt::apply_edits(&mut formatted_rope, formatted_edits);
 
     // 6. Re-insert comments
-    let final_source = comments::reinsert_comments(&formatted_rope.to_string(), comments);
+    let final_source =
+        comments::reinsert_comments(&formatted_rope.to_string(), comments);
 
     Ok(final_source)
 }
 
 fn normalize_scaffold_headers(source: &str) -> String {
-    let mut lines: Vec<String> = source.lines().map(|s| s.to_string()).collect();
+    let mut lines: Vec<String> =
+        source.lines().map(|s| s.to_string()).collect();
     if lines.is_empty() {
         return source.to_string();
     }
@@ -153,7 +171,8 @@ mod tests {
 
     #[test]
     fn test_format_with_comments() {
-        let source = "fn main() {\n    // A line comment\n    let x = 1; /* a block comment */\n}";
+        let source = "fn main() {\n    // A line comment\n    let x = 1; /* a \
+                      block comment */\n}";
         let settings = FormatterSettings::default();
         let formatted = format_source(source, &settings).unwrap();
         assert!(formatted.contains("// A line comment"));
@@ -162,8 +181,8 @@ mod tests {
 
     #[test]
     fn test_format_view_macro() {
-        let source =
-            "fn main() {\n    view! { <div class=\"test\"><span>\"Hello\"</span></div> };\n}";
+        let source = "fn main() {\n    view! { <div \
+                      class=\"test\"><span>\"Hello\"</span></div> };\n}";
         let settings = FormatterSettings::default();
         let formatted = format_source(source, &settings).unwrap();
         assert!(formatted.contains("<div class=\"test\">"));
@@ -176,7 +195,7 @@ mod tests {
         let source = "// MontRS Plate Sketch: Test\nfn main() {}";
         let settings = FormatterSettings::default();
         let formatted = format_source(source, &settings).unwrap();
-        assert!(formatted.contains("//! // MontRS Plate Sketch: Test"));
+        assert!(formatted.contains("//! MontRS Plate Sketch: Test"));
     }
 
     #[test]
@@ -185,6 +204,9 @@ mod tests {
         let settings = FormatterSettings::default();
         let formatted = format_source(source, &settings).unwrap();
         assert!(formatted.contains("@agent-tool"));
-        assert!(formatted.find("@agent-tool").unwrap() < formatted.find("fn main").unwrap());
+        assert!(
+            formatted.find("@agent-tool").unwrap()
+                < formatted.find("fn main").unwrap()
+        );
     }
 }

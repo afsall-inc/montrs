@@ -1,5 +1,5 @@
 //! todo-example: A comprehensive example demonstrating MontRS features.
-//! This application integrates signals, schema validation, and the ORM layer
+//! This application integrates signals, validator validation, and the ORM layer
 //! to build a simple but functional Todo management system.
 
 use leptos::prelude::*;
@@ -8,7 +8,7 @@ use montrs_core::{
     RouteLoader, RouteParams, RouteView, Router, Target,
 };
 use montrs_orm::{DbBackend, FromRow, SqliteBackend};
-use montrs_schema::Schema;
+use montrs_validator::Validator;
 use serde::{Deserialize, Serialize};
 
 // [REQUIRED] 1. Define the Application Error Type.
@@ -42,10 +42,10 @@ impl AppConfig for MyConfig {
     type Env = MyEnv;
 }
 
-// [OPTIONAL] 4. Data Models & Schema
-#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
+// [OPTIONAL] 4. Data Models & Validation
+#[derive(Debug, Clone, Serialize, Deserialize, Validator)]
 pub struct CreateTodo {
-    #[schema(min_len = 3)]
+    #[validator(min_len = 3)]
     pub title: String,
 }
 
@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
 
     println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());
 
-    // [EXPLICIT] Demonstrate Schema Validation
+    // [EXPLICIT] Demonstrate Validator Validation
     let valid_todo = CreateTodo {
         title: "Build with Leptos".to_string(),
     };

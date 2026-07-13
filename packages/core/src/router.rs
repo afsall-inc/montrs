@@ -7,18 +7,27 @@ use crate::AppConfig;
 use async_trait::async_trait;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 /// Trait for route parameters. Must be serializable and deserializable.
-pub trait RouteParams: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static {}
+pub trait RouteParams:
+    Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static
+{
+}
 
 /// Trait for data loading components. Loaders are responsible for fetching data
 /// for a specific route. They are read-only and idempotent.
 #[async_trait]
-pub trait RouteLoader<P: RouteParams, C: AppConfig>: Send + Sync + 'static {
+pub trait RouteLoader<P: RouteParams, C: AppConfig>:
+    Send + Sync + 'static
+{
     type Output: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static;
 
-    async fn load(&self, ctx: RouteContext<'_, C>, params: P) -> Result<Self::Output, RouteError>;
+    async fn load(
+        &self,
+        ctx: RouteContext<'_, C>,
+        params: P,
+    ) -> Result<Self::Output, RouteError>;
 
     /// Returns a description of what this loader fetches.
     fn description(&self) -> &'static str {
@@ -29,7 +38,9 @@ pub trait RouteLoader<P: RouteParams, C: AppConfig>: Send + Sync + 'static {
 /// Trait for data mutation components. Actions are responsible for handling
 /// state-changing operations (form submissions, API mutations).
 #[async_trait]
-pub trait RouteAction<P: RouteParams, C: AppConfig>: Send + Sync + 'static {
+pub trait RouteAction<P: RouteParams, C: AppConfig>:
+    Send + Sync + 'static
+{
     type Input: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static;
     type Output: Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static;
 
@@ -105,8 +116,9 @@ pub struct ActionResponse {
 }
 
 /// The Application Router which maintains the static route graph.
+#[derive(Clone)]
 pub struct Router<C: AppConfig> {
-    routes: HashMap<&'static str, Box<dyn RouteInfo<C>>>,
+    routes: HashMap<&'static str, Arc<dyn RouteInfo<C>>>,
 }
 
 /// Internal trait to erase the associated types of a Route for storage in the Router.
@@ -145,7 +157,8 @@ impl<C: AppConfig, R: Route<C>> RouteInfo<C> for R {
 
         let loader = self.loader();
         let output = loader.load(ctx, params).await?;
-        serde_json::to_value(output).map_err(|e| RouteError::InternalError(e.to_string()))
+        serde_json::to_value(output)
+            .map_err(|e| RouteError::InternalError(e.to_string()))
     }
 
     async fn handle_act(
@@ -156,12 +169,14 @@ impl<C: AppConfig, R: Route<C>> RouteInfo<C> for R {
     ) -> Result<serde_json::Value, RouteError> {
         let params: R::Params = serde_json::from_value(params)
             .map_err(|e| RouteError::ValidationFailed(e.to_string()))?;
-        let input: <R::Action as RouteAction<R::Params, C>>::Input = serde_json::from_value(input)
-            .map_err(|e| RouteError::ValidationFailed(e.to_string()))?;
+        let input: <R::Action as RouteAction<R::Params, C>>::Input =
+            serde_json::from_value(input)
+                .map_err(|e| RouteError::ValidationFailed(e.to_string()))?;
 
         let action = self.action();
         let output = action.act(ctx, params, input).await?;
-        serde_json::to_value(output).map_err(|e| RouteError::InternalError(e.to_string()))
+        serde_json::to_value(output)
+            .map_err(|e| RouteError::InternalError(e.to_string()))
     }
 
     fn render(&self) -> Box<dyn Fn() -> AnyView + Send + Sync> {
@@ -192,7 +207,7 @@ impl<C: AppConfig> Router<C> {
     }
 
     pub fn register<R: Route<C>>(&mut self, route: R) {
-        self.routes.insert(R::path(), Box::new(route));
+        self.routes.insert(R::path(), Arc::new(route));
     }
 
     pub fn spec(&self) -> RouterSpec {

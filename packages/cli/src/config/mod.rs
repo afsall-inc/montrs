@@ -7,6 +7,7 @@
 use anyhow::{Context, Result};
 use cargo_metadata::MetadataCommand;
 use montrs_fmt::FormatterSettings;
+pub use montrs_runner::TaskConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -60,7 +61,9 @@ pub struct ProjectConfig {
 }
 
 /// Tailwind CSS integration style.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default,
+)]
 pub enum TailwindStyle {
     /// Automatically detect style.
     #[default]
@@ -199,37 +202,20 @@ pub struct E2eConfig {
 }
 
 /// Configuration for custom tasks.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(untagged)]
-pub enum TaskConfig {
-    /// A simple command string.
-    Simple(String),
-    /// A detailed task definition.
-    Detailed {
-        /// The command to execute.
-        command: String,
-        /// Description of the task.
-        #[serde(default)]
-        description: Option<String>,
-        /// Category for grouping tasks.
-        #[serde(default)]
-        category: Option<String>,
-        /// List of dependent tasks to run before this one.
-        #[serde(default)]
-        dependencies: Vec<String>,
-        /// Environment variables to set for this task.
-        #[serde(default)]
-        env: HashMap<String, String>,
-    },
-}
-
+// Moved to montrs-tasks crate
 impl MontrsConfig {
     /// Loads configuration from a specific file.
     pub fn from_file(path: impl AsRef<std::path::Path>) -> Result<Self> {
-        let content = std::fs::read_to_string(path.as_ref())
-            .with_context(|| format!("Failed to read config file: {}", path.as_ref().display()))?;
-        let mut config: Self = toml::from_str(&content)
-            .with_context(|| format!("Failed to parse config file: {}", path.as_ref().display()))?;
+        let content =
+            std::fs::read_to_string(path.as_ref()).with_context(|| {
+                format!(
+                    "Failed to read config file: {}",
+                    path.as_ref().display()
+                )
+            })?;
+        let mut config: Self = toml::from_str(&content).with_context(|| {
+            format!("Failed to parse config file: {}", path.as_ref().display())
+        })?;
 
         // Try to resolve project name if it's default
         if config.project.name == "app"

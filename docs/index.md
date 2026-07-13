@@ -10,7 +10,7 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [The Golden Path](getting-started/golden-path.md) - Idiomatic MontRS development.
 - [Common Mistakes](guides/common-mistakes.md) - Avoid frequent pitfalls.
 - [Router](core/router.md) & [Plates](core/plates.md) - Understanding the Loader/Action pattern.
-- [Schema & Validation](core/schema.md) - Type-safe data handling.
+- [Validator & Validation](core/validator.md) - Input validation.
 - [ORM Layer](orm/index.md) - Working with databases.
 - [ORM Backends](orm/backends.md) - Supported databases.
 - [Testing](testing/index.md) - Writing deterministic tests.

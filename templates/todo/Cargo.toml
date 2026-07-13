@@ -8,7 +8,7 @@ members = ["e2e"]
 
 [dependencies]
 montrs-core = { path = "../../packages/core" }
-montrs-schema = { path = "../../packages/schema" }
+montrs-validator = { path = "../../packages/validator" }
 montrs-orm = { path = "../../packages/orm" }
 montrs-test = { path = "../../packages/test" }
 serde = { workspace = true }

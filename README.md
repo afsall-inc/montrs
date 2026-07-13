@@ -1,3 +1,5 @@
+بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+
 # MontRS: The Deterministic Full-Stack Rust Framework
 
 MontRS is a Rust-native, trait-driven framework for building cross-platform applications. It provides a unified, deterministic environment for web, desktop, and mobile, powered by the performance of Leptos and the safety of Rust's type system.
@@ -18,7 +20,7 @@ MontRS exists because building complex applications requires more than just a UI
 The "Golden Path" is the recommended workflow for building robust MontRS applications:
 
 1.  **Scaffold**: Start with `montrs new <app-name>` to get a pre-configured workspace.
-2.  **Define**: Use `#[derive(Schema)]` to define your data models and validation rules.
+2.  **Define**: Use `#[derive(Validator)]` to define your data models and validation rules.
 3.  **Implement**: Build features as `Plate`s. Define unified `Route`s that bundle your Loader, Action, and View.
 4.  **Verify**: Use the `TestRuntime` for in-process, deterministic testing of your entire application spec.
 5.  **Ship**: Deploy to your target (Web, Server, or Desktop) using `montrs build`.
@@ -39,9 +41,9 @@ The "Golden Path" is the recommended workflow for building robust MontRS applica
 ```rust
 use montrs::prelude::*;
 
-#[derive(Schema, Serialize, Deserialize)]
+#[derive(Validator, Serialize, Deserialize)]
 struct Greeting {
-    #[schema(min_len = 3)]
+    #[validator(min_len = 3)]
     name: String,
 }
 
@@ -102,7 +104,7 @@ impl Route<AppConfig> for HelloRoute {
 | [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
 | [agent](packages/agent/README.md) | Agent-first logic, snapshotting, and error tracking. |
 | [orm](packages/orm/README.md) | SQL-centric database abstraction. |
-| [schema](packages/schema/README.md) | Compile-time validation and data modeling. |
+| [validator](packages/validator/README.md) | Compile-time validation and data modeling. |
 | [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
 
 ---

@@ -1,7 +1,6 @@
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct TailwindToml {
@@ -19,8 +18,10 @@ pub struct MergeConfig {
 
 impl TailwindToml {
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = fs::read_to_string(path).context("Failed to read tailwind.toml")?;
-        let config: Self = toml::from_str(&content).context("Failed to parse tailwind.toml")?;
+        let content =
+            fs::read_to_string(path).context("Failed to read tailwind.toml")?;
+        let config: Self = toml::from_str(&content)
+            .context("Failed to parse tailwind.toml")?;
         Ok(config)
     }
 
@@ -44,7 +45,8 @@ impl TailwindToml {
         }
 
         format!(
-            "module.exports = {{\n  content: {},\n  theme: {},\n  plugins: [{}]\n}}",
+            "module.exports = {{\n  content: {},\n  theme: {},\n  plugins: \
+             [{}]\n}}",
             content, theme, plugins_js
         )
     }
@@ -72,7 +74,8 @@ pub fn ensure_tailwind_config(
         let js_content = config.to_js();
         let js_path = project_root.join("tailwind.config.js");
 
-        fs::write(&js_path, js_content).context("Failed to write tailwind.config.js")?;
+        fs::write(&js_path, js_content)
+            .context("Failed to write tailwind.config.js")?;
         return Ok(Some(js_path));
     }
     Ok(None)

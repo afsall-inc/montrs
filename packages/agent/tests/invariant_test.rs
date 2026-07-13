@@ -21,6 +21,13 @@ fn test_invariant_dependencies() {
             metadata: HashMap::new(),
         }],
         routes: Vec::new(),
+        packages: vec![montrs_agent::PackageSummary {
+            name: "test-pkg".to_string(),
+            path: "packages/test-pkg".to_string(),
+            invariants: Some("Must be fast".to_string()),
+            description: None,
+        }],
+        agent_entry_point: Some("docs/agent/index.md".to_string()),
         documentation_snippets: HashMap::new(),
     };
 
@@ -66,6 +73,13 @@ fn test_invariant_cycles() {
             },
         ],
         routes: Vec::new(),
+        packages: vec![montrs_agent::PackageSummary {
+            name: "test-pkg".to_string(),
+            path: "packages/test-pkg".to_string(),
+            invariants: Some("Must be fast".to_string()),
+            description: None,
+        }],
+        agent_entry_point: Some("docs/agent/index.md".to_string()),
         documentation_snippets: HashMap::new(),
     };
 

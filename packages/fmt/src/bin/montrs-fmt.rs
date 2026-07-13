@@ -29,7 +29,8 @@ fn main() -> anyhow::Result<()> {
 
     for input_path in &args.input {
         if input_path.is_file() {
-            if format_one_file(input_path, &settings, args.check, args.verbose)? {
+            if format_one_file(input_path, &settings, args.check, args.verbose)?
+            {
                 exit_code = 1;
             }
         } else {
@@ -38,7 +39,12 @@ fn main() -> anyhow::Result<()> {
                 .filter_map(|e| e.ok())
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
-                if format_one_file(entry.path(), &settings, args.check, args.verbose)? {
+                if format_one_file(
+                    entry.path(),
+                    &settings,
+                    args.check,
+                    args.verbose,
+                )? {
                     exit_code = 1;
                 }
             }

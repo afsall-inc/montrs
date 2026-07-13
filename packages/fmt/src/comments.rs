@@ -217,8 +217,14 @@ mod tests {
 }
 
 /// Helper to get text between two spans
-pub fn get_text_between_spans(source: &Rope, start: LineColumn, end: LineColumn) -> String {
-    if start.line > end.line || (start.line == end.line && start.column > end.column) {
+pub fn get_text_between_spans(
+    source: &Rope,
+    start: LineColumn,
+    end: LineColumn,
+) -> String {
+    if start.line > end.line
+        || (start.line == end.line && start.column > end.column)
+    {
         return String::new();
     }
 
@@ -239,7 +245,10 @@ pub fn get_text_between_spans(source: &Rope, start: LineColumn, end: LineColumn)
             };
 
             if start_col < line_str.len() {
-                result.push_str(&line_str[start_col..std::cmp::min(end_col, line_str.len())]);
+                result.push_str(
+                    &line_str
+                        [start_col..std::cmp::min(end_col, line_str.len())],
+                );
             }
             if line_idx < end.line - 1 {
                 result.push('\n');

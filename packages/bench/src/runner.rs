@@ -1,7 +1,6 @@
-use crate::BenchCase;
-use crate::config::BenchConfig;
-use crate::report::Report;
-use crate::stats::BenchStats;
+use crate::{
+    BenchCase, config::BenchConfig, report::Report, stats::BenchStats,
+};
 use colored::*;
 use std::time::Instant;
 
@@ -162,7 +161,8 @@ impl BenchRunner {
         if let Some(param) = &param_info {
             // Parametric mode: Iterate through parameter values
             let values = param.values();
-            let runs_per_val = std::cmp::max(1, self.config.iterations / values.len() as u32);
+            let runs_per_val =
+                std::cmp::max(1, self.config.iterations / values.len() as u32);
 
             println!(
                 "  Parameter: {} ({} values, {} runs/val)",

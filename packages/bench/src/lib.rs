@@ -14,14 +14,13 @@ pub mod sys;
 pub mod weights;
 
 pub use config::BenchConfig;
+use montrs_core::AgentError;
 pub use parameter::{Parameter, ParametricBench};
 pub use report::Report;
 pub use runner::{BenchRunner, Benchmark};
-pub use weights::Weight;
-
-use montrs_core::AgentError;
 use std::future::Future;
 use thiserror::Error;
+pub use weights::Weight;
 
 /// Errors that can occur during benchmarking.
 #[derive(Error, Debug)]
@@ -51,9 +50,15 @@ impl AgentError for BenchError {
 
     fn explanation(&self) -> String {
         match self {
-            BenchError::Setup(e) => format!("The benchmark setup phase failed: {}.", e),
-            BenchError::Run(e) => format!("The benchmark execution phase failed: {}.", e),
-            BenchError::Teardown(e) => format!("The benchmark teardown phase failed: {}.", e),
+            BenchError::Setup(e) => {
+                format!("The benchmark setup phase failed: {}.", e)
+            }
+            BenchError::Run(e) => {
+                format!("The benchmark execution phase failed: {}.", e)
+            }
+            BenchError::Teardown(e) => {
+                format!("The benchmark teardown phase failed: {}.", e)
+            }
             BenchError::Io(e) => format!(
                 "An I/O error occurred while writing the benchmark report: {}.",
                 e
@@ -67,22 +72,28 @@ impl AgentError for BenchError {
     fn suggested_fixes(&self) -> Vec<String> {
         match self {
             BenchError::Setup(_) => vec![
-                "Check the setup code for resource initialization errors.".to_string(),
-                "Ensure required environment variables or files are present.".to_string(),
+                "Check the setup code for resource initialization errors."
+                    .to_string(),
+                "Ensure required environment variables or files are present."
+                    .to_string(),
             ],
             BenchError::Run(_) => vec![
                 "Debug the workload code for logic errors.".to_string(),
-                "Check for race conditions if the benchmark is multi-threaded.".to_string(),
+                "Check for race conditions if the benchmark is multi-threaded."
+                    .to_string(),
             ],
-            BenchError::Teardown(_) => {
-                vec!["Check the teardown code for resource cleanup errors.".to_string()]
-            }
-            BenchError::Io(_) => {
-                vec!["Verify that the output directory exists and is writable.".to_string()]
-            }
-            BenchError::Serialization(_) => {
-                vec!["Ensure that all data in the report is serializable to JSON.".to_string()]
-            }
+            BenchError::Teardown(_) => vec![
+                "Check the teardown code for resource cleanup errors."
+                    .to_string(),
+            ],
+            BenchError::Io(_) => vec![
+                "Verify that the output directory exists and is writable."
+                    .to_string(),
+            ],
+            BenchError::Serialization(_) => vec![
+                "Ensure that all data in the report is serializable to JSON."
+                    .to_string(),
+            ],
         }
     }
 

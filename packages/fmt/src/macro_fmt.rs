@@ -3,8 +3,10 @@ use crop::Rope;
 use montrs_utils::to_kebab_case;
 use quote::ToTokens;
 use rstml::node::{Node, NodeAttribute, NodeElement};
-use syn::visit::{self, Visit};
-use syn::{File, Macro};
+use syn::{
+    File, Macro,
+    visit::{self, Visit},
+};
 
 #[derive(Debug)]
 pub struct MacroEdit {
@@ -80,7 +82,8 @@ impl MacroVisitor<'_> {
         let tokens = mac.tokens.clone();
 
         // rstml 0.12.x provides a top-level parse2 function
-        let nodes = rstml::parse2(tokens).map_err(|e| FormatError::Macro(e.to_string()))?;
+        let nodes = rstml::parse2(tokens)
+            .map_err(|e| FormatError::Macro(e.to_string()))?;
 
         let mut printer = RstmlPrinter {
             settings: self.settings,
@@ -93,7 +96,7 @@ impl MacroVisitor<'_> {
         let result = printer.result.trim_end();
 
         // Return only the contents of the braces, with the braces themselves
-        Ok(format!("{{\n{}\n}}", result))
+        Ok(format!("{{\n{result}\n}}"))
     }
 }
 
@@ -162,7 +165,8 @@ impl RstmlPrinter<'_> {
         }
 
         if el.children.is_empty()
-            && self.settings.view.closing_tag_style == crate::config::ClosingTagStyle::SelfClosing
+            && self.settings.view.closing_tag_style
+                == crate::config::ClosingTagStyle::SelfClosing
         {
             self.result.push_str(" />\n");
         } else {
@@ -210,8 +214,10 @@ pub fn apply_edits(source: &mut Rope, edits: Vec<MacroEdit>) {
     });
 
     for edit in sorted_edits {
-        let start_offset = line_col_to_byte_offset(source, edit.start_line, edit.start_col);
-        let end_offset = line_col_to_byte_offset(source, edit.end_line, edit.end_col);
+        let start_offset =
+            line_col_to_byte_offset(source, edit.start_line, edit.start_col);
+        let end_offset =
+            line_col_to_byte_offset(source, edit.end_line, edit.end_col);
 
         if let (Some(start), Some(end)) = (start_offset, end_offset) {
             source.replace(start..end, &edit.new_content);
@@ -219,7 +225,11 @@ pub fn apply_edits(source: &mut Rope, edits: Vec<MacroEdit>) {
     }
 }
 
-fn line_col_to_byte_offset(source: &Rope, line: usize, col: usize) -> Option<usize> {
+fn line_col_to_byte_offset(
+    source: &Rope,
+    line: usize,
+    col: usize,
+) -> Option<usize> {
     if line == 0 || line > source.line_len() {
         return None;
     }

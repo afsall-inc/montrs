@@ -60,10 +60,10 @@ Typically, you'll spend 90% of your time in `src/plates/`.
 
 Let's build a simple **Counter with Persistence**. We want a button that increments a number and saves it to a (simulated) database.
 
-### Step 1: Define the Schema
+### Step 1: Define the Validator
 In MontRS, we always start with the data shape.
 ```rust
-#[derive(Schema, Serialize, Deserialize)]
+#[derive(Validator, Serialize, Deserialize)]
 pub struct CounterState {
     pub count: i32,
 }
@@ -131,7 +131,7 @@ view! {
 In MontRS, data flows in a clear loop:
 
 1.  **UI** triggers an **Action**.
-2.  **Action** validates input via **Schema** and updates the **Database**.
+2.  **Action** validates input via **Validator** and updates the **Database**.
 3.  **Router** re-triggers the **Loader**.
 4.  **Loader** provides new data to the **Signals**.
 5.  **Signals** update the **UI** atomically.

@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 use montrs_core::{
-    Action, ActionCtx, ActionResponse, AppConfig, Loader, LoaderCtx, LoaderResponse,
+    ActionResponse, AppConfig, LoaderResponse, RouteAction, RouteContext,
+    RouteError, RouteLoader, RouteParams,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 struct TestConfig;
@@ -18,14 +20,21 @@ impl montrs_core::EnvConfig for TestEnv {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct EmptyParams;
+impl RouteParams for EmptyParams {}
+
 struct TestLoader;
 
 #[async_trait]
-impl Loader<TestConfig> for TestLoader {
-    async fn call(
+impl RouteLoader<EmptyParams, TestConfig> for TestLoader {
+    type Output = LoaderResponse;
+
+    async fn load(
         &self,
-        _ctx: LoaderCtx<TestConfig>,
-    ) -> Result<LoaderResponse, Box<dyn std::error::Error + Send + Sync>> {
+        _ctx: RouteContext<'_, TestConfig>,
+        _params: EmptyParams,
+    ) -> Result<Self::Output, RouteError> {
         Ok(LoaderResponse {
             data: serde_json::json!({}),
         })
@@ -39,12 +48,16 @@ impl Loader<TestConfig> for TestLoader {
 struct TestAction;
 
 #[async_trait]
-impl Action<TestConfig> for TestAction {
-    async fn call(
+impl RouteAction<EmptyParams, TestConfig> for TestAction {
+    type Input = serde_json::Value;
+    type Output = ActionResponse;
+
+    async fn act(
         &self,
-        _input: serde_json::Value,
-        _ctx: ActionCtx<TestConfig>,
-    ) -> Result<ActionResponse, Box<dyn std::error::Error + Send + Sync>> {
+        _ctx: RouteContext<'_, TestConfig>,
+        _params: EmptyParams,
+        _input: Self::Input,
+    ) -> Result<Self::Output, RouteError> {
         Ok(ActionResponse {
             data: serde_json::json!({}),
         })
@@ -53,4 +66,13 @@ impl Action<TestConfig> for TestAction {
     fn description(&self) -> &'static str {
         "A test action for discovery verification"
     }
+}
+
+#[tokio::test]
+async fn test_discovery_types_compile() {
+    let _loader = TestLoader;
+    let _action = TestAction;
+    let _params = EmptyParams;
+    let _config = TestConfig;
+    let _env = TestEnv;
 }

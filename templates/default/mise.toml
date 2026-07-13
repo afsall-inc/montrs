@@ -1,0 +1,17 @@
+[tools]
+rust = "1.84"
+
+[env]
+RUST_BACKTRACE = "1"
+MONTRS_LOG = "info"
+
+[tasks]
+build = "montrs build"
+dev = "montrs serve"
+test = "montrs test"
+fmt = "montrs fmt"
+lint = "cargo clippy --workspace -- -D warnings"
+
+[tasks.ci]
+description = "Run all CI checks"
+depends = ["fmt", "lint", "test"]

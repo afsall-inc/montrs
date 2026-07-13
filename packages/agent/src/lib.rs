@@ -1,9 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::PathBuf;
+use std::{collections::HashMap, fs, path::PathBuf};
 
 pub mod error_parser;
 pub mod framework;
@@ -49,12 +47,12 @@ pub struct RouteSummary {
     pub path: String,
     pub kind: String,
     pub description: String,
-    pub input_schema: Option<serde_json::Value>,
-    pub output_schema: Option<serde_json::Value>,
-    pub params_schema: Option<serde_json::Value>,
-    pub loader_output_schema: Option<serde_json::Value>,
-    pub action_input_schema: Option<serde_json::Value>,
-    pub action_output_schema: Option<serde_json::Value>,
+    pub input_validator: Option<serde_json::Value>,
+    pub output_validator: Option<serde_json::Value>,
+    pub params_validator: Option<serde_json::Value>,
+    pub loader_output_validator: Option<serde_json::Value>,
+    pub action_input_validator: Option<serde_json::Value>,
+    pub action_output_validator: Option<serde_json::Value>,
     pub metadata: HashMap<String, String>,
 }
 
@@ -140,8 +138,61 @@ impl AgentManager {
         self.agent_dir().join("errorfiles")
     }
 
+    /// Scaffolds IDE rules (.trae/rules and .cursorrules) for the project.
+    pub fn setup_ide_rules(&self) -> Result<String> {
+        println!("Setting up IDE rules in: {:?}", self.root_path);
+
+        // 1. Setup Trae (.trae/rules/)
+        let trae_dir = self.root_path.join(".trae").join("rules");
+        if !trae_dir.exists() {
+            println!("Creating Trae directory: {:?}", trae_dir);
+            fs::create_dir_all(&trae_dir)?;
+        }
+
+        fs::write(
+            trae_dir.join("app-developer.md"),
+            framework::APP_DEVELOPER_RULE,
+        )?;
+        fs::write(
+            trae_dir.join("framework-contributor.md"),
+            framework::FRAMEWORK_CONTRIBUTOR_RULE,
+        )?;
+
+        // 2. Setup Cursor (.cursorrules)
+        // Cursor uses a single root file. We default it to the App Developer prompt.
+        let cursorrules_path = self.root_path.join(".cursorrules");
+        println!("Writing .cursorrules to: {:?}", cursorrules_path);
+        fs::write(&cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
+
+        Ok("Successfully scaffolded .trae/rules/ and .cursorrules".to_string())
+    }
+
+    pub fn report_agent_error(
+        &self,
+        err: &dyn montrs_core::AgentError,
+    ) -> Result<String> {
+        let metadata = AgentErrorMetadata {
+            error_code: err.error_code().to_string(),
+            explanation: err.explanation(),
+            suggested_fixes: err.suggested_fixes(),
+            rustc_error: err.rustc_error(),
+            documentation_refs: err.documentation_refs(),
+        };
+
+        self.report_project_error(ProjectError {
+            package: None,
+            file: "unknown".to_string(),
+            line: 0,
+            column: 0,
+            message: err.to_string(),
+            code_context: "".to_string(),
+            level: "Error".to_string(),
+            agent_metadata: Some(metadata),
+        })
+    }
+
     pub fn tracking_file(&self) -> PathBuf {
-        self.agent_dir().join("error_tracking.json")
+        self.errorfiles_dir().join("error_tracking.json")
     }
 
     pub fn ensure_dir(&self) -> Result<()> {
@@ -156,7 +207,11 @@ impl AgentManager {
         Ok(())
     }
 
-    pub fn write_snapshot(&self, snapshot: &AgentSnapshot, format: &str) -> Result<()> {
+    pub fn write_snapshot(
+        &self,
+        snapshot: &AgentSnapshot,
+        format: &str,
+    ) -> Result<()> {
         self.ensure_dir()?;
         let content = match format {
             "yaml" => serde_yaml::to_string(snapshot)?,
@@ -176,13 +231,16 @@ impl AgentManager {
 
     pub fn write_error_record(&self, record: &ErrorRecord) -> Result<()> {
         self.ensure_dir()?;
-        let version_dir = self.errorfiles_dir().join(format!("v{}", record.version));
-        if !version_dir.exists() {
-            fs::create_dir_all(&version_dir)?;
+        let error_group_dir = self.errorfiles_dir().join(&record.id);
+        if !error_group_dir.exists() {
+            fs::create_dir_all(&error_group_dir)?;
         }
 
         let content = serde_json::to_string_pretty(record)?;
-        fs::write(version_dir.join(format!("{}.json", record.id)), content)?;
+        fs::write(
+            error_group_dir.join(format!("v{}.json", record.version)),
+            content,
+        )?;
 
         // Update consolidated tracking
         self.update_consolidated_tracking(record)?;
@@ -195,12 +253,16 @@ impl AgentManager {
         if path.exists() {
             let content = fs::read_to_string(&path)?;
             // Try new format first
-            if let Ok(tracking) = serde_json::from_str::<ErrorTracking>(&content) {
+            if let Ok(tracking) =
+                serde_json::from_str::<ErrorTracking>(&content)
+            {
                 return Ok(tracking);
             }
             // Fallback to manual parsing if needed or try to adapt legacy
-            if let Ok(value) = serde_json::from_str::<serde_json::Value>(&content)
-                && let Some(active_issues) = value.get("active_issues").and_then(|v| v.as_array())
+            if let Ok(value) =
+                serde_json::from_str::<serde_json::Value>(&content)
+                && let Some(active_issues) =
+                    value.get("active_issues").and_then(|v| v.as_array())
             {
                 let mut errors = Vec::new();
                 for issue in active_issues {
@@ -224,8 +286,15 @@ impl AgentManager {
                                 .and_then(|v| v.as_str())
                                 .unwrap_or("unknown")
                                 .to_string(),
-                            line: issue.get("line").and_then(|v| v.as_u64()).unwrap_or(0) as u32,
-                            column: issue.get("column").and_then(|v| v.as_u64()).unwrap_or(0)
+                            line: issue
+                                .get("line")
+                                .and_then(|v| v.as_u64())
+                                .unwrap_or(0)
+                                as u32,
+                            column: issue
+                                .get("column")
+                                .and_then(|v| v.as_u64())
+                                .unwrap_or(0)
                                 as u32,
                             level: issue
                                 .get("type")
@@ -279,7 +348,9 @@ impl AgentManager {
             timestamp: record.timestamp,
         };
 
-        if let Some(pos) = tracking.errors.iter().position(|e| e.id == record.id) {
+        if let Some(pos) =
+            tracking.errors.iter().position(|e| e.id == record.id)
+        {
             tracking.errors[pos] = consolidated;
         } else {
             tracking.errors.push(consolidated);
@@ -289,7 +360,10 @@ impl AgentManager {
     }
 
     /// Reports a new error to the agent, creating or updating errorfile.json.
-    pub fn report_project_error(&self, mut error: ProjectError) -> Result<String> {
+    pub fn report_project_error(
+        &self,
+        mut error: ProjectError,
+    ) -> Result<String> {
         // Try to determine package from file path if not provided
         if error.package.is_none()
             && error.file != "unknown"
@@ -333,9 +407,11 @@ impl AgentManager {
         for entry in fs::read_dir(error_dir)?.flatten() {
             if entry.path().is_dir() {
                 for file in fs::read_dir(entry.path())?.flatten() {
-                    if file.path().extension().and_then(|s| s.to_str()) == Some("json")
+                    if file.path().extension().and_then(|s| s.to_str())
+                        == Some("json")
                         && let Ok(content) = fs::read_to_string(file.path())
-                        && let Ok(record) = serde_json::from_str::<ErrorRecord>(&content)
+                        && let Ok(record) =
+                            serde_json::from_str::<ErrorRecord>(&content)
                         && let ErrorStatus::Active = record.status
                     {
                         active.push(record);
@@ -358,27 +434,6 @@ impl AgentManager {
             agent_metadata: None,
         })?;
         Ok(())
-    }
-
-    pub fn report_agent_error(&self, err: &dyn montrs_core::AgentError) -> Result<String> {
-        let metadata = AgentErrorMetadata {
-            error_code: err.error_code().to_string(),
-            explanation: err.explanation(),
-            suggested_fixes: err.suggested_fixes(),
-            rustc_error: err.rustc_error(),
-            documentation_refs: err.documentation_refs(),
-        };
-
-        self.report_project_error(ProjectError {
-            package: None,
-            file: "unknown".to_string(),
-            line: 0,
-            column: 0,
-            message: err.to_string(),
-            code_context: "".to_string(),
-            level: "Error".to_string(),
-            agent_metadata: Some(metadata),
-        })
     }
 
     fn determine_package(&self, file_path: &str) -> Option<String> {
@@ -422,19 +477,30 @@ impl AgentManager {
     ) -> Result<()> {
         let walker = walkdir::WalkDir::new(self.errorfiles_dir()).into_iter();
         for entry in walker.filter_map(|e| e.ok()) {
-            if entry.path().extension().and_then(|s| s.to_str()) == Some("json") {
+            if entry.path().extension().and_then(|s| s.to_str()) == Some("json")
+            {
                 let content = fs::read_to_string(entry.path())?;
-                if let Ok(record) = serde_json::from_str::<ErrorRecord>(&content)
+                if let Ok(record) =
+                    serde_json::from_str::<ErrorRecord>(&content)
                     && let ErrorStatus::Active = record.status
                 {
-                    self.resolve_error(&record.id, fix_message.clone(), diff.clone())?;
+                    self.resolve_error(
+                        &record.id,
+                        fix_message.clone(),
+                        diff.clone(),
+                    )?;
                 }
             }
         }
         Ok(())
     }
 
-    pub fn resolve_error(&self, id: &str, fix_message: String, diff: Option<String>) -> Result<()> {
+    pub fn resolve_error(
+        &self,
+        id: &str,
+        fix_message: String,
+        diff: Option<String>,
+    ) -> Result<()> {
         let mut record = self.find_error(id)?;
         if let ErrorStatus::Active = record.status {
             record.status = ErrorStatus::Resolved;
@@ -522,6 +588,25 @@ impl AgentManager {
                     "required": ["path"]
                 }
             }),
+            serde_json::json!({
+                "name": "montrs_run",
+                "description": "Runs a custom task defined in montrs.toml.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task": { "type": "string", "description": "Name of the task to run" }
+                    },
+                    "required": ["task"]
+                }
+            }),
+            serde_json::json!({
+                "name": "montrs_runner",
+                "description": "Lists available custom tasks from montrs.toml.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            }),
         ];
 
         // Scan for package-specific tools/capabilities from READMEs and source comments
@@ -538,19 +623,24 @@ impl AgentManager {
 
                         // 1. Scan README and docs/invariants.md for high-level capabilities
                         let readme_path = path.join("README.md");
-                        let invariants_path = path.join("docs").join("invariants.md");
+                        let invariants_path =
+                            path.join("docs").join("invariants.md");
                         let mut description = format!(
-                            "Capability provided by package {}. Refer to its README for details.",
+                            "Capability provided by package {}. Refer to its \
+                             README for details.",
                             pkg_name
                         );
 
                         if invariants_path.exists() {
                             description = format!(
-                                "Capability provided by package {}. MUST follow invariants defined in agent.json under packages['{}'].invariants",
+                                "Capability provided by package {}. MUST \
+                                 follow invariants defined in agent.json \
+                                 under packages['{}'].invariants",
                                 pkg_name, pkg_name
                             );
                         } else if readme_path.exists()
-                            && let Ok(content) = fs::read_to_string(&readme_path)
+                            && let Ok(content) =
+                                fs::read_to_string(&readme_path)
                             && (content.contains("Agent Usage Guide")
                                 || content.contains("Key Features")
                                 || content.contains("Key Components")
@@ -568,25 +658,32 @@ impl AgentManager {
                         // 2. Scan source for explicit @agent-tool markers
                         let src_dir = path.join("src");
                         if src_dir.exists() {
-                            let walker = walkdir::WalkDir::new(&src_dir).into_iter();
+                            let walker =
+                                walkdir::WalkDir::new(&src_dir).into_iter();
                             for entry in walker.filter_map(|e| e.ok()) {
                                 if entry.path().is_file()
-                                    && entry.path().extension().and_then(|s| s.to_str())
+                                    && entry
+                                        .path()
+                                        .extension()
+                                        .and_then(|s| s.to_str())
                                         == Some("rs")
-                                    && let Ok(content) = fs::read_to_string(entry.path())
+                                    && let Ok(content) =
+                                        fs::read_to_string(entry.path())
                                 {
                                     for line in content.lines() {
-                                        if line.contains("@agent-tool:") {
-                                            // Simple extraction: // @agent-tool: name="tool_name" desc="description"
-                                            if let Some(tool_meta) =
-                                                self.parse_agent_tool_marker(line)
+                                        if line.contains("@agent-tool:")
+                                            && let Some(tool_meta) = self
+                                                .parse_agent_tool_marker(line)
+                                        {
+                                            // Avoid duplicates
+                                            let name = tool_meta["name"]
+                                                .as_str()
+                                                .unwrap_or_default();
+                                            if !tools
+                                                .iter()
+                                                .any(|t| t["name"] == name)
                                             {
-                                                // Avoid duplicates
-                                                let name =
-                                                    tool_meta["name"].as_str().unwrap_or_default();
-                                                if !tools.iter().any(|t| t["name"] == name) {
-                                                    tools.push(tool_meta);
-                                                }
+                                                tools.push(tool_meta);
                                             }
                                         }
                                     }
@@ -604,14 +701,18 @@ impl AgentManager {
                 let walker = walkdir::WalkDir::new(&src_dir).into_iter();
                 for entry in walker.filter_map(|e| e.ok()) {
                     if entry.path().is_file()
-                        && entry.path().extension().and_then(|s| s.to_str()) == Some("rs")
+                        && entry.path().extension().and_then(|s| s.to_str())
+                            == Some("rs")
                         && let Ok(content) = fs::read_to_string(entry.path())
                     {
                         for line in content.lines() {
                             if line.contains("@agent-tool:")
-                                && let Some(tool_meta) = self.parse_agent_tool_marker(line)
+                                && let Some(tool_meta) =
+                                    self.parse_agent_tool_marker(line)
                             {
-                                let name = tool_meta["name"].as_str().unwrap_or_default();
+                                let name = tool_meta["name"]
+                                    .as_str()
+                                    .unwrap_or_default();
                                 if !tools.iter().any(|t| t["name"] == name) {
                                     tools.push(tool_meta);
                                 }
@@ -627,9 +728,10 @@ impl AgentManager {
 
     fn parse_agent_tool_marker(&self, line: &str) -> Option<serde_json::Value> {
         // Expected format: @agent-tool: name="name" desc="description"
-        let re =
-            regex::Regex::new(r#"@agent-tool:\s+name="(?P<name>[^"]+)"\s+desc="(?P<desc>[^"]+)""#)
-                .ok()?;
+        let re = regex::Regex::new(
+            r#"@agent-tool:\s+name="(?P<name>[^"]+)"\s+desc="(?P<desc>[^"]+)""#,
+        )
+        .ok()?;
         let caps = re.captures(line)?;
 
         Some(serde_json::json!({
@@ -656,7 +758,9 @@ impl AgentManager {
         None
     }
 
-    fn discover_plates_heuristically(&self) -> (Vec<PlateSummary>, Vec<RouteSummary>) {
+    fn discover_plates_heuristically(
+        &self,
+    ) -> (Vec<PlateSummary>, Vec<RouteSummary>) {
         let mut plates = Vec::new();
         let mut routes = Vec::new();
 
@@ -677,7 +781,10 @@ impl AgentManager {
                         }
                         let tests = entry.path().join("tests");
                         if tests.exists() {
-                            println!("Agent: Scanning for plates in {:?}", tests);
+                            println!(
+                                "Agent: Scanning for plates in {:?}",
+                                tests
+                            );
                             scan_dirs.push(tests);
                         }
                     }
@@ -685,8 +792,12 @@ impl AgentManager {
             }
         }
 
-        let plate_re = regex::Regex::new(r"impl\s+Plate(?:<[^>]+>)?\s+for\s+(\w+)").unwrap();
-        let route_re = regex::Regex::new(r"impl\s+Route(?:<[^>]+>)?\s+for\s+(\w+)").unwrap();
+        let plate_re =
+            regex::Regex::new(r"impl\s+Plate(?:<[^>]+>)?\s+for\s+(\w+)")
+                .unwrap();
+        let route_re =
+            regex::Regex::new(r"impl\s+Route(?:<[^>]+>)?\s+for\s+(\w+)")
+                .unwrap();
 
         for src_dir in scan_dirs {
             if !src_dir.exists() {
@@ -695,7 +806,8 @@ impl AgentManager {
             let walker = walkdir::WalkDir::new(&src_dir).into_iter();
             for entry in walker.filter_map(|e| e.ok()) {
                 if entry.path().is_file()
-                    && entry.path().extension().and_then(|s| s.to_str()) == Some("rs")
+                    && entry.path().extension().and_then(|s| s.to_str())
+                        == Some("rs")
                     && let Ok(content) = fs::read_to_string(entry.path())
                 {
                     println!("Agent: Checking file {:?}", entry.path());
@@ -703,12 +815,15 @@ impl AgentManager {
                     for caps in plate_re.captures_iter(&content) {
                         let name = caps[1].to_string();
                         println!("Agent: Found plate implementation: {}", name);
-                        if !plates.iter().any(|m: &PlateSummary| m.name == name) {
+                        if !plates.iter().any(|m: &PlateSummary| m.name == name)
+                        {
                             plates.push(PlateSummary {
                                 name,
                                 description: self
                                     .get_file_description(entry.path())
-                                    .unwrap_or_else(|| "Discovered plate".to_string()),
+                                    .unwrap_or_else(|| {
+                                        "Discovered plate".to_string()
+                                    }),
                                 dependencies: Vec::new(),
                                 metadata: HashMap::new(),
                             });
@@ -722,13 +837,16 @@ impl AgentManager {
                         routes.push(RouteSummary {
                             path: format!("(impl) {}", name),
                             kind: "Route".to_string(),
-                            description: format!("Heuristically discovered Route: {}", name),
-                            input_schema: None,
-                            output_schema: None,
-                            params_schema: None,
-                            loader_output_schema: None,
-                            action_input_schema: None,
-                            action_output_schema: None,
+                            description: format!(
+                                "Heuristically discovered Route: {}",
+                                name
+                            ),
+                            input_validator: None,
+                            output_validator: None,
+                            params_validator: None,
+                            loader_output_validator: None,
+                            action_input_validator: None,
+                            action_output_validator: None,
                             metadata: HashMap::new(),
                         });
                     }
@@ -748,7 +866,10 @@ impl AgentManager {
     }
 
     /// Generates a comprehensive snapshot of the codebase.
-    pub fn generate_snapshot(&self, project_name: &str) -> Result<AgentSnapshot> {
+    pub fn generate_snapshot(
+        &self,
+        project_name: &str,
+    ) -> Result<AgentSnapshot> {
         self.generate_snapshot_with_spec(project_name, None)
     }
 
@@ -760,7 +881,10 @@ impl AgentManager {
             "architecture".to_string(),
             guides::ARCHITECTURE_GUIDE.to_string(),
         );
-        documentation_snippets.insert("debugging".to_string(), guides::DEBUGGING_GUIDE.to_string());
+        documentation_snippets.insert(
+            "debugging".to_string(),
+            guides::DEBUGGING_GUIDE.to_string(),
+        );
         documentation_snippets.insert(
             "agent/index".to_string(),
             framework::AGENT_INDEX.to_string(),
@@ -781,7 +905,10 @@ impl AgentManager {
                 name: name.to_string(),
                 path: format!("packages/{}", name),
                 invariants: Some(invariants.to_string()),
-                description: Some(format!("MontRS {} package (embedded reference)", name)),
+                description: Some(format!(
+                    "MontRS {} package (embedded reference)",
+                    name
+                )),
             });
         }
 
@@ -820,7 +947,9 @@ impl AgentManager {
                     .strip_prefix(&self.root_path)?
                     .to_string_lossy()
                     .into_owned();
-                let description = if path.extension().and_then(|s| s.to_str()) == Some("rs") {
+                let description = if path.extension().and_then(|s| s.to_str())
+                    == Some("rs")
+                {
                     self.get_file_description(path)
                 } else {
                     None
@@ -838,7 +967,10 @@ impl AgentManager {
             "architecture".to_string(),
             guides::ARCHITECTURE_GUIDE.to_string(),
         );
-        documentation_snippets.insert("debugging".to_string(), guides::DEBUGGING_GUIDE.to_string());
+        documentation_snippets.insert(
+            "debugging".to_string(),
+            guides::DEBUGGING_GUIDE.to_string(),
+        );
 
         // Add embedded workflows and prompts
         documentation_snippets.insert(
@@ -868,12 +1000,15 @@ impl AgentManager {
             let walker = walkdir::WalkDir::new(&docs_dir).into_iter();
             for entry in walker.filter_map(|e| e.ok()) {
                 if entry.path().is_file()
-                    && entry.path().extension().and_then(|s| s.to_str()) == Some("md")
-                    && let Ok(relative_path) = entry.path().strip_prefix(&docs_dir)
+                    && entry.path().extension().and_then(|s| s.to_str())
+                        == Some("md")
+                    && let Ok(relative_path) =
+                        entry.path().strip_prefix(&docs_dir)
                 {
                     let key = relative_path.to_string_lossy().to_string();
                     if let Ok(content) = fs::read_to_string(entry.path()) {
-                        documentation_snippets.insert(format!("docs/{}", key), content);
+                        documentation_snippets
+                            .insert(format!("docs/{}", key), content);
                     }
                 }
             }
@@ -911,18 +1046,30 @@ impl AgentManager {
 
                     // Also scan for other package-specific docs
                     if pkg_docs_dir.exists() {
-                        let walker = walkdir::WalkDir::new(&pkg_docs_dir).into_iter();
+                        let walker =
+                            walkdir::WalkDir::new(&pkg_docs_dir).into_iter();
                         for doc_entry in walker.filter_map(|e| e.ok()) {
                             if doc_entry.path().is_file()
-                                && doc_entry.path().extension().and_then(|s| s.to_str())
+                                && doc_entry
+                                    .path()
+                                    .extension()
+                                    .and_then(|s| s.to_str())
                                     == Some("md")
                                 && let Ok(rel_doc_path) =
                                     doc_entry.path().strip_prefix(&pkg_docs_dir)
                             {
-                                let key = rel_doc_path.to_string_lossy().to_string();
-                                if let Ok(content) = fs::read_to_string(doc_entry.path()) {
-                                    documentation_snippets
-                                        .insert(format!("packages/{}/docs/{}", name, key), content);
+                                let key =
+                                    rel_doc_path.to_string_lossy().to_string();
+                                if let Ok(content) =
+                                    fs::read_to_string(doc_entry.path())
+                                {
+                                    documentation_snippets.insert(
+                                        format!(
+                                            "packages/{}/docs/{}",
+                                            name, key
+                                        ),
+                                        content,
+                                    );
                                 }
                             }
                         }
@@ -939,7 +1086,8 @@ impl AgentManager {
         }
 
         // Check for Agent Entry Point
-        let entry_point_path = self.root_path.join("docs").join("agent").join("index.md");
+        let entry_point_path =
+            self.root_path.join("docs").join("agent").join("index.md");
         let agent_entry_point = if entry_point_path.exists() {
             Some(fs::read_to_string(entry_point_path)?)
         } else {
@@ -965,12 +1113,12 @@ impl AgentManager {
                     path: path.clone(),
                     kind: "Route".to_string(),
                     description: meta.loader_description.clone(),
-                    input_schema: None,
-                    output_schema: None,
-                    params_schema: None,
-                    loader_output_schema: None,
-                    action_input_schema: None,
-                    action_output_schema: None,
+                    input_validator: None,
+                    output_validator: None,
+                    params_validator: None,
+                    loader_output_validator: None,
+                    action_input_validator: None,
+                    action_output_validator: None,
                     metadata: HashMap::new(),
                 });
             }
@@ -992,7 +1140,10 @@ impl AgentManager {
         })
     }
 
-    pub fn check_invariants(&self, snapshot: &AgentSnapshot) -> Result<Vec<String>> {
+    pub fn check_invariants(
+        &self,
+        snapshot: &AgentSnapshot,
+    ) -> Result<Vec<String>> {
         let mut violations = Vec::new();
 
         // 1. Check Plate Dependencies
@@ -1032,7 +1183,9 @@ impl AgentManager {
                 }
                 visited.insert(current_name);
 
-                if let Some(p) = snapshot.plates.iter().find(|p| &p.name == current_name) {
+                if let Some(p) =
+                    snapshot.plates.iter().find(|p| &p.name == current_name)
+                {
                     for dep in &p.dependencies {
                         stack.push((dep, depth + 1));
                     }
@@ -1043,17 +1196,112 @@ impl AgentManager {
         // 3. Check for package invariants and documentation
         for pkg in &snapshot.packages {
             if pkg.invariants.is_none() {
-                violations.push(format!("Package '{}' is missing invariants. All framework packages must define architectural rules.", pkg.name));
+                violations.push(format!(
+                    "Package '{}' is missing invariants. All framework \
+                     packages must define architectural rules.",
+                    pkg.name
+                ));
             }
         }
 
         // 4. Check for unified entry point
         if snapshot.agent_entry_point.is_none() {
             violations.push(
-                "Project is missing a unified agent entry point (docs/agent/index.md).".to_string(),
+                "Project is missing a unified agent entry point \
+                 (docs/agent/index.md)."
+                    .to_string(),
             );
         }
 
         Ok(violations)
+    }
+
+    /// Runs health diagnostics on the project or a specific package.
+    pub fn run_doctor(&self, package: Option<&str>) -> Result<Vec<String>> {
+        let mut reports = Vec::new();
+
+        // 1. Check Cargo.toml presence and validity
+        let cargo_toml = self.root_path.join("Cargo.toml");
+        if !cargo_toml.exists() {
+            reports.push(
+                "❌ Root Cargo.toml not found. Is this a Rust project?"
+                    .to_string(),
+            );
+        } else {
+            reports.push("✅ Root Cargo.toml found.".to_string());
+        }
+
+        // 2. Check for .agent directory
+        if !self.agent_dir().exists() {
+            reports.push(
+                "⚠️ .agent directory not found. Run 'agent check' to \
+                 initialize."
+                    .to_string(),
+            );
+        } else {
+            reports.push("✅ .agent directory exists.".to_string());
+        }
+
+        // 3. Check for error tracking file
+        if !self.tracking_file().exists() {
+            reports.push(
+                "ℹ️ No error tracking file found. No errors currently tracked."
+                    .to_string(),
+            );
+        } else {
+            let tracking = self.load_tracking()?;
+            let active_count = tracking
+                .errors
+                .iter()
+                .filter(|e| e.status == "Active")
+                .count();
+            if active_count > 0 {
+                reports.push(format!(
+                    "⚠️ Found {} active errors in tracking.",
+                    active_count
+                ));
+            } else {
+                reports.push("✅ All tracked errors are resolved.".to_string());
+            }
+        }
+
+        // 4. Package specific checks
+        if let Some(pkg_name) = package {
+            let pkg_path = self.root_path.join("packages").join(pkg_name);
+            if !pkg_path.exists() {
+                reports.push(format!(
+                    "❌ Package '{}' not found in packages/ directory.",
+                    pkg_name
+                ));
+            } else {
+                reports.push(format!(
+                    "✅ Package '{}' directory exists.",
+                    pkg_name
+                ));
+                let pkg_cargo = pkg_path.join("Cargo.toml");
+                if !pkg_cargo.exists() {
+                    reports.push(format!(
+                        "❌ Package '{}' is missing Cargo.toml.",
+                        pkg_name
+                    ));
+                }
+            }
+        }
+
+        // 5. Check toolchain (basic)
+        let rustc = std::process::Command::new("rustc")
+            .arg("--version")
+            .output();
+        match rustc {
+            Ok(output) if output.status.success() => {
+                let version =
+                    String::from_utf8_lossy(&output.stdout).trim().to_string();
+                reports
+                    .push(format!("✅ Rust toolchain available: {}", version));
+            }
+            _ => reports.push("❌ rustc not found in PATH.".to_string()),
+        }
+
+        Ok(reports)
     }
 }

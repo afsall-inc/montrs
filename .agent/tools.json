@@ -89,6 +89,30 @@
       }
     },
     {
+      "description": "Runs a custom task defined in montrs.toml.",
+      "name": "montrs_run",
+      "parameters": {
+        "properties": {
+          "task": {
+            "description": "Name of the task to run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Lists available custom tasks from montrs.toml.",
+      "name": "montrs_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package agent. MUST follow invariants defined in agent.json under packages['agent'].invariants",
       "name": "montrs_pkg_agent",
       "parameters": {
@@ -185,8 +209,8 @@
       }
     },
     {
-      "description": "Capability provided by package schema. MUST follow invariants defined in agent.json under packages['schema'].invariants",
-      "name": "montrs_pkg_schema",
+      "description": "Capability provided by package runner. Refer to its README for details.",
+      "name": "montrs_pkg_runner",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -211,6 +235,14 @@
     {
       "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
       "name": "montrs_pkg_utils",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package validator. MUST follow invariants defined in agent.json under packages['validator'].invariants",
+      "name": "montrs_pkg_validator",
       "parameters": {
         "properties": {},
         "type": "object"

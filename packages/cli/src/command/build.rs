@@ -1,5 +1,4 @@
-use crate::config::MontrsConfig;
-use crate::utils::run_cargo_leptos;
+use crate::{config::MontrsConfig, utils::run_cargo_leptos};
 
 pub async fn run() -> anyhow::Result<()> {
     let mut config = MontrsConfig::load()?;
@@ -10,7 +9,8 @@ pub async fn run() -> anyhow::Result<()> {
         config.project.tailwind_style.unwrap_or_default(),
     ) && config.build.tailwind_config_file.is_none()
     {
-        config.build.tailwind_config_file = Some(js_path.to_string_lossy().into_owned());
+        config.build.tailwind_config_file =
+            Some(js_path.to_string_lossy().into_owned());
     }
 
     run_cargo_leptos("build", &[], &config).await

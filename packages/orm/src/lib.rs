@@ -36,11 +36,16 @@ impl AgentError for DbError {
 
     fn explanation(&self) -> String {
         match self {
-            DbError::Connection(e) => {
-                format!("Failed to establish a connection to the database: {}.", e)
+            DbError::Connection(e) => format!(
+                "Failed to establish a connection to the database: {}.",
+                e
+            ),
+            DbError::Query(e) => {
+                format!("An error occurred while executing a SQL query: {}.", e)
             }
-            DbError::Query(e) => format!("An error occurred while executing a SQL query: {}.", e),
-            DbError::Migration(e) => format!("Database migration failed: {}.", e),
+            DbError::Migration(e) => {
+                format!("Database migration failed: {}.", e)
+            }
         }
     }
 
@@ -48,18 +53,28 @@ impl AgentError for DbError {
         match self {
             DbError::Connection(_) => vec![
                 "Verify that the database server is running.".to_string(),
-                "Check your connection string and credentials in the environment configuration.".to_string(),
-                "Ensure that the network path to the database is accessible.".to_string(),
+                "Check your connection string and credentials in the \
+                 environment configuration."
+                    .to_string(),
+                "Ensure that the network path to the database is accessible."
+                    .to_string(),
             ],
             DbError::Query(_) => vec![
                 "Check the SQL syntax for errors.".to_string(),
-                "Ensure all tables and columns referenced in the query exist.".to_string(),
-                "Verify that the parameters passed to the query match the expected types.".to_string(),
+                "Ensure all tables and columns referenced in the query exist."
+                    .to_string(),
+                "Verify that the parameters passed to the query match the \
+                 expected types."
+                    .to_string(),
             ],
             DbError::Migration(_) => vec![
                 "Check for conflicts in migration files.".to_string(),
-                "Ensure the database user has sufficient permissions to modify the schema.".to_string(),
-                "Verify that the migration scripts are compatible with the target database backend.".to_string(),
+                "Ensure the database user has sufficient permissions to \
+                 modify the structure."
+                    .to_string(),
+                "Verify that the migration scripts are compatible with the \
+                 target database backend."
+                    .to_string(),
             ],
         }
     }
@@ -119,9 +134,17 @@ pub trait FromRow: Sized {
 #[async_trait]
 pub trait DbBackend: Send + Sync + 'static {
     /// Executes a non-query SQL statement (INSERT, UPDATE, DELETE).
-    async fn execute(&self, sql: &str, params: &[&dyn ToSql]) -> Result<usize, DbError>;
+    async fn execute(
+        &self,
+        sql: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<usize, DbError>;
     /// Executes a query SQL statement and returns a vector of results.
-    async fn query<T: FromRow>(&self, sql: &str, params: &[&dyn ToSql]) -> Result<Vec<T>, DbError>;
+    async fn query<T: FromRow>(
+        &self,
+        sql: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<Vec<T>, DbError>;
 }
 
 /// SQLite-specific database backend implementation.
@@ -152,7 +175,11 @@ impl SqliteBackend {
 #[cfg(feature = "sqlite")]
 #[async_trait]
 impl DbBackend for SqliteBackend {
-    async fn execute(&self, sql: &str, params: &[&dyn ToSql]) -> Result<usize, DbError> {
+    async fn execute(
+        &self,
+        sql: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<usize, DbError> {
         let conn = self.conn.lock().unwrap();
         // Convert unified params to rusqlite-compatible params.
         let sqlite_params: Vec<&dyn rusqlite::ToSql> =
@@ -161,7 +188,11 @@ impl DbBackend for SqliteBackend {
             .map_err(|e| DbError::Query(e.to_string()))
     }
 
-    async fn query<T: FromRow>(&self, sql: &str, params: &[&dyn ToSql]) -> Result<Vec<T>, DbError> {
+    async fn query<T: FromRow>(
+        &self,
+        sql: &str,
+        params: &[&dyn ToSql],
+    ) -> Result<Vec<T>, DbError> {
         let conn = self.conn.lock().unwrap();
         let sqlite_params: Vec<&dyn rusqlite::ToSql> =
             params.iter().map(|p| p.as_rusqlite()).collect();
@@ -204,7 +235,11 @@ impl PostgresBackend {
 #[cfg(feature = "postgres")]
 #[async_trait]
 impl DbBackend for PostgresBackend {
-    async fn execute(&self, sql: &str, _params: &[&dyn ToSql]) -> Result<usize, DbError> {
+    async fn execute(
+        &self,
+        sql: &str,
+        _params: &[&dyn ToSql],
+    ) -> Result<usize, DbError> {
         let client = self
             .pool
             .get()

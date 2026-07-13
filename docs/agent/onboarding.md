@@ -26,10 +26,10 @@ MontRS is a modular, trait-driven Rust framework for building cross-platform app
 
 ### 3. The Golden Path (Default Behavior)
 
-1. **Define Schema**: Create structs with `#[derive(Schema)]`.
+1. **Define Validator**: Create structs with `#[derive(Validator)]`.
 2. **Implement Logic**: Wrap logic in `Loader` (read) or `Action` (write).
 3. **Register Route**: Attach logic to a path in a `Plate`.
-4. **Expose Metadata**: Implement `description()` and `input_schema()` for agent discovery.
+4. **Expose Metadata**: Implement `description()` and `input_validator()` for agent discovery.
 
 **Flow Diagram:**
 `UI (View) -> Action (Mutation) -> Plate (Side Effect) -> DB/Store -> Loader (Read) -> Signal (Update) -> UI (Reactive)`
@@ -98,15 +98,15 @@ impl Action<UpdateEmailInput, ()> for UpdateEmailAction {
   - *Fix*: Keep routes as thin mapping layers.
 - **Anti-Pattern**: Using `std::sync::RwLock` for app state.
   - *Fix*: Use `Signal<T>` for reactivity.
-- **Anti-Pattern**: Forgetting `#[derive(Schema)]` on input/output types.
-  - *Fix*: Agents must ensure all transit types are Schema-ready.
+- **Anti-Pattern**: Forgetting `#[derive(Validator)]` on input/output types.
+  - *Fix*: Agents must ensure all transit types are Validator-ready.
 
 ---
 
 ### 9. Output Expectations
 
 Before emitting code, the agent must verify:
-- [ ] All inputs/outputs derive `Schema`, `Serialize`, and `Deserialize`.
+- [ ] All inputs/outputs derive `Validator`, `Serialize`, and `Deserialize`.
 - [ ] No side effects exist outside of `Plates` or `Actions`.
 - [ ] `Loaders` are strictly read-only.
 - [ ] Routes are registered via `Plate` traits.

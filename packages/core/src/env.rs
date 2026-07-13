@@ -3,8 +3,7 @@
 //! variables in a type-safe and mockable manner.
 
 use crate::AgentError;
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 /// Errors that can occur when retrieving or parsing environment variables.
 #[derive(Debug)]
@@ -16,8 +15,12 @@ pub enum EnvError {
 impl fmt::Display for EnvError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EnvError::MissingKey(k) => write!(f, "Missing environment variable: {}", k),
-            EnvError::InvalidType(k) => write!(f, "Invalid type for environment variable: {}", k),
+            EnvError::MissingKey(k) => {
+                write!(f, "Missing environment variable: {k}")
+            }
+            EnvError::InvalidType(k) => {
+                write!(f, "Invalid type for environment variable: {k}")
+            }
         }
     }
 }
@@ -35,12 +38,12 @@ impl AgentError for EnvError {
     fn explanation(&self) -> String {
         match self {
             EnvError::MissingKey(k) => format!(
-                "The application expected the environment variable '{}' to be set, but it was not found.",
-                k
+                "The application expected the environment variable '{k}' to \
+                 be set, but it was not found."
             ),
             EnvError::InvalidType(k) => format!(
-                "The environment variable '{}' was found, but its value could not be parsed into the expected type.",
-                k
+                "The environment variable '{k}' was found, but its value \
+                 could not be parsed into the expected type."
             ),
         }
     }
@@ -49,17 +52,17 @@ impl AgentError for EnvError {
         match self {
             EnvError::MissingKey(k) => vec![
                 format!(
-                    "Set the '{}' environment variable in your shell or .env file.",
-                    k
+                    "Set the '{k}' environment variable in your shell or .env \
+                     file."
                 ),
                 format!(
-                    "Check if '{}' is correctly spelled in your configuration.",
-                    k
+                    "Check if '{k}' is correctly spelled in your \
+                     configuration."
                 ),
             ],
             EnvError::InvalidType(k) => vec![format!(
-                "Ensure the value of '{}' matches the expected format (e.g., a number, boolean, or valid string).",
-                k
+                "Ensure the value of '{k}' matches the expected format (e.g., \
+                 a number, boolean, or valid string)."
             )],
         }
     }
@@ -71,12 +74,36 @@ impl AgentError for EnvError {
 
 /// Trait for types that can be initialized from an environment variable string.
 pub trait FromEnv: Sized {
-    fn from_env(val: String) -> Result<Self, EnvError>;
+    fn from_env(val: String) -> Result<Self, String>;
 }
 
 impl FromEnv for String {
-    fn from_env(val: String) -> Result<Self, EnvError> {
+    fn from_env(val: String) -> Result<Self, String> {
         Ok(val)
+    }
+}
+
+impl FromEnv for bool {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "bool".to_string())
+    }
+}
+
+impl FromEnv for u16 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "u16".to_string())
+    }
+}
+
+impl FromEnv for u32 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "u32".to_string())
+    }
+}
+
+impl FromEnv for i32 {
+    fn from_env(val: String) -> Result<Self, String> {
+        val.parse().map_err(|_| "i32".to_string())
     }
 }
 
@@ -96,7 +123,8 @@ pub trait EnvConfig: Send + Sync + 'static {
 pub trait EnvConfigExt: EnvConfig {
     /// Retrieves and parses an environment variable into the desired type T.
     fn get<T: FromEnv>(&self, key: &str) -> Result<T, EnvError> {
-        self.get_var(key).and_then(T::from_env)
+        let val = self.get_var(key)?;
+        T::from_env(val).map_err(|_| EnvError::InvalidType(key.to_string()))
     }
 }
 

@@ -20,7 +20,7 @@ You are currently in **Framework Contributor Mode**.
 - **Zero-Cost Abstractions**: MontRS should be fast. Use Rust's type system to enforce rules at compile-time whenever possible.
 - **Package Boundaries & Internal Invariants**: Respect the responsibilities of each crate. Every framework package has a `docs/invariants.md` that defines its internal "rules of engagement" and boundary constraints. You MUST consult these before and after any change to ensure framework integrity.
 - **Agent-Native**: Every framework feature must be designed with machine-readability in mind. If an agent can't "understand" a feature, it's not finished.
-- **Stability**: Prioritize backward compatibility for core traits and schemas.
+- **Stability**: Prioritize backward compatibility for core traits and validation rules.
 
 ## 🛠️ Your Workflow
 

@@ -10,7 +10,7 @@ The root `.agent` folder is the primary interface for agents. It contains:
 The project snapshot. It includes:
 - `structure`: A flat list of files in the project (excluding `.git`, `target`, etc.).
 - `plates`: High-level summaries of all MontRS plates found in the app.
-- `routes`: All registered loaders and actions with their input/output schemas.
+- `routes`: All registered loaders and actions with their input/output validators.
 - `documentation_snippets`: Relevant guides (architecture, debugging) for quick context.
 
 ### `tools.json`
