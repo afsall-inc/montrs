@@ -396,10 +396,10 @@ pub fn main_entry() {
             .unwrap_or_else(|| "app".to_string());
 
         // Initialize .agent if it doesn't exist
-        if !agent_manager.agent_dir().exists() {
-            if let Err(e) = agent_manager.ensure_dir() {
-                eprintln!("Warning: Failed to create .agent directory: {}", e);
-            }
+        if !agent_manager.agent_dir().exists()
+            && let Err(e) = agent_manager.ensure_dir()
+        {
+            eprintln!("Warning: Failed to create .agent directory: {}", e);
         }
 
         // Agent: Update tools and snapshot if we are in an existing project

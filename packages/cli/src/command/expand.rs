@@ -69,10 +69,10 @@ fn expand_plate(file: &File, content: &str) -> Result<()> {
         .items
         .iter()
         .find_map(|item| {
-            if let Item::Struct(s) = item {
-                if s.ident.to_string().contains("Plate") {
-                    return Some(s);
-                }
+            if let Item::Struct(s) = item
+                && s.ident.to_string().contains("Plate")
+            {
+                return Some(s);
             }
             None
         })
@@ -109,10 +109,10 @@ fn expand_route(file: &File, content: &str) -> Result<()> {
         .items
         .iter()
         .find_map(|item| {
-            if let Item::Struct(s) = item {
-                if s.ident.to_string().contains("Route") {
-                    return Some(s);
-                }
+            if let Item::Struct(s) = item
+                && s.ident.to_string().contains("Route")
+            {
+                return Some(s);
             }
             None
         })
@@ -127,8 +127,7 @@ fn expand_route(file: &File, content: &str) -> Result<()> {
     let plate_name = if plates_dir.exists() {
         fs::read_dir(plates_dir)?
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().is_dir())
-            .next()
+            .find(|e| e.path().is_dir())
             .map(|e| e.file_name().to_string_lossy().to_string())
             .unwrap_or_else(|| "main".to_string())
     } else {

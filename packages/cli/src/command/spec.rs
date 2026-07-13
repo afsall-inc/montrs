@@ -24,23 +24,22 @@ pub async fn run_to_string(
     // Try to load basic project info from Cargo.toml
     if let Ok(cargo_toml_content) =
         std::fs::read_to_string(cwd.join("Cargo.toml"))
+        && let Ok(value) = cargo_toml_content.parse::<toml::Value>()
     {
-        if let Ok(value) = cargo_toml_content.parse::<toml::Value>() {
-            if let Some(package) = value.get("package") {
-                snapshot.project_name = package
-                    .get("name")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("unknown")
-                    .to_string();
-            } else if let Some(workspace) = value.get("workspace") {
-                if let Some(package) = workspace.get("package") {
-                    snapshot.project_name = package
-                        .get("name")
-                        .and_then(|v| v.as_str())
-                        .unwrap_or("workspace")
-                        .to_string();
-                }
-            }
+        if let Some(package) = value.get("package") {
+            snapshot.project_name = package
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
+                .to_string();
+        } else if let Some(workspace) = value.get("workspace")
+            && let Some(package) = workspace.get("package")
+        {
+            snapshot.project_name = package
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("workspace")
+                .to_string();
         }
     }
 

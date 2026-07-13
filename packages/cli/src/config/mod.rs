@@ -203,7 +203,6 @@ pub struct E2eConfig {
 
 /// Configuration for custom tasks.
 // Moved to montrs-tasks crate
-
 impl MontrsConfig {
     /// Loads configuration from a specific file.
     pub fn from_file(path: impl AsRef<std::path::Path>) -> Result<Self> {
@@ -219,12 +218,11 @@ impl MontrsConfig {
         })?;
 
         // Try to resolve project name if it's default
-        if config.project.name == "app" {
-            if let Ok(metadata) = MetadataCommand::new().exec() {
-                if let Some(root) = metadata.root_package() {
-                    config.project.name = root.name.clone();
-                }
-            }
+        if config.project.name == "app"
+            && let Ok(metadata) = MetadataCommand::new().exec()
+            && let Some(root) = metadata.root_package()
+        {
+            config.project.name = root.name.clone();
         }
 
         Ok(config)
@@ -250,12 +248,11 @@ impl MontrsConfig {
         }
 
         // Try to resolve project name if still default
-        if config.project.name == "app" {
-            if let Ok(metadata) = MetadataCommand::new().exec() {
-                if let Some(root) = metadata.root_package() {
-                    config.project.name = root.name.clone();
-                }
-            }
+        if config.project.name == "app"
+            && let Ok(metadata) = MetadataCommand::new().exec()
+            && let Some(root) = metadata.root_package()
+        {
+            config.project.name = root.name.clone();
         }
 
         Ok(config)

@@ -59,6 +59,7 @@ impl<T> Expectation<T> {
     /// use montrs_test::unit::expect;
     /// expect(1).not().to_equal(2);
     /// ```
+    #[allow(clippy::should_implement_trait)]
     pub fn not(mut self) -> Self {
         self.negated = !self.negated;
         self
@@ -117,12 +118,9 @@ impl Expectation<bool> {
 
 impl<T: Debug, E: Debug> Expectation<Result<T, E>> {
     pub fn to_be_ok(&self) {
-        if self.negated {
-            if self.value.is_ok() {
-                panic!(
-                    "Expected Err, but found Ok({:?})",
-                    self.value.as_ref().unwrap()
-                );
+        if let Ok(val) = &self.value {
+            if self.negated {
+                panic!("Expected Err, but found Ok({:?})", val);
             }
         } else if self.value.is_err() {
             panic!(
@@ -133,30 +131,21 @@ impl<T: Debug, E: Debug> Expectation<Result<T, E>> {
     }
 
     pub fn to_be_err(&self) {
-        if self.negated {
-            if self.value.is_err() {
-                panic!(
-                    "Expected Ok, but found Err({:?})",
-                    self.value.as_ref().err().unwrap()
-                );
+        if let Err(val) = &self.value {
+            if self.negated {
+                panic!("Expected Ok, but found Err({:?})", val);
             }
-        } else if self.value.is_ok() {
-            panic!(
-                "Expected Err, but found Ok({:?})",
-                self.value.as_ref().unwrap()
-            );
+        } else if let Ok(val) = &self.value {
+            panic!("Expected Err, but found Ok({:?})", val);
         }
     }
 }
 
 impl<T: Debug> Expectation<Option<T>> {
     pub fn to_be_some(&self) {
-        if self.negated {
-            if self.value.is_some() {
-                panic!(
-                    "Expected None, but found Some({:?})",
-                    self.value.as_ref().unwrap()
-                );
+        if let Some(val) = &self.value {
+            if self.negated {
+                panic!("Expected None, but found Some({:?})", val);
             }
         } else if self.value.is_none() {
             panic!("Expected Some, but found None");
@@ -344,8 +333,10 @@ where
 {
     use montrs_bench::{BenchConfig, BenchRunner, SimpleBench};
 
-    let mut config = BenchConfig::default();
-    config.iterations = iterations;
+    let config = BenchConfig {
+        iterations,
+        ..Default::default()
+    };
 
     let mut runner = BenchRunner::with_config(config);
 

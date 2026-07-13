@@ -10,6 +10,7 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use std::{fs, path::Path, process::Command, time::Instant};
 
+#[allow(clippy::too_many_arguments)]
 pub async fn run(
     target: Option<String>,
     iterations: u32,
@@ -78,7 +79,7 @@ async fn run_native_bench(
             .await;
     }
 
-    if path.extension().map_or(false, |e| e == "rs") {
+    if path.extension().is_some_and(|e| e == "rs") {
         // Rust Source File
         println!("Type:   Rust Source");
         println!("Action: Compiling and benchmarking execution...");

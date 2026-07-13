@@ -29,6 +29,12 @@ pub struct BenchRunner {
     benchmarks: Vec<Box<dyn BenchCase>>,
 }
 
+impl Default for BenchRunner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BenchRunner {
     /// Creates a new `BenchRunner` with configuration parsed from command-line arguments and environment variables.
     ///
@@ -108,10 +114,10 @@ impl BenchRunner {
         println!("---------------------------------------------------");
 
         for bench in &self.benchmarks {
-            if let Some(filter) = &self.config.filter {
-                if !bench.name().contains(filter) {
-                    continue;
-                }
+            if let Some(filter) = &self.config.filter
+                && !bench.name().contains(filter)
+            {
+                continue;
             }
 
             self.run_single_bench(bench.as_ref(), &mut report).await?;
@@ -184,10 +190,10 @@ impl BenchRunner {
                 bench.run().await?;
                 durations.push(start.elapsed());
 
-                if let Some(max_dur) = self.config.duration {
-                    if start_total.elapsed() > max_dur {
-                        break;
-                    }
+                if let Some(max_dur) = self.config.duration
+                    && start_total.elapsed() > max_dur
+                {
+                    break;
                 }
             }
         }

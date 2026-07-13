@@ -261,60 +261,58 @@ impl AgentManager {
             // Fallback to manual parsing if needed or try to adapt legacy
             if let Ok(value) =
                 serde_json::from_str::<serde_json::Value>(&content)
-            {
-                if let Some(active_issues) =
+                && let Some(active_issues) =
                     value.get("active_issues").and_then(|v| v.as_array())
-                {
-                    let mut errors = Vec::new();
-                    for issue in active_issues {
-                        if let (Some(id), Some(msg)) = (
-                            issue.get("id").and_then(|v| v.as_str()),
-                            issue.get("message").and_then(|v| v.as_str()),
-                        ) {
-                            let status = issue
-                                .get("status")
+            {
+                let mut errors = Vec::new();
+                for issue in active_issues {
+                    if let (Some(id), Some(msg)) = (
+                        issue.get("id").and_then(|v| v.as_str()),
+                        issue.get("message").and_then(|v| v.as_str()),
+                    ) {
+                        let status = issue
+                            .get("status")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("Pending")
+                            .to_string();
+                        errors.push(ConsolidatedError {
+                            id: id.to_string(),
+                            package: issue
+                                .get("package")
                                 .and_then(|v| v.as_str())
-                                .unwrap_or("Pending")
-                                .to_string();
-                            errors.push(ConsolidatedError {
-                                id: id.to_string(),
-                                package: issue
-                                    .get("package")
-                                    .and_then(|v| v.as_str())
-                                    .map(|s| s.to_string()),
-                                file: issue
-                                    .get("file")
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_string(),
-                                line: issue
-                                    .get("line")
-                                    .and_then(|v| v.as_u64())
-                                    .unwrap_or(0)
-                                    as u32,
-                                column: issue
-                                    .get("column")
-                                    .and_then(|v| v.as_u64())
-                                    .unwrap_or(0)
-                                    as u32,
-                                level: issue
-                                    .get("type")
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("Error")
-                                    .to_string(),
-                                message: msg.to_string(),
-                                status,
-                                timestamp: issue
-                                    .get("timestamp")
-                                    .and_then(|v| v.as_str())
-                                    .and_then(|s| s.parse().ok())
-                                    .unwrap_or_else(Utc::now),
-                            });
-                        }
+                                .map(|s| s.to_string()),
+                            file: issue
+                                .get("file")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("unknown")
+                                .to_string(),
+                            line: issue
+                                .get("line")
+                                .and_then(|v| v.as_u64())
+                                .unwrap_or(0)
+                                as u32,
+                            column: issue
+                                .get("column")
+                                .and_then(|v| v.as_u64())
+                                .unwrap_or(0)
+                                as u32,
+                            level: issue
+                                .get("type")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("Error")
+                                .to_string(),
+                            message: msg.to_string(),
+                            status,
+                            timestamp: issue
+                                .get("timestamp")
+                                .and_then(|v| v.as_str())
+                                .and_then(|s| s.parse().ok())
+                                .unwrap_or_else(Utc::now),
+                        });
                     }
-                    if !errors.is_empty() {
-                        return Ok(ErrorTracking { errors });
-                    }
+                }
+                if !errors.is_empty() {
+                    return Ok(ErrorTracking { errors });
                 }
             }
         }
@@ -367,10 +365,11 @@ impl AgentManager {
         mut error: ProjectError,
     ) -> Result<String> {
         // Try to determine package from file path if not provided
-        if error.package.is_none() && error.file != "unknown" {
-            if let Some(pkg) = self.determine_package(&error.file) {
-                error.package = Some(pkg);
-            }
+        if error.package.is_none()
+            && error.file != "unknown"
+            && let Some(pkg) = self.determine_package(&error.file)
+        {
+            error.package = Some(pkg);
         }
 
         // Check if a similar active error already exists
@@ -410,16 +409,12 @@ impl AgentManager {
                 for file in fs::read_dir(entry.path())?.flatten() {
                     if file.path().extension().and_then(|s| s.to_str())
                         == Some("json")
+                        && let Ok(content) = fs::read_to_string(file.path())
+                        && let Ok(record) =
+                            serde_json::from_str::<ErrorRecord>(&content)
+                        && let ErrorStatus::Active = record.status
                     {
-                        if let Ok(content) = fs::read_to_string(file.path()) {
-                            if let Ok(record) =
-                                serde_json::from_str::<ErrorRecord>(&content)
-                            {
-                                if let ErrorStatus::Active = record.status {
-                                    active.push(record);
-                                }
-                            }
-                        }
+                        active.push(record);
                     }
                 }
             }
@@ -446,14 +441,14 @@ impl AgentManager {
         // Look for "packages/NAME" or "apps/NAME"
         let components: Vec<_> = path.components().collect();
         for i in 0..components.len() {
-            if let Some(c) = components[i].as_os_str().to_str() {
-                if (c == "packages" || c == "apps") && i + 1 < components.len()
-                {
-                    return components[i + 1]
-                        .as_os_str()
-                        .to_str()
-                        .map(|s| s.to_string());
-                }
+            if let Some(c) = components[i].as_os_str().to_str()
+                && (c == "packages" || c == "apps")
+                && i + 1 < components.len()
+            {
+                return components[i + 1]
+                    .as_os_str()
+                    .to_str()
+                    .map(|s| s.to_string());
             }
         }
         None
@@ -487,14 +482,13 @@ impl AgentManager {
                 let content = fs::read_to_string(entry.path())?;
                 if let Ok(record) =
                     serde_json::from_str::<ErrorRecord>(&content)
+                    && let ErrorStatus::Active = record.status
                 {
-                    if let ErrorStatus::Active = record.status {
-                        self.resolve_error(
-                            &record.id,
-                            fix_message.clone(),
-                            diff.clone(),
-                        )?;
-                    }
+                    self.resolve_error(
+                        &record.id,
+                        fix_message.clone(),
+                        diff.clone(),
+                    )?;
                 }
             }
         }
@@ -644,18 +638,15 @@ impl AgentManager {
                                  under packages['{}'].invariants",
                                 pkg_name, pkg_name
                             );
-                        } else if readme_path.exists() {
-                            if let Ok(content) =
+                        } else if readme_path.exists()
+                            && let Ok(content) =
                                 fs::read_to_string(&readme_path)
-                            {
-                                if content.contains("Agent Usage Guide")
-                                    || content.contains("Key Features")
-                                    || content.contains("Key Components")
-                                    || content.contains("Agent")
-                                {
-                                    // Keep default description or refine if needed
-                                }
-                            }
+                            && (content.contains("Agent Usage Guide")
+                                || content.contains("Key Features")
+                                || content.contains("Key Components")
+                                || content.contains("Agent"))
+                        {
+                            // Keep default description or refine if needed
                         }
 
                         tools.push(serde_json::json!({
@@ -676,29 +667,23 @@ impl AgentManager {
                                         .extension()
                                         .and_then(|s| s.to_str())
                                         == Some("rs")
-                                {
-                                    if let Ok(content) =
+                                    && let Ok(content) =
                                         fs::read_to_string(entry.path())
-                                    {
-                                        for line in content.lines() {
-                                            if line.contains("@agent-tool:") {
-                                                // Simple extraction: // @agent-tool: name="tool_name" desc="description"
-                                                if let Some(tool_meta) = self
-                                                    .parse_agent_tool_marker(
-                                                        line,
-                                                    )
-                                                {
-                                                    // Avoid duplicates
-                                                    let name = tool_meta
-                                                        ["name"]
-                                                        .as_str()
-                                                        .unwrap_or_default();
-                                                    if !tools.iter().any(|t| {
-                                                        t["name"] == name
-                                                    }) {
-                                                        tools.push(tool_meta);
-                                                    }
-                                                }
+                                {
+                                    for line in content.lines() {
+                                        if line.contains("@agent-tool:")
+                                            && let Some(tool_meta) = self
+                                                .parse_agent_tool_marker(line)
+                                        {
+                                            // Avoid duplicates
+                                            let name = tool_meta["name"]
+                                                .as_str()
+                                                .unwrap_or_default();
+                                            if !tools
+                                                .iter()
+                                                .any(|t| t["name"] == name)
+                                            {
+                                                tools.push(tool_meta);
                                             }
                                         }
                                     }
@@ -718,23 +703,18 @@ impl AgentManager {
                     if entry.path().is_file()
                         && entry.path().extension().and_then(|s| s.to_str())
                             == Some("rs")
+                        && let Ok(content) = fs::read_to_string(entry.path())
                     {
-                        if let Ok(content) = fs::read_to_string(entry.path()) {
-                            for line in content.lines() {
-                                if line.contains("@agent-tool:") {
-                                    if let Some(tool_meta) =
-                                        self.parse_agent_tool_marker(line)
-                                    {
-                                        let name = tool_meta["name"]
-                                            .as_str()
-                                            .unwrap_or_default();
-                                        if !tools
-                                            .iter()
-                                            .any(|t| t["name"] == name)
-                                        {
-                                            tools.push(tool_meta);
-                                        }
-                                    }
+                        for line in content.lines() {
+                            if line.contains("@agent-tool:")
+                                && let Some(tool_meta) =
+                                    self.parse_agent_tool_marker(line)
+                            {
+                                let name = tool_meta["name"]
+                                    .as_str()
+                                    .unwrap_or_default();
+                                if !tools.iter().any(|t| t["name"] == name) {
+                                    tools.push(tool_meta);
                                 }
                             }
                         }
@@ -789,26 +769,23 @@ impl AgentManager {
 
         for dir_name in &["packages", "templates"] {
             let base_dir = self.root_path.join(dir_name);
-            if base_dir.exists() {
-                if let Ok(entries) = fs::read_dir(base_dir) {
-                    for entry in entries.flatten() {
-                        if entry.path().is_dir() {
-                            let src = entry.path().join("src");
-                            if src.exists() {
-                                println!(
-                                    "Agent: Scanning for plates in {:?}",
-                                    src
-                                );
-                                scan_dirs.push(src);
-                            }
-                            let tests = entry.path().join("tests");
-                            if tests.exists() {
-                                println!(
-                                    "Agent: Scanning for plates in {:?}",
-                                    tests
-                                );
-                                scan_dirs.push(tests);
-                            }
+            if base_dir.exists()
+                && let Ok(entries) = fs::read_dir(base_dir)
+            {
+                for entry in entries.flatten() {
+                    if entry.path().is_dir() {
+                        let src = entry.path().join("src");
+                        if src.exists() {
+                            println!("Agent: Scanning for plates in {:?}", src);
+                            scan_dirs.push(src);
+                        }
+                        let tests = entry.path().join("tests");
+                        if tests.exists() {
+                            println!(
+                                "Agent: Scanning for plates in {:?}",
+                                tests
+                            );
+                            scan_dirs.push(tests);
                         }
                     }
                 }
@@ -831,56 +808,47 @@ impl AgentManager {
                 if entry.path().is_file()
                     && entry.path().extension().and_then(|s| s.to_str())
                         == Some("rs")
+                    && let Ok(content) = fs::read_to_string(entry.path())
                 {
-                    if let Ok(content) = fs::read_to_string(entry.path()) {
-                        println!("Agent: Checking file {:?}", entry.path());
-                        // Discover Plates
-                        for caps in plate_re.captures_iter(&content) {
-                            let name = caps[1].to_string();
-                            println!(
-                                "Agent: Found plate implementation: {}",
-                                name
-                            );
-                            if !plates
-                                .iter()
-                                .any(|m: &PlateSummary| m.name == name)
-                            {
-                                plates.push(PlateSummary {
-                                    name,
-                                    description: self
-                                        .get_file_description(entry.path())
-                                        .unwrap_or_else(|| {
-                                            "Discovered plate".to_string()
-                                        }),
-                                    dependencies: Vec::new(),
-                                    metadata: HashMap::new(),
-                                });
-                            }
-                        }
-
-                        // Discover Routes
-                        for caps in route_re.captures_iter(&content) {
-                            let name = caps[1].to_string();
-                            println!(
-                                "Agent: Found route implementation: {}",
-                                name
-                            );
-                            routes.push(RouteSummary {
-                                path: format!("(impl) {}", name),
-                                kind: "Route".to_string(),
-                                description: format!(
-                                    "Heuristically discovered Route: {}",
-                                    name
-                                ),
-                                input_validator: None,
-                                output_validator: None,
-                                params_validator: None,
-                                loader_output_validator: None,
-                                action_input_validator: None,
-                                action_output_validator: None,
+                    println!("Agent: Checking file {:?}", entry.path());
+                    // Discover Plates
+                    for caps in plate_re.captures_iter(&content) {
+                        let name = caps[1].to_string();
+                        println!("Agent: Found plate implementation: {}", name);
+                        if !plates.iter().any(|m: &PlateSummary| m.name == name)
+                        {
+                            plates.push(PlateSummary {
+                                name,
+                                description: self
+                                    .get_file_description(entry.path())
+                                    .unwrap_or_else(|| {
+                                        "Discovered plate".to_string()
+                                    }),
+                                dependencies: Vec::new(),
                                 metadata: HashMap::new(),
                             });
                         }
+                    }
+
+                    // Discover Routes
+                    for caps in route_re.captures_iter(&content) {
+                        let name = caps[1].to_string();
+                        println!("Agent: Found route implementation: {}", name);
+                        routes.push(RouteSummary {
+                            path: format!("(impl) {}", name),
+                            kind: "Route".to_string(),
+                            description: format!(
+                                "Heuristically discovered Route: {}",
+                                name
+                            ),
+                            input_validator: None,
+                            output_validator: None,
+                            params_validator: None,
+                            loader_output_validator: None,
+                            action_input_validator: None,
+                            action_output_validator: None,
+                            metadata: HashMap::new(),
+                        });
                     }
                 }
             }
@@ -972,28 +940,25 @@ impl AgentManager {
             })
             .build();
 
-        for entry in walker {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_file() {
-                    let relative_path = path
-                        .strip_prefix(&self.root_path)?
-                        .to_string_lossy()
-                        .into_owned();
-                    let description =
-                        if path.extension().and_then(|s| s.to_str())
-                            == Some("rs")
-                        {
-                            self.get_file_description(path)
-                        } else {
-                            None
-                        };
+        for entry in walker.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                let relative_path = path
+                    .strip_prefix(&self.root_path)?
+                    .to_string_lossy()
+                    .into_owned();
+                let description = if path.extension().and_then(|s| s.to_str())
+                    == Some("rs")
+                {
+                    self.get_file_description(path)
+                } else {
+                    None
+                };
 
-                    structure.push(FileEntry {
-                        path: relative_path,
-                        description,
-                    });
-                }
+                structure.push(FileEntry {
+                    path: relative_path,
+                    description,
+                });
             }
         }
 
@@ -1037,15 +1002,13 @@ impl AgentManager {
                 if entry.path().is_file()
                     && entry.path().extension().and_then(|s| s.to_str())
                         == Some("md")
-                {
-                    if let Ok(relative_path) =
+                    && let Ok(relative_path) =
                         entry.path().strip_prefix(&docs_dir)
-                    {
-                        let key = relative_path.to_string_lossy().to_string();
-                        if let Ok(content) = fs::read_to_string(entry.path()) {
-                            documentation_snippets
-                                .insert(format!("docs/{}", key), content);
-                        }
+                {
+                    let key = relative_path.to_string_lossy().to_string();
+                    if let Ok(content) = fs::read_to_string(entry.path()) {
+                        documentation_snippets
+                            .insert(format!("docs/{}", key), content);
                     }
                 }
             }
@@ -1058,72 +1021,66 @@ impl AgentManager {
         // Use embedded framework invariants as a base/fallback
         let framework_invariants = framework::get_framework_invariants();
 
-        if packages_dir.exists() {
-            if let Ok(entries) = fs::read_dir(&packages_dir) {
-                for entry in entries.flatten() {
-                    if entry.path().is_dir() {
-                        let name =
-                            entry.file_name().to_string_lossy().to_string();
-                        let relative_path = entry
-                            .path()
-                            .strip_prefix(&self.root_path)?
-                            .to_string_lossy()
-                            .to_string();
+        if packages_dir.exists()
+            && let Ok(entries) = fs::read_dir(&packages_dir)
+        {
+            for entry in entries.flatten() {
+                if entry.path().is_dir() {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let relative_path = entry
+                        .path()
+                        .strip_prefix(&self.root_path)?
+                        .to_string_lossy()
+                        .to_string();
 
-                        let pkg_docs_dir = entry.path().join("docs");
-                        let invariants_path =
-                            pkg_docs_dir.join("invariants.md");
-                        let invariants = if invariants_path.exists() {
-                            fs::read_to_string(invariants_path).ok()
-                        } else {
-                            // Fallback to embedded framework invariant if it matches a core package
-                            framework_invariants
-                                .get(name.as_str())
-                                .map(|s| s.to_string())
-                        };
+                    let pkg_docs_dir = entry.path().join("docs");
+                    let invariants_path = pkg_docs_dir.join("invariants.md");
+                    let invariants = if invariants_path.exists() {
+                        fs::read_to_string(invariants_path).ok()
+                    } else {
+                        // Fallback to embedded framework invariant if it matches a core package
+                        framework_invariants
+                            .get(name.as_str())
+                            .map(|s| s.to_string())
+                    };
 
-                        // Also scan for other package-specific docs
-                        if pkg_docs_dir.exists() {
-                            let walker = walkdir::WalkDir::new(&pkg_docs_dir)
-                                .into_iter();
-                            for doc_entry in walker.filter_map(|e| e.ok()) {
-                                if doc_entry.path().is_file()
-                                    && doc_entry
-                                        .path()
-                                        .extension()
-                                        .and_then(|s| s.to_str())
-                                        == Some("md")
+                    // Also scan for other package-specific docs
+                    if pkg_docs_dir.exists() {
+                        let walker =
+                            walkdir::WalkDir::new(&pkg_docs_dir).into_iter();
+                        for doc_entry in walker.filter_map(|e| e.ok()) {
+                            if doc_entry.path().is_file()
+                                && doc_entry
+                                    .path()
+                                    .extension()
+                                    .and_then(|s| s.to_str())
+                                    == Some("md")
+                                && let Ok(rel_doc_path) =
+                                    doc_entry.path().strip_prefix(&pkg_docs_dir)
+                            {
+                                let key =
+                                    rel_doc_path.to_string_lossy().to_string();
+                                if let Ok(content) =
+                                    fs::read_to_string(doc_entry.path())
                                 {
-                                    if let Ok(rel_doc_path) = doc_entry
-                                        .path()
-                                        .strip_prefix(&pkg_docs_dir)
-                                    {
-                                        let key = rel_doc_path
-                                            .to_string_lossy()
-                                            .to_string();
-                                        if let Ok(content) =
-                                            fs::read_to_string(doc_entry.path())
-                                        {
-                                            documentation_snippets.insert(
-                                                format!(
-                                                    "packages/{}/docs/{}",
-                                                    name, key
-                                                ),
-                                                content,
-                                            );
-                                        }
-                                    }
+                                    documentation_snippets.insert(
+                                        format!(
+                                            "packages/{}/docs/{}",
+                                            name, key
+                                        ),
+                                        content,
+                                    );
                                 }
                             }
                         }
-
-                        packages.push(PackageSummary {
-                            name,
-                            path: relative_path,
-                            invariants,
-                            description: None,
-                        });
                     }
+
+                    packages.push(PackageSummary {
+                        name,
+                        path: relative_path,
+                        invariants,
+                        description: None,
+                    });
                 }
             }
         }

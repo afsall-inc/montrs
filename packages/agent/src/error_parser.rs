@@ -60,13 +60,15 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
                     let end = (line + 2).min(lines.len());
 
                     let mut context = String::new();
-                    for i in start..end {
+                    for (i, ln) in
+                        lines.iter().enumerate().take(end).skip(start)
+                    {
                         let line_num = i + 1;
                         let indicator =
                             if line_num == line { "> " } else { "  " };
                         context.push_str(&format!(
                             "{}{:4} | {}\n",
-                            indicator, line_num, lines[i]
+                            indicator, line_num, ln
                         ));
                     }
                     context

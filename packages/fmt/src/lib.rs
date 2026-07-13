@@ -195,7 +195,7 @@ mod tests {
         let source = "// MontRS Plate Sketch: Test\nfn main() {}";
         let settings = FormatterSettings::default();
         let formatted = format_source(source, &settings).unwrap();
-        assert!(formatted.contains("//! // MontRS Plate Sketch: Test"));
+        assert!(formatted.contains("//! MontRS Plate Sketch: Test"));
     }
 
     #[test]

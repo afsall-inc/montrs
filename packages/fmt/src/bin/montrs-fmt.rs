@@ -37,9 +37,7 @@ fn main() -> anyhow::Result<()> {
             for entry in WalkDir::new(input_path)
                 .into_iter()
                 .filter_map(|e| e.ok())
-                .filter(|e| {
-                    e.path().extension().map_or(false, |ext| ext == "rs")
-                })
+                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
                 if format_one_file(
                     entry.path(),

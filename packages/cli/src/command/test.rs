@@ -87,6 +87,7 @@ pub async fn run(
 
     // Simple parser for cargo test json
     while let Some(line) = reader.next_line().await? {
+        #[allow(clippy::collapsible_if)]
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(&line) {
             if let Some(type_field) = json.get("type").and_then(|v| v.as_str())
             {

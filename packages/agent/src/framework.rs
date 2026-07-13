@@ -1,15 +1,15 @@
-/// Framework Invariants & Documentation
-///
-/// This module embeds core framework invariants and guides directly into the binary.
-/// This ensures that the agent always has access to the fundamental rules of the framework,
-/// even when a local `.agent` folder is missing or when the package is distributed via crates.io.
-///
-/// ### 🛠️ Adding a New Package
-/// When adding a new package to the MontRS framework:
-/// 1. Create `packages/<name>/docs/invariants.md`.
-/// 2. Add a new `pub const <NAME>_INVARIANTS` below using `include_str!`.
-/// 3. Update `get_framework_invariants()` to include the new invariants.
-/// 4. (Optional) If the package has specialized workflows, add them to `docs/agent/workflows/` and embed them here.
+//! Framework Invariants & Documentation
+//!
+//! This module embeds core framework invariants and guides directly into the binary.
+//! This ensures that the agent always has access to the fundamental rules of the framework,
+//! even when a local `.agent` folder is missing or when the package is distributed via crates.io.
+//!
+//! ### 🛠️ Adding a New Package
+//! When adding a new package to the MontRS framework:
+//! 1. Create `packages/<name>/docs/invariants.md`.
+//! 2. Add a new `pub const <NAME>_INVARIANTS` below using `include_str!`.
+//! 3. Update `get_framework_invariants()` to include the new invariants.
+//! 4. (Optional) If the package has specialized workflows, add them to `docs/agent/workflows/` and embed them here.
 
 pub const CORE_INVARIANTS: &str =
     include_str!("../../../packages/core/docs/invariants.md");

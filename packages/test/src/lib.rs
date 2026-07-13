@@ -22,6 +22,7 @@
 //! ## Example
 //!
 //! ```rust
+//! use montrs_core::env::EnvConfig;
 //! use montrs_test::TestEnv;
 //!
 //! let env = TestEnv::new();
