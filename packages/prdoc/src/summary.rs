@@ -4,7 +4,7 @@ use crate::{
     },
     types::CrateChange,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct SummaryContext<'a> {
     pub analysis: &'a DiffAnalysis,
@@ -13,7 +13,7 @@ pub struct SummaryContext<'a> {
     pub public_api_removals: Vec<PublicApiChange>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PublicApiChange {
     pub item_type: String,
     pub name: String,
@@ -21,49 +21,102 @@ pub struct PublicApiChange {
     pub path: String,
 }
 
-pub fn generate_rich_summary(ctx: &SummaryContext) -> String {
-    let mut parts: Vec<String> = Vec::new();
+const NOISE_NAMES: &[&str] = &[
+    "as_str",
+    "from_str_lossy",
+    "dominates",
+    "provider_name",
+    "ensure_model",
+    "new",
+];
 
+const MAX_ITEMS_PER_CATEGORY: usize = 12;
+
+pub fn generate_rich_summary(ctx: &SummaryContext) -> String {
+    let mut out = String::new();
+
+    let narrative = build_narrative_sentence(ctx);
+
+    if !narrative.is_empty() {
+        out.push_str(&narrative);
+        out.push_str("\n\n");
+    }
+
+    let (additions, removals) = filter_and_dedup_api_changes(
+        &ctx.public_api_additions,
+        &ctx.public_api_removals,
+    );
+
+    let has_additions = !additions.is_empty();
+    let has_removals = !removals.is_empty();
+    let has_pkg_changes = !ctx.analysis.packages.is_empty();
+
+    if has_additions || has_removals || has_pkg_changes {
+        out.push_str("### Key Changes\n");
+
+        if has_additions {
+            let grouped = group_api_by_package_and_type(&additions);
+            out.push_str(&format_additions_section(&grouped));
+        }
+
+        if has_removals {
+            let grouped = group_api_by_package_and_type(&removals);
+            out.push_str(&format_removals_section(&grouped));
+        }
+
+        if has_pkg_changes {
+            out.push_str(&format_package_breakdown(
+                &ctx.analysis.packages,
+                &ctx.analysis.crate_changes,
+                &ctx.analysis.file_changes,
+            ));
+        }
+
+        if ctx.analysis.is_breaking {
+            out.push_str(
+                "\n**Breaking:** This change modifies the public API in a \
+                 backward-incompatible way.",
+            );
+        }
+        out.push('\n');
+    }
+
+    if out.is_empty() {
+        return ctx.analysis.summary_hints.join(". ");
+    }
+
+    out
+}
+
+fn build_narrative_sentence(ctx: &SummaryContext) -> String {
     if let Some(context) = ctx.context
         && !context.commit_messages.is_empty()
     {
         let narrative = build_commit_narrative(&context.commit_messages);
         if !narrative.is_empty() {
-            parts.push(narrative);
+            return narrative;
         }
     }
 
-    if !ctx.public_api_additions.is_empty() {
-        let additions = describe_api_additions(&ctx.public_api_additions);
-        parts.push(additions);
+    let pkg_count = ctx.analysis.packages.len();
+    if pkg_count == 0 {
+        return String::new();
     }
 
-    if !ctx.public_api_removals.is_empty() {
-        let removals = describe_api_removals(&ctx.public_api_removals);
-        parts.push(removals);
-    }
+    let verb = match ctx.analysis.dominant_category {
+        ChangeCategory::NewFeature => "Adds functionality across",
+        ChangeCategory::BugFix => "Fixes issues in",
+        ChangeCategory::BreakingChange => "Introduces breaking changes to",
+        ChangeCategory::Refactor => "Refactors",
+        ChangeCategory::Documentation => "Updates documentation for",
+        ChangeCategory::Internal => "Updates",
+    };
 
-    if !ctx.analysis.packages.is_empty() {
-        let pkg_summary = describe_package_changes(
-            &ctx.analysis.packages,
-            &ctx.analysis.crate_changes,
-            &ctx.analysis.file_changes,
-        );
-        parts.push(pkg_summary);
-    }
-
-    if ctx.analysis.is_breaking {
-        parts.push(
-            "This change introduces breaking modifications to the public API."
-                .to_string(),
-        );
-    }
-
-    if parts.is_empty() {
-        return ctx.analysis.summary_hints.join(". ");
-    }
-
-    parts.join(" ")
+    format!(
+        "{verb} {} package(s): {}.",
+        pkg_count,
+        ctx.analysis.packages.join(", ")
+    )
 }
 
 fn build_commit_narrative(messages: &[String]) -> String {
@@ -75,41 +128,31 @@ fn build_commit_narrative(messages: &[String]) -> String {
 
     let mut sentences = Vec::new();
 
-    if let Some(feats) = groups.get(&ChangeCategory::NewFeature) {
-        let descriptions = extract_descriptions(feats);
-        if !descriptions.is_empty() {
-            sentences.push(format!("Adds {}.", descriptions.join(", ")));
-        }
-    }
+    let order = [
+        ChangeCategory::NewFeature,
+        ChangeCategory::BugFix,
+        ChangeCategory::Refactor,
+        ChangeCategory::BreakingChange,
+        ChangeCategory::Documentation,
+        ChangeCategory::Internal,
+    ];
 
-    if let Some(fixes) = groups.get(&ChangeCategory::BugFix) {
-        let descriptions = extract_descriptions(fixes);
-        if !descriptions.is_empty() {
-            sentences.push(format!("Fixes {}.", descriptions.join(", ")));
-        }
-    }
-
-    if let Some(refactors) = groups.get(&ChangeCategory::Refactor) {
-        let descriptions = extract_descriptions(refactors);
-        if !descriptions.is_empty() {
-            sentences.push(format!("Refactors {}.", descriptions.join(", ")));
-        }
-    }
-
-    if let Some(docs) = groups.get(&ChangeCategory::Documentation) {
-        let descriptions = extract_descriptions(docs);
-        if !descriptions.is_empty() {
-            sentences.push(format!(
-                "Updates documentation for {}.",
-                descriptions.join(", ")
-            ));
-        }
-    }
-
-    if let Some(breaking) = groups.get(&ChangeCategory::BreakingChange) {
-        let descriptions = extract_descriptions(breaking);
-        if !descriptions.is_empty() {
-            sentences.push(format!("Breaking: {}.", descriptions.join(", ")));
+    for cat in &order {
+        if let Some(msgs) = groups.get(cat) {
+            let descriptions = extract_descriptions(msgs);
+            if descriptions.is_empty() {
+                continue;
+            }
+            let prefix = match cat {
+                ChangeCategory::NewFeature => "Adds",
+                ChangeCategory::BugFix => "Fixes",
+                ChangeCategory::Refactor => "Refactors",
+                ChangeCategory::BreakingChange => "Breaking:",
+                ChangeCategory::Documentation => "Docs:",
+                ChangeCategory::Internal => "Chore:",
+            };
+            let text = descriptions.join(", ");
+            sentences.push(format!("{prefix} {text}."));
         }
     }
 
@@ -117,6 +160,7 @@ fn build_commit_narrative(messages: &[String]) -> String {
 }
 
 fn extract_descriptions(messages: &[String]) -> Vec<String> {
+    let mut seen = HashSet::new();
     messages
         .iter()
         .filter_map(|msg| {
@@ -137,7 +181,8 @@ fn extract_descriptions(messages: &[String]) -> Vec<String> {
             } else {
                 trimmed
             };
-            if after_prefix.is_empty() {
+            if after_prefix.is_empty() || !seen.insert(after_prefix.to_string())
+            {
                 None
             } else {
                 Some(after_prefix.to_string())
@@ -146,49 +191,139 @@ fn extract_descriptions(messages: &[String]) -> Vec<String> {
         .collect()
 }
 
-fn describe_api_additions(additions: &[PublicApiChange]) -> String {
-    let by_type = group_by_item_type(additions);
-    let mut parts = Vec::new();
+fn filter_and_dedup_api_changes<'a>(
+    additions: &'a [PublicApiChange],
+    removals: &'a [PublicApiChange],
+) -> (Vec<&'a PublicApiChange>, Vec<&'a PublicApiChange>) {
+    let removal_names: HashSet<&str> =
+        removals.iter().map(|r| r.name.as_str()).collect();
 
-    if let Some(fns) = by_type.get("fn") {
-        let names: Vec<&str> = fns.iter().map(|a| a.name.as_str()).collect();
-        parts.push(format!("new functions {}", names.join(", ")));
-    }
-    if let Some(structs) = by_type.get("struct") {
-        let names: Vec<&str> =
-            structs.iter().map(|a| a.name.as_str()).collect();
-        parts.push(format!("new structs {}", names.join(", ")));
-    }
-    if let Some(enums) = by_type.get("enum") {
-        let names: Vec<&str> = enums.iter().map(|a| a.name.as_str()).collect();
-        parts.push(format!("new enums {}", names.join(", ")));
-    }
-    if let Some(traits) = by_type.get("trait") {
-        let names: Vec<&str> = traits.iter().map(|a| a.name.as_str()).collect();
-        parts.push(format!("new traits {}", names.join(", ")));
-    }
+    let filtered_adds: Vec<&PublicApiChange> = additions
+        .iter()
+        .filter(|a| {
+            !is_noise_item(a)
+                && !is_test_item(a)
+                && !removal_names.contains(a.name.as_str())
+        })
+        .collect();
 
-    if parts.is_empty() {
-        return String::new();
-    }
+    let addition_names: HashSet<&str> =
+        filtered_adds.iter().map(|a| a.name.as_str()).collect();
 
-    format!("Introduces {}.", parts.join(", "))
+    let filtered_removals: Vec<&PublicApiChange> = removals
+        .iter()
+        .filter(|r| {
+            !is_noise_item(r)
+                && !is_test_item(r)
+                && !addition_names.contains(r.name.as_str())
+        })
+        .collect();
+
+    (filtered_adds, filtered_removals)
 }
 
-fn describe_api_removals(removals: &[PublicApiChange]) -> String {
-    let names: Vec<&str> = removals.iter().map(|a| a.name.as_str()).collect();
-    if names.is_empty() {
-        return String::new();
-    }
-    format!("Removes {}.", names.join(", "))
+fn is_noise_item(change: &PublicApiChange) -> bool {
+    NOISE_NAMES.contains(&change.name.as_str())
 }
 
-fn describe_package_changes(
+fn is_test_item(change: &PublicApiChange) -> bool {
+    change.path.contains("/tests/")
+        || change.path.ends_with("_test.rs")
+        || change.name.starts_with("test_")
+        || change.name.starts_with("Test")
+}
+
+fn group_api_by_package_and_type<'a>(
+    changes: &[&'a PublicApiChange],
+) -> HashMap<Option<String>, HashMap<&'a str, Vec<&'a str>>> {
+    let mut by_pkg: HashMap<Option<String>, HashMap<&str, Vec<&str>>> =
+        HashMap::new();
+    for change in changes {
+        let pkg_entry = by_pkg.entry(change.package.clone()).or_default();
+        pkg_entry
+            .entry(&change.item_type)
+            .or_default()
+            .push(&change.name);
+    }
+    by_pkg
+}
+
+fn format_additions_section(
+    grouped: &HashMap<Option<String>, HashMap<&str, Vec<&str>>>,
+) -> String {
+    if grouped.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    out.push_str("**Added**\n");
+
+    let type_order = ["trait", "struct", "enum", "fn"];
+
+    for (pkg, by_type) in grouped {
+        let pkg_label = pkg.as_deref().unwrap_or("project");
+        let mut lines = Vec::new();
+        for item_type in &type_order {
+            if let Some(names) = by_type.get(item_type) {
+                let mut unique: Vec<&str> = names.to_vec();
+                unique.sort();
+                unique.dedup();
+                let label = match *item_type {
+                    "trait" => "traits",
+                    "struct" => "structs",
+                    "enum" => "enums",
+                    _ => "functions",
+                };
+                let (shown, rest) = split_and_ellipsis(&unique);
+                lines.push(format!("`{}` {label}", shown.join("`, `")));
+                if let Some(count) = rest {
+                    lines.push(format!("...and {count} more"));
+                }
+            }
+        }
+        if !lines.is_empty() {
+            out.push_str(&format!("- **{pkg_label}**: {}\n", lines.join("; ")));
+        }
+    }
+    out
+}
+
+fn format_removals_section(
+    grouped: &HashMap<Option<String>, HashMap<&str, Vec<&str>>>,
+) -> String {
+    if grouped.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    out.push_str("**Removed**\n");
+
+    for (pkg, by_type) in grouped {
+        let pkg_label = pkg.as_deref().unwrap_or("project");
+        let mut names: Vec<&str> = Vec::new();
+        for list in by_type.values() {
+            names.extend(list.iter().copied());
+        }
+        names.sort();
+        names.dedup();
+        if names.is_empty() {
+            continue;
+        }
+        let (shown, rest) = split_and_ellipsis(&names);
+        out.push_str(&format!("- **{pkg_label}**: `{}`", shown.join("`, `")));
+        if let Some(count) = rest {
+            out.push_str(&format!("; ...and {count} more"));
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn format_package_breakdown(
     packages: &[String],
     crate_changes: &[CrateChange],
     file_changes: &[FileChange],
 ) -> String {
-    let mut parts = Vec::new();
+    let mut out = String::new();
+    out.push_str("### Package Breakdown\n");
 
     for pkg in packages {
         let pkg_files: Vec<&FileChange> = file_changes
@@ -205,15 +340,6 @@ fn describe_package_changes(
             .iter()
             .filter(|c| c.category == FileCategory::Source)
             .count();
-        let test_count = pkg_files
-            .iter()
-            .filter(|c| c.category == FileCategory::Test)
-            .count();
-        let doc_count = pkg_files
-            .iter()
-            .filter(|c| c.category == FileCategory::Docs)
-            .count();
-
         let total_added: usize = pkg_files.iter().map(|c| c.added_lines).sum();
         let total_removed: usize =
             pkg_files.iter().map(|c| c.removed_lines).sum();
@@ -224,57 +350,30 @@ fn describe_package_changes(
             .map(|c| c.bump.as_str())
             .unwrap_or("none");
 
-        let mut details = Vec::new();
-        if source_count > 0 {
-            details.push(format!("{} source file(s)", source_count));
-        }
-        if test_count > 0 {
-            details.push(format!("{} test file(s)", test_count));
-        }
-        if doc_count > 0 {
-            details.push(format!("{} doc file(s)", doc_count));
-        }
-
-        let detail_str = if details.is_empty() {
-            String::new()
-        } else {
-            format!(" ({})", details.join(", "))
-        };
-
         let line_str = if total_added > 0 || total_removed > 0 {
-            format!("+{}/-{}", total_added, total_removed)
+            format!(" (+{total_added}/-{total_removed})")
         } else {
             String::new()
         };
 
-        parts.push(format!(
-            "{}{} [{}]{}",
-            pkg,
-            detail_str,
-            bump,
-            if line_str.is_empty() {
-                String::new()
-            } else {
-                format!(" {}", line_str)
-            }
+        out.push_str(&format!(
+            "- **{pkg}** ({bump}): {source_count} source file(s){line_str}\n",
         ));
     }
-
-    if parts.is_empty() {
-        return String::new();
-    }
-
-    format!("Affects: {}.", parts.join(", "))
+    out.push('\n');
+    out
 }
 
-fn group_by_item_type(
-    changes: &[PublicApiChange],
-) -> HashMap<&str, Vec<&PublicApiChange>> {
-    let mut map: HashMap<&str, Vec<&PublicApiChange>> = HashMap::new();
-    for change in changes {
-        map.entry(&change.item_type).or_default().push(change);
+fn split_and_ellipsis<'a>(
+    names: &'a [&'a str],
+) -> (Vec<&'a str>, Option<usize>) {
+    if names.len() <= MAX_ITEMS_PER_CATEGORY {
+        (names.to_vec(), None)
+    } else {
+        let shown: Vec<&str> = names[..MAX_ITEMS_PER_CATEGORY].to_vec();
+        let rest = names.len() - MAX_ITEMS_PER_CATEGORY;
+        (shown, Some(rest))
     }
-    map
 }
 
 fn extract_package_from_path(path: &str) -> Option<String> {
@@ -328,11 +427,23 @@ fn extract_path_from_diff_line(line: &str) -> Option<String> {
 fn parse_public_api_line(line: &str, path: &str) -> Option<PublicApiChange> {
     let trimmed = line.trim_start_matches('+').trim_start_matches('-').trim();
 
+    if trimmed.starts_with("//")
+        || trimmed.starts_with("//!")
+        || trimmed.starts_with("///")
+        || trimmed.starts_with("#[")
+        || trimmed.starts_with("mod ")
+        || trimmed.starts_with("use ")
+        || trimmed.starts_with("type ")
+        || trimmed.starts_with("macro_rules!")
+    {
+        return None;
+    }
+
     let patterns = [
-        ("fn", r"pub\s+(?:async\s+)?fn\s+(\w+)"),
+        ("trait", r"pub\s+trait\s+(\w+)"),
         ("struct", r"pub\s+struct\s+(\w+)"),
         ("enum", r"pub\s+enum\s+(\w+)"),
-        ("trait", r"pub\s+trait\s+(\w+)"),
+        ("fn", r"pub\s+(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)"),
     ];
 
     for (item_type, pattern) in &patterns {
@@ -340,6 +451,9 @@ fn parse_public_api_line(line: &str, path: &str) -> Option<PublicApiChange> {
             && let Some(caps) = re.captures(trimmed)
         {
             let name = caps[1].to_string();
+            if name.len() < 2 {
+                return None;
+            }
             let package = extract_package_from_path(path);
             return Some(PublicApiChange {
                 item_type: item_type.to_string(),

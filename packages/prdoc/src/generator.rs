@@ -13,10 +13,7 @@ pub fn generate_prdoc(
     analysis: &DiffAnalysis,
     context: Option<&PrContext>,
 ) -> PrDoc {
-    let title = context
-        .map(|c| c.title.clone())
-        .filter(|t| !t.is_empty())
-        .unwrap_or_else(|| derive_title_from_analysis(analysis));
+    let title = derive_title(context, analysis);
 
     let author = context
         .map(|c| c.author.clone())
@@ -95,29 +92,33 @@ pub fn render_prdoc_rich(
     let mut out = String::new();
 
     out.push_str("---\n");
-    out.push_str(&format!("title: {:?}\n", prdoc.title));
+    out.push_str(&yaml_kv("title", &prdoc.title));
     if let Some(pr) = prdoc.pr {
-        out.push_str(&format!("pr: {}\n", pr));
+        out.push_str(&format!("pr: {pr}\n"));
     }
-    out.push_str(&format!("author: {:?}\n", prdoc.author));
+    out.push_str(&yaml_kv("author", &prdoc.author));
     out.push_str(&format!(
         "status: {}\n",
         serde_yaml::to_string(&prdoc.status)
             .unwrap_or_default()
             .trim()
     ));
-    out.push_str(&format!("packages: {:?}\n", prdoc.packages));
+    out.push_str("packages:\n");
+    for pkg in &prdoc.packages {
+        out.push_str(&format!("  - {pkg}\n"));
+    }
     out.push_str(&format!("breaking: {}\n", prdoc.breaking));
     if !prdoc.needs_review.is_empty() {
-        out.push_str(&format!("needs-review: {:?}\n", prdoc.needs_review));
+        out.push_str("needs-review:\n");
+        for item in &prdoc.needs_review {
+            out.push_str(&format!("  - {item}\n"));
+        }
     }
     if !prdoc.audience.is_empty() {
-        let audience_strs: Vec<String> = prdoc
-            .audience
-            .iter()
-            .map(|a| a.as_str().to_string())
-            .collect();
-        out.push_str(&format!("audience: {:?}\n", audience_strs));
+        out.push_str("audience:\n");
+        for a in &prdoc.audience {
+            out.push_str(&format!("  - {}\n", a.as_str()));
+        }
     }
     if !prdoc.crates.is_empty() {
         out.push_str("crates:\n");
@@ -156,7 +157,10 @@ pub fn render_prdoc_rich(
         rich_summary
     };
     out.push_str(&final_summary);
-    out.push_str("\n\n");
+    if !final_summary.ends_with('\n') {
+        out.push('\n');
+    }
+    out.push('\n');
 
     out.push_str("## Changes\n");
     out.push_str("### Packages Affected\n");
@@ -167,10 +171,13 @@ pub fn render_prdoc_rich(
             .find(|c| c.name == *pkg)
             .map(|c| c.bump.as_str())
             .unwrap_or("none");
-        out.push_str(&format!(
-            "- **{}** (bump: {}): See summary for details.\n",
-            pkg, bump
-        ));
+        let desc = describe_package_change(
+            pkg,
+            &analysis.file_changes,
+            bump,
+            prdoc.breaking,
+        );
+        out.push_str(&desc);
     }
     out.push('\n');
 
@@ -183,22 +190,89 @@ pub fn render_prdoc_rich(
     out.push_str("3. Run `montrs agent check` — no invariant violations.\n");
     out.push('\n');
 
-    out.push_str("### Review Focus\n\n");
+    if !prdoc.needs_review.is_empty() {
+        out.push_str("### Review Focus\n");
+        for item in &prdoc.needs_review {
+            out.push_str(&format!(
+                "- {}\n",
+                match item.as_str() {
+                    "architecture" =>
+                        "Architecture: verify structural integrity of public \
+                         API changes.",
+                    "design" =>
+                        "Design: confirm new types and traits follow project \
+                         conventions.",
+                    "agent" =>
+                        "Agent: ensure machine-readable metadata is present.",
+                    "migration" =>
+                        "Migration: validate that breaking changes are \
+                         documented.",
+                    other => other,
+                }
+            ));
+        }
+        out.push('\n');
+    } else {
+        out.push_str("### Review Focus\n\n");
+    }
 
+    out.push_str("## Migration Notes\n\n");
     if prdoc.breaking {
-        out.push_str("## Migration Notes\n\n");
+        let breaking_pkgs: Vec<&str> = prdoc
+            .crates
+            .iter()
+            .filter(|c| c.bump == BumpLevel::Major)
+            .map(|c| c.name.as_str())
+            .collect();
+        if !breaking_pkgs.is_empty() {
+            out.push_str(&format!(
+                "This PR introduces breaking changes to: {}.\n",
+                breaking_pkgs.join(", ")
+            ));
+        }
         out.push_str(
-            "This PR introduces breaking changes. Review the public API \
-             modifications carefully.\n",
+            "Review the public API modifications carefully before merging.\n",
         );
     } else {
-        out.push_str("## Migration Notes\n\n");
+        out.push_str("None.\n");
     }
 
     out
 }
 
-fn derive_title_from_analysis(analysis: &DiffAnalysis) -> String {
+fn yaml_kv(key: &str, value: &str) -> String {
+    if value.contains('"')
+        || value.contains('\n')
+        || value.contains(':')
+        || value.contains('#')
+        || value.contains('@')
+    {
+        let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+        format!("{key}: \"{escaped}\"\n")
+    } else if value.is_empty()
+        || value.contains(' ')
+        || value.contains('&')
+        || value.contains('*')
+        || value.contains('!')
+        || value.contains('{')
+        || value.contains('[')
+    {
+        format!("{key}: \"{value}\"\n")
+    } else {
+        format!("{key}: {value}\n")
+    }
+}
+
+fn derive_title(
+    context: Option<&PrContext>,
+    analysis: &DiffAnalysis,
+) -> String {
+    if let Some(ctx) = context
+        && !ctx.title.is_empty()
+    {
+        return ctx.title.clone();
+    }
+
     let cat_str = match &analysis.dominant_category {
         ChangeCategory::NewFeature => "Add",
         ChangeCategory::BugFix => "Fix",
@@ -209,17 +283,67 @@ fn derive_title_from_analysis(analysis: &DiffAnalysis) -> String {
     };
 
     if analysis.packages.is_empty() {
-        format!("{} project", cat_str)
+        format!("{cat_str} project")
     } else if analysis.packages.len() == 1 {
-        format!("{} {}", cat_str, analysis.packages[0])
+        format!("{cat_str} {}", analysis.packages[0])
     } else {
         format!(
-            "{} {} and {} other package(s)",
-            cat_str,
+            "{cat_str} {} and {} other package(s)",
             analysis.packages[0],
             analysis.packages.len() - 1
         )
     }
+}
+
+fn describe_package_change(
+    pkg: &str,
+    file_changes: &[crate::analyzer::FileChange],
+    bump: &str,
+    _is_breaking: bool,
+) -> String {
+    let pkg_files: Vec<&crate::analyzer::FileChange> = file_changes
+        .iter()
+        .filter(|c| {
+            extract_package_from_path(&c.path)
+                .as_ref()
+                .map(|p| p == pkg)
+                .unwrap_or(false)
+        })
+        .collect();
+
+    let source_count = pkg_files
+        .iter()
+        .filter(|c| c.category == FileCategory::Source)
+        .count();
+    let test_count = pkg_files
+        .iter()
+        .filter(|c| c.category == FileCategory::Test)
+        .count();
+
+    let total_added: usize = pkg_files.iter().map(|c| c.added_lines).sum();
+    let total_removed: usize = pkg_files.iter().map(|c| c.removed_lines).sum();
+
+    let mut details = Vec::new();
+    if source_count > 0 {
+        details.push(format!("{source_count} source file(s)"));
+    }
+    if test_count > 0 {
+        details.push(format!("{test_count} test file(s)"));
+    }
+
+    let detail_str = if details.is_empty() {
+        String::new()
+    } else {
+        format!(" ({})", details.join(", "))
+    };
+
+    let line_str = if total_added > 0 || total_removed > 0 {
+        format!(" +{total_added}/-{total_removed}")
+    } else {
+        String::new()
+    };
+
+    format!("- **{pkg}** ({bump}):{detail_str}{line_str}\n")
 }
 
 fn default_bump_for_category(
@@ -246,14 +370,16 @@ fn derive_needs_review(
     let mut review = Vec::new();
     if is_breaking {
         review.push("architecture".to_string());
+        review.push("migration".to_string());
     }
     match category {
         ChangeCategory::NewFeature => {
             review.push("design".to_string());
         }
         ChangeCategory::BreakingChange => {
-            review.push("architecture".to_string());
-            review.push("migration".to_string());
+            if !is_breaking {
+                review.push("architecture".to_string());
+            }
         }
         _ => {}
     }
@@ -289,3 +415,15 @@ fn most_frequent_category(
     }
     counts.into_iter().max_by_key(|(_, c)| *c).map(|(c, _)| c)
 }
+
+fn extract_package_from_path(path: &str) -> Option<String> {
+    let parts: Vec<&str> = path.split('/').collect();
+    for (i, part) in parts.iter().enumerate() {
+        if (*part == "packages" || *part == "apps") && i + 1 < parts.len() {
+            return Some(parts[i + 1].to_string());
+        }
+    }
+    None
+}
+
+use crate::analyzer::FileCategory;
