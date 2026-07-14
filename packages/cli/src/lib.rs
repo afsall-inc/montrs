@@ -205,12 +205,18 @@ pub enum AgentSubcommand {
         /// Path to check.
         #[arg(default_value = ".")]
         path: String,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
     },
     /// Assess project health and agent-readability.
     Doctor {
         /// Optional package to focus on.
         #[arg(short, long)]
         package: Option<String>,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
     },
     /// Show a diagnostic diff for an error file, including the offending code and the suggested fix.
     Diff {
@@ -222,6 +228,29 @@ pub enum AgentSubcommand {
         /// Filter by status (active or resolved).
         #[arg(short, long)]
         status: Option<String>,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve a specific tracked error by ID.
+    Resolve {
+        /// The error ID to resolve.
+        id: String,
+        /// A message describing the fix.
+        #[arg(short, long)]
+        message: Option<String>,
+    },
+    /// Regenerate the agent snapshot (agent.json).
+    Snapshot {
+        /// Output format (json, yaml, txt).
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
+    /// List and inspect available skills.
+    Skills {
+        /// Show details for a specific skill by name.
+        #[arg(short, long)]
+        name: Option<String>,
     },
     /// Manage agent rules and IDE integration.
     Rules {

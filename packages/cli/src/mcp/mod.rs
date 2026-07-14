@@ -184,6 +184,7 @@ async fn handle_tool_call(
                 .unwrap_or(".");
             let output = agent::run(AgentSubcommand::Check {
                 path: path.to_string(),
+                json: false,
             })
             .await?;
             Ok(CallToolResult {
@@ -197,8 +198,11 @@ async fn handle_tool_call(
                 .get("package")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string());
-            let output =
-                agent::run(AgentSubcommand::Doctor { package }).await?;
+            let output = agent::run(AgentSubcommand::Doctor {
+                package,
+                json: false,
+            })
+            .await?;
             Ok(CallToolResult {
                 content: vec![ToolContent::Text { text: output }],
                 is_error: false,
@@ -268,8 +272,11 @@ async fn handle_tool_call(
                 .get("status")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string());
-            let output =
-                agent::run(AgentSubcommand::ListErrors { status }).await?;
+            let output = agent::run(AgentSubcommand::ListErrors {
+                status,
+                json: false,
+            })
+            .await?;
             Ok(CallToolResult {
                 content: vec![ToolContent::Text { text: output }],
                 is_error: false,

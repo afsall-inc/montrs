@@ -55,61 +55,66 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 Ok(output)
             }
         },
-        AgentSubcommand::Check { path } => {
-            output.push_str(&format!(
-                "Checking MontRS invariants at {}...\n",
-                path
-            ));
-
+        AgentSubcommand::Check { path, json } => {
             let cwd = std::env::current_dir()?;
             let manager = montrs_agent::AgentManager::new(cwd);
-
-            // 1. Generate snapshot (heuristically if no spec is available in this context)
-            // In a real run, we'd ideally have the AppSpec, but for 'check' we can start with discovery.
             let snapshot = manager.generate_snapshot("montrs-project")?;
-
-            // 2. Check invariants
             let violations = manager.check_invariants(&snapshot)?;
 
-            if violations.is_empty() {
-                output.push_str("✅ No invariant violations found.\n");
+            if json {
+                let json_violations: Vec<serde_json::Value> = violations
+                    .iter()
+                    .map(|v| serde_json::json!({ "violation": v }))
+                    .collect();
+                Ok(serde_json::to_string_pretty(&json_violations)?)
             } else {
-                output.push_str("❌ Invariant violations found:\n");
-                for violation in violations {
-                    output.push_str(&format!("  - {}\n", violation));
-                }
-            }
-
-            Ok(output)
-        }
-        AgentSubcommand::Doctor { package } => {
-            if let Some(ref pkg) = package {
                 output.push_str(&format!(
-                    "Running agent doctor for package {}...\n",
-                    pkg
+                    "Checking MontRS invariants at {}...\n",
+                    path
                 ));
-            } else {
-                output.push_str(
-                    "Running agent doctor for the entire project...\n",
-                );
+                if violations.is_empty() {
+                    output.push_str("No invariant violations found.\n");
+                } else {
+                    output.push_str("Invariant violations found:\n");
+                    for violation in violations {
+                        output.push_str(&format!("  - {}\n", violation));
+                    }
+                }
+                Ok(output)
             }
-
+        }
+        AgentSubcommand::Doctor { package, json } => {
             let cwd = std::env::current_dir()?;
             let manager = montrs_agent::AgentManager::new(cwd);
-
             let diagnostics = manager.run_doctor(package.as_deref())?;
 
-            for report in diagnostics {
-                output.push_str(&format!("  {}\n", report));
+            if json {
+                let json_diag: Vec<serde_json::Value> = diagnostics
+                    .iter()
+                    .map(|d| serde_json::json!({ "report": d }))
+                    .collect();
+                Ok(serde_json::to_string_pretty(&json_diag)?)
+            } else {
+                if let Some(ref pkg) = package {
+                    output.push_str(&format!(
+                        "Running agent doctor for package {}...\n",
+                        pkg
+                    ));
+                } else {
+                    output.push_str(
+                        "Running agent doctor for the entire project...\n",
+                    );
+                }
+                for report in diagnostics {
+                    output.push_str(&format!("  {}\n", report));
+                }
+                Ok(output)
             }
-
-            Ok(output)
         }
         AgentSubcommand::Diff { path } => {
             output.push_str("### Agent Diagnostic Report\n");
             output.push_str(&format!("Target: {}\n", path));
 
-            // 1. Load error file
             let error_content = std::fs::read_to_string(&path)?;
             output.push_str(&format!(
                 "\n#### Error Context\n```\n{}\n```\n",
@@ -136,12 +141,10 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
 
             Ok(output)
         }
-        AgentSubcommand::ListErrors { status } => {
+        AgentSubcommand::ListErrors { status, json } => {
             let cwd = std::env::current_dir()?;
             let manager = montrs_agent::AgentManager::new(cwd);
             let tracking = manager.load_tracking()?;
-
-            output.push_str("### Agent Error Tracking\n\n");
 
             let filtered_errors: Vec<_> = tracking
                 .errors
@@ -155,29 +158,110 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 })
                 .collect();
 
-            if filtered_errors.is_empty() {
-                output.push_str("No errors tracked yet.\n");
+            if json {
+                Ok(serde_json::to_string_pretty(&filtered_errors)?)
             } else {
-                output.push_str(
-                    "| ID | Package | File | Line | Level | Status | Message \
-                     |\n",
-                );
-                output
-                    .push_str("| --- | --- | --- | --- | --- | --- | --- |\n");
-                for error in filtered_errors {
+                output.push_str("### Agent Error Tracking\n\n");
+                if filtered_errors.is_empty() {
+                    output.push_str("No errors tracked yet.\n");
+                } else {
+                    output.push_str(
+                        "| ID | Package | File | Line | Level | Status | \
+                         Message |\n",
+                    );
+                    output.push_str(
+                        "| --- | --- | --- | --- | --- | --- | --- |\n",
+                    );
+                    for error in filtered_errors {
+                        output.push_str(&format!(
+                            "| {} | {} | {} | {} | {} | {} | {} |\n",
+                            error.id,
+                            error.package.unwrap_or_else(|| "-".to_string()),
+                            error.file,
+                            error.line,
+                            error.level,
+                            error.status,
+                            error.message
+                        ));
+                    }
+                }
+                Ok(output)
+            }
+        }
+        AgentSubcommand::Resolve { id, message } => {
+            let cwd = std::env::current_dir()?;
+            let manager = montrs_agent::AgentManager::new(cwd);
+            let fix_msg =
+                message.unwrap_or_else(|| "Resolved via CLI".to_string());
+            let diff = manager.generate_diff();
+            manager.resolve_error(&id, fix_msg, diff)?;
+            Ok(format!("Error {} resolved.", id))
+        }
+        AgentSubcommand::Snapshot { format } => {
+            let cwd = std::env::current_dir()?;
+            let manager = montrs_agent::AgentManager::new(cwd);
+            let app_name = std::fs::read_to_string("montrs.toml")
+                .ok()
+                .and_then(|c| toml::from_str::<toml::Value>(&c).ok())
+                .and_then(|v| {
+                    v.get("project")
+                        .and_then(|p| p.get("name"))
+                        .and_then(|n| n.as_str())
+                        .map(|s| s.to_string())
+                })
+                .unwrap_or_else(|| "app".to_string());
+            let snapshot = manager.generate_snapshot(&app_name)?;
+            manager.write_snapshot(&snapshot, &format)?;
+            Ok(format!("Snapshot written to .agent/agent.{}", format))
+        }
+        AgentSubcommand::Skills { name } => {
+            let cwd = std::env::current_dir()?;
+            let discovered = montrs_agent::skills::discover_skills(&cwd);
+            if let Some(skill_name) = name {
+                let skill =
+                    discovered.iter().find(|s| s.skill.name == skill_name);
+                if let Some(s) = skill {
                     output.push_str(&format!(
-                        "| {} | {} | {} | {} | {} | {} | {} |\n",
-                        error.id,
-                        error.package.unwrap_or_else(|| "-".to_string()),
-                        error.file,
-                        error.line,
-                        error.level,
-                        error.status,
-                        error.message
+                        "### Skill: {}\n\n{}\n\n**Workflow:**\n",
+                        s.skill.name, s.skill.description
+                    ));
+                    for (i, step) in s.workflow.steps.iter().enumerate() {
+                        output.push_str(&format!("{}. {}\n", i + 1, step));
+                    }
+                    if !s.context.prompts.is_empty() {
+                        output.push_str("\n**Context Prompts:**\n");
+                        for prompt in &s.context.prompts {
+                            output.push_str(&format!("  - {}\n", prompt));
+                        }
+                    }
+                    if !s.context.invariants.is_empty() {
+                        output.push_str("\n**Invariants:**\n");
+                        for inv in &s.context.invariants {
+                            output.push_str(&format!("  - {}\n", inv));
+                        }
+                    }
+                } else {
+                    output.push_str(&format!(
+                        "Skill '{}' not found.\n",
+                        skill_name
                     ));
                 }
+            } else {
+                output.push_str("### Available Skills\n\n");
+                if discovered.is_empty() {
+                    output.push_str(
+                        "No skills found. Add skill.toml files to skills/ \
+                         directory.\n",
+                    );
+                } else {
+                    for s in &discovered {
+                        output.push_str(&format!(
+                            "- **{}** (v{}): {}\n",
+                            s.skill.name, s.skill.version, s.skill.description
+                        ));
+                    }
+                }
             }
-
             Ok(output)
         }
     }
