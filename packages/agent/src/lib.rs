@@ -13,6 +13,8 @@ pub mod prdoc_embed;
 pub mod prdoc_generator;
 pub mod skills;
 
+pub use montrs_prdoc;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
     pub project_name: String,
