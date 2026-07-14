@@ -6,8 +6,6 @@ use crate::{
     summary::{SummaryContext, extract_public_api_from_diff},
     types::{Audience, BumpLevel, CrateChange, PrDoc, PrDocStatus},
 };
-#[cfg(not(feature = "llm"))]
-type LlmConfig = ();
 
 pub fn generate_prdoc(
     analysis: &DiffAnalysis,
@@ -79,7 +77,7 @@ pub fn generate_prdoc(
 }
 
 pub fn render_prdoc(prdoc: &PrDoc, analysis: &DiffAnalysis) -> String {
-    render_prdoc_rich(prdoc, analysis, None, None, None)
+    render_prdoc_rich(prdoc, analysis, None, None, false)
 }
 
 pub fn render_prdoc_rich(
@@ -87,7 +85,7 @@ pub fn render_prdoc_rich(
     analysis: &DiffAnalysis,
     context: Option<&PrContext>,
     diff: Option<&str>,
-    llm_config: Option<&LlmConfig>,
+    use_llm: bool,
 ) -> String {
     let mut out = String::new();
 
@@ -143,14 +141,20 @@ pub fn render_prdoc_rich(
         public_api_removals: api_removals,
     };
     let rich_summary = crate::summary::generate_rich_summary(&summary_ctx);
-    let final_summary = if let Some(config) = llm_config {
+    let final_summary = if use_llm {
         #[cfg(feature = "llm")]
         {
-            crate::llm::enhance_summary(&rich_summary, &summary_ctx, config)
+            let root = crate::config::find_project_root()
+                .unwrap_or_else(std::path::PathBuf::new);
+            let config = crate::config::load_config(&root);
+            if let Some(cfg) = config.to_llm_config() {
+                crate::llm::enhance_summary(&rich_summary, &summary_ctx, &cfg)
+            } else {
+                rich_summary
+            }
         }
         #[cfg(not(feature = "llm"))]
         {
-            let _ = config;
             rich_summary
         }
     } else {

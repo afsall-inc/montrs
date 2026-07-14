@@ -10,6 +10,10 @@ repository.workspace = true
 name = "montrs"
 path = "src/bin/montrs.rs"
 
+[features]
+default = []
+llm = ["montrs-agent/llm"]
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 tokio = { version = "1.40", features = ["full"] }

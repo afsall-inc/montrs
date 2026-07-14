@@ -107,7 +107,7 @@ pub fn create_provider(
         "openai" => Some(Box::new(OpenAiProvider {
             config: config.clone(),
         })),
-        "ollama" => Some(Box::new(OllamaProvider {
+        "ollama" | "local" => Some(Box::new(OllamaProvider {
             config: config.clone(),
         })),
         _ => None,

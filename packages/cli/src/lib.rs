@@ -310,6 +310,9 @@ pub enum PrdocSubcommand {
         /// Enable embedding-based classification.
         #[arg(long)]
         embed: bool,
+        /// Enable LLM-enhanced summary via configured provider.
+        #[arg(long)]
+        llm: bool,
         /// Output file path.
         #[arg(short, long, default_value = "prdoc.md")]
         output: String,

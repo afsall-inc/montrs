@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[features]
+default = []
+llm = ["montrs-prdoc/llm"]
+
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true

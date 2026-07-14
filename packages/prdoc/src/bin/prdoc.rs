@@ -159,20 +159,12 @@ fn run_command(cli: Cli) -> Result<String, String> {
             let prdoc =
                 montrs_prdoc::generate_prdoc(&analysis, context.as_ref());
 
-            let llm_config = if llm {
-                let root = montrs_prdoc::find_project_root()
-                    .unwrap_or_else(std::path::PathBuf::new);
-                montrs_prdoc::load_config(&root).to_llm_config()
-            } else {
-                None
-            };
-
             let rendered = montrs_prdoc::render_prdoc_rich(
                 &prdoc,
                 &analysis,
                 context.as_ref(),
                 Some(&diff_str),
-                llm_config.as_ref(),
+                llm,
             );
 
             if let Some(parent) = output_path.parent()
