@@ -1,0 +1,26 @@
+[skill]
+name = "deployment"
+version = "1.0.0"
+description = "Guides the agent through deploying a MontRS application to various targets."
+author = "MontRS"
+tags = ["deployment", "devops", "release"]
+
+[workflow]
+steps = [
+    "Determine deployment target: web (WASM+server), desktop (Tauri), or mobile",
+    "For web: build with `montrs build --release`, configure static file serving",
+    "For desktop: use Tauri integration with `cargo tauri build`",
+    "Verify the deployment with a health check or smoke test",
+    "Document the deployment configuration in montrs.toml",
+]
+
+[context]
+prompts = [
+    "What is your deployment target? (web, desktop, mobile)",
+    "Do you have a domain or server ready for deployment?",
+]
+invariants = [
+    "Release builds must use --release flag",
+    "Environment variables must be configured via montrs.toml, not hardcoded",
+    "Deployment configuration must be documented in the project README",
+]

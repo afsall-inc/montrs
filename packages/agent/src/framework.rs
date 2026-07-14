@@ -46,6 +46,14 @@ pub const FIXING_ERRORS_WORKFLOW: &str =
 pub const ADDING_FEATURES_WORKFLOW: &str =
     include_str!("../../../docs/agent/workflows/adding-features.md");
 
+pub const SKILLS_GUIDE: &str = include_str!("../../../docs/agent/skills.md");
+pub const SKILL_DATABASE_SETUP: &str =
+    include_str!("../../../skills/database-setup/skill.toml");
+pub const SKILL_TESTING: &str =
+    include_str!("../../../skills/testing/skill.toml");
+pub const SKILL_DEPLOYMENT: &str =
+    include_str!("../../../skills/deployment/skill.toml");
+
 pub fn get_framework_invariants()
 -> std::collections::HashMap<&'static str, &'static str> {
     let mut m = std::collections::HashMap::new();
