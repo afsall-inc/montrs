@@ -113,24 +113,16 @@
       }
     },
     {
-      "description": "Capability provided by package agent. MUST follow invariants defined in agent.json under packages['agent'].invariants",
-      "name": "montrs_pkg_agent",
+      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
+      "name": "montrs_pkg_fmt",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "description",
-      "name": "tool_name",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "description",
-      "name": "name",
+      "description": "Formats Rust and view! code according to MontRS standards.",
+      "name": "code_format",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -153,46 +145,6 @@
       }
     },
     {
-      "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
-      "name": "montrs_pkg_cli",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package core. MUST follow invariants defined in agent.json under packages['core'].invariants",
-      "name": "montrs_pkg_core",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
-      "name": "montrs_pkg_fmt",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Formats Rust and view! code according to MontRS standards.",
-      "name": "code_format",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
-      "name": "montrs_pkg_montrs",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
       "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
       "name": "montrs_pkg_orm",
       "parameters": {
@@ -209,8 +161,16 @@
       }
     },
     {
-      "description": "Capability provided by package runner. Refer to its README for details.",
-      "name": "montrs_pkg_runner",
+      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
+      "name": "montrs_pkg_montrs",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
+      "name": "montrs_pkg_cli",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -233,8 +193,24 @@
       }
     },
     {
-      "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
-      "name": "montrs_pkg_utils",
+      "description": "Capability provided by package agent. MUST follow invariants defined in agent.json under packages['agent'].invariants",
+      "name": "montrs_pkg_agent",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "description",
+      "name": "name",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "description",
+      "name": "skill_name",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -246,6 +222,152 @@
       "parameters": {
         "properties": {},
         "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package core. MUST follow invariants defined in agent.json under packages['core'].invariants",
+      "name": "montrs_pkg_core",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
+      "name": "montrs_pkg_utils",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package runner. Refer to its README for details.",
+      "name": "montrs_pkg_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Guides the agent through writing and running tests for MontRS applications.",
+      "name": "skill_testing",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Tests must be deterministic and hermetic",
+          "Integration tests must use TestRuntime for in-process execution",
+          "E2E tests must be tagged with #[cfg(feature = \"e2e\")]"
+        ],
+        "context_prompts": [
+          "What type of test are you writing? (unit, integration, e2e)",
+          "What is the expected behavior you want to verify?"
+        ],
+        "name": "testing",
+        "tags": [
+          "testing",
+          "quality",
+          "verification"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Identify the target: unit test, integration test, or E2E test",
+          "For unit tests: use the test crate's expect() and table_test() macros",
+          "For integration tests: use TestRuntime and Fixture traits",
+          "For E2E tests: use playwright-rs with the e2e crate",
+          "Run tests with `montrs test` or `cargo test --workspace`",
+          "Check test output for failures and iterate"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through deploying a MontRS application to various targets.",
+      "name": "skill_deployment",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Release builds must use --release flag",
+          "Environment variables must be configured via montrs.toml, not hardcoded",
+          "Deployment configuration must be documented in the project README"
+        ],
+        "context_prompts": [
+          "What is your deployment target? (web, desktop, mobile)",
+          "Do you have a domain or server ready for deployment?"
+        ],
+        "name": "deployment",
+        "tags": [
+          "deployment",
+          "devops",
+          "release"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Determine deployment target: web (WASM+server), desktop (Tauri), or mobile",
+          "For web: build with `montrs build --release`, configure static file serving",
+          "For desktop: use Tauri integration with `cargo tauri build`",
+          "Verify the deployment with a health check or smoke test",
+          "Document the deployment configuration in montrs.toml"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through setting up and configuring a database backend for a MontRS application.",
+      "name": "skill_database_setup",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Database configuration must be in montrs.toml, not hardcoded",
+          "Connection strings must not be committed to version control"
+        ],
+        "context_prompts": [
+          "Which database backend would you like to use? (sqlite, postgres, mysql)",
+          "What is the connection URL or path for your database?"
+        ],
+        "name": "database-setup",
+        "tags": [
+          "database",
+          "setup",
+          "configuration"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Check montrs.toml for database configuration section",
+          "If no database configured, guide user to add [database] section with backend and URL",
+          "Run `cargo add` for the chosen backend driver",
+          "Verify connection with TestRuntime"
+        ]
       }
     }
   ]

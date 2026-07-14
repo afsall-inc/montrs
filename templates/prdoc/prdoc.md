@@ -1,9 +1,9 @@
 ---
-title: ""
-pr: 
-author: ""
+title: "Short description of the change"
+pr: 0
+author: "@username"
 status: draft
-packages: []
+packages: ["core"]
 breaking: false
 needs-review: []
 ---

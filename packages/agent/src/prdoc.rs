@@ -26,7 +26,7 @@ pub enum PrDocStatus {
 /// Parse a prdoc.md file, extracting the YAML frontmatter.
 pub fn parse_prdoc(content: &str) -> Result<PrDoc, String> {
     let frontmatter = extract_frontmatter(content)?;
-    toml::from_str(&frontmatter)
+    serde_yaml::from_str(&frontmatter)
         .map_err(|e| format!("Invalid prdoc frontmatter: {e}"))
 }
 

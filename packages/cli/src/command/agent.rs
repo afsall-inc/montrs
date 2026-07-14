@@ -267,7 +267,16 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
         AgentSubcommand::Prdoc { path, validate } => {
             let prdoc_path = std::path::PathBuf::from(&path);
             if !prdoc_path.exists() {
-                return Err(anyhow::anyhow!("prdoc.md not found at {}", path));
+                if validate {
+                    return Ok("No prdoc.md found. Validation skipped (not \
+                               required outside of pull requests)."
+                        .to_string());
+                }
+                return Err(anyhow::anyhow!(
+                    "prdoc.md not found at {}. Create one with the template \
+                     in templates/prdoc/prdoc.md.",
+                    path
+                ));
             }
             let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
                 .map_err(|e| anyhow::anyhow!("{}", e))?;

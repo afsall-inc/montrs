@@ -14,14 +14,9 @@ montrs-validator = { path = "../validator", version = "0.1.0", optional = true }
 montrs-test = { path = "../test", version = "0.1.0", optional = true }
 montrs-cli = { path = "../cli", version = "0.1.0", optional = true }
 
-# [[bin]]
-# name = "montrs"
-# path = "src/bin/montrs.rs"
-# required-features = ["cli"]
-
 [[bin]]
-name = "cargo-montrs"
-path = "src/bin/cargo-montrs.rs"
+name = "montrs"
+path = "src/bin/montrs.rs"
 required-features = ["cli"]
 
 [features]
