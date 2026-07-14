@@ -11,7 +11,7 @@ Choose your path based on the task at hand. Do not attempt to "wing it"—follow
 ### 1. I am fixing a Bug or Error
 - **Goal**: Identify, diagnose, and resolve a failure (compilation, runtime, or architectural).
 - **Primary Guide**: [Workflow: Fixing Errors](workflows/fixing-errors.md)
-- **Key Tools**: `montrs agent list-errors`, `montrs agent diff`.
+- **Key Tools**: `montrs agent list-errors`, `montrs agent diff`, `montrs agent resolve`.
 
 ### 2. I am adding a New Feature
 - **Goal**: Extend the application or framework with new capabilities.
@@ -27,6 +27,16 @@ Choose your path based on the task at hand. Do not attempt to "wing it"—follow
 - **Goal**: Move logic, split plates, or improve architectural health without changing behavior.
 - **Primary Guide**: [Workflow: Restructuring](workflows/restructuring.md)
 - **Key Tools**: `montrs agent check`.
+
+### 5. I am using a Skill
+- **Goal**: Load a composable, multi-step agent capability.
+- **Primary Guide**: [Skills System](skills.md)
+- **Key Tools**: `montrs agent skills`, `montrs agent skills --name <skill>`.
+
+### 6. I am documenting a Pull Request
+- **Goal**: Create structured, machine-readable PR documentation for agent review.
+- **Primary Guide**: [PRDoc Guide](../contributor/prdoc.md)
+- **Key Tools**: `montrs agent prdoc`, `montrs agent prdoc --validate`.
 
 ---
 
@@ -46,7 +56,9 @@ Before performing any action, ensure you are grounded in these core principles:
 - **[Agent-First Philosophy](agent-first.md)**: Why we prioritize machine-readability.
 - **[Framework Invariants](onboarding.md)**: The rules you must never break.
 - **[Spec Snapshot (agent.json)](spec.md)**: How to read the project's current state.
-- **[Metadata Standards](metadata.md)**: How to annotate code for discovery.
+- **[Metadata Standards](metadata.md)**: How to annotate code for discovery (`@agent-tool`, `@agent-skill`).
+- **[Skills System](skills.md)**: Composable, reusable agent capabilities with workflow steps.
+- **[PRDoc Guide](../contributor/prdoc.md)**: Structured PR documentation for agent review.
 
 ---
 

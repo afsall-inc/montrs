@@ -92,7 +92,9 @@ impl Route<AppConfig> for HelloRoute {
 - [Agent-first design](docs/agent/agent-first.md): Principles of machine-readability.
 - [Agent Usage Guide](packages/agent/README.md): How to use `agent.json` and `tools.json`.
 - [Spec Snapshot](docs/agent/spec.md): Understanding the machine-readable project state.
-- **Metadata Markers**: Look for `@agent-tool` and `AgentError` implementations in the source.
+- [Skills System](docs/agent/skills.md): Composable, reusable agent capabilities with multi-step workflows.
+- [PRDoc](docs/contributor/prdoc.md): Structured PR documentation for agent review.
+- **Metadata Markers**: Look for `@agent-tool`, `@agent-skill`, and `AgentError` implementations in the source.
 
 ---
 

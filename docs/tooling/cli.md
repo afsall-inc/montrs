@@ -127,6 +127,61 @@ MontRS CLI is built to be a primary communication channel between the developer 
 - **Error Capturing**: When a command fails, the CLI generates a versioned `errorfile.json` in `.agent/errorfiles/`.
 - **Context Awareness**: The CLI knows the state of your project through the `.agent` folder, allowing it to provide smarter error messages and suggested fixes.
 
+### `agent list-errors`
+List all tracked errors and their status.
+```bash
+montrs agent list-errors [--status <active|resolved>] [--json]
+```
+
+### `agent diff`
+Show a diagnostic diff for an error file.
+```bash
+montrs agent diff <path>
+```
+
+### `agent resolve`
+Resolve a specific tracked error by ID.
+```bash
+montrs agent resolve <id> [--message <msg>]
+```
+
+### `agent check`
+Validate structural correctness and project invariants.
+```bash
+montrs agent check [--path <path>] [--json]
+```
+
+### `agent doctor`
+Assess project health and agent-readiness.
+```bash
+montrs agent doctor [--package <pkg>] [--json]
+```
+
+### `agent snapshot`
+Regenerate the agent snapshot (`agent.json`).
+```bash
+montrs agent snapshot [--format <json|yaml|txt>]
+```
+
+### `agent skills`
+List and inspect available skills.
+```bash
+montrs agent skills [--name <skill-name>]
+```
+
+### `agent prdoc`
+Validate or display a `prdoc.md` file.
+```bash
+montrs agent prdoc [--path <prdoc.md>] [--validate]
+```
+
+### `agent rules`
+Manage agent rules and IDE integration.
+```bash
+montrs agent rules list
+montrs agent rules export --target <trae|cursor>
+```
+
 ### `watch`
 Watch for changes and rebuild automatically.
 ```bash
