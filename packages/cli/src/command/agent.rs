@@ -268,6 +268,13 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             let prdoc_path = std::path::PathBuf::from(&path);
             if !prdoc_path.exists() {
                 if validate {
+                    if std::env::var("CI").is_ok() {
+                        return Err(anyhow::anyhow!(
+                            "prdoc.md not found at {}. Pull requests require \
+                             a prdoc.md file.",
+                            path
+                        ));
+                    }
                     return Ok("No prdoc.md found. Validation skipped (not \
                                required outside of pull requests)."
                         .to_string());
