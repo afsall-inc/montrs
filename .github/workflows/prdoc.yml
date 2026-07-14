@@ -1,0 +1,46 @@
+name: PRDoc
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: nightly-2026-02-18
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Generate PRDoc
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cargo run --package montrs-cli -- agent prdoc generate \
+          --pr ${{ github.event.pull_request.number }} \
+          --output prdoc.md \
+          --force
+
+    - name: Validate PRDoc
+      run: cargo run --package montrs-cli -- agent prdoc validate
+
+    - name: Commit PRDoc
+      run: |
+        git config user.name "montrs-bot"
+        git config user.email "bot@montrs.dev"
+        git add prdoc.md
+        git diff --cached --quiet || git commit -m "chore: auto-generate prdoc.md"
+        git push

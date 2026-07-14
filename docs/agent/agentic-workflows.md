@@ -23,8 +23,12 @@ Agents should follow specific workflows based on the task at hand. See the detai
 | `montrs agent snapshot` | Regenerates the agent snapshot (`agent.json`). | After structural changes. |
 | `montrs agent skills` | Lists available skills and their workflows. | When looking for a multi-step capability. |
 | `montrs agent skills --name <n>` | Shows details for a specific skill. | Before executing a skill workflow. |
-| `montrs agent prdoc` | Displays prdoc.md information. | When reviewing a PR. |
-| `montrs agent prdoc --validate` | Validates prdoc.md schema. | Before submitting a PR. |
+| `montrs agent prdoc show` | Displays prdoc.md as JSON. | When reviewing a PR. |
+| `montrs agent prdoc validate` | Validates prdoc.md schema. | Before submitting a PR. |
+| `montrs agent prdoc generate` | Auto-generates prdoc.md from PR context. | When opening a new PR. |
+| `montrs agent changelog generate` | Generates CHANGELOG.md from merged prdocs. | When preparing a release. |
+| `montrs agent changelog bump` | Computes version bumps from prdocs. | When cutting a new release. |
+| `montrs agent changelog verify` | Checks all PRs have prdocs. | Before release. |
 | `montrs agent rules list` | Lists all agent rules. | When checking project conventions. |
 | `montrs agent rules export` | Exports rules to IDE format. | When setting up IDE integration. |
 | `montrs spec` | Refreshes the machine-readable project snapshot. | Before analyzing project structure. |

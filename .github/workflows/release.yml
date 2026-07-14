@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: nightly-2026-02-18
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Generate Changelog
+      run: |
+        cargo run --package montrs-cli -- agent changelog generate \
+          --from "v$(cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "montrs") | .version')" \
+          --output CHANGELOG.md
+
+    - name: Commit Changelog
+      run: |
+        git config user.name "montrs-bot"
+        git config user.email "bot@montrs.dev"
+        git add CHANGELOG.md
+        git diff --cached --quiet || git commit -m "chore: update CHANGELOG.md for v${{ steps.version.outputs.VERSION }}"
+
+    - name: Create GitHub Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create "v${{ steps.version.outputs.VERSION }}" \
+          --title "v${{ steps.version.outputs.VERSION }}" \
+          --notes-file CHANGELOG.md

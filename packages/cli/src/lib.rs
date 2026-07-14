@@ -252,19 +252,20 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         name: Option<String>,
     },
-    /// Validate or display a prdoc.md file.
+    /// Manage PR documentation (prdoc.md).
     Prdoc {
-        /// Path to prdoc.md file.
-        #[arg(default_value = "prdoc.md")]
-        path: String,
-        /// Validate the prdoc and report issues.
-        #[arg(long)]
-        validate: bool,
+        #[command(subcommand)]
+        subcommand: PrdocSubcommand,
     },
     /// Manage agent rules and IDE integration.
     Rules {
         #[command(subcommand)]
         subcommand: RulesSubcommand,
+    },
+    /// Generate changelogs and manage version bumps from prdocs.
+    Changelog {
+        #[command(subcommand)]
+        subcommand: ChangelogSubcommand,
     },
 }
 
@@ -279,6 +280,77 @@ pub enum RulesSubcommand {
     },
     /// List available rule sets in .agent/rules/.
     List,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum PrdocSubcommand {
+    /// Display a prdoc.md file as JSON.
+    Show {
+        /// Path to prdoc.md file.
+        #[arg(default_value = "prdoc.md")]
+        path: String,
+    },
+    /// Validate a prdoc.md file and report issues.
+    Validate {
+        /// Path to prdoc.md file.
+        #[arg(default_value = "prdoc.md")]
+        path: String,
+    },
+    /// Auto-generate a prdoc.md from PR context, diffs, and commit messages.
+    Generate {
+        /// PR number to generate from (uses gh CLI).
+        #[arg(short, long)]
+        pr: Option<u64>,
+        /// Use a local diff file instead of PR.
+        #[arg(long)]
+        from_diff: Option<String>,
+        /// Git commit range (e.g., main..HEAD).
+        #[arg(long)]
+        from_commits: Option<String>,
+        /// Enable embedding-based classification.
+        #[arg(long)]
+        embed: bool,
+        /// Output file path.
+        #[arg(short, long, default_value = "prdoc.md")]
+        output: String,
+        /// Overwrite existing prdoc.md.
+        #[arg(long)]
+        force: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ChangelogSubcommand {
+    /// Generate a CHANGELOG.md from merged prdocs.
+    Generate {
+        /// Git range to collect prdocs from (e.g., v0.1.0..HEAD).
+        #[arg(short, long)]
+        from: Option<String>,
+        /// Git range end tag (used with --from).
+        #[arg(short, long)]
+        to: Option<String>,
+        /// Output file path.
+        #[arg(short, long, default_value = "CHANGELOG.md")]
+        output: String,
+    },
+    /// Compute next version bumps based on prdocs since last release.
+    Bump {
+        /// Current version (defaults to workspace version).
+        #[arg(short, long)]
+        current: Option<String>,
+        /// Git range for prdocs.
+        #[arg(long)]
+        from: Option<String>,
+        /// Show what would change without writing files.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Verify all merged PRs since last release have prdocs.
+    Verify {
+        /// Git range to check.
+        #[arg(long)]
+        from: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Debug)]

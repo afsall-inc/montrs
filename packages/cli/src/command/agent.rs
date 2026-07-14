@@ -1,4 +1,6 @@
-use crate::{AgentSubcommand, RulesSubcommand};
+use crate::{
+    AgentSubcommand, ChangelogSubcommand, PrdocSubcommand, RulesSubcommand,
+};
 
 pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
     let mut output = String::new();
@@ -264,10 +266,23 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
             Ok(output)
         }
-        AgentSubcommand::Prdoc { path, validate } => {
-            let prdoc_path = std::path::PathBuf::from(&path);
-            if !prdoc_path.exists() {
-                if validate {
+        AgentSubcommand::Prdoc { subcommand } => match subcommand {
+            PrdocSubcommand::Show { path } => {
+                let prdoc_path = std::path::PathBuf::from(&path);
+                if !prdoc_path.exists() {
+                    return Err(anyhow::anyhow!(
+                        "prdoc.md not found at {}. Create one with `montrs \
+                         agent prdoc generate`.",
+                        path
+                    ));
+                }
+                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+                Ok(serde_json::to_string_pretty(&prdoc)?)
+            }
+            PrdocSubcommand::Validate { path } => {
+                let prdoc_path = std::path::PathBuf::from(&path);
+                if !prdoc_path.exists() {
                     if std::env::var("CI").is_ok() {
                         return Err(anyhow::anyhow!(
                             "prdoc.md not found at {}. Pull requests require \
@@ -279,15 +294,8 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                                required outside of pull requests)."
                         .to_string());
                 }
-                return Err(anyhow::anyhow!(
-                    "prdoc.md not found at {}. Create one with the template \
-                     in templates/prdoc/prdoc.md.",
-                    path
-                ));
-            }
-            let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
-                .map_err(|e| anyhow::anyhow!("{}", e))?;
-            if validate {
+                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
                 let issues = montrs_agent::prdoc::validate_prdoc(&prdoc);
                 if issues.is_empty() {
                     Ok("prdoc.md is valid.".to_string())
@@ -298,9 +306,216 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     }
                     Err(anyhow::anyhow!("{}", out))
                 }
-            } else {
-                Ok(serde_json::to_string_pretty(&prdoc)?)
             }
-        }
+            PrdocSubcommand::Generate {
+                pr,
+                from_diff,
+                from_commits,
+                embed: _,
+                output,
+                force,
+            } => {
+                let output_path = std::path::PathBuf::from(&output);
+                if output_path.exists() && !force {
+                    return Err(anyhow::anyhow!(
+                        "{} already exists. Use --force to overwrite.",
+                        output
+                    ));
+                }
+
+                let diff = if let Some(diff_path) = from_diff {
+                    std::fs::read_to_string(&diff_path).ok()
+                } else if let Some(pr_num) = pr {
+                    montrs_agent::prdoc_analyzer::get_diff_for_pr(pr_num)
+                } else if let Some(ref range) = from_commits {
+                    montrs_agent::prdoc_analyzer::get_diff_for_range(range)
+                } else {
+                    montrs_agent::prdoc_analyzer::get_diff_for_range(
+                        "main..HEAD",
+                    )
+                };
+
+                let diff_str = diff.unwrap_or_default();
+                if diff_str.is_empty() {
+                    return Err(anyhow::anyhow!(
+                        "No diff found. Use --pr, --from-diff, or \
+                         --from-commits to specify a source."
+                    ));
+                }
+
+                let analysis =
+                    montrs_agent::prdoc_analyzer::analyze_diff(&diff_str);
+
+                let context = if let Some(pr_num) = pr {
+                    montrs_agent::prdoc_analyzer::gather_pr_context_from_gh(
+                        pr_num,
+                    )
+                } else {
+                    None
+                };
+
+                let prdoc = montrs_agent::prdoc_generator::generate_prdoc(
+                    &analysis,
+                    context.as_ref(),
+                );
+                let rendered = montrs_agent::prdoc_generator::render_prdoc(
+                    &prdoc, &analysis,
+                );
+
+                if let Some(parent) = output_path.parent()
+                    && !parent.as_os_str().is_empty()
+                {
+                    std::fs::create_dir_all(parent)?;
+                }
+                std::fs::write(&output_path, &rendered)?;
+
+                Ok(format!(
+                    "Generated prdoc.md at {} ({} package(s), {} crate(s))",
+                    output,
+                    prdoc.packages.len(),
+                    prdoc.crates.len(),
+                ))
+            }
+        },
+        AgentSubcommand::Changelog { subcommand } => match subcommand {
+            ChangelogSubcommand::Generate { from, to, output } => {
+                let range = build_git_range(from, to);
+                let prdocs =
+                    montrs_agent::changelog::collect_prdocs_from_git(&range);
+                if prdocs.is_empty() {
+                    return Ok("No prdocs found in the specified range. \
+                               Ensure merged PRs have prdoc.md files \
+                               committed."
+                        .to_string());
+                }
+                let mut changelog = montrs_agent::changelog::Changelog::new();
+                for prdoc in &prdocs {
+                    changelog.add_prdoc(prdoc);
+                }
+                let rendered = changelog.render();
+                std::fs::write(&output, &rendered)?;
+                Ok(format!(
+                    "Generated {} with {} entr(ies) from range '{}'",
+                    output,
+                    prdocs.len(),
+                    range,
+                ))
+            }
+            ChangelogSubcommand::Bump {
+                current,
+                from,
+                dry_run,
+            } => {
+                let current_version =
+                    current.unwrap_or_else(read_workspace_version);
+                let range = from
+                    .unwrap_or_else(|| format!("v{}..HEAD", current_version));
+                let prdocs =
+                    montrs_agent::changelog::collect_prdocs_from_git(&range);
+                let bumps = montrs_agent::changelog::determine_next_version(
+                    &current_version,
+                    &prdocs,
+                );
+                if bumps.is_empty() {
+                    return Ok("No version bumps needed. No prdocs with bump \
+                               levels found."
+                        .to_string());
+                }
+                let mut out =
+                    format!("Version bumps from {}:\n", current_version);
+                for (crate_name, next_version) in &bumps {
+                    out.push_str(&format!(
+                        "  {} -> {}{}\n",
+                        crate_name,
+                        next_version,
+                        if dry_run { " (dry-run)" } else { "" }
+                    ));
+                }
+                if !dry_run {
+                    for (crate_name, next_version) in &bumps {
+                        update_crate_version(crate_name, next_version)?;
+                    }
+                    out.push_str("Cargo.toml files updated.\n");
+                }
+                Ok(out)
+            }
+            ChangelogSubcommand::Verify { from } => {
+                let current_version = read_workspace_version();
+                let range = from
+                    .unwrap_or_else(|| format!("v{}..HEAD", current_version));
+                let output = std::process::Command::new("git")
+                    .args(["log", "--oneline", &range])
+                    .output();
+                let log_str = match output {
+                    Ok(o) if o.status.success() => {
+                        String::from_utf8_lossy(&o.stdout).to_string()
+                    }
+                    _ => {
+                        return Ok("Could not read git log for the specified \
+                                   range."
+                            .to_string());
+                    }
+                };
+                let total_commits = log_str.lines().count();
+                let prdocs =
+                    montrs_agent::changelog::collect_prdocs_from_git(&range);
+                let missing = total_commits.saturating_sub(prdocs.len());
+                if missing == 0 {
+                    Ok(format!(
+                        "All {} commit(s) in '{}' have prdocs.",
+                        total_commits, range
+                    ))
+                } else {
+                    Ok(format!(
+                        "{} commit(s) in '{}' are missing prdocs ({} found, \
+                         {} total).",
+                        missing,
+                        range,
+                        prdocs.len(),
+                        total_commits,
+                    ))
+                }
+            }
+        },
     }
+}
+
+fn build_git_range(from: Option<String>, to: Option<String>) -> String {
+    match (from, to) {
+        (Some(f), Some(t)) => format!("{}..{}", f, t),
+        (Some(f), None) => format!("{}..HEAD", f),
+        (None, Some(t)) => format!("HEAD..{}", t),
+        (None, None) => "HEAD~10..HEAD".to_string(),
+    }
+}
+
+fn read_workspace_version() -> String {
+    std::fs::read_to_string("Cargo.toml")
+        .ok()
+        .and_then(|c| toml::from_str::<toml::Value>(&c).ok())
+        .and_then(|v| {
+            v.get("workspace")
+                .and_then(|w| w.get("package"))
+                .and_then(|p| p.get("version"))
+                .and_then(|n| n.as_str())
+                .map(|s| s.to_string())
+        })
+        .unwrap_or_else(|| "0.1.0".to_string())
+}
+
+fn update_crate_version(
+    crate_name: &str,
+    new_version: &str,
+) -> anyhow::Result<()> {
+    let cargo_toml_path = format!("packages/{}/Cargo.toml", crate_name);
+    if !std::path::Path::new(&cargo_toml_path).exists() {
+        return Ok(());
+    }
+    let content = std::fs::read_to_string(&cargo_toml_path)?;
+    let updated = content.replace(
+        "version.workspace = true",
+        &format!("version = \"{}\"", new_version),
+    );
+    std::fs::write(&cargo_toml_path, updated)?;
+    Ok(())
 }
