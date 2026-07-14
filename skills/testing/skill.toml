@@ -1,0 +1,27 @@
+[skill]
+name = "testing"
+version = "1.0.0"
+description = "Guides the agent through writing and running tests for MontRS applications."
+author = "MontRS"
+tags = ["testing", "quality", "verification"]
+
+[workflow]
+steps = [
+    "Identify the target: unit test, integration test, or E2E test",
+    "For unit tests: use the test crate's expect() and table_test() macros",
+    "For integration tests: use TestRuntime and Fixture traits",
+    "For E2E tests: use playwright-rs with the e2e crate",
+    "Run tests with `montrs test` or `cargo test --workspace`",
+    "Check test output for failures and iterate",
+]
+
+[context]
+prompts = [
+    "What type of test are you writing? (unit, integration, e2e)",
+    "What is the expected behavior you want to verify?",
+]
+invariants = [
+    "Tests must be deterministic and hermetic",
+    "Integration tests must use TestRuntime for in-process execution",
+    "E2E tests must be tagged with #[cfg(feature = \"e2e\")]",
+]

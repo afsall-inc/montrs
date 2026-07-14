@@ -6,6 +6,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 pub mod error_parser;
 pub mod framework;
 pub mod guides;
+pub mod skills;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
@@ -675,7 +676,6 @@ impl AgentManager {
                                             && let Some(tool_meta) = self
                                                 .parse_agent_tool_marker(line)
                                         {
-                                            // Avoid duplicates
                                             let name = tool_meta["name"]
                                                 .as_str()
                                                 .unwrap_or_default();
@@ -684,6 +684,20 @@ impl AgentManager {
                                                 .any(|t| t["name"] == name)
                                             {
                                                 tools.push(tool_meta);
+                                            }
+                                        }
+                                        if line.contains("@agent-skill:")
+                                            && let Some(skill_meta) = self
+                                                .parse_agent_skill_marker(line)
+                                        {
+                                            let name = skill_meta["name"]
+                                                .as_str()
+                                                .unwrap_or_default();
+                                            if !tools
+                                                .iter()
+                                                .any(|t| t["name"] == name)
+                                            {
+                                                tools.push(skill_meta);
                                             }
                                         }
                                     }
@@ -717,11 +731,27 @@ impl AgentManager {
                                     tools.push(tool_meta);
                                 }
                             }
+                            if line.contains("@agent-skill:")
+                                && let Some(skill_meta) =
+                                    self.parse_agent_skill_marker(line)
+                            {
+                                let name = skill_meta["name"]
+                                    .as_str()
+                                    .unwrap_or_default();
+                                if !tools.iter().any(|t| t["name"] == name) {
+                                    tools.push(skill_meta);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+
+        // 3. Discover skills from skills/ directory
+        let discovered_skills = skills::discover_skills(&self.root_path);
+        let skill_tools = skills::skills_to_tools_json(&discovered_skills);
+        tools.extend(skill_tools);
 
         Ok(serde_json::json!({ "tools": tools }))
     }
@@ -736,6 +766,24 @@ impl AgentManager {
 
         Some(serde_json::json!({
             "name": caps.name("name")?.as_str(),
+            "description": caps.name("desc")?.as_str(),
+            "parameters": { "type": "object", "properties": {} }
+        }))
+    }
+
+    fn parse_agent_skill_marker(
+        &self,
+        line: &str,
+    ) -> Option<serde_json::Value> {
+        // Expected format: @agent-skill: name="name" desc="description"
+        let re = regex::Regex::new(
+            r#"@agent-skill:\s+name="(?P<name>[^"]+)"\s+desc="(?P<desc>[^"]+)""#,
+        )
+        .ok()?;
+        let caps = re.captures(line)?;
+
+        Some(serde_json::json!({
+            "name": format!("skill_{}", caps.name("name")?.as_str().replace('-', "_")),
             "description": caps.name("desc")?.as_str(),
             "parameters": { "type": "object", "properties": {} }
         }))
@@ -897,6 +945,22 @@ impl AgentManager {
             "workflows/adding-features".to_string(),
             framework::ADDING_FEATURES_WORKFLOW.to_string(),
         );
+        documentation_snippets.insert(
+            "skills/guide".to_string(),
+            framework::SKILLS_GUIDE.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/database-setup".to_string(),
+            framework::SKILL_DATABASE_SETUP.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/testing".to_string(),
+            framework::SKILL_TESTING.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/deployment".to_string(),
+            framework::SKILL_DEPLOYMENT.to_string(),
+        );
 
         let framework_invariants = framework::get_framework_invariants();
         let mut packages = Vec::new();
@@ -980,6 +1044,22 @@ impl AgentManager {
         documentation_snippets.insert(
             "workflows/adding-features".to_string(),
             framework::ADDING_FEATURES_WORKFLOW.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/guide".to_string(),
+            framework::SKILLS_GUIDE.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/database-setup".to_string(),
+            framework::SKILL_DATABASE_SETUP.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/testing".to_string(),
+            framework::SKILL_TESTING.to_string(),
+        );
+        documentation_snippets.insert(
+            "skills/deployment".to_string(),
+            framework::SKILL_DEPLOYMENT.to_string(),
         );
         documentation_snippets.insert(
             "agent/index".to_string(),
