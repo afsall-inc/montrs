@@ -6,6 +6,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 pub mod error_parser;
 pub mod framework;
 pub mod guides;
+pub mod prdoc;
 pub mod skills;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -999,6 +1000,14 @@ impl AgentManager {
             "skills/deployment".to_string(),
             framework::SKILL_DEPLOYMENT.to_string(),
         );
+        documentation_snippets.insert(
+            "contributor/prdoc".to_string(),
+            framework::PRDOC_GUIDE.to_string(),
+        );
+        documentation_snippets.insert(
+            "contributor/prdoc-template".to_string(),
+            framework::PRDOC_TEMPLATE.to_string(),
+        );
 
         let framework_invariants = framework::get_framework_invariants();
         let mut packages = Vec::new();
@@ -1098,6 +1107,14 @@ impl AgentManager {
         documentation_snippets.insert(
             "skills/deployment".to_string(),
             framework::SKILL_DEPLOYMENT.to_string(),
+        );
+        documentation_snippets.insert(
+            "contributor/prdoc".to_string(),
+            framework::PRDOC_GUIDE.to_string(),
+        );
+        documentation_snippets.insert(
+            "contributor/prdoc-template".to_string(),
+            framework::PRDOC_TEMPLATE.to_string(),
         );
         documentation_snippets.insert(
             "agent/index".to_string(),

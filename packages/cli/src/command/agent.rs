@@ -264,5 +264,27 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
             Ok(output)
         }
+        AgentSubcommand::Prdoc { path, validate } => {
+            let prdoc_path = std::path::PathBuf::from(&path);
+            if !prdoc_path.exists() {
+                return Err(anyhow::anyhow!("prdoc.md not found at {}", path));
+            }
+            let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                .map_err(|e| anyhow::anyhow!("{}", e))?;
+            if validate {
+                let issues = montrs_agent::prdoc::validate_prdoc(&prdoc);
+                if issues.is_empty() {
+                    Ok("prdoc.md is valid.".to_string())
+                } else {
+                    let mut out = "prdoc.md validation issues:\n".to_string();
+                    for issue in issues {
+                        out.push_str(&format!("  - {}\n", issue));
+                    }
+                    Err(anyhow::anyhow!("{}", out))
+                }
+            } else {
+                Ok(serde_json::to_string_pretty(&prdoc)?)
+            }
+        }
     }
 }

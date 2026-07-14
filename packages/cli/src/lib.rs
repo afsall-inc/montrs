@@ -252,6 +252,15 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         name: Option<String>,
     },
+    /// Validate or display a prdoc.md file.
+    Prdoc {
+        /// Path to prdoc.md file.
+        #[arg(default_value = "prdoc.md")]
+        path: String,
+        /// Validate the prdoc and report issues.
+        #[arg(long)]
+        validate: bool,
+    },
     /// Manage agent rules and IDE integration.
     Rules {
         #[command(subcommand)]

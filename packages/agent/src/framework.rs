@@ -54,6 +54,11 @@ pub const SKILL_TESTING: &str =
 pub const SKILL_DEPLOYMENT: &str =
     include_str!("../../../skills/deployment/skill.toml");
 
+pub const PRDOC_GUIDE: &str =
+    include_str!("../../../docs/contributor/prdoc.md");
+pub const PRDOC_TEMPLATE: &str =
+    include_str!("../../../templates/prdoc/prdoc.md");
+
 pub fn get_framework_invariants()
 -> std::collections::HashMap<&'static str, &'static str> {
     let mut m = std::collections::HashMap::new();

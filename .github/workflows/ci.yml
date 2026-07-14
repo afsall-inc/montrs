@@ -41,6 +41,10 @@ jobs:
     - name: Run tests
       run: cargo test --workspace
 
+    - name: Validate PRDoc
+      if: github.event_name == 'pull_request'
+      run: cargo run --package montrs-cli -- agent prdoc --validate
+
     - name: Build
       uses: ./.github/actions/build
       with:
