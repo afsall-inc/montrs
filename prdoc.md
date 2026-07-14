@@ -19,7 +19,7 @@ crates:
 
 ## Summary
 
-Refactors prdoc): improve readability with structured sections, dedup,….
+Refactors prdoc): improve readability with structured sections, dedup,…. Chore: auto-generate prdoc.md.
 
 ### Key Changes
 ### Package Breakdown
