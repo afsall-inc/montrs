@@ -10,6 +10,50 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 let result = manager.setup_ide_rules()?;
                 Ok(result)
             }
+            RulesSubcommand::Export { format } => {
+                let cwd = std::env::current_dir()?;
+                let manager = montrs_agent::AgentManager::new(cwd);
+                match format.as_str() {
+                    "trae" => {
+                        manager.export_rules_for_trae()?;
+                        Ok("Exported rules to .trae/rules/".to_string())
+                    }
+                    "cursor" => {
+                        manager.export_rules_for_cursor()?;
+                        Ok("Exported rules to .cursorrules".to_string())
+                    }
+                    _ => Err(anyhow::anyhow!(
+                        "Unknown format '{}'. Supported: trae, cursor",
+                        format
+                    )),
+                }
+            }
+            RulesSubcommand::List => {
+                let cwd = std::env::current_dir()?;
+                let manager = montrs_agent::AgentManager::new(cwd);
+                let rules_dir = manager.agent_dir().join("rules");
+                if !rules_dir.exists() {
+                    return Ok("No rules found. Run `montrs agent rules \
+                               setup` first."
+                        .to_string());
+                }
+                output.push_str("Available rule sets in .agent/rules/:\n");
+                for entry in std::fs::read_dir(&rules_dir)? {
+                    let entry = entry?;
+                    if entry.path().extension().and_then(|s| s.to_str())
+                        == Some("md")
+                    {
+                        let name = entry
+                            .path()
+                            .file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .to_string();
+                        output.push_str(&format!("  - {}\n", name));
+                    }
+                }
+                Ok(output)
+            }
         },
         AgentSubcommand::Check { path } => {
             output.push_str(&format!(

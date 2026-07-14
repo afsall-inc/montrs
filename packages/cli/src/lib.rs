@@ -232,8 +232,15 @@ pub enum AgentSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum RulesSubcommand {
-    /// Scaffold IDE rules (.trae/rules and .cursorrules) for the current project.
+    /// Scaffold agent rules into .agent/rules/ and export IDE configurations.
     Setup,
+    /// Export rules to a specific IDE format.
+    Export {
+        /// Target IDE format (trae, cursor).
+        format: String,
+    },
+    /// List available rule sets in .agent/rules/.
+    List,
 }
 
 #[derive(Subcommand, Debug)]

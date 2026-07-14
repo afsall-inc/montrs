@@ -139,33 +139,67 @@ impl AgentManager {
         self.agent_dir().join("errorfiles")
     }
 
-    /// Scaffolds IDE rules (.trae/rules and .cursorrules) for the project.
+    /// Scaffolds agent rules into .agent/rules/ and exports to IDE-specific formats.
     pub fn setup_ide_rules(&self) -> Result<String> {
-        println!("Setting up IDE rules in: {:?}", self.root_path);
+        println!("Setting up agent rules in: {:?}", self.root_path);
 
-        // 1. Setup Trae (.trae/rules/)
-        let trae_dir = self.root_path.join(".trae").join("rules");
-        if !trae_dir.exists() {
-            println!("Creating Trae directory: {:?}", trae_dir);
-            fs::create_dir_all(&trae_dir)?;
+        // 1. Write canonical rules to .agent/rules/
+        let rules_dir = self.agent_dir().join("rules");
+        if !rules_dir.exists() {
+            println!("Creating .agent/rules directory: {:?}", rules_dir);
+            fs::create_dir_all(&rules_dir)?;
         }
 
         fs::write(
-            trae_dir.join("app-developer.md"),
+            rules_dir.join("app-developer.md"),
             framework::APP_DEVELOPER_RULE,
         )?;
         fs::write(
-            trae_dir.join("framework-contributor.md"),
+            rules_dir.join("framework-contributor.md"),
             framework::FRAMEWORK_CONTRIBUTOR_RULE,
         )?;
 
-        // 2. Setup Cursor (.cursorrules)
-        // Cursor uses a single root file. We default it to the App Developer prompt.
-        let cursorrules_path = self.root_path.join(".cursorrules");
-        println!("Writing .cursorrules to: {:?}", cursorrules_path);
-        fs::write(&cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
+        // 2. Export to Trae (.trae/rules/)
+        self.export_rules_for_trae()?;
 
-        Ok("Successfully scaffolded .trae/rules/ and .cursorrules".to_string())
+        // 3. Export to Cursor (.cursorrules)
+        self.export_rules_for_cursor()?;
+
+        Ok("Successfully scaffolded .agent/rules/ and exported IDE \
+            configurations"
+            .to_string())
+    }
+
+    /// Exports rules to Trae IDE format (.trae/rules/ with YAML frontmatter).
+    pub fn export_rules_for_trae(&self) -> Result<()> {
+        let trae_dir = self.root_path.join(".trae").join("rules");
+        if !trae_dir.exists() {
+            fs::create_dir_all(&trae_dir)?;
+        }
+
+        let rules_dir = self.agent_dir().join("rules");
+        for entry in fs::read_dir(&rules_dir)?.flatten() {
+            if entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
+                let content = fs::read_to_string(entry.path())?;
+                let name = entry
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string();
+                let trae_content =
+                    format!("---\nalwaysApply: false\n---\n{content}");
+                fs::write(trae_dir.join(&name), trae_content)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Exports rules to Cursor IDE format (.cursorrules single file).
+    pub fn export_rules_for_cursor(&self) -> Result<()> {
+        let cursorrules_path = self.root_path.join(".cursorrules");
+        fs::write(&cursorrules_path, framework::APP_DEVELOPER_PROMPT)?;
+        Ok(())
     }
 
     pub fn report_agent_error(
@@ -204,6 +238,10 @@ impl AgentManager {
         let error_dir = self.errorfiles_dir();
         if !error_dir.exists() {
             fs::create_dir_all(&error_dir)?;
+        }
+        let rules_dir = self.agent_dir().join("rules");
+        if !rules_dir.exists() {
+            fs::create_dir_all(&rules_dir)?;
         }
         Ok(())
     }
