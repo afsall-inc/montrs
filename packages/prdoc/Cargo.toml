@@ -1,0 +1,36 @@
+[package]
+name = "montrs-prdoc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Structured PR documentation, auto-generation, changelog, and SemVer bumping for Rust projects."
+
+[[bin]]
+name = "prdoc"
+path = "src/bin/prdoc.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+llm = ["reqwest"]
+local-llm = ["llm", "candle-core", "candle-nn", "candle-transformers", "hf-hub"]
+cli = ["clap"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_yaml = "0.9"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.10"
+toml = "0.8"
+reqwest = { version = "0.12", features = ["json", "blocking"], optional = true }
+candle-core = { version = "0.8", optional = true }
+candle-nn = { version = "0.8", optional = true }
+candle-transformers = { version = "0.8", optional = true }
+hf-hub = { version = "0.4", optional = true }
+clap = { version = "4.5", features = ["derive"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.10"

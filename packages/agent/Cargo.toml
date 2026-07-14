@@ -14,6 +14,7 @@ thiserror.workspace = true
 anyhow.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
 montrs-core = { path = "../core" }
+montrs-prdoc = { path = "../prdoc" }
 ignore = "0.4"
 regex = "1.10"
 walkdir = "2.5"

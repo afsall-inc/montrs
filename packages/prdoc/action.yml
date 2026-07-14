@@ -1,0 +1,55 @@
+name: 'PRDoc Generate & Validate'
+description: 'Auto-generate and validate prdoc.md for pull requests'
+author: 'MontRS'
+
+inputs:
+  command:
+    description: 'Command: generate+validate (default), generate, validate'
+    default: 'generate+validate'
+  pr:
+    description: 'PR number'
+    default: '${{ github.event.pull_request.number }}'
+  features:
+    description: 'Cargo features for montrs-prdoc (e.g., llm)'
+    default: 'cli'
+  api_key:
+    description: 'LLM API key for enhanced summaries'
+    required: false
+  toolchain:
+    description: 'Rust toolchain'
+    default: 'stable'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@v1
+      with:
+        toolchain: ${{ inputs.toolchain }}
+
+    - name: Install montrs-prdoc
+      shell: bash
+      run: cargo install montrs-prdoc --features ${{ inputs.features }}
+
+    - name: Generate PRDoc
+      if: contains(inputs.command, 'generate')
+      shell: bash
+      env:
+        PRDOC_API_KEY: ${{ inputs.api_key }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        if [ -n "$PRDOC_API_KEY" ]; then
+          prdoc generate --pr ${{ inputs.pr }} --llm --force
+        else
+          prdoc generate --pr ${{ inputs.pr }} --force
+        fi
+
+    - name: Validate PRDoc
+      if: contains(inputs.command, 'validate')
+      shell: bash
+      run: prdoc validate

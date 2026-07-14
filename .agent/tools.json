@@ -161,6 +161,14 @@
       }
     },
     {
+      "description": "Capability provided by package prdoc. Refer to its README for details.",
+      "name": "montrs_pkg_prdoc",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
       "name": "montrs_pkg_montrs",
       "parameters": {
