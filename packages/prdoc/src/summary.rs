@@ -89,12 +89,19 @@ pub fn generate_rich_summary(ctx: &SummaryContext) -> String {
 }
 
 fn build_narrative_sentence(ctx: &SummaryContext) -> String {
-    if let Some(context) = ctx.context
-        && !context.commit_messages.is_empty()
-    {
-        let narrative = build_commit_narrative(&context.commit_messages);
-        if !narrative.is_empty() {
-            return narrative;
+    if let Some(context) = ctx.context {
+        if let Some(ref body) = context.body {
+            let excerpt = extract_first_paragraph(body);
+            if !excerpt.is_empty() {
+                return excerpt;
+            }
+        }
+
+        if !context.commit_messages.is_empty() {
+            let narrative = build_commit_narrative(&context.commit_messages);
+            if !narrative.is_empty() {
+                return narrative;
+            }
         }
     }
 
@@ -117,6 +124,31 @@ fn build_narrative_sentence(ctx: &SummaryContext) -> String {
         pkg_count,
         ctx.analysis.packages.join(", ")
     )
+}
+
+fn extract_first_paragraph(body: &str) -> String {
+    let trimmed = body.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    let first_break = trimmed
+        .find("\n\n")
+        .unwrap_or_else(|| trimmed.find("\r\n\r\n").unwrap_or(trimmed.len()));
+    let paragraph = &trimmed[..first_break];
+    let cleaned = paragraph
+        .lines()
+        .map(|l| l.trim())
+        .filter(|l| {
+            !l.is_empty() && !l.starts_with("##") && !l.starts_with("###")
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    if cleaned.len() > 500 {
+        let trunc = cleaned.chars().take(500).collect::<String>();
+        format!("{trunc}...")
+    } else {
+        cleaned
+    }
 }
 
 fn build_commit_narrative(messages: &[String]) -> String {

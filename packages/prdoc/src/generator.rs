@@ -230,6 +230,14 @@ pub fn render_prdoc_rich(
                 breaking_pkgs.join(", ")
             ));
         }
+        if let Some(ctx) = context
+            && let Some(body) = &ctx.body
+        {
+            let migration_hints = extract_migration_hints(body);
+            if !migration_hints.is_empty() {
+                out.push_str(&migration_hints);
+            }
+        }
         out.push_str(
             "Review the public API modifications carefully before merging.\n",
         );
@@ -260,6 +268,32 @@ fn yaml_kv(key: &str, value: &str) -> String {
         format!("{key}: \"{value}\"\n")
     } else {
         format!("{key}: {value}\n")
+    }
+}
+
+fn extract_migration_hints(body: &str) -> String {
+    let lower = body.to_lowercase();
+    let section_start = lower
+        .find("migration")
+        .or_else(|| lower.find("breaking change"))
+        .or_else(|| lower.find("## migration"));
+    match section_start {
+        Some(pos) => {
+            let snippet = &body[pos..];
+            let first_para_end = snippet.find("\n\n").unwrap_or(snippet.len());
+            let text = snippet[..first_para_end]
+                .lines()
+                .map(|l| l.trim())
+                .filter(|l| !l.is_empty() && !l.starts_with('#'))
+                .collect::<Vec<_>>()
+                .join("\n");
+            if text.is_empty() {
+                String::new()
+            } else {
+                format!("From PR description:\n{text}\n")
+            }
+        }
+        None => String::new(),
     }
 }
 
