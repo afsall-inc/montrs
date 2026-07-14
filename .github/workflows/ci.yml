@@ -43,7 +43,7 @@ jobs:
 
     - name: Validate PRDoc
       if: github.event_name == 'pull_request'
-      run: cargo run --package montrs-cli -- agent prdoc --validate
+      run: cargo run --package montrs-cli --bin montrs -- agent prdoc --validate
 
     - name: Build
       uses: ./.github/actions/build
