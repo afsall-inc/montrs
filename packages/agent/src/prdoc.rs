@@ -12,6 +12,10 @@ pub struct PrDoc {
     pub breaking: bool,
     #[serde(default)]
     pub needs_review: Vec<String>,
+    #[serde(default)]
+    pub audience: Vec<Audience>,
+    #[serde(default)]
+    pub crates: Vec<CrateChange>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -21,6 +25,73 @@ pub enum PrDocStatus {
     Review,
     Approved,
     Merged,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BumpLevel {
+    None,
+    Patch,
+    Minor,
+    Major,
+}
+
+impl BumpLevel {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            BumpLevel::None => "none",
+            BumpLevel::Patch => "patch",
+            BumpLevel::Minor => "minor",
+            BumpLevel::Major => "major",
+        }
+    }
+
+    pub fn from_str_lossy(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "patch" => BumpLevel::Patch,
+            "minor" => BumpLevel::Minor,
+            "major" => BumpLevel::Major,
+            _ => BumpLevel::None,
+        }
+    }
+
+    pub fn dominates(&self, other: &BumpLevel) -> bool {
+        let ord = |l: &BumpLevel| match l {
+            BumpLevel::None => 0,
+            BumpLevel::Patch => 1,
+            BumpLevel::Minor => 2,
+            BumpLevel::Major => 3,
+        };
+        ord(self) >= ord(other)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Audience {
+    AppDev,
+    FrameworkDev,
+    AgentUser,
+    Operator,
+}
+
+impl Audience {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Audience::AppDev => "app_dev",
+            Audience::FrameworkDev => "framework_dev",
+            Audience::AgentUser => "agent_user",
+            Audience::Operator => "operator",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CrateChange {
+    pub name: String,
+    pub bump: BumpLevel,
+    #[serde(default)]
+    pub validate: bool,
 }
 
 /// Parse a prdoc.md file, extracting the YAML frontmatter.
@@ -48,6 +119,20 @@ pub fn validate_prdoc(prdoc: &PrDoc) -> Vec<String> {
     }
     if prdoc.packages.is_empty() {
         issues.push("at least one package must be listed".to_string());
+    }
+    for pkg in &prdoc.packages {
+        let has_crate_entry = prdoc.crates.iter().any(|c| c.name == *pkg);
+        if !has_crate_entry {
+            issues.push(format!(
+                "package '{}' has no crate entry with a bump level",
+                pkg
+            ));
+        }
+    }
+    for change in &prdoc.crates {
+        if change.name.is_empty() {
+            issues.push("crate name must not be empty".to_string());
+        }
     }
     issues
 }

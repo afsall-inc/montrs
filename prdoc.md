@@ -5,6 +5,14 @@ status: draft
 packages: [agent, cli, montrs]
 breaking: false
 needs-review: [architecture, agent]
+audience: [framework_dev, agent_user]
+crates:
+  - name: agent
+    bump: minor
+  - name: cli
+    bump: minor
+  - name: montrs
+    bump: patch
 ---
 
 ## Summary
@@ -22,7 +30,7 @@ Extends MontRS with agentic capabilities: a composable skills system, structured
 1. Run `cargo +nightly-2026-02-18 fmt --check` — no formatting issues.
 2. Run `cargo +nightly-2026-02-18 clippy --workspace -- -D warnings` — no warnings.
 3. Run `cargo +nightly-2026-02-18 test --workspace` — all tests pass.
-4. Run `cargo run --package montrs-cli -- agent prdoc --validate` — prdoc.md is valid.
+4. Run `cargo run --package montrs-cli -- agent prdoc validate` — prdoc.md is valid.
 
 ### Review Focus
 - Skill manifests follow the schema in `docs/agent/skills.md`.

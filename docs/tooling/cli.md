@@ -170,9 +170,19 @@ montrs agent skills [--name <skill-name>]
 ```
 
 ### `agent prdoc`
-Validate or display a `prdoc.md` file.
+Manage PR documentation (prdoc.md).
 ```bash
-montrs agent prdoc [--path <prdoc.md>] [--validate]
+montrs agent prdoc show [--path <prdoc.md>]
+montrs agent prdoc validate [--path <prdoc.md>]
+montrs agent prdoc generate [--pr <number>] [--from-diff <path>] [--from-commits <range>] [--embed] [--output <path>] [--force]
+```
+
+### `agent changelog`
+Generate changelogs and manage version bumps from prdocs.
+```bash
+montrs agent changelog generate [--from <tag>] [--to <tag>] [--output <path>]
+montrs agent changelog bump [--current <version>] [--from <range>] [--dry-run]
+montrs agent changelog verify [--from <range>]
 ```
 
 ### `agent rules`

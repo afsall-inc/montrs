@@ -6,15 +6,19 @@ status: draft
 packages: ["core"]
 breaking: false
 needs-review: []
+audience: ["app_dev"]
+crates:
+  - name: core
+    bump: patch
 ---
 
 ## Summary
 
-
+A human-readable summary of what this PR does and why.
 
 ## Changes
 ### Packages Affected
-
+- **core**: Description of changes to this package.
 
 ## Agent Instructions
 ### Verification
