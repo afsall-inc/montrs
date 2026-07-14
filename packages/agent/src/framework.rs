@@ -38,9 +38,9 @@ pub const APP_DEVELOPER_PROMPT: &str =
 pub const FRAMEWORK_CONTRIBUTOR_PROMPT: &str =
     include_str!("../../../docs/agent/framework-contributor-prompt.md");
 pub const APP_DEVELOPER_RULE: &str =
-    include_str!("../../../.trae/rules/app-developer.md");
+    include_str!("../../../.agent/rules/app-developer.md");
 pub const FRAMEWORK_CONTRIBUTOR_RULE: &str =
-    include_str!("../../../.trae/rules/framework-contributor.md");
+    include_str!("../../../.agent/rules/framework-contributor.md");
 pub const FIXING_ERRORS_WORKFLOW: &str =
     include_str!("../../../docs/agent/workflows/fixing-errors.md");
 pub const ADDING_FEATURES_WORKFLOW: &str =
@@ -53,6 +53,11 @@ pub const SKILL_TESTING: &str =
     include_str!("../../../skills/testing/skill.toml");
 pub const SKILL_DEPLOYMENT: &str =
     include_str!("../../../skills/deployment/skill.toml");
+
+pub const PRDOC_GUIDE: &str =
+    include_str!("../../../docs/contributor/prdoc.md");
+pub const PRDOC_TEMPLATE: &str =
+    include_str!("../../../templates/prdoc/prdoc.md");
 
 pub fn get_framework_invariants()
 -> std::collections::HashMap<&'static str, &'static str> {

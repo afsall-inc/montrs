@@ -25,6 +25,8 @@ It is the **entry point** for developers. It coordinates the lifecycle of an app
 - When starting a development server (`montrs serve`).
 - When building for production (`montrs build`).
 - When generating an agent-ready specification (`montrs spec`).
+- When managing agent capabilities (`montrs agent skills`, `montrs agent snapshot`, `montrs agent prdoc`).
+- When resolving tracked errors (`montrs agent resolve`).
 
 ## 6. Deeper Documentation
 - [CLI Command Reference](../../docs/tooling/cli.md)

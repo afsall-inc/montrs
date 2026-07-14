@@ -17,8 +17,16 @@ Agents should follow specific workflows based on the task at hand. See the detai
 | :--- | :--- | :--- |
 | `montrs agent list-errors` | Lists all tracked errors and their status. | Start of every task. |
 | `montrs agent diff <path>` | Generates a diagnostic report for a specific error file. | When fixing a reported bug. |
+| `montrs agent resolve <id>` | Marks a tracked error as resolved. | After successfully fixing a bug. |
 | `montrs agent check` | Validates the project against MontRS invariants. | After making code changes. |
 | `montrs agent doctor` | Runs a health check on the project/package. | When the environment feels unstable. |
+| `montrs agent snapshot` | Regenerates the agent snapshot (`agent.json`). | After structural changes. |
+| `montrs agent skills` | Lists available skills and their workflows. | When looking for a multi-step capability. |
+| `montrs agent skills --name <n>` | Shows details for a specific skill. | Before executing a skill workflow. |
+| `montrs agent prdoc` | Displays prdoc.md information. | When reviewing a PR. |
+| `montrs agent prdoc --validate` | Validates prdoc.md schema. | Before submitting a PR. |
+| `montrs agent rules list` | Lists all agent rules. | When checking project conventions. |
+| `montrs agent rules export` | Exports rules to IDE format. | When setting up IDE integration. |
 | `montrs spec` | Refreshes the machine-readable project snapshot. | Before analyzing project structure. |
 
 ## 🔌 The MCP Advantage

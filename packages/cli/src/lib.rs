@@ -205,12 +205,18 @@ pub enum AgentSubcommand {
         /// Path to check.
         #[arg(default_value = ".")]
         path: String,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
     },
     /// Assess project health and agent-readability.
     Doctor {
         /// Optional package to focus on.
         #[arg(short, long)]
         package: Option<String>,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
     },
     /// Show a diagnostic diff for an error file, including the offending code and the suggested fix.
     Diff {
@@ -222,6 +228,38 @@ pub enum AgentSubcommand {
         /// Filter by status (active or resolved).
         #[arg(short, long)]
         status: Option<String>,
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
+    },
+    /// Resolve a specific tracked error by ID.
+    Resolve {
+        /// The error ID to resolve.
+        id: String,
+        /// A message describing the fix.
+        #[arg(short, long)]
+        message: Option<String>,
+    },
+    /// Regenerate the agent snapshot (agent.json).
+    Snapshot {
+        /// Output format (json, yaml, txt).
+        #[arg(long, default_value = "json")]
+        format: String,
+    },
+    /// List and inspect available skills.
+    Skills {
+        /// Show details for a specific skill by name.
+        #[arg(short, long)]
+        name: Option<String>,
+    },
+    /// Validate or display a prdoc.md file.
+    Prdoc {
+        /// Path to prdoc.md file.
+        #[arg(default_value = "prdoc.md")]
+        path: String,
+        /// Validate the prdoc and report issues.
+        #[arg(long)]
+        validate: bool,
     },
     /// Manage agent rules and IDE integration.
     Rules {
@@ -232,8 +270,15 @@ pub enum AgentSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum RulesSubcommand {
-    /// Scaffold IDE rules (.trae/rules and .cursorrules) for the current project.
+    /// Scaffold agent rules into .agent/rules/ and export IDE configurations.
     Setup,
+    /// Export rules to a specific IDE format.
+    Export {
+        /// Target IDE format (trae, cursor).
+        format: String,
+    },
+    /// List available rule sets in .agent/rules/.
+    List,
 }
 
 #[derive(Subcommand, Debug)]
