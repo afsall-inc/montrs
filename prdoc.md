@@ -1,52 +1,71 @@
 ---
-title: "refactor(prdoc): improve readability with structured sections, dedup, proper YAML"
-pr: 80
+title: Asymptote
+pr: 82
 author: balqaasem
 status: draft
 packages:
   - agent
+  - agentignore
   - cli
-  - prdoc
+  - haptics
+  - montrs
 breaking: true
 needs-review:
   - architecture
   - migration
+  - design
 audience:
   - framework_dev
   - agent_user
-  - operator
 crates:
   - name: agent
+    bump: major
+    validate: true
+  - name: agentignore
     bump: minor
     validate: true
   - name: cli
+    bump: major
+    validate: true
+  - name: haptics
     bump: minor
     validate: true
-  - name: prdoc
-    bump: major
+  - name: montrs
+    bump: minor
     validate: true
 ---
 
 ## Summary
 
-- summary.rs: restructured generate_rich_summary into sections (Key Changes, Package Breakdown). Added dedup logic (filter_and_dedup_api_changes) to remove items that appear in both additions and removals. Added noise filtering for common trait impl methods (as_str, new, etc.) and test artifacts. Grouped API changes by package and type with per-category caps at 12 items (split_and_ellipsis). - generator.rs: replaced Rust Debug formatting with proper YAML (indented lists, yaml_kv helper with esca...
+Adds agentignore): add .agentignore support with IDE-specific export …, agents): add comprehensive agent guide documentation, haptics): cross-platform haptic feedback with platform providers….
 
 ### Key Changes
+**Added**
+- **agent**: `export_rules_for_opencode` functions
+- **haptics**: `HapticsProvider` traits; `DesktopHapticsProvider`, `HapticsConfig`, `MobileHapticsProvider`, `WebHapticsProvider` structs; `HapticsTarget`, `ImpactStyle` enums; `create_haptics_provider` functions
+- **agentignore**: `AgentIgnore` structs; `check_path`, `create_from_gitignore`, `export_for_ide`, `is_ignored`, `load`, `patterns` functions
+- **cli**: `IgnoreSubcommand` enums; `haptics`, `impact_heavy`, `impact_light`, `impact_medium`, `is_supported`, `selection` functions
 **Removed**
-- **project**: `AuthPlate`, `CounterState`, `CreateUserInput`, `MyBench`, `ProjectConfig`, `Route`, `User`, `UserLoader`, `UserRoute`
+- **project**: `AuthPlate`, `CounterState`, `CreateTodoInput`, `CreateUserInput`, `ProjectConfig`, `Route`, `User`, `UserLoader`
+- **agent**: `get_framework_invariants`
+- **cli**: `AgentSubcommand`, `CargoCli`, `ChangelogSubcommand`, `Commands`, `GenerateSubcommand`, `McpSubcommand`, `MontrsCli`, `PrdocSubcommand`, `RulesSubcommand`, `main_entry`, `montrs_cli`, `plate`; ...and 2 more
 ### Package Breakdown
-- **agent** (minor): 0 source file(s) (+4/-0)
-- **cli** (minor): 2 source file(s) (+10/-1)
-- **prdoc** (major): 6 source file(s) (+537/-267)
+- **agent** (major): 2 source file(s) (+110/-76)
+- **agentignore** (minor): 1 source file(s) (+161/-0)
+- **cli** (major): 3 source file(s) (+955/-832)
+- **haptics** (minor): 6 source file(s) (+484/-0)
+- **montrs** (minor): 1 source file(s) (+74/-63)
 
 
 **Breaking:** This change modifies the public API in a backward-incompatible way.
 
 ## Changes
 ### Packages Affected
-- **agent** (minor): +4/-0
-- **cli** (minor): (2 source file(s)) +10/-1
-- **prdoc** (major): (6 source file(s)) +537/-267
+- **agent** (major): (2 source file(s)) +110/-76
+- **agentignore** (minor): (1 source file(s)) +161/-0
+- **cli** (major): (3 source file(s)) +955/-832
+- **haptics** (minor): (6 source file(s), 1 test file(s)) +484/-0
+- **montrs** (minor): (1 source file(s)) +74/-63
 
 ## Agent Instructions
 ### Verification
@@ -57,10 +76,9 @@ crates:
 ### Review Focus
 - Architecture: verify structural integrity of public API changes.
 - Migration: validate that breaking changes are documented.
+- Design: confirm new types and traits follow project conventions.
 
 ## Migration Notes
 
-This PR introduces breaking changes to: prdoc.
-From PR description:
-Migration Notes with specific breaking package names. Better title derivation from PR context when available. Per-package descriptions in Packages Affected section.
+This PR introduces breaking changes to: agent, cli.
 Review the public API modifications carefully before merging.
