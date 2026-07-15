@@ -31,6 +31,8 @@ pub const BENCH_INVARIANTS: &str =
     include_str!("../../../packages/bench/docs/invariants.md");
 pub const MONTRS_INVARIANTS: &str =
     include_str!("../../../packages/montrs/docs/invariants.md");
+pub const HAPTICS_INVARIANTS: &str =
+    include_str!("../../../packages/haptics/docs/invariants.md");
 pub const AGENTIGNORE_INVARIANTS: &str =
     include_str!("../../../packages/agentignore/docs/invariants.md");
 
@@ -74,6 +76,7 @@ pub fn get_framework_invariants()
     m.insert("fmt", FMT_INVARIANTS);
     m.insert("bench", BENCH_INVARIANTS);
     m.insert("montrs", MONTRS_INVARIANTS);
+    m.insert("haptics", HAPTICS_INVARIANTS);
     m.insert("agentignore", AGENTIGNORE_INVARIANTS);
     m
 }

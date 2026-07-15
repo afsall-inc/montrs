@@ -40,6 +40,12 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Provides the "Validation Infrastructure." It allows testing of `Loader` and `Action` logic without needing a real network or database.
 - **When to modify**: When improving the testability of the framework or adding new mocking capabilities.
 
+## 📦 `montrs-haptics`
+- **Responsibility**: Cross-platform haptic feedback for web, desktop, and mobile.
+- **Key Components**: `HapticsProvider` trait, `ImpactStyle`, `HapticsConfig`, platform-specific providers.
+- **Boundary**: Provides a unified `HapticsProvider` trait with feature-gated platform backends. Web uses Vibration API; desktop uses OS-native calls as temporary fallback; mobile is stubbed until native bridges land.
+- **When to modify**: When adding a new platform target, changing the trait interface, or implementing the desktop engine integration.
+
 ---
 
 ## How Packages Interact

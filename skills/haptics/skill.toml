@@ -1,0 +1,31 @@
+[skill]
+name = "haptics-setup"
+version = "1.1.0"
+description = "Guides the agent through setting up haptic feedback for a MontRS application."
+author = "MontRS"
+tags = ["haptics", "feedback", "ux", "web", "desktop", "mobile"]
+
+[workflow]
+steps = [
+    "Check which target the application uses (web, desktop, mobile)",
+    "Enable the corresponding feature gate (haptics-web, haptics-desktop, or haptics-mobile)",
+    "Create a HapticsProvider using create_haptics_provider(&HapticsConfig { enabled: true, target: ... })",
+    "Use config.enabled = false to disable haptics at runtime",
+    "Wrap provider in a Plate for dependency injection",
+    "Configure HapticsConfig with desired settings",
+    "Always call provider.is_supported() before haptic operations",
+    "Test with cargo test --features haptics-desktop",
+]
+
+[context]
+prompts = [
+    "Which platform target does your app use? (web, desktop, mobile)",
+    "Which haptic interactions does the app need? (impact, vibration, selection)",
+]
+invariants = [
+    "Always call is_supported() before haptic operations",
+    "Use ImpactStyle enum, not raw duration values",
+    "Feature-gate platform imports to avoid cross-compilation issues",
+    "Pass &HapticsConfig to create_haptics_provider, not a raw HapticsTarget",
+    "Use enabled: false in tests to get a NoopHapticsProvider",
+]

@@ -4359,6 +4359,7 @@ version = "0.1.0"
 dependencies = [
  "montrs-cli",
  "montrs-core",
+ "montrs-haptics",
  "montrs-orm",
  "montrs-test",
  "montrs-validator",
@@ -4496,6 +4497,16 @@ dependencies = [
  "toml 0.8.23",
  "tracing",
  "walkdir",
+]
+
+[[package]]
+name = "montrs-haptics"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

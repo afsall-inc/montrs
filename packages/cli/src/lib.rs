@@ -391,6 +391,15 @@ pub enum GenerateSubcommand {
         name: String,
     },
     /// Generate a new route.
+    Haptics {
+        /// Name of the haptics provider.
+        #[arg(short, long, default_value = "haptics")]
+        name: String,
+        /// Target platform (web, desktop, mobile).
+        #[arg(short, long, default_value = "desktop")]
+        target: String,
+    },
+    /// Generate a new route.
     Route {
         /// Path pattern for the route (e.g., "/users/:id").
         path: String,
@@ -497,6 +506,9 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         Commands::Generate { subcommand } => match subcommand {
             GenerateSubcommand::Plate { name } => {
                 command::generate::plate(name).await
+            }
+            GenerateSubcommand::Haptics { name, target } => {
+                command::generate::haptics(name, target).await
             }
             GenerateSubcommand::Route { path, plate } => {
                 command::generate::route(path, plate).await
