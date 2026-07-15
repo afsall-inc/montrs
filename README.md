@@ -105,8 +105,10 @@ impl Route<AppConfig> for HelloRoute {
 | [core](packages/core/README.md) | The architectural engine (Plates, Routing, AppSpec). |
 | [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
 | [agent](packages/agent/README.md) | Agent-first logic, snapshotting, and error tracking. |
+| [agentignore](packages/agentignore/README.md) | Agent-first file ignore patterns with IDE-specific export. |
 | [orm](packages/orm/README.md) | SQL-centric database abstraction. |
 | [validator](packages/validator/README.md) | Compile-time validation and data modeling. |
+| [prdoc](packages/prdoc/README.md) | Structured PR documentation, auto-generation, changelog. |
 | [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
 
 ---

@@ -267,6 +267,11 @@ pub enum AgentSubcommand {
         #[command(subcommand)]
         subcommand: ChangelogSubcommand,
     },
+    /// Manage agent ignore patterns (.agentignore).
+    Ignore {
+        #[command(subcommand)]
+        subcommand: IgnoreSubcommand,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -275,11 +280,27 @@ pub enum RulesSubcommand {
     Setup,
     /// Export rules to a specific IDE format.
     Export {
-        /// Target IDE format (trae, cursor).
+        /// Target IDE format (trae, cursor, opencode).
         format: String,
     },
     /// List available rule sets in .agent/rules/.
     List,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum IgnoreSubcommand {
+    /// Create a .agentignore file from .gitignore and defaults.
+    Setup,
+    /// Check if a path is ignored by .agentignore.
+    Check {
+        /// Path to check.
+        path: String,
+    },
+    /// Export .agentignore to IDE-specific ignore files.
+    Export {
+        /// Target IDE format (opencode, cursor, trae).
+        format: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]

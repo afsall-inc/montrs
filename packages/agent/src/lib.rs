@@ -172,9 +172,35 @@ impl AgentManager {
         // 3. Export to Cursor (.cursorrules)
         self.export_rules_for_cursor()?;
 
+        // 4. Export to OpenCode (.opencode/rules/)
+        self.export_rules_for_opencode()?;
+
         Ok("Successfully scaffolded .agent/rules/ and exported IDE \
             configurations"
             .to_string())
+    }
+
+    /// Exports rules to OpenCode IDE format (.opencode/rules/).
+    pub fn export_rules_for_opencode(&self) -> Result<()> {
+        let opencode_dir = self.root_path.join(".opencode").join("rules");
+        if !opencode_dir.exists() {
+            fs::create_dir_all(&opencode_dir)?;
+        }
+
+        let rules_dir = self.agent_dir().join("rules");
+        for entry in fs::read_dir(&rules_dir)?.flatten() {
+            if entry.path().extension().and_then(|s| s.to_str()) == Some("md") {
+                let content = fs::read_to_string(entry.path())?;
+                let name = entry
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string();
+                fs::write(opencode_dir.join(&name), content)?;
+            }
+        }
+        Ok(())
     }
 
     /// Exports rules to Trae IDE format (.trae/rules/ with YAML frontmatter).
@@ -1051,6 +1077,7 @@ impl AgentManager {
         let walker = ignore::WalkBuilder::new(&self.root_path)
             .hidden(false)
             .git_ignore(true)
+            .add_custom_ignore_filename(".agentignore")
             .filter_entry(|entry| {
                 let name = entry.file_name().to_string_lossy();
                 name != ".git" && name != "target" && name != ".agent"
