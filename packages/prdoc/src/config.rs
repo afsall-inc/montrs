@@ -40,7 +40,10 @@ impl PrdocConfig {
             String::new()
         };
 
-        if api_key.is_empty() && self.llm.provider != "ollama" {
+        if api_key.is_empty()
+            && self.llm.provider != "ollama"
+            && self.llm.provider != "local"
+        {
             return None;
         }
 

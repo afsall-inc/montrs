@@ -312,6 +312,7 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 from_diff,
                 from_commits,
                 embed: _,
+                llm,
                 output,
                 force,
             } => {
@@ -358,12 +359,13 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     &analysis,
                     context.as_ref(),
                 );
+
                 let rendered = montrs_agent::prdoc_generator::render_prdoc_rich(
                     &prdoc,
                     &analysis,
                     context.as_ref(),
                     Some(&diff_str),
-                    None,
+                    llm,
                 );
 
                 if let Some(parent) = output_path.parent()

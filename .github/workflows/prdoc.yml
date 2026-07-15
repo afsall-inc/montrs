@@ -25,14 +25,23 @@ jobs:
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2
 
+    - name: Setup Ollama
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sh
+        ollama serve &
+        sleep 5
+        ollama pull qwen2:0.5b
+
     - name: Generate PRDoc
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PRDOC_LLM_PROVIDER: local
       run: |
-        cargo run --package montrs-cli -- agent prdoc generate \
+        cargo run --features llm --package montrs-cli -- agent prdoc generate \
           --pr ${{ github.event.pull_request.number }} \
           --output prdoc.md \
-          --force
+          --force \
+          --llm
 
     - name: Validate PRDoc
       run: cargo run --package montrs-cli -- agent prdoc validate
