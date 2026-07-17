@@ -37,17 +37,17 @@ crates:
 
 ## Summary
 
-Adds agentignore): add .agentignore support with IDE-specific export …, agents): add comprehensive agent guide documentation, haptics): cross-platform haptic feedback with platform providers….
+Adds agentignore): add .agentignore support with IDE-specific export …, agents): add comprehensive agent guide documentation, haptics): cross-platform haptic feedback with platform providers…. Chore: auto-generate prdoc.md.
 
 ### Key Changes
 **Added**
+- **agentignore**: `AgentIgnore` structs; `check_path`, `create_from_gitignore`, `export_for_ide`, `is_ignored`, `load`, `patterns` functions
 - **agent**: `export_rules_for_opencode` functions
 - **haptics**: `HapticsProvider` traits; `DesktopHapticsProvider`, `HapticsConfig`, `MobileHapticsProvider`, `WebHapticsProvider` structs; `HapticsTarget`, `ImpactStyle` enums; `create_haptics_provider` functions
-- **agentignore**: `AgentIgnore` structs; `check_path`, `create_from_gitignore`, `export_for_ide`, `is_ignored`, `load`, `patterns` functions
 - **cli**: `IgnoreSubcommand` enums; `haptics`, `impact_heavy`, `impact_light`, `impact_medium`, `is_supported`, `selection` functions
 **Removed**
-- **project**: `AuthPlate`, `CounterState`, `CreateTodoInput`, `CreateUserInput`, `ProjectConfig`, `Route`, `User`, `UserLoader`
 - **agent**: `get_framework_invariants`
+- **project**: `AuthPlate`, `CounterState`, `CreateTodoInput`, `CreateUserInput`, `ProjectConfig`, `Route`, `User`, `UserLoader`
 - **cli**: `AgentSubcommand`, `CargoCli`, `ChangelogSubcommand`, `Commands`, `GenerateSubcommand`, `McpSubcommand`, `MontrsCli`, `PrdocSubcommand`, `RulesSubcommand`, `main_entry`, `montrs_cli`, `plate`; ...and 2 more
 ### Package Breakdown
 - **agent** (major): 2 source file(s) (+110/-76)
