@@ -1,10 +1,14 @@
 # PRDoc Generation Workflow
 
-This workflow ensures accurate classification of changes when generating PRDoc files.
+This workflow ensures accurate PR documentation following the polkadot-sdk style.
+
+## Philosophy
+
+**PRDocs are skeletons requiring human editing.** The generator detects metadata (packages, audience, bump level) but leaves descriptions as `...` placeholders for the author to fill in. This ensures meaningful, human-written documentation rather than LLM-generated rubbish.
 
 ## Steps
 
-### 1. Generate Initial PRDoc
+### 1. Generate Skeleton PRDoc
 
 ```bash
 montrs agent prdoc generate --pr <number>
@@ -16,93 +20,104 @@ Or from a local diff:
 montrs agent prdoc generate --from-diff changes.diff
 ```
 
-### 2. CRITICAL: Verify "Removed" vs "Moved" Classification
+This creates a skeleton with:
+- Detected packages/crates
+- Inferred audience
+- Suggested bump level
+- `...` placeholders for descriptions
 
-Before accepting the generated PRDoc, **always verify** that items listed as "Removed" are truly removed and not moved.
+### 2. Fill In Descriptions
 
-#### How to Check
+Edit the generated `prdoc.md` and replace all `...` with meaningful content:
 
-1. **Cross-reference every `-pub` item with `+pub` items**:
-   - Look for matching names across removed and added items
-   - Same name + same type (fn/struct/enum/trait) + different file path = **MOVE**, not removal
+```yaml
+title: Add deferred dispatch support
 
-2. **Check the "Moved" section** (if present):
-   - The generator now detects moves automatically
-   - Verify items in "Moved" section have correct `from_path` → `to_path`
+doc:
+  - audience: Framework Dev
+    description: |
+      Extends `pallet-whitelist` with automatic deferred dispatch...
+      [Write a detailed technical description for this audience]
+      
+  - audience: App Dev
+    description: |
+      [Different description for app developers, if applicable]
 
-3. **Review path changes**:
-   - Files renamed: `foo.rs` → `bar.rs` with same public items = move
-   - Directory restructure: `src/a/mod.rs` → `src/b/mod.rs` = move
+crates:
+  - name: montrs-core
+    bump: major
+    note: "Breaking: removed deprecated `old_function`"
+```
 
-#### Manual Verification Checklist
+### 3. Choose Audiences
 
-- [ ] Every item in "Removed" section is truly deleted (no corresponding addition)
-- [ ] Items that appear in both additions and removals are in "Moved" section
-- [ ] Breaking change flag is NOT set for pure moves
-- [ ] Version bump is `minor` (not `major`) for moves without actual removals
+Pick one or more audiences:
 
-### 3. Review Generated Summary Sections
+| Audience | Who They Are |
+|----------|-------------|
+| Framework Dev | Contributors to MontRS framework |
+| App Dev | Developers building apps with MontRS |
+| Agent User | Users of agent/automation features |
+| Operator | Operators running MontRS infrastructure |
 
-Verify the generated `prdoc.md` has accurate sections:
+### 4. Set Bump Levels
 
-| Section | Should Contain |
-|---------|---------------|
-| **Added** | New public API items (not present before) |
-| **Moved** | Relocated items with old → new paths |
-| **Removed** | Deleted items (not moved elsewhere) |
+| Bump | When to Use |
+|------|-------------|
+| `major` | Breaking public API changes (removals, signature changes) |
+| `minor` | New public API additions (new functions, structs, traits) |
+| `patch` | Bug fixes or internal changes with no API change |
+| `none` | No observable change (docs, CI, comments) |
 
-### 4. Validate PRDoc
+Use `validate: false` to override CI SemVer checks with justification.
+
+### 5. Add Migrations (If Applicable)
+
+```yaml
+migrations:
+  db:
+    - name: add_user_table
+      description: Adds user table with email column
+  runtime:
+    - description: Migrates old config format to new format
+      reference: "migration_v2.rs"
+```
+
+### 6. Validate PRDoc
 
 ```bash
 montrs agent prdoc validate
 ```
 
-### 5. Run Agent Check
+Checks:
+- Title is not `...`
+- At least one doc section with non-`...` description
+- At least one crate listed
+- Schema compliance
 
-```bash
-montrs agent check
+### 7. Verify "Removed" vs "Moved"
+
+The generator detects moves automatically. Verify:
+
+- Items moved between files appear correctly
+- Bump level is not `major` for pure moves
+- Actual removals have `major` bump
+
+## Template
+
+```yaml
+---
+title: ...
+
+doc:
+  - audience: ...
+    description: |
+      ...
+
+crates: [ ]
+---
 ```
 
-## Common Scenarios
+## Schema
 
-### File Rename with Same Public API
-
-```diff
-- packages/core/src/old.rs
-+ packages/core/src/new.rs
-```
-
-- Items like `pub fn foo()` appear as removed from `old.rs` and added to `new.rs`
-- Should appear in **Moved** section, NOT Removed
-- No breaking change, bump = `minor` or `patch`
-
-### Extract Module to Separate File
-
-```diff
-- packages/core/src/lib.rs  (-pub mod foo)
-+ packages/core/src/foo/mod.rs  (+pub mod foo)
-```
-
-- Module `foo` moved, not removed
-- Bump = `patch` (internal restructure)
-
-### Actual Removal
-
-```diff
-- packages/core/src/deprecated.rs
-- pub fn old_function()
-```
-
-- No corresponding `+pub fn old_function()` anywhere
-- Should appear in **Removed** section
-- Breaking change = `true`, bump = `major`
-
-## Failure Recovery
-
-If the generator misclassifies a move as removal:
-
-1. Manually edit `prdoc.md`
-2. Move item from "Removed" to "Moved" section
-3. Add `from_path` and `to_path` details
-4. Change `breaking: true` to `breaking: false` (if no actual removals)
-5. Adjust crate `bump` from `major` to appropriate level
+See `prdoc/schema_user.json` for the full JSON Schema definition.

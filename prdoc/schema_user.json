@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/anomalyco/montrs/master/prdoc/schema_user.json",
+  "title": "MontRS PRDoc Schema",
+  "description": "JSON Schema definition for MontRS PR documentation",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "title": "Title of the change",
+      "type": "string",
+      "description": "Title for the PR. Will show up in release notes."
+    },
+    "author": {
+      "title": "Author handle",
+      "type": "string",
+      "description": "Author GitHub handle"
+    },
+    "pr": {
+      "title": "PR number",
+      "type": "integer",
+      "description": "Pull request number"
+    },
+    "doc": {
+      "type": "array",
+      "title": "Documentation for audiences",
+      "description": "Description of the PR for each relevant audience.",
+      "items": {
+        "$ref": "#/$defs/doc"
+      },
+      "minItems": 1
+    },
+    "crates": {
+      "title": "Crates",
+      "description": "List of crates with noticeable changes.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/crate"
+      }
+    },
+    "migrations": {
+      "title": "Migrations",
+      "description": "Database and runtime migrations.",
+      "type": "object",
+      "properties": {
+        "db": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/migration_db" }
+        },
+        "runtime": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/migration_runtime" }
+        }
+      }
+    },
+    "host_functions": {
+      "title": "Host Functions",
+      "description": "List of host functions involved in this PR.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/host_function"
+      }
+    }
+  },
+  "required": ["title", "doc", "crates"],
+  "$defs": {
+    "audience": {
+      "oneOf": [
+        {"const": "Framework Dev", "title": "Framework Dev"},
+        {"const": "App Dev", "title": "App Dev"},
+        {"const": "Agent User", "title": "Agent User"},
+        {"const": "Operator", "title": "Operator"}
+      ]
+    },
+    "crate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "bump": { "$ref": "#/$defs/semver_bump" },
+        "validate": { "type": "boolean", "default": true },
+        "note": { "type": "string" }
+      },
+      "required": ["name", "bump"]
+    },
+    "semver_bump": {
+      "oneOf": [
+        {"const": "major", "title": "Major"},
+        {"const": "minor", "title": "Minor"},
+        {"const": "patch", "title": "Patch"},
+        {"const": "none", "title": "None"}
+      ]
+    },
+    "doc": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "audience": { "$ref": "#/$defs/audience" },
+        "title": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["audience", "description"]
+    },
+    "migration_db": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "description"]
+    },
+    "migration_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reference": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["description"]
+    },
+    "host_function": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["name", "description"]
+    }
+  }
+}

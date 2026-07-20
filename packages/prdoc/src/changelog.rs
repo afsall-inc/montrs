@@ -1,4 +1,4 @@
-use crate::types::{BumpLevel, CrateChange, PrDoc, load_prdoc, parse_prdoc};
+use crate::types::{BumpLevel, CrateChange, PrDoc, load_prdoc, parse_prdoc, DocSection};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -9,7 +9,7 @@ pub struct ChangelogEntry {
     pub pr: Option<u64>,
     pub title: String,
     pub crates: Vec<CrateChange>,
-    pub breaking: bool,
+    pub doc: Vec<DocSection>,
     pub category: ChangelogCategory,
 }
 
@@ -57,7 +57,7 @@ impl Changelog {
             pr: prdoc.pr,
             title: prdoc.title.clone(),
             crates: prdoc.crates.clone(),
-            breaking: prdoc.breaking,
+            doc: prdoc.doc.clone(),
             category,
         });
     }
@@ -83,10 +83,8 @@ impl Changelog {
                 for entry in cat_entries {
                     let pr_str = entry
                         .pr
-                        .map(|p| format!(" (#{})", p))
+                        .map(|p| format!(" (#${})", p))
                         .unwrap_or_default();
-                    let breaking_str =
-                        if entry.breaking { " **BREAKING**" } else { "" };
                     let crate_strs: Vec<String> = entry
                         .crates
                         .iter()
@@ -98,10 +96,13 @@ impl Changelog {
                         format!(" [{}]", crate_strs.join(", "))
                     };
                     out.push_str(&format!(
-                        "- {}{}{}{}\n",
-                        entry.title, breaking_str, crates_info, pr_str,
+                        "- {}{}{}\n",
+                        entry.title, crates_info, pr_str,
                     ));
                 }
+                out.push('\n');
+            }
+        }
                 out.push('\n');
             }
         }
@@ -172,20 +173,13 @@ fn group_by_category<'a>(
 }
 
 fn classify_prdoc(prdoc: &PrDoc) -> ChangelogCategory {
-    if prdoc.breaking {
-        let has_removals =
-            prdoc.crates.iter().any(|c| c.bump == BumpLevel::Major);
-        return if has_removals {
-            ChangelogCategory::Removed
-        } else {
-            ChangelogCategory::Changed
-        };
-    }
-
+    let has_major = prdoc.crates.iter().any(|c| c.bump == BumpLevel::Major);
     let has_minor = prdoc.crates.iter().any(|c| c.bump == BumpLevel::Minor);
     let has_patch = prdoc.crates.iter().any(|c| c.bump == BumpLevel::Patch);
 
-    if has_minor {
+    if has_major {
+        ChangelogCategory::Removed
+    } else if has_minor {
         ChangelogCategory::Added
     } else if has_patch {
         ChangelogCategory::Fixed
