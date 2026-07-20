@@ -235,7 +235,7 @@ fn extract_descriptions(messages: &[String]) -> Vec<String> {
 fn filter_and_dedup_api_changes<'a>(
     additions: &'a [PublicApiChange],
     removals: &'a [PublicApiChange],
-    moved_items: &[MovedItem],
+    moved_items: &'a [MovedItem],
 ) -> (
     Vec<&'a PublicApiChange>,
     Vec<&'a PublicApiChange>,
