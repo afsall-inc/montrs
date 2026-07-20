@@ -134,11 +134,13 @@ pub fn render_prdoc_rich(
     out.push_str("## Summary\n\n");
     let (api_additions, api_removals) =
         diff.map(extract_public_api_from_diff).unwrap_or_default();
+    let moved_items = analysis.moved_items.clone();
     let summary_ctx = SummaryContext {
         analysis,
         context,
         public_api_additions: api_additions,
         public_api_removals: api_removals,
+        moved_items,
     };
     let rich_summary = crate::summary::generate_rich_summary(&summary_ctx);
     let final_summary = if use_llm {

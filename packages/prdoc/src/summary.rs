@@ -1,6 +1,7 @@
 use crate::{
     analyzer::{
-        ChangeCategory, DiffAnalysis, FileCategory, FileChange, PrContext,
+        ChangeCategory, DiffAnalysis, FileCategory, FileChange, MovedItem,
+        PrContext,
     },
     types::CrateChange,
 };
@@ -11,6 +12,7 @@ pub struct SummaryContext<'a> {
     pub context: Option<&'a PrContext>,
     pub public_api_additions: Vec<PublicApiChange>,
     pub public_api_removals: Vec<PublicApiChange>,
+    pub moved_items: Vec<MovedItem>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -19,6 +21,7 @@ pub struct PublicApiChange {
     pub name: String,
     pub package: Option<String>,
     pub path: String,
+    pub moved_from: Option<String>,
 }
 
 const NOISE_NAMES: &[&str] = &[
@@ -42,21 +45,27 @@ pub fn generate_rich_summary(ctx: &SummaryContext) -> String {
         out.push_str("\n\n");
     }
 
-    let (additions, removals) = filter_and_dedup_api_changes(
+    let (additions, removals, moves) = filter_and_dedup_api_changes(
         &ctx.public_api_additions,
         &ctx.public_api_removals,
+        &ctx.moved_items,
     );
 
     let has_additions = !additions.is_empty();
     let has_removals = !removals.is_empty();
+    let has_moves = !moves.is_empty();
     let has_pkg_changes = !ctx.analysis.packages.is_empty();
 
-    if has_additions || has_removals || has_pkg_changes {
+    if has_additions || has_removals || has_moves || has_pkg_changes {
         out.push_str("### Key Changes\n");
 
         if has_additions {
             let grouped = group_api_by_package_and_type(&additions);
             out.push_str(&format_additions_section(&grouped));
+        }
+
+        if has_moves {
+            out.push_str(&format_moved_section(&moves));
         }
 
         if has_removals {
@@ -226,16 +235,23 @@ fn extract_descriptions(messages: &[String]) -> Vec<String> {
 fn filter_and_dedup_api_changes<'a>(
     additions: &'a [PublicApiChange],
     removals: &'a [PublicApiChange],
-) -> (Vec<&'a PublicApiChange>, Vec<&'a PublicApiChange>) {
-    let removal_names: HashSet<&str> =
-        removals.iter().map(|r| r.name.as_str()).collect();
+    moved_items: &[MovedItem],
+) -> (
+    Vec<&'a PublicApiChange>,
+    Vec<&'a PublicApiChange>,
+    Vec<&'a MovedItem>,
+) {
+    let moved_keys: HashSet<(String, String)> = moved_items
+        .iter()
+        .map(|m| (m.name.clone(), m.item_type.clone()))
+        .collect();
 
     let filtered_adds: Vec<&PublicApiChange> = additions
         .iter()
         .filter(|a| {
             !is_noise_item(a)
                 && !is_test_item(a)
-                && !removal_names.contains(a.name.as_str())
+                && !moved_keys.contains(&(a.name.clone(), a.item_type.clone()))
         })
         .collect();
 
@@ -248,10 +264,11 @@ fn filter_and_dedup_api_changes<'a>(
             !is_noise_item(r)
                 && !is_test_item(r)
                 && !addition_names.contains(r.name.as_str())
+                && !moved_keys.contains(&(r.name.clone(), r.item_type.clone()))
         })
         .collect();
 
-    (filtered_adds, filtered_removals)
+    (filtered_adds, filtered_removals, moved_items.iter().collect())
 }
 
 fn is_noise_item(change: &PublicApiChange) -> bool {
@@ -347,6 +364,71 @@ fn format_removals_section(
         out.push('\n');
     }
     out
+}
+
+fn format_moved_section(moves: &[&MovedItem]) -> String {
+    if moves.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    out.push_str("**Moved**\n");
+
+    let grouped: HashMap<Option<String>, Vec<&MovedItem>> = moves
+        .iter()
+        .filter_map(|m| {
+            let pkg = m.package.clone();
+            Some((pkg, *m))
+        })
+        .fold(HashMap::new(), |mut acc, (pkg, m)| {
+            acc.entry(pkg).or_default().push(m);
+            acc
+        });
+
+    for (pkg, items) in grouped {
+        let pkg_label = pkg.as_deref().unwrap_or("project");
+        let mut details: Vec<String> = items
+            .iter()
+            .map(|m| {
+                format!(
+                    "`{}` ({}: {} → {})",
+                    m.name,
+                    m.item_type,
+                    shorten_path(&m.from_path),
+                    shorten_path(&m.to_path)
+                )
+            })
+            .collect();
+        details.sort();
+        let (shown, rest) = split_and_ellipsis_str(&details);
+        out.push_str(&format!("- **{pkg_label}**: {}", shown.join("; ")));
+        if let Some(count) = rest {
+            out.push_str(&format!("; ...and {count} more"));
+        }
+        out.push('\n');
+    }
+    out
+}
+
+fn shorten_path(path: &str) -> String {
+    let parts: Vec<&str> = path.split('/').collect();
+    if parts.len() > 3 {
+        parts[parts.len() - 2..].join("/")
+    } else {
+        path.to_string()
+    }
+}
+
+fn split_and_ellipsis_str(items: &[String]) -> (Vec<&str>, Option<usize>) {
+    if items.len() <= MAX_ITEMS_PER_CATEGORY {
+        (items.iter().map(|s| s.as_str()).collect(), None)
+    } else {
+        let shown: Vec<&str> = items[..MAX_ITEMS_PER_CATEGORY]
+            .iter()
+            .map(|s| s.as_str())
+            .collect();
+        let rest = items.len() - MAX_ITEMS_PER_CATEGORY;
+        (shown, Some(rest))
+    }
 }
 
 fn format_package_breakdown(
@@ -492,6 +574,7 @@ fn parse_public_api_line(line: &str, path: &str) -> Option<PublicApiChange> {
                 name,
                 package,
                 path: path.to_string(),
+                moved_from: None,
             });
         }
     }
