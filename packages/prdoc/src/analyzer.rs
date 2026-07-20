@@ -273,7 +273,7 @@ fn detect_breaking_changes(
     file_changes: &[FileChange],
     moved_items: &[MovedItem],
 ) -> bool {
-    let moved_keys: HashSet<(String, String)> = moved_items
+    let _moved_keys: HashSet<(String, String)> = moved_items
         .iter()
         .map(|m| (m.name.clone(), m.item_type.clone()))
         .collect();
@@ -358,6 +358,7 @@ fn determine_crate_changes(
             name: pkg.clone(),
             bump: determine_bump_for_package(pkg, file_changes, is_breaking, moved_items),
             validate: true,
+            note: None,
         })
         .collect()
 }

@@ -103,9 +103,6 @@ impl Changelog {
                 out.push('\n');
             }
         }
-                out.push('\n');
-            }
-        }
 
         out
     }
