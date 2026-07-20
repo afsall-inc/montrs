@@ -46,11 +46,11 @@ Adds agentignore): add .agentignore support with IDE-specific export …, agents
 ### Key Changes
 **Added**
 - **cli**: `MontrsCli` structs; `AgentSubcommand`, `CargoCli`, `ChangelogSubcommand`, `Commands`, `GenerateSubcommand`, `IgnoreSubcommand`, `McpSubcommand`, `PrdocSubcommand`, `RulesSubcommand` enums; `haptics`, `impact_heavy`, `impact_light`, `impact_medium`, `is_supported`, `main_entry`, `montrs_cli`, `plate`, `route`, `run`, `selection` functions
+- **prdoc**: `DiffAnalysis`, `FileChange`, `MovedItem`, `PrContext`, `PublicApiChange`, `SummaryContext` structs; `ChangeCategory`, `FileCategory` enums; `analyze_commits`, `analyze_diff`, `classify_commit`, `extract_public_api_from_diff`, `gather_pr_context_from_gh`, `generate_prdoc`, `generate_rich_summary`, `get_commit_messages_for_range`, `get_diff_for_pr`, `get_diff_for_range`, `render_prdoc`, `render_prdoc_rich` functions
+- **agentignore**: `AgentIgnore` structs; `check_path`, `create_from_gitignore`, `export_for_ide`, `is_ignored`, `load`, `patterns` functions
 - **project**: `Route` traits; `AuthPlate`, `CounterState`, `CreateTodoInput`, `CreateUserInput`, `ProjectConfig`, `User`, `UserLoader` structs; `foo`, `old_function` functions
 - **agent**: `export_rules_for_opencode`, `get_framework_invariants` functions
-- **agentignore**: `AgentIgnore` structs; `check_path`, `create_from_gitignore`, `export_for_ide`, `is_ignored`, `load`, `patterns` functions
 - **haptics**: `HapticsProvider` traits; `DesktopHapticsProvider`, `HapticsConfig`, `MobileHapticsProvider`, `WebHapticsProvider` structs; `HapticsTarget`, `ImpactStyle` enums; `create_haptics_provider` functions
-- **prdoc**: `DiffAnalysis`, `FileChange`, `MovedItem`, `PrContext`, `PublicApiChange`, `SummaryContext` structs; `ChangeCategory`, `FileCategory` enums; `analyze_commits`, `analyze_diff`, `classify_commit`, `extract_public_api_from_diff`, `gather_pr_context_from_gh`, `generate_prdoc`, `generate_rich_summary`, `get_commit_messages_for_range`, `get_diff_for_pr`, `get_diff_for_range`, `render_prdoc`, `render_prdoc_rich` functions
 ### Package Breakdown
 - **agent** (major): 2 source file(s) (+110/-76)
 - **agentignore** (minor): 1 source file(s) (+161/-0)
