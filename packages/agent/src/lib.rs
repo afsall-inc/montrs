@@ -9,7 +9,6 @@ pub mod framework;
 pub mod guides;
 pub mod prdoc;
 pub mod prdoc_analyzer;
-pub mod prdoc_embed;
 pub mod prdoc_generator;
 pub mod skills;
 
