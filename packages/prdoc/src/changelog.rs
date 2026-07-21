@@ -1,8 +1,18 @@
 use crate::types::{
-    BumpLevel, CrateChange, DocSection, PrDoc, load_prdoc, parse_prdoc,
+    Audience, BumpLevel, CrateChange, DocSection, PrDoc, load_prdoc,
+    parse_prdoc,
 };
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tera::{Context, Tera};
+
+static TEMPLATES: Lazy<Tera> = Lazy::new(|| {
+    let mut tera = Tera::new("templates/changelog/**/*.tera")
+        .unwrap_or_else(|_| Tera::default());
+    tera.autoescape_on(Vec::new());
+    tera
+});
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChangelogEntry {
@@ -140,6 +150,56 @@ impl Changelog {
         });
 
         result
+    }
+
+    pub fn render_by_audience(
+        &self,
+        _version: &str,
+    ) -> HashMap<String, String> {
+        let mut result = HashMap::new();
+        let all_audiences = Audience::all();
+
+        for audience in all_audiences {
+            let audience_str = audience.as_str().to_string();
+            let entries: Vec<&ChangelogEntry> = self
+                .entries
+                .iter()
+                .filter(|e| e.doc.iter().any(|d| d.audience == *audience))
+                .collect();
+
+            if entries.is_empty() {
+                continue;
+            }
+
+            let mut context = Context::new();
+            context.insert("audience", &audience_str);
+            context.insert("entries", &entries);
+
+            let rendered = TEMPLATES
+                .render("audience.md.tera", &context)
+                .unwrap_or_else(|e| format!("Template error: {e}"));
+            result.insert(audience_str, rendered);
+        }
+
+        result
+    }
+
+    pub fn render_full(&self, version: &str) -> String {
+        let audience_content = self.render_by_audience(version);
+        let audiences: Vec<&str> =
+            audience_content.keys().map(|s| s.as_str()).collect();
+        let crates: Vec<&CrateChange> =
+            self.entries.iter().flat_map(|e| &e.crates).collect();
+
+        let mut context = Context::new();
+        context.insert("version", version);
+        context.insert("audiences", &audiences);
+        context.insert("audience_content", &audience_content);
+        context.insert("crates", &crates);
+
+        TEMPLATES
+            .render("summary.md.tera", &context)
+            .unwrap_or_else(|e| format!("Template error: {e}"))
     }
 }
 

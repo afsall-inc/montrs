@@ -1,0 +1,11 @@
+# Release {{ version }}
+
+{% for audience in audiences %}
+{{ audience_content[audience] }}
+{% endfor %}
+
+## Crates Affected
+
+{% for crate in crates %}
+- **{{ crate.name }}**: {{ crate.bump }}
+{% endfor %}
