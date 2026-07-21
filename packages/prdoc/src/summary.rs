@@ -268,7 +268,11 @@ fn filter_and_dedup_api_changes<'a>(
         })
         .collect();
 
-    (filtered_adds, filtered_removals, moved_items.iter().collect())
+    (
+        filtered_adds,
+        filtered_removals,
+        moved_items.iter().collect(),
+    )
 }
 
 fn is_noise_item(change: &PublicApiChange) -> bool {

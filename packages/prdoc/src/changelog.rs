@@ -1,4 +1,6 @@
-use crate::types::{BumpLevel, CrateChange, PrDoc, load_prdoc, parse_prdoc, DocSection};
+use crate::types::{
+    BumpLevel, CrateChange, DocSection, PrDoc, load_prdoc, parse_prdoc,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
