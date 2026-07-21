@@ -318,7 +318,7 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 from_diff,
                 from_commits,
                 embed: _,
-                llm,
+                llm: _,
                 output,
                 force,
             } => {
@@ -366,13 +366,8 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     context.as_ref(),
                 );
 
-                let rendered = montrs_agent::prdoc_generator::render_prdoc_rich(
-                    &prdoc,
-                    &analysis,
-                    context.as_ref(),
-                    Some(&diff_str),
-                    llm,
-                );
+                let rendered =
+                    montrs_agent::prdoc_generator::render_prdoc(&prdoc);
 
                 if let Some(parent) = output_path.parent()
                     && !parent.as_os_str().is_empty()
@@ -382,9 +377,8 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 std::fs::write(&output_path, &rendered)?;
 
                 Ok(format!(
-                    "Generated prdoc.md at {} ({} package(s), {} crate(s))",
+                    "Generated prdoc.md at {} ({} crate(s))",
                     output,
-                    prdoc.packages.len(),
                     prdoc.crates.len(),
                 ))
             }

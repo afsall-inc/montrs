@@ -68,7 +68,7 @@ fn infer_primary_audience(packages: &[String]) -> Audience {
     for pkg in packages {
         match pkg.as_str() {
             "core" | "cli" | "agent" | "fmt" | "bench" | "utils" | "runner" => {
-                return Audience::FrameworkDev
+                return Audience::FrameworkDev;
             }
             "orm" | "validator" | "test" => return Audience::AppDev,
             _ => {}
@@ -140,7 +140,10 @@ pub fn render_prdoc(prdoc: &PrDoc) -> String {
                         out.push_str(&format!("        {}\n", line));
                     }
                     if let Some(ref reference) = mig.reference {
-                        out.push_str(&format!("        reference: {}\n", reference));
+                        out.push_str(&format!(
+                            "        reference: {}\n",
+                            reference
+                        ));
                     }
                 }
             }
@@ -157,7 +160,10 @@ pub fn render_prdoc(prdoc: &PrDoc) -> String {
                     escape_yaml_string(&hf.description)
                 ));
                 if let Some(ref notes) = hf.notes {
-                    out.push_str(&format!("    notes: {}\n", escape_yaml_string(notes)));
+                    out.push_str(&format!(
+                        "    notes: {}\n",
+                        escape_yaml_string(notes)
+                    ));
                 }
             }
         }

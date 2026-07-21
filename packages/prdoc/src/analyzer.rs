@@ -78,11 +78,17 @@ pub fn analyze_diff(diff: &str) -> DiffAnalysis {
     let file_changes = parse_file_changes(diff);
     let packages = extract_packages(&file_changes);
     let moved_items = detect_moves(diff);
-    let is_breaking = detect_breaking_changes(diff, &file_changes, &moved_items);
-    let crate_changes =
-        determine_crate_changes(&packages, &file_changes, is_breaking, &moved_items);
+    let is_breaking =
+        detect_breaking_changes(diff, &file_changes, &moved_items);
+    let crate_changes = determine_crate_changes(
+        &packages,
+        &file_changes,
+        is_breaking,
+        &moved_items,
+    );
     let audience = infer_audience(&file_changes, &packages);
-    let summary_hints = generate_summary_hints(&file_changes, is_breaking, &moved_items);
+    let summary_hints =
+        generate_summary_hints(&file_changes, is_breaking, &moved_items);
     let dominant_category = infer_dominant_category(&file_changes);
 
     DiffAnalysis {
@@ -314,8 +320,9 @@ fn determine_bump_for_package(
                 && c.removed_lines > 0
         });
 
-        let has_actual_removal = pkg_has_public_api_removal && pkg_moved_names.is_empty();
-        
+        let has_actual_removal =
+            pkg_has_public_api_removal && pkg_moved_names.is_empty();
+
         return if has_actual_removal {
             BumpLevel::Major
         } else {
@@ -356,7 +363,12 @@ fn determine_crate_changes(
         .iter()
         .map(|pkg| CrateChange {
             name: pkg.clone(),
-            bump: determine_bump_for_package(pkg, file_changes, is_breaking, moved_items),
+            bump: determine_bump_for_package(
+                pkg,
+                file_changes,
+                is_breaking,
+                moved_items,
+            ),
             validate: true,
             note: None,
         })
@@ -510,7 +522,8 @@ fn detect_moves(diff: &str) -> Vec<MovedItem> {
     let mut used_additions: HashSet<usize> = HashSet::new();
 
     for (rem_name, rem_type, rem_path) in &removals {
-        for (i, (add_name, add_type, add_path)) in additions.iter().enumerate() {
+        for (i, (add_name, add_type, add_path)) in additions.iter().enumerate()
+        {
             if !used_additions.contains(&i)
                 && rem_name == add_name
                 && rem_type == add_type
@@ -605,12 +618,7 @@ fn parse_public_api_item(line: &str) -> Option<(String, String)> {
         } else {
             trimmed.strip_prefix("pub fn ").unwrap_or("")
         };
-        let name = rest
-            .split('(')
-            .next()
-            .unwrap_or("")
-            .trim()
-            .to_string();
+        let name = rest.split('(').next().unwrap_or("").trim().to_string();
         if name.len() >= 2 {
             return Some((name, "fn".to_string()));
         }
