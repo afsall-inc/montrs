@@ -277,36 +277,45 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 let prdoc_path = std::path::PathBuf::from(&path);
                 if !prdoc_path.exists() {
                     return Err(anyhow::anyhow!(
-                        "prdoc.md not found at {}. Create one with `montrs \
-                         agent prdoc generate`.",
+                        "prdoc not found at {}. Create one with `montrs agent \
+                         prdoc generate`.",
                         path
                     ));
                 }
-                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
-                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+                let prdoc =
+                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
+                        .map_err(|e| anyhow::anyhow!("{}", e))?;
                 Ok(serde_json::to_string_pretty(&prdoc)?)
             }
-            PrdocSubcommand::Validate { path } => {
+            PrdocSubcommand::Validate { path, branch } => {
                 let prdoc_path = std::path::PathBuf::from(&path);
                 if !prdoc_path.exists() {
                     if std::env::var("CI").is_ok() {
                         return Err(anyhow::anyhow!(
-                            "prdoc.md not found at {}. Pull requests require \
-                             a prdoc.md file.",
+                            "prdoc not found at {}. Pull requests require a \
+                             prdoc file.",
                             path
                         ));
                     }
-                    return Ok("No prdoc.md found. Validation skipped (not \
+                    return Ok("No prdoc found. Validation skipped (not \
                                required outside of pull requests)."
                         .to_string());
                 }
-                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
-                    .map_err(|e| anyhow::anyhow!("{}", e))?;
-                let issues = montrs_agent::prdoc::validate_prdoc(&prdoc);
-                if issues.is_empty() {
-                    Ok("prdoc.md is valid.".to_string())
+                let prdoc =
+                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
+                        .map_err(|e| anyhow::anyhow!("{}", e))?;
+                let issues = if let Some(ref branch_name) = branch {
+                    montrs_agent::montrs_prdoc::types::validate_prdoc_for_branch(
+                        &prdoc,
+                        branch_name,
+                    )
                 } else {
-                    let mut out = "prdoc.md validation issues:\n".to_string();
+                    montrs_agent::montrs_prdoc::types::validate_prdoc(&prdoc)
+                };
+                if issues.is_empty() {
+                    Ok("prdoc is valid.".to_string())
+                } else {
+                    let mut out = "prdoc validation issues:\n".to_string();
                     for issue in issues {
                         out.push_str(&format!("  - {}\n", issue));
                     }
@@ -315,70 +324,62 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
             PrdocSubcommand::Generate {
                 pr,
-                from_diff,
-                from_commits,
-                embed: _,
-                llm: _,
-                output,
+                bump,
+                audience,
                 force,
             } => {
-                let output_path = std::path::PathBuf::from(&output);
-                if output_path.exists() && !force {
+                let pr_number = pr.ok_or_else(|| {
+                    anyhow::anyhow!("--pr is required for generation")
+                })?;
+
+                let bump_level =
+                    montrs_agent::montrs_prdoc::types::BumpLevel::from_str_lossy(&bump);
+
+                let audience_val =
+                    montrs_agent::montrs_prdoc::types::Audience::from_str_lossy(
+                        &audience,
+                    );
+
+                let opts =
+                    montrs_agent::montrs_prdoc::generator::GenerateOptions {
+                        pr_number,
+                        bump: bump_level,
+                        audience: audience_val,
+                        force,
+                    };
+
+                let prdoc =
+                    montrs_agent::montrs_prdoc::generator::generate_prdoc(
+                        &opts,
+                    )
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+
+                let output_path =
+                    montrs_agent::montrs_prdoc::generator::default_output_path(
+                        pr_number,
+                    );
+                let path = std::path::PathBuf::from(&output_path);
+
+                if path.exists() && !force {
                     return Err(anyhow::anyhow!(
                         "{} already exists. Use --force to overwrite.",
-                        output
+                        output_path
                     ));
                 }
 
-                let diff = if let Some(diff_path) = from_diff {
-                    std::fs::read_to_string(&diff_path).ok()
-                } else if let Some(pr_num) = pr {
-                    montrs_agent::prdoc_analyzer::get_diff_for_pr(pr_num)
-                } else if let Some(ref range) = from_commits {
-                    montrs_agent::prdoc_analyzer::get_diff_for_range(range)
-                } else {
-                    montrs_agent::prdoc_analyzer::get_diff_for_range(
-                        "main..HEAD",
-                    )
-                };
-
-                let diff_str = diff.unwrap_or_default();
-                if diff_str.is_empty() {
-                    return Err(anyhow::anyhow!(
-                        "No diff found. Use --pr, --from-diff, or \
-                         --from-commits to specify a source."
-                    ));
-                }
-
-                let analysis =
-                    montrs_agent::prdoc_analyzer::analyze_diff(&diff_str);
-
-                let context = if let Some(pr_num) = pr {
-                    montrs_agent::prdoc_analyzer::gather_pr_context_from_gh(
-                        pr_num,
-                    )
-                } else {
-                    None
-                };
-
-                let prdoc = montrs_agent::prdoc_generator::generate_prdoc(
-                    &analysis,
-                    context.as_ref(),
-                );
-
-                let rendered =
-                    montrs_agent::prdoc_generator::render_prdoc(&prdoc);
-
-                if let Some(parent) = output_path.parent()
+                if let Some(parent) = path.parent()
                     && !parent.as_os_str().is_empty()
                 {
                     std::fs::create_dir_all(parent)?;
                 }
-                std::fs::write(&output_path, &rendered)?;
+
+                let rendered =
+                    montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
+                std::fs::write(&path, &rendered)?;
 
                 Ok(format!(
-                    "Generated prdoc.md at {} ({} crate(s))",
-                    output,
+                    "Generated {} ({} crate(s)). Edit the `...` placeholders.",
+                    output_path,
                     prdoc.crates.len(),
                 ))
             }

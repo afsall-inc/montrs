@@ -305,39 +305,33 @@ pub enum IgnoreSubcommand {
 
 #[derive(Subcommand, Debug)]
 pub enum PrdocSubcommand {
-    /// Display a prdoc.md file as JSON.
+    /// Display a prdoc file as JSON.
     Show {
-        /// Path to prdoc.md file.
-        #[arg(default_value = "prdoc.md")]
+        /// Path to prdoc file.
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
         path: String,
     },
-    /// Validate a prdoc.md file and report issues.
+    /// Validate a prdoc file and report issues.
     Validate {
-        /// Path to prdoc.md file.
-        #[arg(default_value = "prdoc.md")]
+        /// Path to prdoc file.
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
         path: String,
+        /// Branch name for backport validation (e.g., stable, release).
+        #[arg(long)]
+        branch: Option<String>,
     },
-    /// Auto-generate a prdoc.md from PR context, diffs, and commit messages.
+    /// Auto-generate a prdoc skeleton from PR context.
     Generate {
         /// PR number to generate from (uses gh CLI).
         #[arg(short, long)]
         pr: Option<u64>,
-        /// Use a local diff file instead of PR.
-        #[arg(long)]
-        from_diff: Option<String>,
-        /// Git commit range (e.g., main..HEAD).
-        #[arg(long)]
-        from_commits: Option<String>,
-        /// Enable embedding-based classification.
-        #[arg(long)]
-        embed: bool,
-        /// Enable LLM-enhanced summary via configured provider.
-        #[arg(long)]
-        llm: bool,
-        /// Output file path.
-        #[arg(short, long, default_value = "prdoc.md")]
-        output: String,
-        /// Overwrite existing prdoc.md.
+        /// Default bump level for all crates.
+        #[arg(short, long, default_value = "minor")]
+        bump: String,
+        /// Target audience (app_dev, framework_dev, agent_user, operator).
+        #[arg(short, long, default_value = "app_dev")]
+        audience: String,
+        /// Overwrite existing prdoc.
         #[arg(long)]
         force: bool,
     },

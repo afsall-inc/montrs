@@ -210,6 +210,24 @@ pub fn validate_prdoc(prdoc: &PrDoc) -> Vec<String> {
     issues
 }
 
+pub fn validate_prdoc_for_branch(prdoc: &PrDoc, branch: &str) -> Vec<String> {
+    let mut issues = validate_prdoc(prdoc);
+
+    if branch.starts_with("stable") || branch.starts_with("release") {
+        for crate_change in &prdoc.crates {
+            if crate_change.bump == BumpLevel::Major && crate_change.validate {
+                issues.push(format!(
+                    "crate '{}' has major bump on backport branch '{}' but \
+                     validate=true. Set validate: false if intentional.",
+                    crate_change.name, branch
+                ));
+            }
+        }
+    }
+
+    issues
+}
+
 fn extract_frontmatter(content: &str) -> Result<String, String> {
     let trimmed = content.trim_start();
     if !trimmed.starts_with("---") {
