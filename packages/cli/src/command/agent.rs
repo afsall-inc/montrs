@@ -277,95 +277,64 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 let prdoc_path = std::path::PathBuf::from(&path);
                 if !prdoc_path.exists() {
                     return Err(anyhow::anyhow!(
-                        "prdoc not found at {}. Create one with `montrs agent \
-                         prdoc generate`.",
+                        "prdoc.md not found at {}. Create one with `montrs \
+                         agent prdoc generate`.",
                         path
                     ));
                 }
-                let prdoc =
-                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
-                        .map_err(|e| anyhow::anyhow!("{}", e))?;
+                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
                 Ok(serde_json::to_string_pretty(&prdoc)?)
             }
-            PrdocSubcommand::Validate { path, branch } => {
+            PrdocSubcommand::Validate { path } => {
                 let prdoc_path = std::path::PathBuf::from(&path);
                 if !prdoc_path.exists() {
                     if std::env::var("CI").is_ok() {
                         return Err(anyhow::anyhow!(
-                            "prdoc not found at {}. Pull requests require a \
-                             prdoc file.",
+                            "prdoc.md not found at {}. Pull requests require \
+                             a prdoc.md file.",
                             path
                         ));
                     }
-                    return Ok("No prdoc found. Validation skipped (not \
+                    return Ok("No prdoc.md found. Validation skipped (not \
                                required outside of pull requests)."
                         .to_string());
                 }
-                let prdoc =
-                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
-                        .map_err(|e| anyhow::anyhow!("{}", e))?;
-                let issues = if let Some(ref branch_name) = branch {
-                    montrs_agent::montrs_prdoc::types::validate_prdoc_for_branch(
-                        &prdoc,
-                        branch_name,
-                    )
-                } else {
-                    montrs_agent::montrs_prdoc::types::validate_prdoc(&prdoc)
-                };
+                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+                let issues = montrs_agent::prdoc::validate_prdoc(&prdoc);
                 if issues.is_empty() {
-                    Ok("prdoc is valid.".to_string())
+                    Ok("prdoc.md is valid.".to_string())
                 } else {
-                    let mut out = "prdoc validation issues:\n".to_string();
+                    let mut out = "prdoc.md validation issues:\n".to_string();
                     for issue in issues {
                         out.push_str(&format!("  - {}\n", issue));
                     }
                     Err(anyhow::anyhow!("{}", out))
                 }
             }
-            PrdocSubcommand::Generate {
+                        PrdocSubcommand::Generate {
                 pr,
-                bump,
-                audience,
+                output,
                 force,
+                ..
             } => {
                 let pr_number = pr.ok_or_else(|| {
                     anyhow::anyhow!("--pr is required for generation")
                 })?;
 
-                let bump_level =
-                    montrs_agent::montrs_prdoc::types::BumpLevel::from_str_lossy(&bump);
+                let opts = montrs_agent::montrs_prdoc::generator::GenerateOptions {
+                    pr_number,
+                    bump: montrs_agent::montrs_prdoc::types::BumpLevel::Minor,
+                    audience: montrs_agent::montrs_prdoc::types::Audience::AppDev,
+                    force,
+                };
 
-                let audience_val =
-                    montrs_agent::montrs_prdoc::types::Audience::from_str_lossy(
-                        &audience,
-                    );
-
-                let opts =
-                    montrs_agent::montrs_prdoc::generator::GenerateOptions {
-                        pr_number,
-                        bump: bump_level,
-                        audience: audience_val,
-                        force,
-                    };
-
-                let prdoc =
-                    montrs_agent::montrs_prdoc::generator::generate_prdoc(
-                        &opts,
-                    )
+                let prdoc = montrs_agent::montrs_prdoc::generator::generate_prdoc(&opts)
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
 
-                let output_path =
-                    montrs_agent::montrs_prdoc::generator::default_output_path(
-                        pr_number,
-                    );
+                let output_path = montrs_agent::montrs_prdoc::generator::default_output_path(pr_number);
                 let path = std::path::PathBuf::from(&output_path);
-
-                if path.exists() && !force {
-                    return Err(anyhow::anyhow!(
-                        "{} already exists. Use --force to overwrite.",
-                        output_path
-                    ));
-                }
 
                 if let Some(parent) = path.parent()
                     && !parent.as_os_str().is_empty()
@@ -373,12 +342,11 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     std::fs::create_dir_all(parent)?;
                 }
 
-                let rendered =
-                    montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
+                let rendered = montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
                 std::fs::write(&path, &rendered)?;
 
                 Ok(format!(
-                    "Generated {} ({} crate(s)). Edit the `...` placeholders.",
+                    "Generated {} ({} crate(s)). Edit the placeholders.",
                     output_path,
                     prdoc.crates.len(),
                 ))
