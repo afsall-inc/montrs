@@ -1,0 +1,8 @@
+# Config file for prdoc
+# See docs/contributor/prdoc.md for schema details.
+
+version = 1
+schema = "prdoc/schema_user.json"
+output_dir = "prdoc"
+prdoc_folders = ["prdoc"]
+template = "templates/prdoc/.template.prdoc"

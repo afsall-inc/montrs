@@ -4,49 +4,50 @@ This workflow ensures accurate PR documentation following the polkadot-sdk style
 
 ## Philosophy
 
-**PRDocs are skeletons requiring human editing.** The generator detects metadata (packages, audience, bump level) but leaves descriptions as `...` placeholders for the author to fill in. This ensures meaningful, human-written documentation rather than LLM-generated rubbish.
+**PRDocs are skeletons requiring human editing.** The generator detects metadata (packages, audience, bump level) from the git diff, but leaves descriptions as `...` placeholders for the author to fill in. This ensures meaningful, human-written documentation rather than LLM-generated rubbish.
 
 ## Steps
 
 ### 1. Generate Skeleton PRDoc
 
 ```bash
-montrs agent prdoc generate --pr <number>
+montrs agent prdoc generate --pr <number> --bump <level> --audience <audience>
 ```
 
-Or from a local diff:
+Required parameters:
+- `--pr` : PR number
+- `--bump` : `major`, `minor`, `patch`, or `none`
+- `--audience` : `app_dev`, `framework_dev`, `agent_user`, or `operator`
+- `--force` : Overwrite existing prdoc file
 
+Example:
 ```bash
-montrs agent prdoc generate --from-diff changes.diff
+montrs agent prdoc generate --pr 82 --bump minor --audience app_dev
 ```
 
-This creates a skeleton with:
-- Detected packages/crates
-- Inferred audience
-- Suggested bump level
+This creates `prdoc/pr_82.prdoc` with:
+- Modified crates detected from the git diff
+- PR title and body from GitHub API
 - `...` placeholders for descriptions
 
 ### 2. Fill In Descriptions
 
-Edit the generated `prdoc.md` and replace all `...` with meaningful content:
+Edit the generated `prdoc/pr_<number>.prdoc` and replace all `...` with meaningful content:
 
 ```yaml
+---
 title: Add deferred dispatch support
 
 doc:
   - audience: Framework Dev
     description: |
-      Extends `pallet-whitelist` with automatic deferred dispatch...
+      Extends pallet-whitelist with automatic deferred dispatch...
       [Write a detailed technical description for this audience]
-      
-  - audience: App Dev
-    description: |
-      [Different description for app developers, if applicable]
 
 crates:
   - name: montrs-core
-    bump: major
-    note: "Breaking: removed deprecated `old_function`"
+    bump: minor
+---
 ```
 
 ### 3. Choose Audiences
@@ -86,22 +87,23 @@ migrations:
 ### 6. Validate PRDoc
 
 ```bash
-montrs agent prdoc validate
+montrs agent prdoc validate prdoc/pr_<number>.prdoc
 ```
 
 Checks:
 - Title is not `...`
 - At least one doc section with non-`...` description
 - At least one crate listed
+- Crate names exist in workspace
 - Schema compliance
 
-### 7. Verify "Removed" vs "Moved"
+### 7. Validate Backport Rules
 
-The generator detects moves automatically. Verify:
+On stable/release branches, major bumps require `validate: false`:
 
-- Items moved between files appear correctly
-- Bump level is not `major` for pure moves
-- Actual removals have `major` bump
+```bash
+montrs agent prdoc validate --branch stable/v1 prdoc/pr_<number>.prdoc
+```
 
 ## Template
 
