@@ -8,6 +8,7 @@ repository.workspace = true
 description = "The main entry point for the MontRS framework."
 
 [dependencies]
+montrs-haptics = { path = "../haptics", optional = true }
 montrs-core = { path = "../core", version = "0.1.0" }
 montrs-orm = { path = "../orm", version = "0.1.0", optional = true }
 montrs-validator = { path = "../validator", version = "0.1.0", optional = true }
@@ -20,6 +21,7 @@ path = "src/bin/montrs.rs"
 required-features = ["cli"]
 
 [features]
+haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
@@ -42,3 +44,8 @@ postgres = ["orm", "montrs-orm/postgres"]
 
 # Forwarding 'e2e' to 'montrs-test/e2e'
 e2e = ["test", "montrs-test/e2e"]
+
+# Forwarding haptics platform features
+haptics-web = ["haptics", "montrs-haptics/web"]
+haptics-desktop = ["haptics", "montrs-haptics/desktop"]
+haptics-mobile = ["haptics", "montrs-haptics/mobile"]

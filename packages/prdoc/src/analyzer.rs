@@ -1,6 +1,6 @@
 use crate::types::{Audience, BumpLevel, CrateChange};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum ChangeCategory {
@@ -44,6 +44,15 @@ pub enum FileCategory {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MovedItem {
+    pub name: String,
+    pub item_type: String,
+    pub from_path: String,
+    pub to_path: String,
+    pub package: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DiffAnalysis {
     pub packages: Vec<String>,
     pub file_changes: Vec<FileChange>,
@@ -53,6 +62,7 @@ pub struct DiffAnalysis {
     pub crate_changes: Vec<CrateChange>,
     pub audience: Vec<Audience>,
     pub summary_hints: Vec<String>,
+    pub moved_items: Vec<MovedItem>,
 }
 
 pub struct PrContext {
@@ -67,11 +77,12 @@ pub struct PrContext {
 pub fn analyze_diff(diff: &str) -> DiffAnalysis {
     let file_changes = parse_file_changes(diff);
     let packages = extract_packages(&file_changes);
-    let is_breaking = detect_breaking_changes(diff, &file_changes);
+    let moved_items = detect_moves(diff);
+    let is_breaking = detect_breaking_changes(diff, &file_changes, &moved_items);
     let crate_changes =
-        determine_crate_changes(&packages, &file_changes, is_breaking);
+        determine_crate_changes(&packages, &file_changes, is_breaking, &moved_items);
     let audience = infer_audience(&file_changes, &packages);
-    let summary_hints = generate_summary_hints(&file_changes, is_breaking);
+    let summary_hints = generate_summary_hints(&file_changes, is_breaking, &moved_items);
     let dominant_category = infer_dominant_category(&file_changes);
 
     DiffAnalysis {
@@ -83,6 +94,7 @@ pub fn analyze_diff(diff: &str) -> DiffAnalysis {
         crate_changes,
         audience,
         summary_hints,
+        moved_items,
     }
 }
 
@@ -256,7 +268,16 @@ fn extract_packages(file_changes: &[FileChange]) -> Vec<String> {
     packages
 }
 
-fn detect_breaking_changes(diff: &str, file_changes: &[FileChange]) -> bool {
+fn detect_breaking_changes(
+    diff: &str,
+    file_changes: &[FileChange],
+    moved_items: &[MovedItem],
+) -> bool {
+    let _moved_keys: HashSet<(String, String)> = moved_items
+        .iter()
+        .map(|m| (m.name.clone(), m.item_type.clone()))
+        .collect();
+
     for change in file_changes {
         if change.removed_lines > 0 && change.is_public_api_change {
             return true;
@@ -278,14 +299,24 @@ fn determine_bump_for_package(
     pkg: &str,
     file_changes: &[FileChange],
     is_breaking: bool,
+    moved_items: &[MovedItem],
 ) -> BumpLevel {
     if is_breaking {
-        let pkg_has_public_api_change = file_changes.iter().any(|c| {
+        let pkg_moved_names: HashSet<&str> = moved_items
+            .iter()
+            .filter(|m| m.package.as_deref() == Some(pkg))
+            .map(|m| m.name.as_str())
+            .collect();
+
+        let pkg_has_public_api_removal = file_changes.iter().any(|c| {
             extract_package_from_path(&c.path) == Some(pkg.to_string())
                 && c.is_public_api_change
                 && c.removed_lines > 0
         });
-        return if pkg_has_public_api_change {
+
+        let has_actual_removal = pkg_has_public_api_removal && pkg_moved_names.is_empty();
+        
+        return if has_actual_removal {
             BumpLevel::Major
         } else {
             BumpLevel::Minor
@@ -319,13 +350,15 @@ fn determine_crate_changes(
     packages: &[String],
     file_changes: &[FileChange],
     is_breaking: bool,
+    moved_items: &[MovedItem],
 ) -> Vec<CrateChange> {
     packages
         .iter()
         .map(|pkg| CrateChange {
             name: pkg.clone(),
-            bump: determine_bump_for_package(pkg, file_changes, is_breaking),
+            bump: determine_bump_for_package(pkg, file_changes, is_breaking, moved_items),
             validate: true,
+            note: None,
         })
         .collect()
 }
@@ -406,11 +439,19 @@ fn infer_dominant_category(file_changes: &[FileChange]) -> ChangeCategory {
 fn generate_summary_hints(
     file_changes: &[FileChange],
     is_breaking: bool,
+    moved_items: &[MovedItem],
 ) -> Vec<String> {
     let mut hints = Vec::new();
 
     if is_breaking {
         hints.push("Contains breaking changes".to_string());
+    }
+
+    if !moved_items.is_empty() {
+        hints.push(format!(
+            "Moved {} public API item(s) to new location(s)",
+            moved_items.len()
+        ));
     }
 
     let new_public: Vec<&FileChange> = file_changes
@@ -442,6 +483,140 @@ fn generate_summary_hints(
     }
 
     hints
+}
+
+fn detect_moves(diff: &str) -> Vec<MovedItem> {
+    let mut removals: Vec<(String, String, String)> = Vec::new();
+    let mut additions: Vec<(String, String, String)> = Vec::new();
+    let mut current_path = String::new();
+
+    for line in diff.lines() {
+        if line.starts_with("diff --git") {
+            if let Some(path) = extract_path_from_diff_line(line) {
+                current_path = path;
+            }
+        } else if line.starts_with('-') && !line.starts_with("---") {
+            if let Some((name, item_type)) = parse_public_api_item(line) {
+                removals.push((name, item_type, current_path.clone()));
+            }
+        } else if line.starts_with('+') && !line.starts_with("+++") {
+            if let Some((name, item_type)) = parse_public_api_item(line) {
+                additions.push((name, item_type, current_path.clone()));
+            }
+        }
+    }
+
+    let mut moved_items = Vec::new();
+    let mut used_additions: HashSet<usize> = HashSet::new();
+
+    for (rem_name, rem_type, rem_path) in &removals {
+        for (i, (add_name, add_type, add_path)) in additions.iter().enumerate() {
+            if !used_additions.contains(&i)
+                && rem_name == add_name
+                && rem_type == add_type
+                && rem_path != add_path
+            {
+                let package = extract_package_from_path(add_path);
+                moved_items.push(MovedItem {
+                    name: rem_name.clone(),
+                    item_type: rem_type.clone(),
+                    from_path: rem_path.clone(),
+                    to_path: add_path.clone(),
+                    package,
+                });
+                used_additions.insert(i);
+                break;
+            }
+        }
+    }
+
+    moved_items
+}
+
+fn parse_public_api_item(line: &str) -> Option<(String, String)> {
+    let trimmed = line.trim_start_matches('-').trim_start_matches('+').trim();
+
+    if trimmed.starts_with("//")
+        || trimmed.starts_with("//!")
+        || trimmed.starts_with("///")
+        || trimmed.starts_with("#[")
+        || trimmed.starts_with("mod ")
+        || trimmed.starts_with("use ")
+        || trimmed.starts_with("type ")
+        || trimmed.starts_with("macro_rules!")
+    {
+        return None;
+    }
+
+    if trimmed.starts_with("pub trait ") {
+        let name = trimmed
+            .strip_prefix("pub trait ")
+            .unwrap_or("")
+            .split('<')
+            .next()
+            .unwrap_or("")
+            .split('{')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if name.len() >= 2 {
+            return Some((name, "trait".to_string()));
+        }
+    }
+
+    if trimmed.starts_with("pub struct ") {
+        let name = trimmed
+            .strip_prefix("pub struct ")
+            .unwrap_or("")
+            .split('<')
+            .next()
+            .unwrap_or("")
+            .split('{')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if name.len() >= 2 {
+            return Some((name, "struct".to_string()));
+        }
+    }
+
+    if trimmed.starts_with("pub enum ") {
+        let name = trimmed
+            .strip_prefix("pub enum ")
+            .unwrap_or("")
+            .split('<')
+            .next()
+            .unwrap_or("")
+            .split('{')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if name.len() >= 2 {
+            return Some((name, "enum".to_string()));
+        }
+    }
+
+    if trimmed.starts_with("pub fn ") || trimmed.starts_with("pub async fn ") {
+        let rest = if trimmed.starts_with("pub async fn ") {
+            trimmed.strip_prefix("pub async fn ").unwrap_or("")
+        } else {
+            trimmed.strip_prefix("pub fn ").unwrap_or("")
+        };
+        let name = rest
+            .split('(')
+            .next()
+            .unwrap_or("")
+            .trim()
+            .to_string();
+        if name.len() >= 2 {
+            return Some((name, "fn".to_string()));
+        }
+    }
+
+    None
 }
 
 pub fn gather_pr_context_from_gh(pr_number: u64) -> Option<PrContext> {

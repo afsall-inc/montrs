@@ -1,0 +1,14 @@
+# PRDoc: Pull Request Documentation
+# Fill in the ... placeholders with meaningful content.
+# See docs/contributor/prdoc.md for schema details.
+
+---
+title: ...
+
+doc:
+  - audience: ...
+    description: |
+      ...
+
+crates: [ ]
+---

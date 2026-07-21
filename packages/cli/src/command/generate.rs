@@ -181,3 +181,58 @@ impl<C: AppConfig> Route<C> for {route_name_pascal}Route {{
 
     Ok(())
 }
+
+pub async fn haptics(name: String, _target: String) -> Result<()> {
+    let name_pascal = to_pascal_case(&name);
+    let name_snake = to_snake_case(&name);
+    println!(
+        "{} Generating haptics provider: {}",
+        style("H").bold(),
+        style(&name_pascal).cyan().bold()
+    );
+    let file_path = Path::new("src")
+        .join("haptics")
+        .join(format!("{}.rs", name_snake));
+    if let Some(parent) = file_path.parent()
+        && !parent.exists()
+    {
+        std::fs::create_dir_all(parent)?;
+    }
+    let content = format!(
+        "use montrs_haptics::{{HapticsProvider, HapticsConfig, HapticsTarget, \
+         ImpactStyle, create_haptics_provider}};
+
+pub struct {0}Haptics {{
+    provider: Box<dyn HapticsProvider>,
+}}
+
+impl {0}Haptics {{
+    pub fn new() -> Self {{
+        Self {{
+            provider: create_haptics_provider(&HapticsConfig {{
+                enabled: true,
+                target: HapticsTarget::Desktop,
+            }}),
+        }}
+    }}
+    pub fn impact_light(&self) {{ self.provider.impact(ImpactStyle::Light); }}
+    pub fn impact_medium(&self) {{ self.provider.impact(ImpactStyle::Medium); \
+         }}
+    pub fn impact_heavy(&self) {{ self.provider.impact(ImpactStyle::Heavy); }}
+    pub fn selection(&self) {{ self.provider.selection_changed(); }}
+    pub fn is_supported(&self) -> bool {{ self.provider.is_supported(); }}
+}}
+",
+        name_pascal,
+    );
+    std::fs::write(&file_path, &content)?;
+    println!(
+        "{} Created haptics provider at: {}",
+        style("").green().bold(),
+        style(file_path.display()).underlined()
+    );
+    println!("Next steps:");
+    println!("  1. Enable haptics feature (web, desktop, or mobile)");
+    println!("  2. Use `{}Haptics::new()` in your plate", name_pascal);
+    Ok(())
+}

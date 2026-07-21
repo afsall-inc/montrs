@@ -267,6 +267,11 @@ pub enum AgentSubcommand {
         #[command(subcommand)]
         subcommand: ChangelogSubcommand,
     },
+    /// Manage agent ignore patterns (.agentignore).
+    Ignore {
+        #[command(subcommand)]
+        subcommand: IgnoreSubcommand,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -275,11 +280,27 @@ pub enum RulesSubcommand {
     Setup,
     /// Export rules to a specific IDE format.
     Export {
-        /// Target IDE format (trae, cursor).
+        /// Target IDE format (trae, cursor, opencode).
         format: String,
     },
     /// List available rule sets in .agent/rules/.
     List,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum IgnoreSubcommand {
+    /// Create a .agentignore file from .gitignore and defaults.
+    Setup,
+    /// Check if a path is ignored by .agentignore.
+    Check {
+        /// Path to check.
+        path: String,
+    },
+    /// Export .agentignore to IDE-specific ignore files.
+    Export {
+        /// Target IDE format (opencode, cursor, trae).
+        format: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -368,6 +389,15 @@ pub enum GenerateSubcommand {
     Plate {
         /// Name of the plate.
         name: String,
+    },
+    /// Generate a new route.
+    Haptics {
+        /// Name of the haptics provider.
+        #[arg(short, long, default_value = "haptics")]
+        name: String,
+        /// Target platform (web, desktop, mobile).
+        #[arg(short, long, default_value = "desktop")]
+        target: String,
     },
     /// Generate a new route.
     Route {
@@ -476,6 +506,9 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         Commands::Generate { subcommand } => match subcommand {
             GenerateSubcommand::Plate { name } => {
                 command::generate::plate(name).await
+            }
+            GenerateSubcommand::Haptics { name, target } => {
+                command::generate::haptics(name, target).await
             }
             GenerateSubcommand::Route { path, plate } => {
                 command::generate::route(path, plate).await

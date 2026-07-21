@@ -145,6 +145,14 @@
       }
     },
     {
+      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
+      "name": "montrs_pkg_agentignore",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
       "name": "montrs_pkg_orm",
       "parameters": {

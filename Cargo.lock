@@ -4359,6 +4359,7 @@ version = "0.1.0"
 dependencies = [
  "montrs-cli",
  "montrs-core",
+ "montrs-haptics",
  "montrs-orm",
  "montrs-test",
  "montrs-validator",
@@ -4371,6 +4372,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "ignore",
+ "montrs-agentignore",
  "montrs-core",
  "montrs-prdoc",
  "regex",
@@ -4383,6 +4385,14 @@ dependencies = [
  "toml 0.8.23",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "montrs-agentignore"
+version = "0.1.0"
+dependencies = [
+ "ignore",
+ "serde",
 ]
 
 [[package]]
@@ -4423,6 +4433,7 @@ dependencies = [
  "ignore",
  "indicatif 0.17.11",
  "montrs-agent",
+ "montrs-agentignore",
  "montrs-bench",
  "montrs-core",
  "montrs-fmt",
@@ -4486,6 +4497,16 @@ dependencies = [
  "toml 0.8.23",
  "tracing",
  "walkdir",
+]
+
+[[package]]
+name = "montrs-haptics"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

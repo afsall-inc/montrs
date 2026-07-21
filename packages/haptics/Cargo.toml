@@ -1,0 +1,22 @@
+[package]
+name = "montrs-haptics"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Cross-platform haptic feedback for web, desktop, and mobile"
+
+[features]
+default = []
+web = ["dep:wasm-bindgen", "dep:web-sys"]
+desktop = []
+mobile = []
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", features = ["Navigator"], optional = true }
+
+[dev-dependencies]
+serde_json.workspace = true

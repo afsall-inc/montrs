@@ -1,5 +1,6 @@
 use crate::{
-    AgentSubcommand, ChangelogSubcommand, PrdocSubcommand, RulesSubcommand,
+    AgentSubcommand, ChangelogSubcommand, IgnoreSubcommand, PrdocSubcommand,
+    RulesSubcommand,
 };
 
 pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
@@ -24,8 +25,13 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                         manager.export_rules_for_cursor()?;
                         Ok("Exported rules to .cursorrules".to_string())
                     }
+                    "opencode" => {
+                        manager.export_rules_for_opencode()?;
+                        Ok("Exported rules to .opencode/rules/".to_string())
+                    }
                     _ => Err(anyhow::anyhow!(
-                        "Unknown format '{}'. Supported: trae, cursor",
+                        "Unknown format '{}'. Supported: trae, cursor, \
+                         opencode",
                         format
                     )),
                 }
@@ -481,6 +487,34 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                         total_commits,
                     ))
                 }
+            }
+        },
+        AgentSubcommand::Ignore { subcommand } => match subcommand {
+            IgnoreSubcommand::Setup => {
+                let cwd = std::env::current_dir()?;
+                montrs_agentignore::AgentIgnore::create_from_gitignore(&cwd)
+                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+                Ok(".agentignore created from .gitignore and default patterns."
+                    .to_string())
+            }
+            IgnoreSubcommand::Check { path } => {
+                let cwd = std::env::current_dir()?;
+                let ignored =
+                    montrs_agentignore::AgentIgnore::check_path(&cwd, &path)
+                        .map_err(|e| anyhow::anyhow!("{}", e))?;
+                Ok(if ignored {
+                    format!("'{path}' is ignored by .agentignore")
+                } else {
+                    format!("'{path}' is NOT ignored by .agentignore")
+                })
+            }
+            IgnoreSubcommand::Export { format } => {
+                let cwd = std::env::current_dir()?;
+                let result = montrs_agentignore::AgentIgnore::export_for_ide(
+                    &cwd, &format,
+                )
+                .map_err(|e| anyhow::anyhow!("{}", e))?;
+                Ok(result)
             }
         },
     }
