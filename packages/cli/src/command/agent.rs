@@ -286,36 +286,42 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
                 Ok(serde_json::to_string_pretty(&prdoc)?)
             }
-            PrdocSubcommand::Validate { path } => {
+            PrdocSubcommand::Validate { path, branch } => {
                 let prdoc_path = std::path::PathBuf::from(&path);
                 if !prdoc_path.exists() {
                     if std::env::var("CI").is_ok() {
                         return Err(anyhow::anyhow!(
-                            "prdoc.md not found at {}. Pull requests require \
-                             a prdoc.md file.",
+                            "prdoc not found at {}. Pull requests require \
+                             a prdoc file.",
                             path
                         ));
                     }
-                    return Ok("No prdoc.md found. Validation skipped (not \
+                    return Ok("No prdoc found. Validation skipped (not \
                                required outside of pull requests)."
                         .to_string());
                 }
-                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
+                let prdoc = montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
-                let issues = montrs_agent::prdoc::validate_prdoc(&prdoc);
-                if issues.is_empty() {
-                    Ok("prdoc.md is valid.".to_string())
+                let issues = if let Some(ref branch_name) = branch {
+                    montrs_agent::montrs_prdoc::types::validate_prdoc_for_branch(
+                        &prdoc,
+                        branch_name,
+                    )
                 } else {
-                    let mut out = "prdoc.md validation issues:\n".to_string();
+                    montrs_agent::montrs_prdoc::types::validate_prdoc(&prdoc)
+                };
+                if issues.is_empty() {
+                    Ok("prdoc is valid.".to_string())
+                } else {
+                    let mut out = "prdoc validation issues:\n".to_string();
                     for issue in issues {
                         out.push_str(&format!("  - {}\n", issue));
                     }
                     Err(anyhow::anyhow!("{}", out))
                 }
             }
-                        PrdocSubcommand::Generate {
+            PrdocSubcommand::Generate {
                 pr,
-                output,
                 force,
                 ..
             } => {
