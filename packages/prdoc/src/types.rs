@@ -98,11 +98,11 @@ fn is_default_validate(v: &bool) -> bool {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum BumpLevel {
     Major,
     Minor,
     Patch,
-    #[serde(rename = "none")]
     None,
 }
 
