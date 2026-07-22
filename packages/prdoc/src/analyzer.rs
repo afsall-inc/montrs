@@ -507,14 +507,16 @@ fn detect_moves(diff: &str) -> Vec<MovedItem> {
             if let Some(path) = extract_path_from_diff_line(line) {
                 current_path = path;
             }
-        } else if line.starts_with('-') && !line.starts_with("---") {
-            if let Some((name, item_type)) = parse_public_api_item(line) {
-                removals.push((name, item_type, current_path.clone()));
-            }
-        } else if line.starts_with('+') && !line.starts_with("+++") {
-            if let Some((name, item_type)) = parse_public_api_item(line) {
-                additions.push((name, item_type, current_path.clone()));
-            }
+        } else if line.starts_with('-')
+            && !line.starts_with("---")
+            && let Some((name, item_type)) = parse_public_api_item(line)
+        {
+            removals.push((name, item_type, current_path.clone()));
+        } else if line.starts_with('+')
+            && !line.starts_with("+++")
+            && let Some((name, item_type)) = parse_public_api_item(line)
+        {
+            additions.push((name, item_type, current_path.clone()));
         }
     }
 

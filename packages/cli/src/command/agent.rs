@@ -291,8 +291,8 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 if !prdoc_path.exists() {
                     if std::env::var("CI").is_ok() {
                         return Err(anyhow::anyhow!(
-                            "prdoc not found at {}. Pull requests require \
-                             a prdoc file.",
+                            "prdoc not found at {}. Pull requests require a \
+                             prdoc file.",
                             path
                         ));
                     }
@@ -300,8 +300,9 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                                required outside of pull requests)."
                         .to_string());
                 }
-                let prdoc = montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
-                    .map_err(|e| anyhow::anyhow!("{}", e))?;
+                let prdoc =
+                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
+                        .map_err(|e| anyhow::anyhow!("{}", e))?;
                 let issues = if let Some(ref branch_name) = branch {
                     montrs_agent::montrs_prdoc::types::validate_prdoc_for_branch(
                         &prdoc,
@@ -320,26 +321,31 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     Err(anyhow::anyhow!("{}", out))
                 }
             }
-            PrdocSubcommand::Generate {
-                pr,
-                force,
-                ..
-            } => {
+            PrdocSubcommand::Generate { pr, force, .. } => {
                 let pr_number = pr.ok_or_else(|| {
                     anyhow::anyhow!("--pr is required for generation")
                 })?;
 
-                let opts = montrs_agent::montrs_prdoc::generator::GenerateOptions {
-                    pr_number,
-                    bump: montrs_agent::montrs_prdoc::types::BumpLevel::Minor,
-                    audience: montrs_agent::montrs_prdoc::types::Audience::AppDev,
-                    force,
-                };
+                let opts =
+                    montrs_agent::montrs_prdoc::generator::GenerateOptions {
+                        pr_number,
+                        bump:
+                            montrs_agent::montrs_prdoc::types::BumpLevel::Minor,
+                        audience:
+                            montrs_agent::montrs_prdoc::types::Audience::AppDev,
+                        force,
+                    };
 
-                let prdoc = montrs_agent::montrs_prdoc::generator::generate_prdoc(&opts)
+                let prdoc =
+                    montrs_agent::montrs_prdoc::generator::generate_prdoc(
+                        &opts,
+                    )
                     .map_err(|e| anyhow::anyhow!("{}", e))?;
 
-                let output_path = montrs_agent::montrs_prdoc::generator::default_output_path(pr_number);
+                let output_path =
+                    montrs_agent::montrs_prdoc::generator::default_output_path(
+                        pr_number,
+                    );
                 let path = std::path::PathBuf::from(&output_path);
 
                 if let Some(parent) = path.parent()
@@ -348,7 +354,8 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                     std::fs::create_dir_all(parent)?;
                 }
 
-                let rendered = montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
+                let rendered =
+                    montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
                 std::fs::write(&path, &rendered)?;
 
                 Ok(format!(

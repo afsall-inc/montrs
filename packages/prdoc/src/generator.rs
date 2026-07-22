@@ -144,14 +144,13 @@ fn extract_modified_crates(diff: &str) -> Result<Vec<String>, String> {
 fn extract_changed_files(diff: &str) -> Vec<String> {
     let mut files = Vec::new();
     for line in diff.lines() {
-        if line.starts_with("diff --git") {
-            if let Some(path) = line
+        if line.starts_with("diff --git")
+            && let Some(path) = line
                 .splitn(4, ' ')
                 .nth(3)
                 .map(|p| p.trim_start_matches("b/"))
-            {
-                files.push(path.to_string());
-            }
+        {
+            files.push(path.to_string());
         }
     }
     files
@@ -199,52 +198,52 @@ pub fn render_prdoc(prdoc: &PrDoc) -> String {
         }
     }
 
-    if let Some(ref migrations) = prdoc.migrations {
-        if !migrations.db.is_empty() || !migrations.runtime.is_empty() {
-            out.push_str("\nmigrations:\n");
-            if !migrations.db.is_empty() {
-                out.push_str("  db:\n");
-                for mig in &migrations.db {
-                    out.push_str(&format!("    - name: {}\n", mig.name));
-                    out.push_str(&format!(
-                        "      description: {}\n",
-                        escape_yaml_string(&mig.description)
-                    ));
-                }
+    if let Some(ref migrations) = prdoc.migrations
+        && (!migrations.db.is_empty() || !migrations.runtime.is_empty())
+    {
+        out.push_str("\nmigrations:\n");
+        if !migrations.db.is_empty() {
+            out.push_str("  db:\n");
+            for mig in &migrations.db {
+                out.push_str(&format!("    - name: {}\n", mig.name));
+                out.push_str(&format!(
+                    "      description: {}\n",
+                    escape_yaml_string(&mig.description)
+                ));
             }
-            if !migrations.runtime.is_empty() {
-                out.push_str("  runtime:\n");
-                for mig in &migrations.runtime {
-                    out.push_str("    - description: |\n");
-                    for line in mig.description.lines() {
-                        out.push_str(&format!("        {}\n", line));
-                    }
-                    if let Some(ref reference) = mig.reference {
-                        out.push_str(&format!(
-                            "        reference: {}\n",
-                            reference
-                        ));
-                    }
+        }
+        if !migrations.runtime.is_empty() {
+            out.push_str("  runtime:\n");
+            for mig in &migrations.runtime {
+                out.push_str("    - description: |\n");
+                for line in mig.description.lines() {
+                    out.push_str(&format!("        {}\n", line));
+                }
+                if let Some(ref reference) = mig.reference {
+                    out.push_str(&format!(
+                        "        reference: {}\n",
+                        reference
+                    ));
                 }
             }
         }
     }
 
-    if let Some(ref host_functions) = prdoc.host_functions {
-        if !host_functions.is_empty() {
-            out.push_str("\nhost_functions:\n");
-            for hf in host_functions {
-                out.push_str(&format!("  - name: {}\n", hf.name));
+    if let Some(ref host_functions) = prdoc.host_functions
+        && !host_functions.is_empty()
+    {
+        out.push_str("\nhost_functions:\n");
+        for hf in host_functions {
+            out.push_str(&format!("  - name: {}\n", hf.name));
+            out.push_str(&format!(
+                "    description: {}\n",
+                escape_yaml_string(&hf.description)
+            ));
+            if let Some(ref notes) = hf.notes {
                 out.push_str(&format!(
-                    "    description: {}\n",
-                    escape_yaml_string(&hf.description)
+                    "    notes: {}\n",
+                    escape_yaml_string(notes)
                 ));
-                if let Some(ref notes) = hf.notes {
-                    out.push_str(&format!(
-                        "    notes: {}\n",
-                        escape_yaml_string(notes)
-                    ));
-                }
             }
         }
     }
