@@ -19,5 +19,11 @@ doc:
       - Added: Tera templates for per-audience changelog
       - Updated CI workflows to remove LLM/Ollama references
 
-crates: [ ]
+crates:
+  - name: montrs-prdoc
+    bump: minor
+  - name: montrs-cli
+    bump: patch
+  - name: montrs-agent
+    bump: patch
 ---
