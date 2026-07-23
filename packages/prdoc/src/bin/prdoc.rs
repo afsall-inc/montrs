@@ -1,4 +1,8 @@
 use clap::{Parser, Subcommand};
+use montrs_prdoc::{
+    generator::{GenerateOptions, default_output_path},
+    types::{Audience, BumpLevel},
+};
 
 #[derive(Parser, Debug)]
 #[command(name = "prdoc", version, about = "PR Documentation tool")]
@@ -9,34 +13,26 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Display a prdoc.md file as JSON
+    /// Display a prdoc file as JSON
     Show {
-        #[arg(default_value = "prdoc.md")]
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
         path: String,
     },
-    /// Validate a prdoc.md file
+    /// Validate a prdoc file
     Validate {
-        #[arg(default_value = "prdoc.md")]
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
         path: String,
+        #[arg(long)]
+        branch: Option<String>,
     },
-    /// Auto-generate a prdoc.md
+    /// Auto-generate a prdoc skeleton
     Generate {
-        /// PR number (uses gh CLI)
         #[arg(short, long)]
         pr: Option<u64>,
-        /// Local diff file
-        #[arg(long)]
-        from_diff: Option<String>,
-        /// Git commit range
-        #[arg(long)]
-        from_commits: Option<String>,
-        /// Enable LLM-enhanced summary
-        #[arg(long)]
-        llm: bool,
-        /// Output path
-        #[arg(short, long, default_value = "prdoc.md")]
-        output: String,
-        /// Overwrite existing file
+        #[arg(short, long, default_value = "minor")]
+        bump: String,
+        #[arg(short, long, default_value = "app_dev")]
+        audience: String,
         #[arg(long)]
         force: bool,
     },
@@ -97,21 +93,25 @@ fn run_command(cli: Cli) -> Result<String, String> {
                 .map_err(|e| e.to_string())?;
             serde_json::to_string_pretty(&prdoc).map_err(|e| e.to_string())
         }
-        Commands::Validate { path } => {
+        Commands::Validate { path, branch } => {
             let prdoc_path = std::path::PathBuf::from(&path);
             if !prdoc_path.exists() {
                 if std::env::var("CI").is_ok() {
                     return Err(format!(
-                        "prdoc.md not found at {path}. PRs require prdoc.md."
+                        "prdoc not found at {path}. PRs require prdoc."
                     ));
                 }
-                return Ok("No prdoc.md found. Validation skipped.".to_string());
+                return Ok("No prdoc found. Validation skipped.".to_string());
             }
             let prdoc = montrs_prdoc::load_prdoc(&prdoc_path)
                 .map_err(|e| e.to_string())?;
-            let issues = montrs_prdoc::validate_prdoc(&prdoc);
+            let issues = if let Some(ref branch_name) = branch {
+                montrs_prdoc::validate_prdoc_for_branch(&prdoc, branch_name)
+            } else {
+                montrs_prdoc::validate_prdoc(&prdoc)
+            };
             if issues.is_empty() {
-                Ok("prdoc.md is valid.".to_string())
+                Ok("prdoc is valid.".to_string())
             } else {
                 let mut out = "Issues:\n".to_string();
                 for issue in issues {
@@ -122,62 +122,45 @@ fn run_command(cli: Cli) -> Result<String, String> {
         }
         Commands::Generate {
             pr,
-            from_diff,
-            from_commits,
-            llm,
-            output,
+            bump,
+            audience,
             force,
         } => {
-            let output_path = std::path::PathBuf::from(&output);
-            if output_path.exists() && !force {
+            let pr_number = pr.ok_or_else(|| "--pr is required".to_string())?;
+            let bump_level = BumpLevel::from_str_lossy(&bump);
+            let audience_val = Audience::from_str_lossy(&audience);
+
+            let opts = GenerateOptions {
+                pr_number,
+                bump: bump_level,
+                audience: audience_val,
+                force,
+            };
+
+            let prdoc = montrs_prdoc::generator::generate_prdoc(&opts)
+                .map_err(|e| e.to_string())?;
+
+            let output_path = default_output_path(pr_number);
+            let path = std::path::PathBuf::from(&output_path);
+
+            if path.exists() && !force {
                 return Err(format!(
-                    "{output} exists. Use --force to overwrite."
+                    "{output_path} exists. Use --force to overwrite."
                 ));
             }
 
-            let diff = if let Some(p) = from_diff {
-                std::fs::read_to_string(&p).ok()
-            } else if let Some(n) = pr {
-                montrs_prdoc::get_diff_for_pr(n)
-            } else if let Some(r) = from_commits {
-                montrs_prdoc::get_diff_for_range(&r)
-            } else {
-                montrs_prdoc::get_diff_for_range("main..HEAD")
-            };
-
-            let diff_str = diff.unwrap_or_default();
-            if diff_str.is_empty() {
-                return Err("No diff found. Use --pr, --from-diff, or \
-                            --from-commits."
-                    .to_string());
-            }
-
-            let analysis = montrs_prdoc::analyze_diff(&diff_str);
-            let context =
-                pr.and_then(|n| montrs_prdoc::gather_pr_context_from_gh(n));
-
-            let prdoc =
-                montrs_prdoc::generate_prdoc(&analysis, context.as_ref());
-
-            let rendered = montrs_prdoc::render_prdoc_rich(
-                &prdoc,
-                &analysis,
-                context.as_ref(),
-                Some(&diff_str),
-                llm,
-            );
-
-            if let Some(parent) = output_path.parent()
+            if let Some(parent) = path.parent()
                 && !parent.as_os_str().is_empty()
             {
                 std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
-            std::fs::write(&output_path, &rendered)
-                .map_err(|e| e.to_string())?;
+
+            let rendered = montrs_prdoc::generator::render_prdoc(&prdoc);
+            std::fs::write(&path, &rendered).map_err(|e| e.to_string())?;
 
             Ok(format!(
-                "Generated {output} ({} package(s), {} crate(s))",
-                prdoc.packages.len(),
+                "Generated {output_path} ({} crate(s)). Edit the `...` \
+                 placeholders.",
                 prdoc.crates.len(),
             ))
         }

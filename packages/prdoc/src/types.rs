@@ -59,7 +59,12 @@ impl Audience {
     }
 
     pub fn all() -> &'static [Audience] {
-        &[Audience::FrameworkDev, Audience::AppDev, Audience::AgentUser, Audience::Operator]
+        &[
+            Audience::FrameworkDev,
+            Audience::AppDev,
+            Audience::AgentUser,
+            Audience::Operator,
+        ]
     }
 }
 
@@ -75,22 +80,29 @@ pub struct DocSection {
 pub struct CrateChange {
     pub name: String,
     pub bump: BumpLevel,
-    #[serde(default = "default_validate", skip_serializing_if = "is_default_validate")]
+    #[serde(
+        default = "default_validate",
+        skip_serializing_if = "is_default_validate"
+    )]
     pub validate: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 
-fn default_validate() -> bool { true }
+fn default_validate() -> bool {
+    true
+}
 
-fn is_default_validate(v: &bool) -> bool { *v }
+fn is_default_validate(v: &bool) -> bool {
+    *v
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum BumpLevel {
     Major,
     Minor,
     Patch,
-    #[serde(rename = "none")]
     None,
 }
 
@@ -167,15 +179,15 @@ pub fn load_prdoc(path: &Path) -> Result<PrDoc, String> {
 
 pub fn validate_prdoc(prdoc: &PrDoc) -> Vec<String> {
     let mut issues = Vec::new();
-    
+
     if prdoc.title.is_empty() || prdoc.title == "..." {
         issues.push("title is required and cannot be '...'".to_string());
     }
-    
+
     if prdoc.doc.is_empty() {
         issues.push("at least one doc section is required".to_string());
     }
-    
+
     for (i, doc) in prdoc.doc.iter().enumerate() {
         if doc.description.is_empty() || doc.description == "..." {
             issues.push(format!(
@@ -184,17 +196,35 @@ pub fn validate_prdoc(prdoc: &PrDoc) -> Vec<String> {
             ));
         }
     }
-    
+
     if prdoc.crates.is_empty() {
         issues.push("at least one crate must be listed".to_string());
     }
-    
+
     for crate_change in &prdoc.crates {
         if crate_change.name.is_empty() {
             issues.push("crate name must not be empty".to_string());
         }
     }
-    
+
+    issues
+}
+
+pub fn validate_prdoc_for_branch(prdoc: &PrDoc, branch: &str) -> Vec<String> {
+    let mut issues = validate_prdoc(prdoc);
+
+    if branch.starts_with("stable") || branch.starts_with("release") {
+        for crate_change in &prdoc.crates {
+            if crate_change.bump == BumpLevel::Major && crate_change.validate {
+                issues.push(format!(
+                    "crate '{}' has major bump on backport branch '{}' but \
+                     validate=true. Set validate: false if intentional.",
+                    crate_change.name, branch
+                ));
+            }
+        }
+    }
+
     issues
 }
 

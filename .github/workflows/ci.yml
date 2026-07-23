@@ -43,7 +43,15 @@ jobs:
 
     - name: Validate PRDoc
       if: github.event_name == 'pull_request'
-      run: cargo run --package montrs-cli -- agent prdoc validate
+      env:
+        CI: "true"
+      run: |
+        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
+        if [ -f "$PRDOC" ]; then
+          cargo run --package montrs-cli -- agent prdoc validate "$PRDOC"
+        else
+          echo "No prdoc found at $PRDOC (skipping validation)"
+        fi
 
     - name: Build
       uses: ./.github/actions/build

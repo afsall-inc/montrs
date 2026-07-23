@@ -1,0 +1,10 @@
+### Changelog for {{ audience }}
+
+{% for entry in entries -%}
+{%- for doc in entry.doc -%}
+{%- if doc.audience == audience %}
+#### [#{{ entry.pr }}] {{ entry.title }}
+{{ doc.description }}
+{% endif -%}
+{%- endfor -%}
+{%- endfor %}

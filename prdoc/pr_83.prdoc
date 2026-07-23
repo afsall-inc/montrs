@@ -1,0 +1,29 @@
+---
+title: "docs: update PRDoc documentation, add .prdoc.toml config, and CI workflow"
+
+doc:
+  - audience: Framework Dev
+    description: |
+      Completes the PRDoc system migration by adopting the polkadot-sdk style
+      skeleton approach. Removes all LLM infrastructure, rewrites the generator
+      to use cargo_metadata for crate detection, updates the CLI with --bump
+      and --audience parameters, adds backport branch validation, and creates
+      Tera templates for per-audience changelog generation.
+
+      Key changes:
+      - Removed: llm.rs, local_llm.rs, embed.rs, summary.rs
+      - Rewrote: generator.rs with polkadot-sdk style skeleton generation
+      - Updated CLI: montrs agent prdoc generate --pr 82 --bump minor --audience app_dev
+      - Added: validate_prdoc_for_branch() for backport major bump checks
+      - Added: .prdoc.toml config file
+      - Added: Tera templates for per-audience changelog
+      - Updated CI workflows to remove LLM/Ollama references
+
+crates:
+  - name: montrs-prdoc
+    bump: minor
+  - name: montrs-cli
+    bump: patch
+  - name: montrs-agent
+    bump: patch
+---

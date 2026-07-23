@@ -5,17 +5,13 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  generate-and-validate:
+  validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
 
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@v1
@@ -25,31 +21,24 @@ jobs:
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2
 
-    - name: Setup Ollama
-      run: |
-        curl -fsSL https://ollama.com/install.sh | sh
-        ollama serve &
-        sleep 5
-        ollama pull qwen2:0.5b
-
-    - name: Generate PRDoc
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PRDOC_LLM_PROVIDER: local
-      run: |
-        cargo run --features llm --package montrs-cli -- agent prdoc generate \
-          --pr ${{ github.event.pull_request.number }} \
-          --output prdoc.md \
-          --force \
-          --llm
+    - name: Build CLI
+      run: cargo build --package montrs-cli
 
     - name: Validate PRDoc
-      run: cargo run --package montrs-cli -- agent prdoc validate
-
-    - name: Commit PRDoc
+      env:
+        CI: "true"
       run: |
-        git config user.name "montrs-bot"
-        git config user.email "bot@montrs.dev"
-        git add prdoc.md
-        git diff --cached --quiet || git commit -m "chore: auto-generate prdoc.md"
-        git push
+        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
+        if [ -f "$PRDOC" ]; then
+          cargo run --package montrs-cli -- agent prdoc validate "$PRDOC"
+        else
+          echo "PRDoc not found at $PRDOC"
+          echo "Create one with: montrs agent prdoc generate --pr ${{ github.event.pull_request.number }} --bump <level> --audience <audience>"
+          exit 1
+        fi
+
+    - name: Validate Backport Rules
+      if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
+      run: |
+        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
+        cargo run --package montrs-cli -- agent prdoc validate --branch "${{ github.base_ref }}" "$PRDOC"
