@@ -1,0 +1,8 @@
+[package]
+name = "montrs-license-headers"
+version = "0.1.0"
+edition = "2024"
+description = "Apply license headers to all source files in the MontRS workspace."
+
+[dependencies]
+walkdir = "2.5"

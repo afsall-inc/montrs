@@ -116,3 +116,4 @@ fn main() {
     // but for a simple Wasm mount, we can use this:
     mount_to_body(|| view! { <App /> });
 }
+

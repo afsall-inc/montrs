@@ -89,3 +89,4 @@ fn test_config_priority() {
     assert_eq!(config.filter, Some("my_test".to_string()));
     assert_eq!(config.json_output, Some("report.json".to_string()));
 }
+

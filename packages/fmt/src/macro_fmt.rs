@@ -272,3 +272,4 @@ fn line_col_to_byte_offset(
     let line_start = source.byte_of_line(line - 1);
     Some(line_start + col)
 }
+

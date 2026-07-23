@@ -123,3 +123,4 @@ fn format_one_file(
 
     Ok(false)
 }
+

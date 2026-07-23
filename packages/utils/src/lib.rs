@@ -73,3 +73,4 @@ pub fn to_snake_case(s: &str) -> String {
 pub fn to_kebab_case(s: &str) -> String {
     to_snake_case(s).replace('_', "-")
 }
+

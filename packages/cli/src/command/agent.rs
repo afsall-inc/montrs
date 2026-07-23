@@ -571,3 +571,4 @@ fn update_crate_version(
     std::fs::write(&cargo_toml_path, updated)?;
     Ok(())
 }
+

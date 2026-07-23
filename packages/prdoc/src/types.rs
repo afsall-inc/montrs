@@ -276,3 +276,4 @@ fn extract_frontmatter(content: &str) -> Result<String, String> {
         .ok_or("prdoc.md frontmatter must be closed with ---")?;
     Ok(trimmed[3..end + 3].trim().to_string())
 }
+

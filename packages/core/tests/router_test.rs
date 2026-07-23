@@ -142,3 +142,4 @@ async fn test_router_registration_and_handling() {
     // However, we can verify the spec is correct.
     assert_eq!(spec.routes.len(), 1);
 }
+

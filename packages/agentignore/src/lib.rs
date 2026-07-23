@@ -147,3 +147,4 @@ impl AgentIgnore {
         Ok(Self::load(root)?.is_ignored(&root.join(s)))
     }
 }
+

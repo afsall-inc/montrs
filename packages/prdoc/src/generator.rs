@@ -305,3 +305,4 @@ fn escape_yaml_string(s: &str) -> String {
 pub fn default_output_path(pr_number: u64) -> String {
     format!("prdoc/pr_{}.prdoc", pr_number)
 }
+

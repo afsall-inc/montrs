@@ -94,3 +94,4 @@ fn main() {
     // [EXPLICIT] Explicit mount
     mount_to_body(|| view! { <App /> });
 }
+

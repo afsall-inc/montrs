@@ -55,3 +55,4 @@ async fn test_app_is_running() -> anyhow::Result<()> {
 
     Ok(())
 }
+

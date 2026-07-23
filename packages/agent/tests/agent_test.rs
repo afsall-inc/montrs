@@ -118,3 +118,4 @@ async fn test_consolidated_error_tracking() {
     assert_eq!(tracking.errors[0].package, Some("test-pkg".to_string()));
     assert_eq!(tracking.errors[0].status, "Pending");
 }
+

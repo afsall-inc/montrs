@@ -42,3 +42,4 @@ pub use types::*;
 
 pub const DESCRIPTION: &str =
     "Cross-platform haptic feedback for web, desktop, and mobile";
+

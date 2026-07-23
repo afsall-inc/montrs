@@ -57,3 +57,4 @@ pub const DEBUGGING_GUIDE: &str = r#"
 MontRS provides an `errorfile.json` in the `.agent/errorfiles` folder when a build or test fails.
 Agents should use these files to understand the context of the error and propose fixes.
 "#;
+

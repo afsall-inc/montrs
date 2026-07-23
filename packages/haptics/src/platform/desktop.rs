@@ -107,3 +107,4 @@ impl HapticsProvider for DesktopHapticsProvider {
          engine)"
     }
 }
+

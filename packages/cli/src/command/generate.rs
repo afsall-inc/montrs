@@ -272,3 +272,4 @@ impl {0}Haptics {{
     println!("  2. Use `{}Haptics::new()` in your plate", name_pascal);
     Ok(())
 }
+

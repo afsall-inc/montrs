@@ -77,3 +77,4 @@ fn test_integration_no_macros() {
     assert!(result.contains("fn add(a: i32, b: i32) -> i32 {"));
     assert!(result.contains("a + b"));
 }
+

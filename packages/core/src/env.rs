@@ -177,3 +177,4 @@ impl EnvConfig for TypedEnv {
         std::env::var(key).map_err(|_| EnvError::MissingKey(key.to_string()))
     }
 }
+

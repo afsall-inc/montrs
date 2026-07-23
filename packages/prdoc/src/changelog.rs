@@ -386,3 +386,4 @@ pub fn load_prdocs_from_dir(dir: &std::path::Path) -> Vec<PrDoc> {
     }
     prdocs
 }
+

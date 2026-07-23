@@ -54,3 +54,4 @@ pub async fn run() -> anyhow::Result<()> {
     // other than running the binary, but "watch" is safer for dev.
     run_cargo_leptos("watch", &[], &config).await
 }
+

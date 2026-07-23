@@ -193,3 +193,4 @@ fn haptics_config_serialize_roundtrip() {
     assert_eq!(config.enabled, deserialized.enabled);
     assert_eq!(config.target, deserialized.target);
 }
+

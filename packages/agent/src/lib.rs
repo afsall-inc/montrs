@@ -1508,3 +1508,4 @@ impl AgentManager {
         Ok(reports)
     }
 }
+

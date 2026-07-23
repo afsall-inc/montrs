@@ -271,3 +271,4 @@ fn run_command(cli: Cli) -> Result<String, String> {
         },
     }
 }
+

@@ -126,3 +126,4 @@ fn test_invariant_cycles() {
             .any(|v| v.contains("Circular dependency detected"))
     );
 }
+

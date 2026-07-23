@@ -86,3 +86,4 @@ impl HapticsProvider for WebHapticsProvider {
         "Web Vibration API via navigator.vibrate()"
     }
 }
+
