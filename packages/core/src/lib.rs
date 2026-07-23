@@ -292,4 +292,3 @@ impl<C: AppConfig> AppSpec<C> {
         });
     }
 }
-

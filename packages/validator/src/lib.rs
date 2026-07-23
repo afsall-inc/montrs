@@ -201,4 +201,3 @@ pub fn derive_validator(input: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
-

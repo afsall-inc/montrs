@@ -71,4 +71,3 @@ fn test_code_context_reading() {
     assert!(error.code_context.contains("     2 |     let x = 5;"));
     assert!(error.code_context.contains("     4 |     let y = 10;"));
 }
-

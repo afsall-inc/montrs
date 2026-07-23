@@ -117,4 +117,3 @@ impl AgentError for CliError {
         }
     }
 }
-

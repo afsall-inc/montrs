@@ -94,4 +94,3 @@ fn test_parameter_iteration() {
 
     assert_eq!(values, vec![1, 3, 5]);
 }
-

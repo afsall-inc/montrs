@@ -267,4 +267,3 @@ pub struct RouteMetadata {
     pub loader_description: String,
     pub action_description: String,
 }
-

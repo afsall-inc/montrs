@@ -166,4 +166,3 @@ impl AgentError for TestError {
         "test"
     }
 }
-

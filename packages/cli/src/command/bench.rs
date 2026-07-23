@@ -350,4 +350,3 @@ async fn run_cargo_bench(
 
     Ok(())
 }
-

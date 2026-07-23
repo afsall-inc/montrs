@@ -224,4 +224,3 @@ impl Default for BenchConfig {
         }
     }
 }
-

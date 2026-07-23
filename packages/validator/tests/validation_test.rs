@@ -163,4 +163,3 @@ fn test_product_validation() {
     };
     assert!(p.validate().is_ok());
 }
-

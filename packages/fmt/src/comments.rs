@@ -293,4 +293,3 @@ pub fn get_text_between_spans(
     }
     result
 }
-

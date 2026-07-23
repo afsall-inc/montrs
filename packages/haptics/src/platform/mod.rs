@@ -81,4 +81,3 @@ pub fn create_haptics_provider(
         }
     }
 }
-

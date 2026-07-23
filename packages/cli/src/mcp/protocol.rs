@@ -131,4 +131,3 @@ pub enum ToolContent {
     #[serde(rename = "text")]
     Text { text: String },
 }
-

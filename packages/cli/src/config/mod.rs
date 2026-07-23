@@ -296,4 +296,3 @@ impl MontrsConfig {
 
     // to_leptos_config removed as we now use cargo-leptos CLI wrapper
 }
-

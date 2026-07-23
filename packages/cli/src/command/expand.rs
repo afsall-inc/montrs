@@ -235,4 +235,3 @@ fn register_module<P: AsRef<Path>>(
     }
     Ok(())
 }
-

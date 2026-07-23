@@ -767,4 +767,3 @@ pub fn get_commit_messages_for_range(range: &str) -> Vec<String> {
         _ => Vec::new(),
     }
 }
-

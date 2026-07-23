@@ -112,4 +112,3 @@ async fn test_discovery_types_compile() {
     let _config = TestConfig;
     let _env = TestEnv;
 }
-

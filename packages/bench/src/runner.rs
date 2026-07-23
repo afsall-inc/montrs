@@ -305,4 +305,3 @@ where
         (self.func)().await
     }
 }
-

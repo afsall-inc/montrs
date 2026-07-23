@@ -203,4 +203,3 @@ where
         (self.func)().await
     }
 }
-

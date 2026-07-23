@@ -51,4 +51,3 @@ pub async fn run() -> anyhow::Result<()> {
 
     run_cargo_leptos("watch", &[], &config).await
 }
-

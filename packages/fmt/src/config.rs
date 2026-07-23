@@ -128,4 +128,3 @@ impl Default for ViewSettings {
         }
     }
 }
-

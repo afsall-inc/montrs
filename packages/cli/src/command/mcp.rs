@@ -41,4 +41,3 @@ pub async fn run(subcommand: McpSubcommand) -> anyhow::Result<()> {
         McpSubcommand::Serve => mcp::run_server().await,
     }
 }
-

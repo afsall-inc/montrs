@@ -248,4 +248,3 @@ pub fn create_app() -> AppSpec<{pascal}Config> {{
 "#
     )
 }
-

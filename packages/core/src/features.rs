@@ -147,4 +147,3 @@ fn hash_string(s: &str) -> u32 {
     }
     h
 }
-

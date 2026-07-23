@@ -137,4 +137,3 @@ pub fn parse_rustc_errors(output: &str) -> Vec<ProjectError> {
     }
     errors
 }
-

@@ -44,4 +44,3 @@ pub fn exe_command(cmd: &mut Command) -> anyhow::Result<()> {
     }
     Ok(())
 }
-

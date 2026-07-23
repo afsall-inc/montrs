@@ -75,4 +75,3 @@ pub trait HapticsProvider: Send + Sync {
     fn is_supported(&self) -> bool;
     fn description(&self) -> &str;
 }
-

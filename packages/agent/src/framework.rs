@@ -116,4 +116,3 @@ pub fn get_framework_invariants()
     m.insert("agentignore", AGENTIGNORE_INVARIANTS);
     m
 }
-

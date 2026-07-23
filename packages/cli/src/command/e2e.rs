@@ -89,4 +89,3 @@ pub async fn run(
 
     run_cargo_leptos("end-to-end", &[], &config).await
 }
-

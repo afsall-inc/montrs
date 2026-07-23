@@ -34,8 +34,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::fs;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 use walkdir::WalkDir;
 
 const HEADER_PATH: &str = "docs/LICENSES/headers/HEADER-MIT-APACHE";
@@ -85,13 +84,17 @@ fn apply_header_to_rs(content: &str, header: &str) -> Option<String> {
     if content.trim_start().starts_with(header) {
         return None;
     }
-    let lines: Vec<&str> = content.lines().collect();
+    let lines: Vec<&str> = content.split('\n').collect();
     let start = find_content_start_rs(&lines);
     let mut remaining: Vec<&str> = lines[start..].to_vec();
-    while remaining.first().map_or(false, |l| l.trim().is_empty()) {
+    while remaining.first().is_some_and(|l| l.trim().is_empty()) {
         remaining.remove(0);
     }
-    Some(format!("{header}\n\n{}\n", remaining.join("\n")))
+    while remaining.last().is_some_and(|l| l.is_empty()) {
+        remaining.pop();
+    }
+    let new = format!("{header}\n\n{}\n", remaining.join("\n"));
+    if new == content { None } else { Some(new) }
 }
 
 fn update_license_in_toml(content: &str) -> Option<String> {
@@ -99,7 +102,9 @@ fn update_license_in_toml(content: &str) -> Option<String> {
     let mut result = String::new();
     for line in content.split('\n') {
         let trimmed = line.trim();
-        if trimmed.starts_with("license =") && !trimmed.starts_with("license.workspace") {
+        if trimmed.starts_with("license =")
+            && !trimmed.starts_with("license.workspace")
+        {
             let indent = &line[..line.len() - line.trim_start().len()];
             let new_line = format!("{indent}license = \"Apache-2.0 OR MIT\"");
             if line != new_line {
@@ -117,15 +122,17 @@ fn update_license_in_toml(content: &str) -> Option<String> {
 fn main() {
     let root = repo_root();
     let header_path = root.join(HEADER_PATH);
-    let header = fs::read_to_string(&header_path)
-        .unwrap_or_else(|e| panic!("Failed to read header from {}: {e}", header_path.display()));
+    let header = fs::read_to_string(&header_path).unwrap_or_else(|e| {
+        panic!("Failed to read header from {}: {e}", header_path.display())
+    });
     let header = header.trim().to_string();
 
     let mut modified = 0;
 
-    for entry in WalkDir::new(&root).into_iter().filter_entry(|e| {
-        !is_skip_dir(e.file_name().to_str().unwrap_or(""))
-    }) {
+    for entry in WalkDir::new(&root)
+        .into_iter()
+        .filter_entry(|e| !is_skip_dir(e.file_name().to_str().unwrap_or("")))
+    {
         let entry = entry.unwrap();
         let path = entry.path();
 

@@ -77,4 +77,3 @@ impl HapticsProvider for MobileHapticsProvider {
         "Mobile haptics via platform-native APIs"
     }
 }
-

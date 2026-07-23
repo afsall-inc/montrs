@@ -116,4 +116,3 @@ pub fn ensure_tailwind_config(
     }
     Ok(None)
 }
-

@@ -294,4 +294,3 @@ fn generate_junit_report(
     writer.write_event(Event::End(root.to_end()))?;
     Ok(())
 }
-

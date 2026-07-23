@@ -73,4 +73,3 @@ impl Weight {
         self.slope_ns
     }
 }
-
