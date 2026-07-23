@@ -9,6 +9,7 @@ members = [
     "packages/core",
     "packages/fmt",
     "packages/agent",
+    "packages/license-headers",
     "packages/montrs",
     "packages/orm",
     "packages/prdoc",
@@ -21,9 +22,9 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "MIT"
-authors = ["Afsall Labs"]
-repository = "https://github.com/afsall-labs/montrs"
+license = "Apache-2.0 OR MIT"
+authors = ["Afsall Inc"]
+repository = "https://github.com/afsall-inc/montrs"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

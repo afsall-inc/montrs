@@ -16,6 +16,10 @@ bench = "cargo run --package montrs-cli -- bench"
 description = "Start the development server"
 run = "cargo run --package montrs-cli -- serve"
 
+[tasks.headers]
+description = "Apply license headers to all source files"
+run = "cargo run --package montrs-license-headers"
+
 [tasks.ci]
 description = "Run all CI checks"
-depends = ["fmt", "clippy", "test"]
+depends = ["fmt", "headers", "clippy", "test"]
