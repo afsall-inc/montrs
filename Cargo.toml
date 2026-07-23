@@ -23,8 +23,8 @@ members = [
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0 OR MIT"
-authors = ["Afsall Labs"]
-repository = "https://github.com/afsall-labs/montrs"
+authors = ["Afsall Inc"]
+repository = "https://github.com/afsall-inc/montrs"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
