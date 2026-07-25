@@ -3,7 +3,7 @@ name = "montrs-fmt"
 version = "0.1.0"
 edition = "2024"
 authors = ["Afsall Labs"]
-license = "MIT or Apache-2.0"
+license = "Apache-2.0 OR MIT"
 description = "A specialized formatter for MontRS projects, supporting view! macros and non-doc comments."
 
 [dependencies]
