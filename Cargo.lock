@@ -4117,13 +4117,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "montrs-license-headers"
-version = "0.1.0"
-dependencies = [
- "walkdir",
-]
-
-[[package]]
 name = "montrs-orm"
 version = "0.1.0"
 dependencies = [

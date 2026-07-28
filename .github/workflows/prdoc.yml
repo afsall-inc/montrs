@@ -32,7 +32,9 @@ jobs:
         if [ -f "$PRDOC" ]; then
           cargo run --package montrs-cli -- agent prdoc validate "$PRDOC"
         else
-          echo "No prdoc found at $PRDOC (skipping validation)"
+          echo "PRDoc not found at $PRDOC"
+          echo "Create one with: montrs agent prdoc generate --pr ${{ github.event.pull_request.number }} --bump <level> --audience <audience>"
+          exit 1
         fi
 
     - name: Validate Backport Rules
