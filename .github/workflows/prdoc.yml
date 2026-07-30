@@ -15,9 +15,15 @@ jobs:
           toolchain: stable
       - run: cargo install changelogger-cli
       - name: Generate prdoc from PR context
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: changelogger prdoc generate --pr ${{ github.event.pull_request.number }} --force
       - name: Validate prdoc
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: changelogger prdoc validate
       - name: Validate Backport Rules
         if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: changelogger prdoc validate --branch ${{ github.base_ref }}
