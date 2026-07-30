@@ -1,5 +1,4 @@
 name: PRDoc
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -7,38 +6,18 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@v1
-      with:
-        toolchain: nightly-2026-02-18
-
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
-
-    - name: Build CLI
-      run: cargo build --package montrs-cli
-
-    - name: Validate PRDoc
-      env:
-        CI: "true"
-      run: |
-        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
-        if [ -f "$PRDOC" ]; then
-          cargo run --package montrs-cli -- agent prdoc validate "$PRDOC"
-        else
-          echo "PRDoc not found at $PRDOC"
-          echo "Create one with: montrs agent prdoc generate --pr ${{ github.event.pull_request.number }} --bump <level> --audience <audience>"
-          exit 1
-        fi
-
-    - name: Validate Backport Rules
-      if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
-      run: |
-        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
-        cargo run --package montrs-cli -- agent prdoc validate --branch "${{ github.base_ref }}" "$PRDOC"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo install changelogger-cli
+      - name: Generate prdoc from PR context
+        run: changelogger prdoc generate --pr ${{ github.event.pull_request.number }} --force
+      - name: Validate prdoc
+        run: changelogger prdoc validate
+      - name: Validate Backport Rules
+        if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
+        run: changelogger prdoc validate --branch ${{ github.base_ref }}
