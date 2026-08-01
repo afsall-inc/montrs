@@ -2,7 +2,7 @@
 title: "docs: update PRDoc documentation, add .prdoc.toml config, and CI workflow"
 
 doc:
-  - audience: Framework Dev
+  - audience: Developer
     description: |
       Completes the PRDoc system migration by adopting the polkadot-sdk style
       skeleton approach. Removes all LLM infrastructure, rewrites the generator
