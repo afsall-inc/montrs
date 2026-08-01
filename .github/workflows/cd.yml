@@ -51,7 +51,7 @@ jobs:
       - run: cargo install changelogger-cli
       - name: Generate changelog from prdocs
         run: |
-          changelogger changelog generate --from "v${{ needs.detect.outputs.version }}" --to HEAD --output CHANGELOG.md
+          changelogger changelog generate --from "v${{ needs.detect.outputs.version }}..HEAD" --output CHANGELOG.md
       - name: Commit changelog
         run: |
           git config user.name "montrs-bot"
