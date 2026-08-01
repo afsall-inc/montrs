@@ -27,7 +27,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Generate changelog from prdocs
         run: |
-          changelogger changelog generate --from "v${{ steps.version.outputs.VERSION }}" --to HEAD --output CHANGELOG.md
+          changelogger changelog generate --from "v${{ steps.version.outputs.VERSION }}..HEAD" --output CHANGELOG.md
       - name: Commit changelog
         run: |
           git config user.name "montrs-bot"
