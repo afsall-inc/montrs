@@ -17,6 +17,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install changelogger-cli
       - name: Detect version bump
         id: version
         run: |
@@ -33,10 +38,27 @@ jobs:
     if: needs.detect.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install changelogger-cli
+      - name: Generate changelog from prdocs
+        run: |
+          changelogger changelog generate --from "v${{ needs.detect.outputs.version }}" --to HEAD --output CHANGELOG.md
+      - name: Commit changelog
+        run: |
+          git config user.name "montrs-bot"
+          git config user.email "bot@montrs.dev"
+          git add CHANGELOG.md
+          git diff --cached --quiet || git commit -m "chore: update CHANGELOG.md for v${{ needs.detect.outputs.version }}"
+          git push
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to GitHub Container Registry
@@ -45,7 +67,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
