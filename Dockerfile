@@ -1,9 +1,6 @@
-FROM rust:slim-bookworm AS builder
+FROM rust:bookworm AS builder
 WORKDIR /app
-RUN apt-get update -qq && \
-    apt-get install -y -qq --no-install-recommends \
-        libssl-dev pkg-config perl && \
-    rm -rf /var/lib/apt/lists/*
+COPY . .
 COPY . .
 RUN rustup toolchain install nightly-2026-02-18 && \
     rustup target add wasm32-unknown-unknown --toolchain nightly-2026-02-18 && \
