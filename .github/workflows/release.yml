@@ -8,17 +8,33 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  github-release:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install changelogger-cli
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Generate changelog from prdocs
+        run: |
+          changelogger changelog generate --from "v${{ steps.version.outputs.VERSION }}" --to HEAD --output CHANGELOG.md
+      - name: Commit changelog
+        run: |
+          git config user.name "montrs-bot"
+          git config user.email "bot@montrs.dev"
+          git add CHANGELOG.md
+          git diff --cached --quiet || git commit -m "chore: update CHANGELOG.md for v${{ steps.version.outputs.VERSION }}"
+          git push
       - name: Build
         run: cargo build --release --workspace
       - name: Create GitHub Release
@@ -30,16 +46,8 @@ jobs:
           else
             gh release create "${{ github.ref_name }}" \
               --title "montrs v${{ steps.version.outputs.VERSION }}" \
-              --generate-notes
+              --notes-file CHANGELOG.md
           fi
-
-  container:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to GitHub Container Registry
@@ -48,10 +56,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
