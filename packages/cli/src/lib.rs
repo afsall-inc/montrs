@@ -252,20 +252,10 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         name: Option<String>,
     },
-    /// Manage PR documentation (prdoc.md).
-    Prdoc {
-        #[command(subcommand)]
-        subcommand: PrdocSubcommand,
-    },
     /// Manage agent rules and IDE integration.
     Rules {
         #[command(subcommand)]
         subcommand: RulesSubcommand,
-    },
-    /// Generate changelogs and manage version bumps from prdocs.
-    Changelog {
-        #[command(subcommand)]
-        subcommand: ChangelogSubcommand,
     },
     /// Manage agent ignore patterns (.agentignore).
     Ignore {
@@ -300,74 +290,6 @@ pub enum IgnoreSubcommand {
     Export {
         /// Target IDE format (opencode, cursor, trae).
         format: String,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum PrdocSubcommand {
-    /// Display a prdoc file as JSON.
-    Show {
-        /// Path to prdoc file.
-        #[arg(default_value = "prdoc/pr_1.prdoc")]
-        path: String,
-    },
-    /// Validate a prdoc file and report issues.
-    Validate {
-        /// Path to prdoc file.
-        #[arg(default_value = "prdoc/pr_1.prdoc")]
-        path: String,
-        /// Branch name for backport validation (e.g., stable, release).
-        #[arg(long)]
-        branch: Option<String>,
-    },
-    /// Auto-generate a prdoc skeleton from PR context.
-    Generate {
-        /// PR number to generate from (uses gh CLI).
-        #[arg(short, long)]
-        pr: Option<u64>,
-        /// Default bump level for all crates.
-        #[arg(short, long, default_value = "minor")]
-        bump: String,
-        /// Target audience (app_dev, framework_dev, agent_user, operator).
-        #[arg(short, long, default_value = "app_dev")]
-        audience: String,
-        /// Overwrite existing prdoc.
-        #[arg(long)]
-        force: bool,
-    },
-}
-
-#[derive(Subcommand, Debug)]
-pub enum ChangelogSubcommand {
-    /// Generate a CHANGELOG.md from merged prdocs.
-    Generate {
-        /// Git range to collect prdocs from (e.g., v0.1.0..HEAD).
-        #[arg(short, long)]
-        from: Option<String>,
-        /// Git range end tag (used with --from).
-        #[arg(short, long)]
-        to: Option<String>,
-        /// Output file path.
-        #[arg(short, long, default_value = "CHANGELOG.md")]
-        output: String,
-    },
-    /// Compute next version bumps based on prdocs since last release.
-    Bump {
-        /// Current version (defaults to workspace version).
-        #[arg(short, long)]
-        current: Option<String>,
-        /// Git range for prdocs.
-        #[arg(long)]
-        from: Option<String>,
-        /// Show what would change without writing files.
-        #[arg(long)]
-        dry_run: bool,
-    },
-    /// Verify all merged PRs since last release have prdocs.
-    Verify {
-        /// Git range to check.
-        #[arg(long)]
-        from: Option<String>,
     },
 }
 

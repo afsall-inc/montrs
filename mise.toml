@@ -11,6 +11,7 @@ test = "cargo test --workspace"
 fmt = "cargo fmt --all"
 clippy = "cargo clippy --workspace -- -D warnings"
 bench = "cargo run --package montrs-cli -- bench"
+prdoc = "cargo install changelogger-cli && changelogger prdoc validate"
 
 [tasks.dev]
 description = "Start the development server"
