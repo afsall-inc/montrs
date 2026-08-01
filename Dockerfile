@@ -1,4 +1,4 @@
-FROM rust:nightly-bookworm AS builder
+FROM rust:bookworm AS builder
 WORKDIR /app
 RUN rustup toolchain install nightly-2026-02-18 && \
     rustup target add wasm32-unknown-unknown --toolchain nightly-2026-02-18 && \
