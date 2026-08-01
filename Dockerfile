@@ -1,7 +1,9 @@
-FROM rust:1.84-slim-bookworm AS builder
+FROM rust:slim-bookworm AS builder
 WORKDIR /app
 COPY . .
-RUN cargo build --release --package montrs-cli && \
+RUN rustup toolchain install nightly-2026-02-18 && \
+    rustup target add wasm32-unknown-unknown --toolchain nightly-2026-02-18 && \
+    cargo +nightly-2026-02-18 build --release --package montrs-cli && \
     cp target/release/montrs /usr/local/bin/montrs
 
 FROM gcr.io/distroless/cc-debian12:latest
