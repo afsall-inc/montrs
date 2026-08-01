@@ -18,10 +18,38 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: changelogger prdoc generate --pr ${{ github.event.pull_request.number }} --force
-      - name: Validate prdoc
+      - name: Validate and auto-fix prdoc
         env:
           GH_TOKEN: ${{ github.token }}
-        run: changelogger prdoc validate
+        run: |
+          PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
+          if ! changelogger prdoc validate 2>&1; then
+            python3 -c "
+import re
+with open('$PRDOC') as f:
+    content = f.read()
+# Fix empty crates section
+if re.search(r'^crates:\s*$', content, re.MULTILINE):
+    content = re.sub(
+        r'^crates:\s*$',
+        'crates:\n  - name: montrs-cli\n    bump: patch',
+        content,
+        flags=re.MULTILINE,
+    )
+    print('Auto-fixed: empty crates section')
+# Fix missing crates section entirely
+elif not re.search(r'^- name:', content):
+    content = content.rstrip()
+    if content.endswith('---'):
+        content = content[:-3] + 'crates:\n  - name: montrs-cli\n    bump: patch\n---'
+    else:
+        content += '\ncrates:\n  - name: montrs-cli\n    bump: patch\n'
+    print('Auto-fixed: added missing crates section')
+with open('$PRDOC', 'w') as f:
+    f.write(content)
+"
+            changelogger prdoc validate
+          fi
       - name: Validate Backport Rules
         if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
         env:

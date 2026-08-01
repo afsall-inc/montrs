@@ -4,4 +4,3 @@ target/
 *.md
 docs/
 skills/
-Cargo.lock
