@@ -113,72 +113,8 @@
       }
     },
     {
-      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
-      "name": "montrs_pkg_fmt",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Formats Rust and view! code according to MontRS standards.",
-      "name": "code_format",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package bench. MUST follow invariants defined in agent.json under packages['bench'].invariants",
-      "name": "montrs_pkg_bench",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Runs performance benchmarks for the project or specific targets.",
-      "name": "bench_run",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
-      "name": "montrs_pkg_agentignore",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
-      "name": "montrs_pkg_orm",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Executes a SQL query on the configured database backend.",
-      "name": "db_query",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package prdoc. Refer to its README for details.",
-      "name": "montrs_pkg_prdoc",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
-      "name": "montrs_pkg_montrs",
+      "description": "Capability provided by package ui. Refer to its README for details.",
+      "name": "montrs_pkg_ui",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -193,16 +129,8 @@
       }
     },
     {
-      "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
-      "name": "montrs_pkg_test",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
-      "description": "Runs unit, integration, and end-to-end tests for the MontRS project.",
-      "name": "test_run",
+      "description": "Capability provided by package haptics. MUST follow invariants defined in agent.json under packages['haptics'].invariants",
+      "name": "montrs_pkg_haptics",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -241,8 +169,72 @@
       }
     },
     {
+      "description": "Capability provided by package runner. Refer to its README for details.",
+      "name": "montrs_pkg_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
+      "name": "montrs_pkg_fmt",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Formats Rust and view! code according to MontRS standards.",
+      "name": "code_format",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
+      "name": "montrs_pkg_montrs",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package core. MUST follow invariants defined in agent.json under packages['core'].invariants",
       "name": "montrs_pkg_core",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package bench. MUST follow invariants defined in agent.json under packages['bench'].invariants",
+      "name": "montrs_pkg_bench",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs performance benchmarks for the project or specific targets.",
+      "name": "bench_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
+      "name": "montrs_pkg_orm",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Executes a SQL query on the configured database backend.",
+      "name": "db_query",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -257,8 +249,40 @@
       }
     },
     {
-      "description": "Capability provided by package runner. Refer to its README for details.",
-      "name": "montrs_pkg_runner",
+      "description": "Capability provided by package icons. MUST follow invariants defined in agent.json under packages['icons'].invariants",
+      "name": "montrs_pkg_icons",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
+      "name": "montrs_pkg_test",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs unit, integration, and end-to-end tests for the MontRS project.",
+      "name": "test_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package prdoc. Refer to its README for details.",
+      "name": "montrs_pkg_prdoc",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
+      "name": "montrs_pkg_agentignore",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -344,6 +368,55 @@
           "For desktop: use Tauri integration with `cargo tauri build`",
           "Verify the deployment with a health check or smoke test",
           "Document the deployment configuration in montrs.toml"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through setting up haptic feedback for a MontRS application.",
+      "name": "skill_haptics_setup",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Always call is_supported() before haptic operations",
+          "Use ImpactStyle enum, not raw duration values",
+          "Feature-gate platform imports to avoid cross-compilation issues",
+          "Pass &HapticsConfig to create_haptics_provider, not a raw HapticsTarget",
+          "Use enabled: false in tests to get a NoopHapticsProvider"
+        ],
+        "context_prompts": [
+          "Which platform target does your app use? (web, desktop, mobile)",
+          "Which haptic interactions does the app need? (impact, vibration, selection)"
+        ],
+        "name": "haptics-setup",
+        "tags": [
+          "haptics",
+          "feedback",
+          "ux",
+          "web",
+          "desktop",
+          "mobile"
+        ],
+        "version": "1.1.0",
+        "workflow_steps": [
+          "Check which target the application uses (web, desktop, mobile)",
+          "Enable the corresponding feature gate (haptics-web, haptics-desktop, or haptics-mobile)",
+          "Create a HapticsProvider using create_haptics_provider(&HapticsConfig { enabled: true, target: ... })",
+          "Use config.enabled = false to disable haptics at runtime",
+          "Wrap provider in a Plate for dependency injection",
+          "Configure HapticsConfig with desired settings",
+          "Always call provider.is_supported() before haptic operations",
+          "Test with cargo test --features haptics-desktop"
         ]
       }
     },

@@ -18,6 +18,7 @@ members = [
     "packages/runner",
     "packages/icons",
     "packages/ui",
+    "packages/motion",
     "apps/website",
     "apps/website/server",
 ]
@@ -48,3 +49,17 @@ strum_macros = "0.28"
 convert_case = "0.11"
 tw_merge = "0.1"
 paste = "1"
+
+[[workspace.metadata.leptos]]
+name = "montrs-website"
+bin-package = "website-server"
+lib-package = "website"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+tailwind-input-file = "style/main.css"
+assets-dir = "public"
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+browserquery = "defaults"
+lib-features = ["hydrate"]
+lib-default-features = false

@@ -1,0 +1,116 @@
+{
+  "tools": [
+    {
+      "description": "Builds the MontRS project.",
+      "name": "montrs_build",
+      "parameters": {
+        "properties": {
+          "release": {
+            "description": "Build in release mode",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Generates a project specification.",
+      "name": "montrs_spec",
+      "parameters": {
+        "properties": {
+          "format": {
+            "enum": [
+              "json",
+              "yaml",
+              "txt"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Formats the project's Rust and view! code.",
+      "name": "montrs_fmt",
+      "parameters": {
+        "properties": {
+          "check": {
+            "description": "Check if files are formatted without modifying them",
+            "type": "boolean"
+          },
+          "path": {
+            "description": "Path to format (default: .)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Generates a single-file 'sketch' of a MontRS component.",
+      "name": "montrs_sketch",
+      "parameters": {
+        "properties": {
+          "kind": {
+            "description": "Component type",
+            "enum": [
+              "plate",
+              "route",
+              "app"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the sketch file",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Expands a sketch file into a full MontRS workspace structure.",
+      "name": "montrs_expand",
+      "parameters": {
+        "properties": {
+          "path": {
+            "description": "Path to the sketch file",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs a custom task defined in montrs.toml.",
+      "name": "montrs_run",
+      "parameters": {
+        "properties": {
+          "task": {
+            "description": "Name of the task to run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Lists available custom tasks from montrs.toml.",
+      "name": "montrs_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    }
+  ]
+}

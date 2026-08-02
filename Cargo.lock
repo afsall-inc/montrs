@@ -4265,6 +4265,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-motion"
+version = "0.1.0"
+dependencies = [
+ "leptos",
+ "montrs-core",
+ "serde",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "montrs-orm"
 version = "0.1.0"
 dependencies = [
