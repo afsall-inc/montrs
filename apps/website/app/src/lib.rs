@@ -10,7 +10,6 @@ use montrs_core::*;
 use montrs_ui::prelude::*;
 
 use crate::components::*;
-use crate::routes::*;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

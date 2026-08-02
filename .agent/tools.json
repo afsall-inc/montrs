@@ -121,6 +121,14 @@
       }
     },
     {
+      "description": "Capability provided by package motion. MUST follow invariants defined in agent.json under packages['motion'].invariants",
+      "name": "montrs_pkg_motion",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
       "name": "montrs_pkg_cli",
       "parameters": {

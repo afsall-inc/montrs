@@ -12,6 +12,7 @@ pub mod clx;
 pub mod utils;
 pub mod variants;
 pub mod theme;
+pub mod components;
 
 pub use montrs_icons::*;
 
@@ -19,6 +20,7 @@ pub mod prelude {
     pub use crate::cn::*;
     pub use crate::clx::*;
     pub use crate::variants::*;
+    pub use crate::components::*;
     pub use crate::theme::provider::{ThemeMode, ThemeProvider, use_theme, toggle_theme};
     pub use montrs_icons::*;
 }

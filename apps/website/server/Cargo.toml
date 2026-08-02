@@ -7,13 +7,29 @@ authors.workspace = true
 repository.workspace = true
 description = "MontRS website server"
 
+[package.metadata.leptos]
+name = "montrs-website"
+bin-package = "website-server"
+lib-package = "website"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+tailwind-input-file = "style/main.css"
+assets-dir = "public"
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+browserquery = "defaults"
+lib-features = ["hydrate"]
+lib-default-features = false
+
 [dependencies]
 website = { path = "..", features = ["ssr"] }
 leptos = { workspace = true, features = ["ssr"] }
-leptos_axum = { workspace = true }
+leptos_axum = "0.8"
+leptos_meta = { workspace = true, features = ["ssr"] }
+leptos_router = { workspace = true, features = ["ssr"] }
 axum = "0.8"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["fs"] }
 tokio = { workspace = true, features = ["full"] }
-tracing.workspace = true
+tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
