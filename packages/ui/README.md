@@ -19,7 +19,7 @@ MontRS UI uses a shadcn-inspired theming system. The `components.json` file at y
 
 ```json
 {
-  "$schema": "https://ui.montrs.com/schema.json",
+  "$schema": "https://montrs.com/schema.json",
   "style": "default",
   "tailwind": {
     "css": "style/main.css",

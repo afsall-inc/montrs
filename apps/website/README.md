@@ -56,3 +56,5 @@ The website uses MontRS patterns:
 - **Routes**: Each page is a `view_route!` with a `RouteView`
 - **Router**: `RouterOutlet<MyConfig>` renders the matched page
 - **AppSpec**: `AppSpec::new().with_plate().mount_with_router()`
+
+No Leptos Router imports in application code — the MontRS Router wraps it internally.

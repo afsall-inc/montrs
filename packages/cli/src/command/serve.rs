@@ -1,16 +1,7 @@
-use montrs_build::{Pipeline, DevServer};
-use std::path::Path;
+use crate::{config::MontrsConfig, utils::run_cargo_leptos};
 
 pub async fn run() -> anyhow::Result<()> {
-    let pipeline = Pipeline::from_root(Path::new("."))?;
+    let config = MontrsConfig::load()?;
 
-    // Build everything
-    pipeline.build_all()?;
-
-    // Start dev server
-    let server = DevServer::new(
-        pipeline.site_root.clone(),
-        &pipeline.meta.serve.site_addr,
-    );
-    server.run().await
+    run_cargo_leptos("watch", &[], &config).await
 }
