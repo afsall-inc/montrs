@@ -11,8 +11,6 @@ pub use montrs_runner::TaskConfig;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub mod tailwind;
-
 /// The root configuration structure for a MontRS project.
 ///
 /// Corresponds to the `montrs.toml` file.
@@ -56,24 +54,9 @@ pub struct ProjectConfig {
     pub hot_reload: bool,
     #[serde(skip)]
     pub features: Vec<String>,
-    #[serde(skip)]
-    pub tailwind_style: Option<TailwindStyle>,
 }
 
 /// Tailwind CSS integration style.
-#[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default,
-)]
-pub enum TailwindStyle {
-    /// Automatically detect style.
-    #[default]
-    Auto,
-    /// Use configuration from `montrs.toml`.
-    Toml,
-    /// Use Tailwind v4 conventions.
-    V4,
-}
-
 impl Default for ProjectConfig {
     fn default() -> Self {
         Self {
@@ -83,7 +66,6 @@ impl Default for ProjectConfig {
             release: false,
             hot_reload: false,
             features: Vec::new(),
-            tailwind_style: None,
         }
     }
 }
@@ -113,9 +95,6 @@ pub struct BuildConfig {
     /// Path to the Tailwind CSS input file.
     #[serde(default)]
     pub tailwind_input_file: Option<String>,
-    /// Path to the Tailwind CSS config file.
-    #[serde(rename = "tailwind-config-file")]
-    pub tailwind_config_file: Option<String>,
     /// Path to the main style file (e.g., CSS/SCSS).
     #[serde(rename = "style-file")]
     pub style_file: Option<String>,
@@ -133,7 +112,6 @@ impl Default for BuildConfig {
             site_pkg_name: default_site_pkg_name(),
             assets_dir: None,
             tailwind_input_file: None,
-            tailwind_config_file: None,
             style_file: None,
             browserquery: default_browserquery(),
         }
