@@ -1,0 +1,11 @@
+[tools]
+rust = "1.84"
+
+[env]
+RUST_BACKTRACE = "1"
+
+[tasks]
+dev = "cargo leptos watch"
+build = "cargo leptos build --release"
+fmt = "cargo fmt"
+test = "cargo test"

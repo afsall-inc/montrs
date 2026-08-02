@@ -1,0 +1,36 @@
+[package]
+name = "website"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS website — montrs.com"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "app/src/lib.rs"
+
+[dependencies]
+montrs-core = { path = "../../packages/core" }
+montrs-icons = { path = "../../packages/icons" }
+montrs-ui = { path = "../../packages/ui" }
+leptos.workspace = true
+leptos_meta.workspace = true
+leptos_axum = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+tw_merge.workspace = true
+web-sys = { version = "0.3", features = ["Element", "HtmlElement", "Window", "Storage"] }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+[features]
+default = []
+hydrate = ["leptos/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "dep:leptos_axum",
+]

@@ -46,6 +46,18 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Provides a unified `HapticsProvider` trait with feature-gated platform backends. Web uses Vibration API; desktop uses OS-native calls as temporary fallback; mobile is stubbed until native bridges land.
 - **When to modify**: When adding a new platform target, changing the trait interface, or implementing the desktop engine integration.
 
+## 📦 `montrs-icons`
+- **Responsibility**: 1600+ Lucide icons as Leptos components, grouped into 42 category features.
+- **Key Components**: `Glyph` enum, `Icon` generic component, per-icon convenience components (e.g. `SearchIcon`), `CustomIcon` for inline SVG.
+- **Boundary**: Pure icon rendering and metadata (search, categories, tags). No animation, picker UI, or icon design tools.
+- **When to modify**: When adding new icons from upstream Lucide, improving search, or adding rendering features.
+
+## 📦 `montrs-ui`
+- **Responsibility**: UI component library with Tailwind CSS macros, shadcn-inspired theming system, and type-safe variant components.
+- **Key Components**: `clx!`/`void!` macros, `variants!` macro, `cn!()` utility, `ThemeProvider`, `components.json` config, theme generator.
+- **Boundary**: Pure Rust macros and components. No JavaScript, no Objective-C, no external runtime dependencies. Relies on `montrs-icons` for icon rendering.
+- **When to modify**: When adding new UI macros, updating the theming system, or adding new component patterns.
+
 ---
 
 ## How Packages Interact
@@ -57,7 +69,8 @@ MontRS follows a **Dependency Inversion** pattern. `montrs-core` defines the tra
 1.  **CLI** reads **Config** and **Core** to understand the app.
 2.  **Core** uses **Validator** to validate data at the boundaries.
 3.  **Plates** use **ORM** to persist data.
-4.  **Agent** scans everything to produce the **Spec Snapshot**.
+4.  **UI** uses **Icons** for icon rendering.
+5.  **Agent** scans everything to produce the **Spec Snapshot**.
 
 ---
 

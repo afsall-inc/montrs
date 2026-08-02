@@ -14,6 +14,8 @@ montrs-orm = { path = "../orm", version = "0.1.0", optional = true }
 montrs-validator = { path = "../validator", version = "0.1.0", optional = true }
 montrs-test = { path = "../test", version = "0.1.0", optional = true }
 montrs-cli = { path = "../cli", version = "0.1.0", optional = true }
+montrs-icons = { path = "../icons", version = "0.1.0", optional = true }
+montrs-ui = { path = "../ui", version = "0.1.0", optional = true }
 
 [[bin]]
 name = "montrs"
@@ -25,13 +27,15 @@ haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "validator", "test", "cli"]
+full = ["orm", "validator", "test", "cli", "icons", "ui"]
 
 # Basic package activation
 orm = ["dep:montrs-orm"]
 validator = ["dep:montrs-validator"]
 test = ["dep:montrs-test"]
 cli = ["dep:montrs-cli"]
+icons = ["dep:montrs-icons"]
+ui = ["dep:montrs-ui", "icons"]
 
 # --- Forwarded Features ---
 

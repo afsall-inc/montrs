@@ -1,0 +1,72 @@
+[package]
+name = "montrs-icons"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Lucide icons for MontRS applications — 1600+ icons with category-based features"
+
+[dependencies]
+leptos.workspace = true
+strum = { workspace = true, features = ["derive"] }
+strum_macros.workspace = true
+convert_case.workspace = true
+
+[features]
+accessibility = []
+account = []
+animals = []
+arrows = []
+buildings = []
+charts = []
+communication = []
+connectivity = []
+cursors = []
+default = [
+    "accessibility", "account", "animals", "arrows", "buildings",
+    "charts", "communication", "connectivity", "cursors",
+    "design", "development", "devices", "emoji", "files",
+    "finance", "food_beverage", "gaming", "home", "layout",
+    "mail", "math", "medical", "multimedia", "nature",
+    "navigation", "notifications", "people", "photography",
+    "science", "seasons", "security", "shapes", "shopping",
+    "social", "sports", "sustainability", "text", "time",
+    "tools", "transportation", "travel", "weather",
+]
+design = []
+development = []
+devices = []
+emoji = []
+files = []
+finance = []
+food_beverage = []
+gaming = []
+home = []
+layout = []
+mail = []
+math = []
+medical = []
+multimedia = []
+nature = []
+navigation = []
+notifications = []
+people = []
+photography = []
+science = []
+seasons = []
+security = []
+shapes = []
+shopping = []
+social = []
+sports = []
+sustainability = []
+text = []
+time = []
+tools = []
+transportation = []
+travel = []
+weather = []
+
+[lib]
+bench = false

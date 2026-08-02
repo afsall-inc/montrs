@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 montrs-core = { workspace = true }
+montrs-ui = { workspace = true }
+montrs-icons = { workspace = true }
 leptos = { workspace = true }
-tailwind-fuse = { workspace = true }
 ui = { path = "../../packages/ui" }

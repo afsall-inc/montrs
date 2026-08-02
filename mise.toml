@@ -16,6 +16,10 @@ bench = "cargo run --package montrs-cli -- bench"
 description = "Start the development server"
 run = "cargo run --package montrs-cli -- serve"
 
+[tasks.serve-website]
+description = "Serve the MontRS website"
+run = "cd apps/website && cargo run --package montrs-cli -- serve"
+
 [tasks.ci]
 description = "Run all CI checks"
 depends = ["fmt", "clippy", "test"]

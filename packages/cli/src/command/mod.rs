@@ -12,5 +12,6 @@ pub mod serve;
 pub mod sketch;
 pub mod spec;
 pub mod test;
+pub mod ui_init;
 pub mod upgrade;
 pub mod watch;

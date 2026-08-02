@@ -17,9 +17,20 @@ pub use features::{FeatureFlag, FeatureManager, Rule, Segment, UserContext};
 pub use leptos::prelude::*;
 pub use limiter::{GovernorLimiter, Limiter};
 pub use router::{
-    ActionResponse, LoaderResponse, Route, RouteAction, RouteContext,
-    RouteError, RouteLoader, RouteParams, RouteView, Router,
+    ActionResponse, LoaderResponse, NoParams, NoopAction, NoopLoader, Route,
+    RouteAction, RouteContext, RouteError, RouteLink, RouteLoader, RouteParams,
+    RouteView, Router, RouterOutlet, use_montrs_router,
 };
+
+/// Re-exported Leptos Router hooks for convenience.
+/// Users get client-side navigation, query params, and location access
+/// without importing `leptos_router` directly.
+pub mod nav {
+    pub use leptos_router::hooks::{
+        use_location, use_navigate, use_query, use_query_map,
+    };
+    pub use leptos_router::NavigateOptions;
+}
 use serde::{Deserialize, Serialize};
 use std::{error::Error as StdError, sync::Arc};
 pub use validation::{Validator, ValidatorError};
@@ -253,6 +264,37 @@ impl<C: AppConfig> AppSpec<C> {
             }
 
             main_view()
+        });
+    }
+
+    /// Boots the application with the MontRS Router available as a Leptos context.
+    ///
+    /// This is the recommended boot method. It provides the `Router<C>` via
+    /// `provide_context`, wraps the app in Leptos Router for client-side URL
+    /// matching, and renders the `main_view`. Inside your view, use
+    /// [`RouterOutlet`] to render the matched route's view.
+    pub fn mount_with_router<F, IV>(self, main_view: F)
+    where
+        C: 'static,
+        F: FnOnce() -> IV + 'static,
+        IV: IntoView + 'static,
+    {
+        let config = self.config;
+        let env = self.env;
+        let plates = self.plates;
+        let router = self.router;
+
+        leptos::mount::mount_to_body(move || {
+            provide_context(config.clone());
+            provide_context(env.clone());
+            provide_context(router);
+
+            for plate in &plates {
+                println!("Booting plate: {}", plate.name());
+            }
+
+            let view = main_view();
+            view! { <leptos_router::components::Router>{view}</leptos_router::components::Router> }
         });
     }
 }

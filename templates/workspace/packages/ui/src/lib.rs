@@ -1,9 +1,7 @@
-//! Shared UI components for the workspace.
-
 use leptos::prelude::*;
-use tailwind_fuse::*;
+use montrs_ui::prelude::*;
+use montrs_icons::*;
 
-/// A reusable button component with type-safe variants.
 #[component]
 pub fn Button(
     #[prop(into, optional)] variant: MaybeSignal<ButtonVariant>,
@@ -17,7 +15,7 @@ pub fn Button(
             variant: variant.get(),
             size: size.get(),
         };
-        btn.with_class(class.get())
+        cn!(btn.to_class(), class.get())
     });
 
     view! {
@@ -27,29 +25,23 @@ pub fn Button(
     }
 }
 
-#[derive(TwClass, Clone, Copy)]
-#[tw(class = "px-6 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2")]
-pub struct ButtonClass {
-    pub variant: ButtonVariant,
-    pub size: ButtonSize,
-}
-
-#[derive(TwVariant, Clone, Copy, Default)]
-pub enum ButtonVariant {
-    #[tw(default, class = "bg-blue-600 hover:bg-blue-500 text-white focus:ring-blue-400")]
-    Primary,
-    #[tw(class = "bg-gray-600 hover:bg-gray-500 text-white focus:ring-gray-400")]
-    Secondary,
-    #[tw(class = "bg-transparent border border-gray-500 hover:bg-gray-800 text-white focus:ring-gray-400")]
-    Outline,
-}
-
-#[derive(TwVariant, Clone, Copy, Default)]
-pub enum ButtonSize {
-    #[tw(default, class = "text-base")]
-    Medium,
-    #[tw(class = "text-sm px-4 py-1")]
-    Small,
-    #[tw(class = "text-lg px-8 py-3")]
-    Large,
+variants! {
+    Button {
+        base: "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        variants: {
+            variant: {
+                Primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+                Secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                Outline: "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
+            },
+            size: {
+                Default: "h-10 px-4 py-2 text-sm",
+                Sm: "h-9 rounded-md px-3 text-xs",
+                Lg: "h-11 rounded-md px-8 text-base",
+            }
+        },
+        component: {
+            element: button
+        }
+    }
 }

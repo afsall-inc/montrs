@@ -144,6 +144,9 @@ pub enum Commands {
         /// Template to use.
         #[arg(short, long, default_value = "default")]
         template: String,
+        /// Initialize with MontRS UI theming system.
+        #[arg(long)]
+        ui: bool,
     },
     /// Run custom tasks defined in montrs.toml.
     Run {
@@ -195,6 +198,12 @@ pub enum Commands {
     Mcp {
         #[command(subcommand)]
         subcommand: McpSubcommand,
+    },
+    /// Initialize the MontRS UI theming system.
+    #[command(name = "ui")]
+    Ui {
+        #[command(subcommand)]
+        subcommand: UiSubcommand,
     },
 }
 
@@ -378,6 +387,22 @@ pub enum McpSubcommand {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum UiSubcommand {
+    /// Initialize the MontRS UI theming system (creates components.json, CSS variables, tailwind.toml).
+    Init {
+        /// Base color theme (neutral, stone, zinc, mauve, olive, mist, taupe).
+        #[arg(short, long, default_value = "neutral")]
+        base_color: String,
+        /// Accent color theme (blue, green, red, amber, etc.).
+        #[arg(short, long)]
+        accent_color: Option<String>,
+        /// Base border radius (e.g. "0.5rem").
+        #[arg(short, long, default_value = "0.5rem")]
+        radius: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
 pub enum GenerateSubcommand {
     /// Generate a new plate.
     Plate {
@@ -471,8 +496,12 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             keep_alive,
             browser,
         } => command::e2e::run(headless, keep_alive, browser).await,
-        Commands::New { name, template } => {
-            command::new::run(name, template).await
+        Commands::New { name, template, ui } => {
+            command::new::run(name, template).await?;
+            if ui {
+                command::ui_init::run(None, None, None).await?;
+            }
+            Ok(())
         }
         Commands::Run { task } => command::run::run(task).await,
         Commands::Tasks => command::run::list().await,
@@ -521,6 +550,13 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             }
         }
         Commands::Mcp { subcommand } => command::mcp::run(subcommand).await,
+        Commands::Ui { subcommand } => match subcommand {
+            UiSubcommand::Init {
+                base_color,
+                accent_color,
+                radius,
+            } => command::ui_init::run(Some(base_color), accent_color, Some(radius)).await,
+        },
     }
 }
 

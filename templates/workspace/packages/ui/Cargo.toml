@@ -5,4 +5,5 @@ edition.workspace = true
 
 [dependencies]
 leptos = { workspace = true }
-tailwind-fuse = { workspace = true }
+montrs-ui = { workspace = true }
+montrs-icons = { workspace = true }

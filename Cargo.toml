@@ -16,6 +16,10 @@ members = [
     "packages/test",
     "packages/utils",
     "packages/runner",
+    "packages/icons",
+    "packages/ui",
+    "apps/website",
+    "apps/website/server",
 ]
 
 [workspace.package]
@@ -35,4 +39,12 @@ anyhow = "1.0"
 tracing = "0.1"
 futures = "0.3"
 leptos = { version = "0.8", features = ["hydrate", "ssr"] }
+leptos_axum = "0.8"
+leptos_meta = "0.8"
+leptos_router = "0.8"
 regex = "1.10"
+strum = { version = "0.28", features = ["derive"] }
+strum_macros = "0.28"
+convert_case = "0.11"
+tw_merge = "0.1"
+paste = "1"

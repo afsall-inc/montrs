@@ -18,6 +18,7 @@ futures.workspace = true
 regex.workspace = true
 
 leptos.workspace = true
+leptos_router.workspace = true
 
 # Rate limiting
 governor = "0.6"

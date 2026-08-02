@@ -1,7 +1,3 @@
-//! todo-example: A comprehensive example demonstrating MontRS features.
-//! This application integrates signals, validator validation, and the ORM layer
-//! to build a simple but functional Todo management system.
-
 use leptos::prelude::*;
 use montrs_core::{
     AppConfig, AppSpec, Plate, PlateContext, Route, RouteAction, RouteContext, RouteError,
@@ -9,9 +5,10 @@ use montrs_core::{
 };
 use montrs_orm::{DbBackend, FromRow, SqliteBackend};
 use montrs_validator::Validator;
+use montrs_ui::prelude::*;
+use montrs_icons::*;
 use serde::{Deserialize, Serialize};
 
-// [REQUIRED] 1. Define the Application Error Type.
 #[derive(Debug, thiserror::Error, Serialize, Deserialize)]
 pub enum MyError {
     #[error("Database error: {0}")]
@@ -20,7 +17,6 @@ pub enum MyError {
     Generic(String),
 }
 
-// [REQUIRED] 2. Define the Application Environment.
 #[derive(Clone)]
 pub struct MyEnv;
 impl montrs_core::EnvConfig for MyEnv {
@@ -32,7 +28,6 @@ impl montrs_core::EnvConfig for MyEnv {
     }
 }
 
-// [REQUIRED] 3. Define the Application Configuration.
 #[derive(Clone)]
 pub struct MyConfig {
     pub db_url: String,
@@ -42,7 +37,6 @@ impl AppConfig for MyConfig {
     type Env = MyEnv;
 }
 
-// [OPTIONAL] 4. Data Models & Validation
 #[derive(Debug, Clone, Serialize, Deserialize, Validator)]
 pub struct CreateTodo {
     #[validator(min_len = 3)]
@@ -56,7 +50,6 @@ pub struct Todo {
     pub completed: bool,
 }
 
-// [REQUIRED] 5. Define explicit Route components
 #[derive(Serialize, Deserialize)]
 pub struct TodoParams {}
 impl RouteParams for TodoParams {}
@@ -100,7 +93,6 @@ impl RouteView for TodoViewImpl {
     }
 }
 
-// [REQUIRED] 6. Unified Route Trait
 pub struct TodoRoute;
 impl Route<MyConfig> for TodoRoute {
     type Params = TodoParams;
@@ -114,7 +106,6 @@ impl Route<MyConfig> for TodoRoute {
     fn view(&self) -> Self::View { TodoViewImpl }
 }
 
-// [REQUIRED] 7. Define a Plate for explicit composition
 pub struct TodoPlate;
 #[async_trait::async_trait]
 impl Plate<MyConfig> for TodoPlate {
@@ -128,18 +119,54 @@ impl Plate<MyConfig> for TodoPlate {
     }
 }
 
-// [REQUIRED] 8. UI Components
 #[component]
 fn TodoApp() -> impl IntoView {
+    let (count, set_count) = signal(0);
+
     view! {
-        <div class="p-8 max-w-md mx-auto bg-white rounded-xl shadow-md mt-10">
-            <h1 class="text-2xl font-bold mb-4">"MontRS Todo"</h1>
-            <p>"Scaffolded Explicit Architecture example."</p>
-        </div>
+        <ThemeProvider>
+            <div class="min-h-screen bg-background text-foreground">
+                <header class="border-b border-border">
+                    <div class="mx-auto flex h-16 max-w-2xl items-center gap-2 px-6">
+                        <CheckCheckIcon class="h-6 w-6 text-primary" />
+                        <span class="text-lg font-bold">"MontRS Todo"</span>
+                    </div>
+                </header>
+                <main class="mx-auto max-w-2xl px-6 py-12">
+                    <div class="rounded-lg border border-border bg-card p-8">
+                        <div class="flex items-center gap-3">
+                            <ListChecksIcon class="h-8 w-8 text-primary" />
+                            <div>
+                                <h1 class="text-2xl font-bold">"Todo Manager"</h1>
+                                <p class="text-sm text-muted-foreground">
+                                    "Scaffolded Explicit Architecture example."
+                                </p>
+                            </div>
+                        </div>
+                        <div class="mt-8 flex items-center gap-4">
+                            <button
+                                on:click=move |_| set_count.update(|n| *n += 1)
+                                class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                            >
+                                <PlusIcon class="h-4 w-4" />
+                                "Count: " {count}
+                            </button>
+                            <span class="text-sm text-muted-foreground">
+                                "Click to increment"
+                            </span>
+                        </div>
+                        <div class="mt-6 rounded-md bg-muted p-4">
+                            <p class="text-xs text-muted-foreground">
+                                "This example demonstrates: AppSpec, Plate, Route, Loader, Action, Validator, ORM, and montrs-ui components."
+                            </p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </ThemeProvider>
     }
 }
 
-// [REQUIRED] 9. Main Entry Point (Explicit Bootstrapping)
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = MyConfig { db_url: ":memory:".to_string() };
@@ -151,13 +178,11 @@ async fn main() -> anyhow::Result<()> {
 
     println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());
 
-    // [EXPLICIT] Demonstrate Validator Validation
     let valid_todo = CreateTodo {
-        title: "Build with Leptos".to_string(),
+        title: "Build with MontRS".to_string(),
     };
     println!("Validation check: {:?}", valid_todo.validate());
 
-    // [EXPLICIT] Mount or boot the application
     println!("Mounting Leptos application...");
     spec.mount(|| view! { <TodoApp /> });
 
