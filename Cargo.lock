@@ -4103,6 +4103,7 @@ dependencies = [
  "montrs-core",
  "montrs-haptics",
  "montrs-icons",
+ "montrs-motion",
  "montrs-orm",
  "montrs-test",
  "montrs-ui",
