@@ -19,6 +19,8 @@ members = [
     "packages/icons",
     "packages/ui",
     "packages/motion",
+    "packages/metadata",
+    "packages/build",
     "packages/renderer",
     "packages/desktop",
     "packages/mobile",

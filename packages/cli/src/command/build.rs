@@ -1,7 +1,7 @@
-use crate::{config::MontrsConfig, utils::run_cargo_leptos};
+use montrs_build::Pipeline;
+use std::path::Path;
 
 pub async fn run() -> anyhow::Result<()> {
-    let config = MontrsConfig::load()?;
-
-    run_cargo_leptos("build", &[], &config).await
+    let pipeline = Pipeline::from_root(Path::new("."))?;
+    pipeline.build_all()
 }
