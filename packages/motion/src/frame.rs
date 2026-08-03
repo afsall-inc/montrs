@@ -1,5 +1,4 @@
-use std::sync::Mutex;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Mutex};
 
 /// A simple frame loop scheduler.
 ///
@@ -55,20 +54,22 @@ impl FrameLoop {
     fn schedule_next() {
         #[cfg(target_arch = "wasm32")]
         {
-            let closure = wasm_bindgen::prelude::Closure::new(|| {
+            use wasm_bindgen::JsCast;
+            let closure = wasm_bindgen::prelude::Closure::wrap(Box::new(|| {
                 Self::tick();
+            }) as Box<dyn FnMut()>);
+            web_sys::window().and_then(|w| {
+                w.request_animation_frame(closure.as_ref().unchecked_ref())
+                    .ok()
             });
-            web_sys::window()
-                .and_then(|w| {
-                    w.request_animation_frame(closure.as_ref().unchecked_ref())
-                        .ok()
-                });
             closure.forget();
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
             std::thread::spawn(|| {
-                std::thread::sleep(std::time::Duration::from_secs_f64(1.0 / 60.0));
+                std::thread::sleep(std::time::Duration::from_secs_f64(
+                    1.0 / 60.0,
+                ));
                 Self::tick();
             });
         }

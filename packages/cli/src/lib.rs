@@ -541,9 +541,21 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
                 base_color,
                 accent_color,
                 radius,
-            } => command::ui_init::run(Some(base_color), accent_color, Some(radius)).await,
+            } => {
+                command::ui_init::run(
+                    Some(base_color),
+                    accent_color,
+                    Some(radius),
+                )
+                .await
+            }
         },
     }
+}
+
+/// Commands that don't need agent snapshot regeneration.
+fn is_no_agent_command(cmd: &str) -> bool {
+    matches!(cmd, "serve" | "watch" | "build" | "bench" | "test" | "fmt")
 }
 
 /// Main entry point for the CLI, handling both standalone and cargo subcommand modes.
@@ -572,7 +584,7 @@ pub fn main_entry() {
         }
 
         // Agent: Update tools and snapshot if we are in an existing project
-        if args.len() > 1 && args[1] != "new" {
+        if args.len() > 1 && args[1] != "new" && !is_no_agent_command(&args[1]) {
             // Check if we're in a MontRS project before doing agent work
             if cwd.join("montrs.toml").exists()
                 || cwd.join("Cargo.toml").exists()
