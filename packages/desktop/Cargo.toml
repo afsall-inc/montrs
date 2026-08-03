@@ -1,0 +1,16 @@
+[package]
+name = "montrs-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Desktop shell for MontRS — webview (wry) or native (winit + wgpu)"
+
+[dependencies]
+montrs-renderer = { path = "../renderer", optional = true }
+serde.workspace = true
+thiserror.workspace = true
+
+[features]
+default = []
