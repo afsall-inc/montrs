@@ -1,7 +1,7 @@
 use anyhow::{Result, anyhow};
 use console::style;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 pub async fn run(name: String, template: String) -> Result<()> {

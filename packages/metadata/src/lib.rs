@@ -56,6 +56,7 @@ impl Default for ProjectMeta {
 
 /// Serve/build configuration equivalent to `[[workspace.metadata.leptos]]`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct ServeMeta {
     /// The binary package to build and run as the server.
     #[serde(default)]
@@ -133,6 +134,7 @@ impl Default for ServeMeta {
 
 /// Build configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct BuildMeta {
     #[serde(default)]
     pub release: bool,
@@ -192,7 +194,13 @@ impl MontrsMetadata {
         if meta.serve.bin_package.is_none() || meta.serve.lib_package.is_none()
         {
             if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
-                let project_path = path.as_ref().canonicalize().unwrap_or_default();
+                let project_path = path
+                        .as_ref()
+                        .canonicalize()
+                        .unwrap_or_default()
+                        .parent()
+                        .map(|p| p.to_path_buf())
+                        .unwrap_or_default();
                 for package in &cargo.packages {
                     // Only auto-detect packages that are part of the current project directory
                     if let Some(pkg_path) = package.manifest_path.parent() {

@@ -24,11 +24,6 @@ impl Pipeline {
             meta.serve.bin_package.as_deref().unwrap_or("montrs-server")
         );
 
-        println!(
-            "DEBUG: bin_package={:?}, server_bin_path={}",
-            meta.serve.bin_package, server_bin_path.display()
-        );
-
         Ok(Self {
             meta,
             project_root: root.to_path_buf(),
