@@ -192,7 +192,14 @@ impl MontrsMetadata {
         if meta.serve.bin_package.is_none() || meta.serve.lib_package.is_none()
         {
             if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
+                let project_path = path.as_ref().canonicalize().unwrap_or_default();
                 for package in &cargo.packages {
+                    // Only auto-detect packages that are part of the current project directory
+                    if let Some(pkg_path) = package.manifest_path.parent() {
+                        if !pkg_path.starts_with(&project_path) {
+                            continue;
+                        }
+                    }
                     for target in &package.targets {
                         if target.kind.iter().any(|k| k == "bin")
                             && meta.serve.bin_package.is_none()

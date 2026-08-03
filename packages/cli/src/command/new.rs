@@ -1,41 +1,114 @@
-use cargo_generate::{GenerateArgs, TemplatePath, generate};
+use anyhow::{Result, anyhow};
 use console::style;
-use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
-pub async fn run(name: String, template_url: String) -> anyhow::Result<()> {
+pub async fn run(name: String, template: String) -> Result<()> {
     println!(
         "{} Creating new MontRS project: {}",
         style("🚀").bold(),
         style(&name).cyan().bold()
     );
 
-    // Use local template path
-    let template_path = format!("templates/{}", template_url);
+    let cwd = std::env::current_dir()?;
+    let template_dir = cwd.join("templates").join(&template);
+    let dest_dir = cwd.join(&name);
 
-    // In a real CLI, we might use include_dir! to embed templates
-    // or look relative to the binary path. For now, we look in the CWD
-    // assuming the user is in the montrs root.
+    if !template_dir.exists() {
+        return Err(anyhow!(
+            "Template '{}' not found at {}. Available templates: {}",
+            template,
+            template_dir.display(),
+            list_templates(&cwd)?
+        ));
+    }
 
-    let args = GenerateArgs {
-        name: Some(name.clone()),
-        template_path: TemplatePath {
-            path: Some(template_path),
-            ..Default::default()
-        },
-        destination: Some(env::current_dir()?),
-        force: false,
-        verbose: true,
-        ..Default::default()
-    };
+    if dest_dir.exists() {
+        return Err(anyhow!("Directory '{}' already exists. Remove it first or choose a different name.", name));
+    }
 
-    generate(args).map_err(|e| anyhow::anyhow!("Scaffolding failed: {}", e))?;
+    println!("  Copying template '{}' → '{}'", template, name);
+    copy_dir_recursive(&template_dir, &dest_dir)?;
 
+    // Substitute project name in Cargo.toml and montrs.toml
+    substitute_project_name(&dest_dir, &name)?;
+
+    // Initialize git
+    println!("  Initializing git repository...");
+    let _ = Command::new("git")
+        .args(["init"])
+        .current_dir(&dest_dir)
+        .output();
+
+    println!();
     println!(
-        "\n{} Project {} created successfully!",
+        "{} Project {} created at {}",
         style("✨").green().bold(),
-        style(&name).cyan().bold()
+        style(&name).cyan().bold(),
+        style(dest_dir.display()).underlined()
     );
-    println!("Next steps:\n  cd {}\n  montrs build\n  montrs serve", name);
+    println!();
+    println!("Next steps:");
+    println!("  cd {}", name);
+    println!("  montrs serve");
 
+    Ok(())
+}
+
+fn list_templates(cwd: &Path) -> Result<String> {
+    let dir = cwd.join("templates");
+    if !dir.exists() {
+        return Ok("none".to_string());
+    }
+    let mut names: Vec<String> = fs::read_dir(&dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map(|t| t.is_dir()).unwrap_or(false))
+        .map(|e| e.file_name().to_string_lossy().to_string())
+        .collect();
+    names.sort();
+    Ok(names.join(", "))
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let path = entry.path();
+        let dest = dst.join(entry.file_name());
+
+        if path.file_name().map_or(false, |n| n == ".agent") {
+            continue;
+        }
+
+        if path.is_dir() {
+            copy_dir_recursive(&path, &dest)?;
+        } else {
+            fs::copy(&path, &dest)?;
+        }
+    }
+    Ok(())
+}
+
+fn substitute_project_name(dir: &Path, name: &str) -> Result<()> {
+    // Walk all .toml files and replace {{project-name}}
+    for entry in walkdir::WalkDir::new(dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.file_name()
+                .to_str()
+                .map_or(false, |n| n.ends_with(".toml"))
+        })
+    {
+        let path = entry.path();
+        let content = fs::read_to_string(path)?;
+        let new_content = content
+            .replace("{{project-name}}", name)
+            .replace("{{crate_name}}", &name.replace('-', "_"));
+        if content != new_content {
+            fs::write(path, new_content)?;
+        }
+    }
     Ok(())
 }
