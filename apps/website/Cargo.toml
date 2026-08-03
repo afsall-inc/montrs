@@ -13,8 +13,9 @@ path = "app/src/lib.rs"
 
 [dependencies]
 montrs-core = { path = "../../packages/core" }
-montrs-icons = { path = "../../packages/icons" }
+montrs-icons = { path = "../../packages/icons", features = ["animated"] }
 montrs-ui = { path = "../../packages/ui" }
+montrs-motion = { path = "../../packages/motion" }
 leptos.workspace = true
 leptos_meta.workspace = true
 leptos_axum = { workspace = true, optional = true }

@@ -18,9 +18,41 @@ crate::variants! {
                 Lg: "h-11 rounded-md px-8",
                 Icon: "h-10 w-10",
             }
-        },
-        component: {
-            element: button
         }
+    }
+}
+
+#[component]
+pub fn Button(
+    #[prop(into, optional)] variant: Signal<ButtonVariant>,
+    #[prop(into, optional)] size: Signal<ButtonSize>,
+    #[prop(into, optional)] class: Signal<String>,
+    #[prop(into, optional)] data_name: Option<String>,
+    #[prop(into, optional)] aria_label: Option<String>,
+    #[prop(into, optional)] aria_pressed: Option<bool>,
+    #[prop(optional)] disabled: bool,
+    children: Children,
+) -> impl IntoView {
+    let computed_class = move || {
+        let v = variant.try_get().unwrap_or_default();
+        let s = size.try_get().unwrap_or_default();
+        let component_class = ButtonClass { variant: v, size: s };
+        component_class.with_class(class.try_get().unwrap_or_default())
+    };
+
+    let data_name = data_name.unwrap_or_else(|| "Button".to_string());
+
+    view! {
+        <button
+            type="button"
+            class=computed_class
+            data-name=data_name
+            disabled=disabled
+            aria-disabled=disabled
+            aria-label=aria_label
+            aria-pressed=aria_pressed
+        >
+            {children()}
+        </button>
     }
 }

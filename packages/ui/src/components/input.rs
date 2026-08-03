@@ -1,21 +1,6 @@
 use leptos::prelude::*;
 use crate::cn::*;
 
-/// Text input with label, description, and error state.
-///
-/// Renders a styled text input field with optional label and validation message.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <Input
-///         id="email"
-///         label="Email"
-///         placeholder="you@example.com"
-///         value=email_signal
-///     />
-/// }
-/// ```
 #[component]
 pub fn Input(
     #[prop(into, optional)] id: Option<String>,
@@ -28,9 +13,15 @@ pub fn Input(
     #[prop(optional)] input_type: &'static str,
     #[prop(optional)] disabled: bool,
     #[prop(optional)] required: bool,
+    #[prop(optional)] readonly: bool,
+    #[prop(into, optional)] aria_label: Option<String>,
 ) -> impl IntoView {
     let input_id = id.unwrap_or_else(crate::utils::Utils::use_random_id);
+    let error_id = crate::utils::Utils::use_random_id();
     let error_for_merged = error.clone();
+    let error_for_has_error = error.clone();
+    let error_for_input = error.clone();
+    let error_for_display = error;
     let merged = move || {
         let base = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
         let error_class = if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
@@ -45,6 +36,8 @@ pub fn Input(
         let target = event_target_value(&ev);
         value.set(target);
     };
+
+    let has_error = move || error_for_has_error.as_ref().map_or(false, |e| !e.is_empty());
 
     view! {
         <div class="grid gap-1.5">
@@ -70,14 +63,23 @@ pub fn Input(
                 value=move || value.get()
                 disabled=disabled
                 required=required
+                readonly=readonly
+                aria-invalid=move || has_error().then_some("true")
+                aria-describedby=error_for_input.as_ref().filter(|e| !e.is_empty()).map(|_| error_id.clone())
+                aria-required=required.then_some("true")
+                aria-label=aria_label
+                aria-disabled=disabled.then_some("true")
                 on:input=on_input
                 data-name="Input"
             />
             {description.map(|d| view! {
                 <p class="text-sm text-muted-foreground">{d}</p>
             })}
-            {error.filter(|e| !e.is_empty()).map(|e| view! {
-                <p class="text-sm font-medium text-destructive">{e}</p>
+            {error_for_display.filter(|e| !e.is_empty()).map(move |e| {
+                let error_id = error_id.clone();
+                view! {
+                    <p class="text-sm font-medium text-destructive" id=error_id role="alert">{e}</p>
+                }
             })}
         </div>
     }

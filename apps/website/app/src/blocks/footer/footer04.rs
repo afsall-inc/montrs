@@ -4,6 +4,15 @@ use montrs_ui::prelude::*;
 
 #[component]
 pub fn Footer04() -> impl IntoView {
+    let email = RwSignal::new(String::new());
+    let subscribed = RwSignal::new(false);
+    let subscribe = move |ev: leptos::ev::SubmitEvent| {
+        ev.prevent_default();
+        if !email.get().trim().is_empty() {
+            subscribed.set(true);
+        }
+    };
+
     view! {
         <div class="rounded-lg border border-border bg-card p-8 shadow-sm">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-border">
@@ -11,44 +20,49 @@ pub fn Footer04() -> impl IntoView {
                     <h3 class="text-lg font-semibold">"Stay up to date"</h3>
                     <p class="text-sm text-muted-foreground mt-1">"Get the latest MontRS news and updates."</p>
                 </div>
-                <div class="flex gap-2 w-full md:w-auto">
+                <form on:submit=subscribe class="flex gap-2 w-full md:w-auto">
                     <input
                         type="email"
                         placeholder="Enter your email"
+                        on:input=move |ev| email.set(event_target_value(&ev))
+                        prop:value=email
                         class="flex-1 md:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
-                    <button class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0">
+                    <button type="submit" class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0">
                         "Subscribe"
                     </button>
-                </div>
+                </form>
             </div>
+            <Show when=move || subscribed.get()>
+                <p class="mt-4 text-sm text-green-600 dark:text-green-400 text-center">"You're subscribed!"</p>
+            </Show>
             <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
                     <h4 class="text-sm font-semibold mb-3">"Product"</h4>
                     <ul class="space-y-2 text-sm text-muted-foreground">
-                        <li><a href="#" class="hover:text-foreground">"Features"</a></li>
-                        <li><a href="#" class="hover:text-foreground">"Pricing"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Features"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Pricing"</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-sm font-semibold mb-3">"Company"</h4>
                     <ul class="space-y-2 text-sm text-muted-foreground">
-                        <li><a href="#" class="hover:text-foreground">"About"</a></li>
-                        <li><a href="#" class="hover:text-foreground">"Blog"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"About"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Blog"</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-sm font-semibold mb-3">"Resources"</h4>
                     <ul class="space-y-2 text-sm text-muted-foreground">
-                        <li><a href="#" class="hover:text-foreground">"Docs"</a></li>
-                        <li><a href="#" class="hover:text-foreground">"API"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Docs"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"API"</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-sm font-semibold mb-3">"Legal"</h4>
                     <ul class="space-y-2 text-sm text-muted-foreground">
-                        <li><a href="#" class="hover:text-foreground">"Privacy"</a></li>
-                        <li><a href="#" class="hover:text-foreground">"Terms"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Privacy"</a></li>
+                        <li><a href="#" class="hover:text-foreground hover:translate-x-0.5 inline-block transition-all">"Terms"</a></li>
                     </ul>
                 </div>
             </div>

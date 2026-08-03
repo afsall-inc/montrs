@@ -4,6 +4,7 @@ use montrs_ui::prelude::*;
 
 #[component]
 pub fn Integration04() -> impl IntoView {
+    let highlighted = RwSignal::new(Option::<String>::None);
     let features = vec![
         ("Compile-time safety", "Yes", "Yes", "No"),
         ("WASM support", "Yes", "Partial", "No"),
@@ -27,8 +28,18 @@ pub fn Integration04() -> impl IntoView {
                     </thead>
                     <tbody>
                         {features.into_iter().map(|(feature, a, b, c)| {
+                            let f = feature;
+                            let is_highlighted = move || highlighted.get().as_deref() == Some(f);
+                            let click = move |_| highlighted.set(Some(f.to_string()));
                             view! {
-                                <tr class="border-b border-border last:border-0">
+                                <tr on:click=click class=move || {
+                                    let base = "border-b border-border last:border-0 cursor-pointer transition-colors";
+                                    if is_highlighted() {
+                                        format!("{} bg-primary/5", base)
+                                    } else {
+                                        format!("{} hover:bg-muted/50", base)
+                                    }
+                                }>
                                     <td class="px-4 py-3 font-medium">{feature}</td>
                                     <td class="px-4 py-3">
                                         <span class="text-green-600 dark:text-green-400">{a}</span>

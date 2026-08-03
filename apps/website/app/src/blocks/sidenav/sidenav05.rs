@@ -4,6 +4,7 @@ use montrs_ui::prelude::*;
 
 #[component]
 pub fn Sidenav05() -> impl IntoView {
+    let active = RwSignal::new("Dashboard");
     let items = vec![
         ("Dashboard", Glyph::LayoutDashboard),
         ("Projects", Glyph::Folder),
@@ -22,18 +23,28 @@ pub fn Sidenav05() -> impl IntoView {
                     </div>
                 </div>
                 {items.into_iter().map(|(label, icon)| {
+                    let l = label;
+                    let is_active = move || active.get() == l;
+                    let click = move |_| active.set(l);
                     view! {
-                        <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                        <button on:click=click class=move || {
+                            let base = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors";
+                            if is_active() {
+                                format!("{} bg-primary/10 text-primary font-medium", base)
+                            } else {
+                                format!("{} text-muted-foreground hover:text-foreground hover:bg-muted", base)
+                            }
+                        }>
                             <Icon glyph=icon class="w-4 h-4" />
                             {label}
-                        </a>
+                        </button>
                     }
                 }).collect::<Vec<_>>()}
                 <div class="mt-4 pt-4 border-t border-border">
-                    <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                    <button on:click=move |_| active.set("Log out") class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                         <Icon glyph=Glyph::DoorOpen class="w-4 h-4" />
                         "Log out"
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>

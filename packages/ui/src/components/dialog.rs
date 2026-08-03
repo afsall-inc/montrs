@@ -1,30 +1,10 @@
 use leptos::prelude::*;
 use crate::cn::*;
 
-/// Modal dialog with overlay.
-///
-/// Renders a centered dialog box with a backdrop overlay.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <Dialog>
-///         <DialogTrigger>"Open"</DialogTrigger>
-///         <DialogOverlay />
-///         <DialogContent>
-///             <DialogHeader>
-///                 <DialogTitle>"Title"</DialogTitle>
-///             </DialogHeader>
-///             <DialogFooter>
-///                 <button>"Close"</button>
-///             </DialogFooter>
-///         </DialogContent>
-///     </Dialog>
-/// }
-/// ```
 #[component]
 pub fn Dialog(
     #[prop(optional)] default_open: bool,
+    #[prop(into, optional)] on_close: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
     let open = RwSignal::new(default_open);
@@ -37,7 +17,6 @@ pub fn Dialog(
     }
 }
 
-/// Trigger button that opens the dialog.
 #[component]
 pub fn DialogTrigger(
     #[prop(into, optional)] class: Signal<String>,
@@ -50,13 +29,12 @@ pub fn DialogTrigger(
     let merged = move || cn!("", class.get());
 
     view! {
-        <button type="button" class=merged on:click=toggle data-name="DialogTrigger">
+        <button type="button" class=merged on:click=toggle data-name="DialogTrigger" aria-haspopup="dialog">
             {children()}
         </button>
     }
 }
 
-/// Dialog overlay / backdrop.
 #[component]
 pub fn DialogOverlay(
     #[prop(into, optional)] class: Signal<String>,
@@ -82,7 +60,6 @@ pub fn DialogOverlay(
     }
 }
 
-/// Dialog content wrapper.
 #[component]
 pub fn DialogContent(
     #[prop(into, optional)] class: Signal<String>,
@@ -98,12 +75,30 @@ pub fn DialogContent(
 
     let close = move |_| open.set(false);
 
+    let title_id = crate::utils::Utils::use_random_id();
+    let desc_id = crate::utils::Utils::use_random_id();
+
+    provide_context(DialogIds { title_id: title_id.clone(), desc_id: desc_id.clone() });
+
+    let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Escape" {
+            ev.prevent_default();
+            open.set(false);
+        }
+    };
+
     view! {
         <div
             class=merged
             data-state=move || if open.get() { "open" } else { "closed" }
             hidden=move || !open.get()
             data-name="DialogContent"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby=title_id.clone()
+            aria-describedby=desc_id.clone()
+            tabindex="-1"
+            on:keydown=handle_key_down
         >
             {children()}
             <button
@@ -111,6 +106,7 @@ pub fn DialogContent(
                 class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 on:click=close
                 data-name="DialogClose"
+                aria-label="Close"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -132,7 +128,12 @@ pub fn DialogContent(
     }
 }
 
-/// Dialog header.
+#[derive(Clone)]
+struct DialogIds {
+    title_id: String,
+    desc_id: String,
+}
+
 #[component]
 pub fn DialogHeader(
     #[prop(into, optional)] class: Signal<String>,
@@ -147,7 +148,6 @@ pub fn DialogHeader(
     }
 }
 
-/// Dialog footer.
 #[component]
 pub fn DialogFooter(
     #[prop(into, optional)] class: Signal<String>,
@@ -162,31 +162,35 @@ pub fn DialogFooter(
     }
 }
 
-/// Dialog title.
 #[component]
 pub fn DialogTitle(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
+    let ids = use_context::<DialogIds>();
+    let id = ids.as_ref().map(|ids| ids.title_id.clone());
+
     let merged = move || cn!("text-lg font-semibold leading-none tracking-tight", class.get());
 
     view! {
-        <h2 class=merged data-name="DialogTitle">
+        <h2 class=merged data-name="DialogTitle" id=id>
             {children()}
         </h2>
     }
 }
 
-/// Dialog description.
 #[component]
 pub fn DialogDescription(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
+    let ids = use_context::<DialogIds>();
+    let id = ids.as_ref().map(|ids| ids.desc_id.clone());
+
     let merged = move || cn!("text-sm text-muted-foreground", class.get());
 
     view! {
-        <div class=merged data-name="DialogDescription">
+        <div class=merged data-name="DialogDescription" id=id>
             {children()}
         </div>
     }

@@ -27,6 +27,12 @@ pub fn Header() -> impl IntoView {
                         <a href="/blocks" class="text-muted-foreground hover:text-foreground transition-colors">
                             "Blocks"
                         </a>
+                        <a href="/motion" class="text-muted-foreground hover:text-foreground transition-colors">
+                            "Motion"
+                        </a>
+                        <a href="/animated-icons" class="text-muted-foreground hover:text-foreground transition-colors">
+                            "Animated Icons"
+                        </a>
                     </nav>
                 </div>
                 <div class="flex items-center gap-4">

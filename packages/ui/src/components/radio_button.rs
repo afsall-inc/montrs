@@ -1,27 +1,15 @@
 use leptos::prelude::*;
 use crate::cn::*;
 
-/// Radio button with label.
-///
-/// Renders a styled radio button with an optional label.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <RadioGroup>
-///         <RadioButton value="option-1" name="options" label="Option 1" />
-///         <RadioButton value="option-2" name="options" label="Option 2" />
-///     </RadioGroup>
-/// }
-/// ```
 #[component]
 pub fn RadioButton(
     value: String,
-    #[prop(into, optional)] name: Option<String>,
+    #[prop(into, optional)] _name: Option<String>,
     #[prop(into, optional)] label: Option<String>,
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] selected: RwSignal<String>,
     #[prop(optional)] disabled: bool,
+    #[prop(into, optional)] aria_label: Option<String>,
 ) -> impl IntoView {
     let value_for_merged = value.clone();
     let merged = move || {
@@ -37,10 +25,21 @@ pub fn RadioButton(
     let id = crate::utils::Utils::use_random_id();
     let value_for_is_selected = value.clone();
     let is_selected = move || selected.get() == value_for_is_selected;
-    let is_selected_for_aria = is_selected.clone();
-    let is_selected_for_data_state = is_selected.clone();
     let value_for_select = value.clone();
     let select = move |_| selected.set(value_for_select.clone());
+
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" | "ArrowRight" | "ArrowUp" | "ArrowLeft" => {
+                ev.prevent_default();
+            }
+            _ => {}
+        }
+    };
+
+    let is_selected_for_aria = is_selected.clone();
+    let is_selected_for_data_state = is_selected.clone();
+    let is_selected_for_svg = is_selected.clone();
 
     view! {
         <div class="flex items-center space-x-2">
@@ -50,16 +49,15 @@ pub fn RadioButton(
                 id=id.clone()
                 class=merged
                 aria-checked=is_selected_for_aria
-                data-state={
-                    let is_selected = is_selected_for_data_state.clone();
-                    move || if is_selected() { "checked" } else { "unchecked" }
-                }
+                aria-label=aria_label
+                data-state=move || if is_selected_for_data_state() { "checked" } else { "unchecked" }
                 disabled=disabled
                 on:click=select
+                on:keydown=on_key_down
                 data-name="RadioButton"
                 value=value
             >
-{move || if is_selected() {
+                {move || if is_selected_for_svg() {
                     view! {
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -94,7 +92,6 @@ pub fn RadioButton(
     }
 }
 
-/// Radio group container.
 #[component]
 pub fn RadioGroup(
     #[prop(into, optional)] class: Signal<String>,
@@ -102,8 +99,22 @@ pub fn RadioGroup(
 ) -> impl IntoView {
     let merged = move || cn!("grid gap-2", class.get());
 
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" | "ArrowRight" | "ArrowUp" | "ArrowLeft" => {
+                ev.prevent_default();
+            }
+            _ => {}
+        }
+    };
+
     view! {
-        <div class=merged role="radiogroup" data-name="RadioGroup">
+        <div
+            class=merged
+            role="radiogroup"
+            data-name="RadioGroup"
+            on:keydown=on_key_down
+        >
             {children()}
         </div>
     }

@@ -11,12 +11,12 @@ pub fn Sidenav03() -> impl IntoView {
         ("Advanced", vec!["Plugins", "Deployment", "Performance"]),
     ];
 
-    let sections_clone = sections.clone();
+    let active = RwSignal::new("Introduction");
 
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
             <div class="w-56 p-4 space-y-1">
-                {sections_clone.into_iter().enumerate().map(|(i, (title, items))| {
+                {sections.into_iter().enumerate().map(|(i, (title, items))| {
                     let t = title;
                     let is_open = move || open_sections.with(|s| s[i]);
                     let toggle = move |_| open_sections.update(|s| s[i] = !s[i]);
@@ -32,8 +32,18 @@ pub fn Sidenav03() -> impl IntoView {
                             <Show when=is_open>
                                 <div class="ml-2 mt-1 space-y-1">
                                     {items.iter().map(|item| {
+                                        let l = *item;
+                                        let is_active = move || active.get() == l;
+                                        let click = move |_| active.set(l);
                                         view! {
-                                            <a href="#" class="block rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">{*item}</a>
+                                            <button on:click=click class=move || {
+                                                let base = "block w-full text-left rounded-md px-3 py-1.5 text-sm transition-colors";
+                                                if is_active() {
+                                                    format!("{} bg-primary/10 text-primary font-medium", base)
+                                                } else {
+                                                    format!("{} text-muted-foreground hover:text-foreground hover:bg-muted", base)
+                                                }
+                                            }>{*item}</button>
                                         }
                                     }).collect::<Vec<_>>()}
                                 </div>

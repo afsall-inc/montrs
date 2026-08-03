@@ -11,9 +11,15 @@ pub mod glyph_impl;
 pub mod icon;
 pub mod registry;
 
+#[cfg(feature = "animated")]
+pub mod animated;
+
 pub use glyph::Glyph;
 pub use icon::{CustomIcon, Icon};
 pub use registry::*;
+
+#[cfg(feature = "animated")]
+pub use animated::AnimatedIcon;
 
 /// Re-export strum traits for iterating/looking up icons.
 pub mod strum {

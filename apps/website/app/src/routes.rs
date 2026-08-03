@@ -36,6 +36,20 @@ impl RouteView for BlocksView {
     }
 }
 
+pub struct MotionView;
+impl RouteView for MotionView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Motion /> }
+    }
+}
+
+pub struct AnimatedIconsView;
+impl RouteView for AnimatedIconsView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::AnimatedIcons /> }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // MontRS Routes (using view_route! macro)
 // ---------------------------------------------------------------------------
@@ -44,6 +58,8 @@ view_route! { HomeRoute, "/", HomeView }
 view_route! { IconsRoute, "/icons", IconsView }
 view_route! { ComponentsRoute, "/components", ComponentsView }
 view_route! { BlocksRoute, "/blocks", BlocksView }
+view_route! { MotionRoute, "/motion", MotionView }
+view_route! { AnimatedIconsRoute, "/animated-icons", AnimatedIconsView }
 
 // ---------------------------------------------------------------------------
 // Website Plate
@@ -77,5 +93,7 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(IconsRoute);
         router.register(ComponentsRoute);
         router.register(BlocksRoute);
+        router.register(MotionRoute);
+        router.register(AnimatedIconsRoute);
     }
 }

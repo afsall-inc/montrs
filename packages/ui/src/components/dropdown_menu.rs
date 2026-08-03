@@ -1,29 +1,27 @@
 use leptos::prelude::*;
+use leptos::wasm_bindgen::JsCast;
 use crate::cn::*;
 
-/// Dropdown menu with items.
-///
-/// Renders a trigger that opens a floating menu of items.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <DropdownMenu>
-///         <DropdownMenuTrigger>"Menu"</DropdownMenuTrigger>
-///         <DropdownMenuContent>
-///             <DropdownMenuItem>"Profile"</DropdownMenuItem>
-///             <DropdownMenuSeparator />
-///             <DropdownMenuItem>"Logout"</DropdownMenuItem>
-///         </DropdownMenuContent>
-///     </DropdownMenu>
-/// }
-/// ```
+#[derive(Clone)]
+struct DropdownContext {
+    open: RwSignal<bool>,
+    focused_index: RwSignal<usize>,
+    item_count: RwSignal<usize>,
+}
+
 #[component]
 pub fn DropdownMenu(
     children: Children,
 ) -> impl IntoView {
     let open = RwSignal::new(false);
-    provide_context(open);
+    let focused_index = RwSignal::new(0usize);
+    let item_count = RwSignal::new(0usize);
+
+    provide_context(DropdownContext {
+        open,
+        focused_index,
+        item_count,
+    });
 
     view! {
         <div data-name="DropdownMenu">
@@ -32,32 +30,65 @@ pub fn DropdownMenu(
     }
 }
 
-/// Trigger that opens the dropdown.
 #[component]
 pub fn DropdownMenuTrigger(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let open = use_context::<RwSignal<bool>>()
+    let ctx = use_context::<DropdownContext>()
         .expect("DropdownMenuTrigger must be inside DropdownMenu");
-    let toggle = move |_| open.update(|v| *v = !*v);
+    let toggle = move |_| {
+        ctx.open.update(|v| *v = !*v);
+        if ctx.open.get() {
+            ctx.focused_index.set(0);
+        }
+    };
+
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" | "Enter" | " " => {
+                ev.prevent_default();
+                ctx.open.set(true);
+                ctx.focused_index.set(0);
+            }
+            _ => {}
+        }
+    };
 
     let merged = move || cn!("", class.get());
 
     view! {
-        <button type="button" class=merged on:click=toggle data-name="DropdownMenuTrigger">
+        <button
+            type="button"
+            class=merged
+            on:click=toggle
+            on:keydown=on_key_down
+            data-name="DropdownMenuTrigger"
+            aria-haspopup="true"
+            aria-expanded=move || ctx.open.get()
+        >
             {children()}
         </button>
     }
 }
 
-/// Dropdown menu content.
+fn focus_element_by_index(idx: usize) {
+    let selector = format!("[data-dropdown-index=\"{}\"]", idx);
+    if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+        if let Ok(Some(el)) = doc.query_selector(&selector) {
+            if let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>() {
+                let _ = html_el.focus();
+            }
+        }
+    }
+}
+
 #[component]
 pub fn DropdownMenuContent(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let open = use_context::<RwSignal<bool>>()
+    let ctx = use_context::<DropdownContext>()
         .expect("DropdownMenuContent must be inside DropdownMenu");
 
     let merged = move || cn!(
@@ -65,18 +96,53 @@ pub fn DropdownMenuContent(
         class.get()
     );
 
-    let close = move |_| open.set(false);
+    let close = move |_| ctx.open.set(false);
+
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" => {
+                ev.prevent_default();
+                let count = ctx.item_count.get();
+                if count > 0 {
+                    let new_idx = (ctx.focused_index.get() + 1) % count;
+                    ctx.focused_index.set(new_idx);
+                    focus_element_by_index(new_idx);
+                }
+            }
+            "ArrowUp" => {
+                ev.prevent_default();
+                let count = ctx.item_count.get();
+                if count > 0 {
+                    let new_idx = if ctx.focused_index.get() == 0 {
+                        count - 1
+                    } else {
+                        ctx.focused_index.get() - 1
+                    };
+                    ctx.focused_index.set(new_idx);
+                    focus_element_by_index(new_idx);
+                }
+            }
+            "Escape" => {
+                ev.prevent_default();
+                ctx.open.set(false);
+            }
+            _ => {}
+        }
+    };
 
     view! {
         <div
             class=merged
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
+            data-state=move || if ctx.open.get() { "open" } else { "closed" }
+            hidden=move || !ctx.open.get()
             data-name="DropdownMenuContent"
+            role="menu"
+            aria-orientation="vertical"
+            on:keydown=on_key_down
         >
             {children()}
         </div>
-        {move || if open.get() {
+        {move || if ctx.open.get() {
             view! {
                 <div
                     class="fixed inset-0 z-40"
@@ -90,13 +156,22 @@ pub fn DropdownMenuContent(
     }
 }
 
-/// Dropdown menu item.
 #[component]
 pub fn DropdownMenuItem(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] on_select: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
+    let ctx = use_context::<DropdownContext>()
+        .expect("DropdownMenuItem must be inside DropdownMenu");
+
+    let idx = ctx.item_count.get();
+    ctx.item_count.update(|c| *c += 1);
+
+    let variant = if idx == 0 { Some(0) } else { None };
+
+    let _ = variant;
+
     let merged = move || cn!(
         "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         class.get()
@@ -106,13 +181,27 @@ pub fn DropdownMenuItem(
         if let Some(cb) = on_select {
             cb.run(());
         }
+        ctx.open.set(false);
+    };
+
+    let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Enter" || ev.key() == " " {
+            ev.prevent_default();
+            if let Some(cb) = on_select {
+                cb.run(());
+            }
+            ctx.open.set(false);
+        }
     };
 
     view! {
         <div
             class=merged
             role="menuitem"
+            tabindex="-1"
+            data-dropdown-index=idx.to_string()
             on:click=handle_click
+            on:keydown=handle_key_down
             data-name="DropdownMenuItem"
         >
             {children()}
@@ -120,7 +209,6 @@ pub fn DropdownMenuItem(
     }
 }
 
-/// Dropdown menu separator.
 #[component]
 pub fn DropdownMenuSeparator(
     #[prop(into, optional)] class: Signal<String>,
@@ -128,11 +216,10 @@ pub fn DropdownMenuSeparator(
     let merged = move || cn!("-mx-1 my-1 h-px bg-border", class.get());
 
     view! {
-        <div class=merged data-name="DropdownMenuSeparator" />
+        <div class=merged data-name="DropdownMenuSeparator" role="separator" />
     }
 }
 
-/// Dropdown menu label.
 #[component]
 pub fn DropdownMenuLabel(
     #[prop(into, optional)] class: Signal<String>,
@@ -141,13 +228,12 @@ pub fn DropdownMenuLabel(
     let merged = move || cn!("px-2 py-1.5 text-sm font-semibold", class.get());
 
     view! {
-        <div class=merged data-name="DropdownMenuLabel">
+        <div class=merged data-name="DropdownMenuLabel" role="presentation">
             {children()}
         </div>
     }
 }
 
-/// Dropdown menu radio group.
 #[component]
 pub fn DropdownMenuRadioGroup(
     #[prop(into, optional)] class: Signal<String>,
@@ -162,26 +248,45 @@ pub fn DropdownMenuRadioGroup(
     }
 }
 
-/// Dropdown menu radio item.
 #[component]
 pub fn DropdownMenuRadioItem(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] checked: RwSignal<bool>,
     children: Children,
 ) -> impl IntoView {
+    let ctx = use_context::<DropdownContext>()
+        .expect("DropdownMenuRadioItem must be inside DropdownMenu");
+
+    let idx = ctx.item_count.get();
+    ctx.item_count.update(|c| *c += 1);
+
     let merged = move || cn!(
         "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         class.get()
     );
 
-    let toggle = move |_| checked.set(true);
+    let toggle = move |_| {
+        checked.set(true);
+        ctx.open.set(false);
+    };
+
+    let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Enter" || ev.key() == " " {
+            ev.prevent_default();
+            checked.set(true);
+            ctx.open.set(false);
+        }
+    };
 
     view! {
         <div
             class=merged
             role="menuitemradio"
+            tabindex="-1"
+            data-dropdown-index=idx.to_string()
             aria-checked=move || checked.get()
             on:click=toggle
+            on:keydown=handle_key_down
             data-name="DropdownMenuRadioItem"
         >
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -210,26 +315,43 @@ pub fn DropdownMenuRadioItem(
     }
 }
 
-/// Dropdown menu item with checkbox.
 #[component]
 pub fn DropdownMenuCheckboxItem(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] checked: RwSignal<bool>,
     children: Children,
 ) -> impl IntoView {
+    let ctx = use_context::<DropdownContext>()
+        .expect("DropdownMenuCheckboxItem must be inside DropdownMenu");
+
+    let idx = ctx.item_count.get();
+    ctx.item_count.update(|c| *c += 1);
+
     let merged = move || cn!(
         "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         class.get()
     );
 
-    let toggle = move |_| checked.update(|v| *v = !*v);
+    let toggle = move |_| {
+        checked.update(|v| *v = !*v);
+    };
+
+    let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Enter" || ev.key() == " " {
+            ev.prevent_default();
+            checked.update(|v| *v = !*v);
+        }
+    };
 
     view! {
         <div
             class=merged
             role="menuitemcheckbox"
+            tabindex="-1"
+            data-dropdown-index=idx.to_string()
             aria-checked=move || checked.get()
             on:click=toggle
+            on:keydown=handle_key_down
             data-name="DropdownMenuCheckboxItem"
         >
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -258,7 +380,6 @@ pub fn DropdownMenuCheckboxItem(
     }
 }
 
-/// Dropdown menu shortcut.
 #[component]
 pub fn DropdownMenuShortcut(
     #[prop(into, optional)] class: Signal<String>,

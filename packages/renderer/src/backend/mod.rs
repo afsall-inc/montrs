@@ -1,6 +1,13 @@
-// Backend implementations for the Renderer trait.
-// Uncomment when the respective backend modules are fully implemented:
-// #[cfg(feature = "wgpu-backend")]
-// pub mod wgpu;
-// #[cfg(feature = "tiny-skia-backend")]
-// pub mod tiny_skia;
+#[cfg(feature = "wgpu-backend")]
+pub mod wgpu;
+
+#[cfg(feature = "tiny-skia-backend")]
+pub mod tiny_skia;
+
+/// Auto-select the best available backend.
+pub fn auto_select() -> &'static str {
+    #[cfg(feature = "wgpu-backend")]
+    { "wgpu" }
+    #[cfg(not(feature = "wgpu-backend"))]
+    { "tiny-skia" }
+}

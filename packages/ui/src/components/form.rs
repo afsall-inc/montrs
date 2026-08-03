@@ -1,40 +1,41 @@
 use leptos::prelude::*;
 use crate::cn::*;
 
-/// Form component with label, description, and message.
-///
-/// Provides a structured form field with validation display.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <Form>
-///         <FormField name="email">
-///             <FormLabel>"Email"</FormLabel>
-///             <FormControl>
-///                 <input type="email" />
-///             </FormControl>
-///             <FormDescription>"Enter your email."</FormDescription>
-///             <FormMessage>"Invalid email."</FormMessage>
-///         </FormField>
-///     </Form>
-/// }
-/// ```
 #[component]
 pub fn Form(
     #[prop(into, optional)] class: Signal<String>,
+    #[prop(into, optional)] on_submit: Option<Callback<leptos::ev::SubmitEvent>>,
+    #[prop(optional)] novalidate: bool,
+    #[prop(into, optional)] aria_label: Option<String>,
+    #[prop(into, optional)] aria_labelledby: Option<String>,
     children: Children,
 ) -> impl IntoView {
     let merged = move || cn!("space-y-6", class.get());
 
+    let handle_submit = move |ev: leptos::ev::SubmitEvent| {
+        if novalidate {
+            ev.prevent_default();
+        }
+        if let Some(cb) = on_submit {
+            cb.run(ev);
+        }
+    };
+
     view! {
-        <form class=merged data-name="Form">
+        <form
+            class=merged
+            data-name="Form"
+            role="form"
+            aria-label=aria_label
+            aria-labelledby=aria_labelledby
+            novalidate=novalidate.then_some("")
+            on:submit=handle_submit
+        >
             {children()}
         </form>
     }
 }
 
-/// Form field wrapper.
 #[component]
 pub fn FormField(
     name: String,
@@ -50,7 +51,6 @@ pub fn FormField(
     }
 }
 
-/// Form label.
 #[component]
 pub fn FormLabel(
     #[prop(into, optional)] class: Signal<String>,
@@ -68,7 +68,6 @@ pub fn FormLabel(
     }
 }
 
-/// Form control wrapper.
 #[component]
 pub fn FormControl(
     #[prop(into, optional)] class: Signal<String>,
@@ -83,7 +82,6 @@ pub fn FormControl(
     }
 }
 
-/// Form description text.
 #[component]
 pub fn FormDescription(
     #[prop(into, optional)] class: Signal<String>,
@@ -92,13 +90,12 @@ pub fn FormDescription(
     let merged = move || cn!("text-sm text-muted-foreground", class.get());
 
     view! {
-        <p class=merged data-name="FormDescription">
+        <p class=merged data-name="FormDescription" id=crate::utils::Utils::use_random_id()>
             {children()}
         </p>
     }
 }
 
-/// Form validation message.
 #[component]
 pub fn FormMessage(
     #[prop(into, optional)] class: Signal<String>,
@@ -106,8 +103,16 @@ pub fn FormMessage(
 ) -> impl IntoView {
     let merged = move || cn!("text-sm font-medium text-destructive", class.get());
 
+    let id = crate::utils::Utils::use_random_id();
+
     view! {
-        <p class=merged data-name="FormMessage">
+        <p
+            class=merged
+            data-name="FormMessage"
+            id=id
+            role="alert"
+            aria-live="polite"
+        >
             {children()}
         </p>
     }

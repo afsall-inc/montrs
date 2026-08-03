@@ -1,4 +1,5 @@
 use leptos::prelude::*;
+use leptos::wasm_bindgen::JsCast;
 use crate::cn::*;
 
 crate::variants! {
@@ -12,29 +13,31 @@ crate::variants! {
     }
 }
 
-/// Select dropdown component.
-///
-/// Renders a styled select trigger that opens a dropdown list of options.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <Select value=selected_signal>
-///         <SelectItem value="1">"Option 1"</SelectItem>
-///         <SelectItem value="2">"Option 2"</SelectItem>
-///     </Select>
-/// }
-/// ```
+#[derive(Clone)]
+struct SelectContext {
+    open: RwSignal<bool>,
+    value: RwSignal<String>,
+    focused_index: RwSignal<usize>,
+    item_count: RwSignal<usize>,
+}
+
 #[component]
 pub fn Select(
     #[prop(into, optional)] value: RwSignal<String>,
-    #[prop(into, optional)] placeholder: Option<String>,
+    #[prop(into, optional)] _placeholder: Option<String>,
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
     let open = RwSignal::new(false);
-    provide_context(open);
-    provide_context(value);
+    let focused_index = RwSignal::new(0usize);
+    let item_count = RwSignal::new(0usize);
+
+    provide_context(SelectContext {
+        open,
+        value,
+        focused_index,
+        item_count,
+    });
 
     let merged = move || {
         let v = SelectVariant::Default;
@@ -42,7 +45,27 @@ pub fn Select(
         c.with_class(class.try_get().unwrap_or_default())
     };
 
-    let toggle = move |_| open.update(|v| *v = !*v);
+    let toggle = move |_| {
+        open.update(|v| *v = !*v);
+        if open.get() {
+            focused_index.set(0);
+        }
+    };
+
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" | "Enter" | " " => {
+                ev.prevent_default();
+                open.set(true);
+                focused_index.set(0);
+            }
+            "Escape" => {
+                ev.prevent_default();
+                open.set(false);
+            }
+            _ => {}
+        }
+    };
 
     view! {
         <div class="relative" data-name="Select">
@@ -51,7 +74,10 @@ pub fn Select(
                 role="combobox"
                 class=merged
                 aria-expanded=move || open.get()
+                aria-haspopup="listbox"
+                aria-label="Select"
                 on:click=toggle
+                on:keydown=on_key_down
                 data-name="SelectTrigger"
             >
                 <span>{move || value.get().to_string()}</span>
@@ -76,13 +102,23 @@ pub fn Select(
     }
 }
 
-/// Select dropdown content.
+fn focus_select_item_by_index(idx: usize) {
+    let selector = format!("[data-select-index=\"{}\"]", idx);
+    if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
+        if let Ok(Some(el)) = doc.query_selector(&selector) {
+            if let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>() {
+                let _ = html_el.focus();
+            }
+        }
+    }
+}
+
 #[component]
 pub fn SelectContent(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let open = use_context::<RwSignal<bool>>()
+    let ctx = use_context::<SelectContext>()
         .expect("SelectContent must be inside Select");
 
     let merged = move || cn!(
@@ -90,20 +126,55 @@ pub fn SelectContent(
         class.get()
     );
 
-    let close = move |_| open.set(false);
+    let close = move |_| ctx.open.set(false);
+
+    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        match ev.key().as_str() {
+            "ArrowDown" => {
+                ev.prevent_default();
+                let count = ctx.item_count.get();
+                if count > 0 {
+                    let new_idx = (ctx.focused_index.get() + 1) % count;
+                    ctx.focused_index.set(new_idx);
+                    focus_select_item_by_index(new_idx);
+                }
+            }
+            "ArrowUp" => {
+                ev.prevent_default();
+                let count = ctx.item_count.get();
+                if count > 0 {
+                    let new_idx = if ctx.focused_index.get() == 0 {
+                        count - 1
+                    } else {
+                        ctx.focused_index.get() - 1
+                    };
+                    ctx.focused_index.set(new_idx);
+                    focus_select_item_by_index(new_idx);
+                }
+            }
+            "Escape" => {
+                ev.prevent_default();
+                ctx.open.set(false);
+            }
+            _ => {}
+        }
+    };
 
     view! {
         <div
             class=merged
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
+            data-state=move || if ctx.open.get() { "open" } else { "closed" }
+            hidden=move || !ctx.open.get()
             data-name="SelectContent"
+            role="listbox"
+            aria-label="Options"
+            on:keydown=on_key_down
         >
             <div class="max-h-96 overflow-y-auto">
                 {children()}
             </div>
         </div>
-        {move || if open.get() {
+        {move || if ctx.open.get() {
             view! {
                 <div
                     class="fixed inset-0 z-40"
@@ -117,21 +188,20 @@ pub fn SelectContent(
     }
 }
 
-/// Select item option.
 #[component]
 pub fn SelectItem(
     value: String,
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let selected_value = use_context::<RwSignal<String>>()
-        .expect("SelectItem must be inside Select");
-    let open = use_context::<RwSignal<bool>>()
+    let ctx = use_context::<SelectContext>()
         .expect("SelectItem must be inside Select");
 
+    let idx = ctx.item_count.get();
+    ctx.item_count.update(|c| *c += 1);
+
     let value_for_is_selected = value.clone();
-    let is_selected = move || selected_value.get() == value_for_is_selected;
-    let is_selected_for_aria = is_selected.clone();
+    let is_selected = move || ctx.value.get() == value_for_is_selected;
     let is_selected_for_merged = is_selected.clone();
     let merged = move || {
         let base = "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50";
@@ -139,21 +209,37 @@ pub fn SelectItem(
         cn!(base, active, class.get())
     };
 
+    let value_for_select = value.clone();
+    let value_for_kd = value.clone();
     let select = move |_| {
-        selected_value.set(value.clone());
-        open.set(false);
+        ctx.value.set(value_for_select.clone());
+        ctx.open.set(false);
     };
+
+    let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Enter" || ev.key() == " " {
+            ev.prevent_default();
+            ctx.value.set(value_for_kd.clone());
+            ctx.open.set(false);
+        }
+    };
+
+    let is_selected_for_aria = is_selected.clone();
+    let is_selected_for_svg = is_selected.clone();
 
     view! {
         <div
             class=merged
             role="option"
+            tabindex="-1"
+            data-select-index=idx.to_string()
             aria-selected=is_selected_for_aria
             on:click=select
+            on:keydown=handle_key_down
             data-name="SelectItem"
         >
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-                {move || if is_selected() {
+                {move || if is_selected_for_svg() {
                     view! {
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -178,7 +264,6 @@ pub fn SelectItem(
     }
 }
 
-/// Select separator.
 #[component]
 pub fn SelectSeparator(
     #[prop(into, optional)] class: Signal<String>,
@@ -186,11 +271,10 @@ pub fn SelectSeparator(
     let merged = move || cn!("-mx-1 my-1 h-px bg-border", class.get());
 
     view! {
-        <div class=merged data-name="SelectSeparator" />
+        <div class=merged data-name="SelectSeparator" role="separator" />
     }
 }
 
-/// Select label.
 #[component]
 pub fn SelectLabel(
     #[prop(into, optional)] class: Signal<String>,
@@ -199,7 +283,7 @@ pub fn SelectLabel(
     let merged = move || cn!("py-1.5 pl-8 pr-2 text-sm font-semibold", class.get());
 
     view! {
-        <div class=merged data-name="SelectLabel">
+        <div class=merged data-name="SelectLabel" role="presentation">
             {children()}
         </div>
     }

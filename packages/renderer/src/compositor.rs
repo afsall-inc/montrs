@@ -1,6 +1,6 @@
 //! Layer-based compositing, inspired by iced's compositor.
 
-use crate::{Paint, Quad, Rect, Renderer, Viewport};
+use crate::{Paint, Quad, Renderer, Viewport};
 
 /// A compositing layer containing quads, text, and images.
 #[derive(Debug, Default)]

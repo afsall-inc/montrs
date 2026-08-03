@@ -1,22 +1,13 @@
 use leptos::prelude::*;
 use crate::cn::*;
 
-/// Toggle switch component.
-///
-/// Renders a styled toggle switch.
-///
-/// # Example
-/// ```rust,ignore
-/// view! {
-///     <Switch checked=switch_signal label="Notifications" />
-/// }
-/// ```
 #[component]
 pub fn Switch(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] checked: RwSignal<bool>,
     #[prop(into, optional)] label: Option<String>,
     #[prop(optional)] disabled: bool,
+    #[prop(into, optional)] aria_label: Option<String>,
 ) -> impl IntoView {
     let merged = move || {
         let base = "peer inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50";
@@ -28,7 +19,15 @@ pub fn Switch(
         cn!(base, state, class.get())
     };
 
-    let toggle = move |_| checked.update(|v| *v = !*v);
+    let toggle = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == " " {
+            ev.prevent_default();
+            checked.update(|v| *v = !*v);
+        }
+    };
+
+    let click = move |_| checked.update(|v| *v = !*v);
+
     let id = crate::utils::Utils::use_random_id();
 
     let thumb_class = move || {
@@ -45,9 +44,12 @@ pub fn Switch(
                 id=id.clone()
                 class=merged
                 aria-checked=move || checked.get()
+                aria-label=aria_label
+                aria-disabled=disabled.then_some("true")
                 data-state=move || if checked.get() { "checked" } else { "unchecked" }
                 disabled=disabled
-                on:click=toggle
+                on:click=click
+                on:keydown=toggle
                 data-name="Switch"
             >
                 <span class=thumb_class data-name="SwitchThumb" />

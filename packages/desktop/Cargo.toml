@@ -11,6 +11,10 @@ description = "Desktop shell for MontRS — webview (wry) or native (winit + wgp
 montrs-renderer = { path = "../renderer", optional = true }
 serde.workspace = true
 thiserror.workspace = true
+wry = { version = "0.43", optional = true }
+winit = { version = "0.30", optional = true }
 
 [features]
 default = []
+webview = ["dep:wry"]
+native = ["dep:montrs-renderer", "dep:winit"]

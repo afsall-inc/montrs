@@ -62,9 +62,9 @@ pub fn AnimatedIcon(
                     s.set(1.15);
                     // Spring back
                     let s2 = s;
-                    crate::FrameLoop::on_frame(move || {
-                        let current = s2.get();
-                        let next = current + (1.0 - current) * 0.15;
+                    FrameLoop::on_frame(move || {
+                        let current: f64 = s2.get();
+                        let next: f64 = current + (1.0 - current) * 0.15;
                         s2.set(next);
                         (next - 1.0).abs() > 0.01
                     });
@@ -73,9 +73,9 @@ pub fn AnimatedIcon(
                     spin.set(true);
                     let r2 = r;
                     let spin2 = spin;
-                    let start = crate::FrameLoop::now();
-                    crate::FrameLoop::on_frame(move || {
-                        let elapsed = crate::FrameLoop::now() - start;
+                    let start = FrameLoop::now();
+                    FrameLoop::on_frame(move || {
+                        let elapsed = FrameLoop::now() - start;
                         if elapsed > 0.5 || !spin2.get() { return false; }
                         let angle = (elapsed * 40.0).sin() * 10.0;
                         r2.set(angle);
@@ -86,10 +86,10 @@ pub fn AnimatedIcon(
                     spin.set(true);
                     let r2 = r;
                     let spin2 = spin;
-                    let start = crate::FrameLoop::now();
-                    crate::FrameLoop::on_frame(move || {
+                    let start = FrameLoop::now();
+                    FrameLoop::on_frame(move || {
                         if !spin2.get() { return false; }
-                        let elapsed = crate::FrameLoop::now() - start;
+                        let elapsed = FrameLoop::now() - start;
                         r2.set((elapsed * 360.0 * 1.5) % 360.0);
                         true
                     });
@@ -97,9 +97,9 @@ pub fn AnimatedIcon(
                 AnimationProfile::Nod => {
                     ty.set(-4.0);
                     let ty2 = ty;
-                    crate::FrameLoop::on_frame(move || {
-                        let current = ty2.get();
-                        let next = current + (0.0 - current) * 0.2;
+                    FrameLoop::on_frame(move || {
+                        let current: f64 = ty2.get();
+                        let next: f64 = current + (0.0 - current) * 0.2;
                         ty2.set(next);
                         next.abs() > 0.1
                     });
@@ -107,7 +107,7 @@ pub fn AnimatedIcon(
                 AnimationProfile::PathDraw => {
                     po.set(100.0);
                     let po2 = po;
-                    crate::FrameLoop::on_frame(move || {
+                    FrameLoop::on_frame(move || {
                         let current = po2.get();
                         let next = current - 2.0;
                         if next <= 0.0 { po2.set(0.0); return false; }
@@ -203,7 +203,7 @@ pub mod animated_registry {
 
     macro_rules! def_animated_icon {
         ($name:ident) => {
-            #[doc = concat!("Animated ", stringify!($name), " icon — hover to play.")]
+            #[doc(hidden)]
             #[component]
             pub fn $name(#[prop(into, optional)] class: String) -> impl IntoView {
                 view! { <AnimatedIcon glyph=Glyph::$name class=class /> }
