@@ -4253,7 +4253,12 @@ version = "0.1.0"
 dependencies = [
  "leptos",
  "montrs-core",
+ "resvg",
  "serde",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tiny-skia",
+ "usvg",
  "wasm-bindgen",
  "web-sys",
 ]

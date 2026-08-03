@@ -16,9 +16,13 @@ pub fn Animated(
     hover_rotate: Option<f64>,
     #[prop(optional, into)]
     class: Option<String>,
+    #[prop(optional, into)]
+    initial_scale: Option<f64>,
+    #[prop(optional, into)]
+    initial_opacity: Option<f64>,
 ) -> impl IntoView {
-    let scale = MotionValue::new(1.0);
-    let opacity = MotionValue::new(1.0);
+    let scale = MotionValue::new(initial_scale.unwrap_or(1.0));
+    let opacity = MotionValue::new(initial_opacity.unwrap_or(1.0));
     let rotate = MotionValue::new(0.0);
 
     let target_scale = hover_scale.unwrap_or(1.0);
@@ -26,50 +30,52 @@ pub fn Animated(
     let target_rotate = hover_rotate.unwrap_or(0.0);
 
     let on_enter = {
-        let scale = scale.clone();
-        let opacity = opacity.clone();
-        let rotate = rotate.clone();
+        let s = scale.clone();
+        let o = opacity.clone();
+        let r = rotate.clone();
         move |_: leptos::ev::MouseEvent| {
-            if target_scale != 1.0 {
-                scale.animate_to(target_scale, 300.0, 20.0, 1.0);
-            }
-            if target_opacity != 1.0 {
-                opacity.animate_to(target_opacity, 300.0, 20.0, 1.0);
-            }
-            if target_rotate != 0.0 {
-                rotate.animate_to(target_rotate, 300.0, 20.0, 1.0);
-            }
+            if target_scale != 1.0 { s.animate_to(target_scale, 300.0, 20.0, 1.0); }
+            if target_opacity != 1.0 { o.animate_to(target_opacity, 300.0, 20.0, 1.0); }
+            if target_rotate != 0.0 { r.animate_to(target_rotate, 300.0, 20.0, 1.0); }
         }
     };
 
     let on_leave = {
-        let scale = scale.clone();
-        let opacity = opacity.clone();
-        let rotate = rotate.clone();
+        let s = scale.clone();
+        let o = opacity.clone();
+        let r = rotate.clone();
         move |_: leptos::ev::MouseEvent| {
-            scale.animate_to(1.0, 300.0, 20.0, 1.0);
-            opacity.animate_to(1.0, 300.0, 20.0, 1.0);
-            rotate.animate_to(0.0, 300.0, 20.0, 1.0);
+            s.animate_to(1.0, 300.0, 20.0, 1.0);
+            o.animate_to(1.0, 300.0, 20.0, 1.0);
+            r.animate_to(0.0, 300.0, 20.0, 1.0);
         }
     };
 
     let class_val = class.unwrap_or_default();
     let style = move || {
         format!(
-            "transform: translate3d(0px, 0px, 0px) scale({}) rotate({}deg); opacity: {}; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease; will-change: transform, opacity;",
-            scale.get(),
-            rotate.get(),
-            opacity.get()
+            "transform: translate3d(0px,0px,0px) scale({}) rotate({}deg); opacity: {}; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.2s ease; will-change: transform, opacity;",
+            scale.get(), rotate.get(), opacity.get()
         )
     };
 
     view! {
-        <div
-            class=class_val
-            style=style
-            on:mouseenter=on_enter
-            on:mouseleave=on_leave
-        >
+        <div class=class_val style=style on:mouseenter=on_enter on:mouseleave=on_leave>
+            {children()}
+        </div>
+    }
+}
+
+/// AnimatePresence — enter/exit animations for conditionally rendered children.
+#[component]
+pub fn AnimatePresence(
+    children: Children,
+    #[prop(optional, into)]
+    class: Option<String>,
+) -> impl IntoView {
+    let class_val = class.unwrap_or_default();
+    view! {
+        <div class=class_val>
             {children()}
         </div>
     }

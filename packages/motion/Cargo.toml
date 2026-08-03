@@ -5,15 +5,20 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "Animation library for MontRS — spring physics, tweening, gestures, and video creation"
+description = "Animation library for MontRS — spring physics, tweening, gestures, SVG, and video"
 
 [dependencies]
 montrs-core = { path = "../core" }
 leptos.workspace = true
 serde.workspace = true
+thiserror.workspace = true
 web-sys = { version = "0.3", features = ["Window", "Performance"] }
 wasm-bindgen = "0.2"
+tempfile = "3.10"
+resvg = { version = "0.44", optional = true }
+usvg = { version = "0.44", optional = true }
+tiny-skia = { version = "0.11", optional = true }
 
 [features]
 default = []
-video = []
+video = ["dep:resvg", "dep:usvg", "dep:tiny-skia"]
