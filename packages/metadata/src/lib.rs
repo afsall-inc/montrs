@@ -32,6 +32,8 @@ pub struct MontrsMetadata {
     pub serve: ServeMeta,
     #[serde(default)]
     pub build: BuildMeta,
+    #[serde(default)]
+    pub tasks: std::collections::HashMap<String, toml::Value>,
 }
 
 /// Project identity metadata.
@@ -187,14 +189,19 @@ impl MontrsMetadata {
         }
 
         // Auto-detect bin/lib packages from Cargo workspace if not set
-        if meta.serve.bin_package.is_none() || meta.serve.lib_package.is_none() {
+        if meta.serve.bin_package.is_none() || meta.serve.lib_package.is_none()
+        {
             if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
                 for package in &cargo.packages {
                     for target in &package.targets {
-                        if target.kind.iter().any(|k| k == "bin") && meta.serve.bin_package.is_none() {
+                        if target.kind.iter().any(|k| k == "bin")
+                            && meta.serve.bin_package.is_none()
+                        {
                             meta.serve.bin_package = Some(package.name.clone());
                         }
-                        if target.kind.iter().any(|k| k == "cdylib") && meta.serve.lib_package.is_none() {
+                        if target.kind.iter().any(|k| k == "cdylib")
+                            && meta.serve.lib_package.is_none()
+                        {
                             meta.serve.lib_package = Some(package.name.clone());
                         }
                     }

@@ -185,7 +185,39 @@ impl Pipeline {
         }
         self.process_tailwind()?;
         self.copy_assets()?;
+
+        self.generate_fallback_html()?;
+
         println!(" Build complete");
+        Ok(())
+    }
+
+    fn generate_fallback_html(&self) -> Result<()> {
+        let index_path = self.site_root.join("index.html");
+        if index_path.exists() {
+            return Ok(());
+        }
+        let project_name = self.meta.project.name.as_deref().unwrap_or("MontRS App");
+        let html = format!(
+            r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{}</title>
+    <link rel="stylesheet" href="/main.css" />
+</head>
+<body>
+    <div id="app">
+        <h1 style="text-align:center;margin-top:20vh;font-family:sans-serif">{}</h1>
+        <p style="text-align:center;font-family:sans-serif;color:#666">Static dev server — build the WASM frontend or SSR server to see full content.</p>
+    </div>
+</body>
+</html>"#,
+            project_name, project_name
+        );
+        std::fs::write(&index_path, html)?;
+        println!(" Generated fallback index.html");
         Ok(())
     }
 }

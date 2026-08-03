@@ -3,7 +3,7 @@ name = "my-app"
 version = "0.1.0"
 
 [serve]
-site-addr = "0.0.0.0:3000"
+site-addr = "localhost:3000"
 reload-port = 3001
 tailwind-input-file = "style/main.css"
 site-root = "target/site"
@@ -19,14 +19,5 @@ hello = "echo 'Hello from MontRS!'"
 lint = { command = "cargo clippy --workspace -- -D warnings", category = "Quality" }
 fmt = { command = "cargo fmt --all", category = "Quality" }
 test-unit = { command = "cargo test --lib", category = "Testing", description = "Run unit tests" }
-test-all = { 
-    command = "cargo test --workspace", 
-    category = "Testing", 
-    description = "Run all tests", 
-    dependencies = ["lint", "fmt"] 
-}
-pre-release = { 
-    command = "echo 'Preparing release...'", 
-    category = "Release", 
-    dependencies = ["test-all"] 
-}
+test-all = { command = "cargo test --workspace", category = "Testing", description = "Run all tests", dependencies = ["lint", "fmt"] }
+pre-release = { command = "echo 'Preparing release...'", category = "Release", dependencies = ["test-all"] }
