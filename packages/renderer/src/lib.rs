@@ -97,9 +97,24 @@ pub struct Color {
 }
 
 impl Color {
-    pub const BLACK: Color = Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
-    pub const WHITE: Color = Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
-    pub const TRANSPARENT: Color = Color { r: 0.0, g: 0.0, b: 0.0, a: 0.0 };
+    pub const BLACK: Color = Color {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 1.0,
+    };
+    pub const WHITE: Color = Color {
+        r: 1.0,
+        g: 1.0,
+        b: 1.0,
+        a: 1.0,
+    };
+    pub const TRANSPARENT: Color = Color {
+        r: 0.0,
+        g: 0.0,
+        b: 0.0,
+        a: 0.0,
+    };
 
     pub fn from_rgba8(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self {
@@ -165,9 +180,17 @@ pub struct Path {
     pub segments: Vec<PathSegment>,
 }
 
+impl Default for Path {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Path {
     pub fn new() -> Self {
-        Self { segments: Vec::new() }
+        Self {
+            segments: Vec::new(),
+        }
     }
 
     pub fn move_to(&mut self, x: f32, y: f32) {
@@ -179,10 +202,19 @@ impl Path {
     }
 
     pub fn quad_to(&mut self, cx: f32, cy: f32, x: f32, y: f32) {
-        self.segments.push(PathSegment::QuadTo(Point { x: cx, y: cy }, Point { x, y }));
+        self.segments
+            .push(PathSegment::QuadTo(Point { x: cx, y: cy }, Point { x, y }));
     }
 
-    pub fn cubic_to(&mut self, cx1: f32, cy1: f32, cx2: f32, cy2: f32, x: f32, y: f32) {
+    pub fn cubic_to(
+        &mut self,
+        cx1: f32,
+        cy1: f32,
+        cx2: f32,
+        cy2: f32,
+        x: f32,
+        y: f32,
+    ) {
         self.segments.push(PathSegment::CubicTo(
             Point { x: cx1, y: cy1 },
             Point { x: cx2, y: cy2 },

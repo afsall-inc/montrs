@@ -2,6 +2,12 @@ use crate::types::{HapticsProvider, ImpactStyle};
 
 pub struct WebHapticsProvider;
 
+impl Default for WebHapticsProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WebHapticsProvider {
     pub fn new() -> Self {
         Self
@@ -10,17 +16,19 @@ impl WebHapticsProvider {
 
 impl HapticsProvider for WebHapticsProvider {
     fn vibrate(&self, duration_ms: u32) {
-        if let Some(nav) = web_sys::window().and_then(|w| w.navigator()) {
+        if let Some(window) = web_sys::window() {
+            let nav = window.navigator();
             let _ = nav.vibrate_with_duration(duration_ms);
         }
     }
 
     fn vibrate_pattern(&self, pattern: &[u32]) {
-        if let Some(nav) = web_sys::window().and_then(|w| w.navigator()) {
+        if let Some(window) = web_sys::window() {
+            let nav = window.navigator();
             let js_arr = wasm_bindgen::JsValue::from(
                 pattern.iter().map(|d| *d as f64).collect::<Vec<f64>>(),
             );
-            let _ = nav.vibrate(&js_arr);
+            let _ = nav.vibrate_with_pattern(&js_arr);
         }
     }
 
@@ -41,8 +49,7 @@ impl HapticsProvider for WebHapticsProvider {
 
     fn is_supported(&self) -> bool {
         web_sys::window()
-            .and_then(|w| w.navigator())
-            .map(|n| n.vibrate(0).is_ok())
+            .map(|w| w.navigator().vibrate_with_duration(0))
             .unwrap_or(false)
     }
 

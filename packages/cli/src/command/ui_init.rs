@@ -1,7 +1,6 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use console::style;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 pub async fn run(
     base_color: Option<String>,
@@ -11,7 +10,7 @@ pub async fn run(
     println!("{} Initializing MontRS UI theme...", style("🎨").bold());
 
     let base_color = base_color.unwrap_or_else(|| "neutral".to_string());
-    let accent_color = accent_color.unwrap_or_default();
+    let accent_color = accent_color.unwrap_or_else(|| base_color.clone());
     let radius = radius.unwrap_or_else(|| "0.5rem".to_string());
 
     let css_path = Path::new("style/main.css");
@@ -22,7 +21,11 @@ pub async fn run(
     let css = generate_theme_css(&base_color, &accent_color, &radius);
     ensure_parent_dir(css_path)?;
     fs::write(css_path, &css).context("Failed to write style/main.css")?;
-    println!("  {} Wrote theme CSS to {}", style("✓").green().bold(), css_path.display());
+    println!(
+        "  {} Wrote theme CSS to {}",
+        style("✓").green().bold(),
+        css_path.display()
+    );
 
     // Generate tailwind.toml if it doesn't exist
     if !toml_path.exists() {
@@ -70,86 +73,122 @@ fn ensure_parent_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn generate_theme_css(base_color: &str, accent_color: &str, radius: &str) -> String {
-    let vars = theme_vars(base_color, accent_color);
-    let mut css = String::from("@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n@layer base {\n");
+fn color_hue(name: &str) -> f64 {
+    match name {
+        "red" => 0.0,
+        "orange" => 24.0,
+        "amber" => 38.0,
+        "yellow" => 50.0,
+        "lime" => 90.0,
+        "green" => 142.0,
+        "emerald" => 160.0,
+        "teal" => 180.0,
+        "cyan" => 200.0,
+        "sky" => 210.0,
+        "blue" => 222.0,
+        "indigo" => 240.0,
+        "violet" => 270.0,
+        "purple" => 288.0,
+        "fuchsia" => 300.0,
+        "pink" => 330.0,
+        "rose" => 350.0,
+        "stone" => 30.0,
+        "slate" => 215.0,
+        "zinc" => 240.0,
+        _ => 222.0, // neutral/blue default
+    }
+}
+
+fn generate_theme_css(
+    base_color: &str,
+    accent_color: &str,
+    radius: &str,
+) -> String {
+    let base_hue = color_hue(base_color);
+    let accent_hue = color_hue(accent_color);
+
+    let mut css = String::from(
+        "@tailwind base;\n@tailwind components;\n@tailwind \
+         utilities;\n\n@layer base {\n",
+    );
 
     // :root (light mode)
     css.push_str("    :root {\n");
     css.push_str(&format!("        --radius: {};\n", radius));
-    for (key, value) in &vars.light {
+
+    // Light theme with base color
+    let light = light_vars(base_hue, accent_hue);
+    for (key, value) in &light {
         css.push_str(&format!("        --{}: {};\n", key, value));
     }
     css.push_str("    }\n\n");
 
     // .dark (dark mode)
     css.push_str("    .dark {\n");
-    for (key, value) in &vars.dark {
+    let dark = dark_vars(base_hue, accent_hue);
+    for (key, value) in &dark {
         css.push_str(&format!("        --{}: {};\n", key, value));
     }
     css.push_str("    }\n");
 
-    css.push_str("}\n\n@layer base {\n    * { @apply border-border; }\n    body { @apply bg-background text-foreground; font-feature-settings: \"rlig\" 1, \"calt\" 1; }\n}\n\nhtml { scroll-behavior: smooth; }\n\n@layer base {\n    *:focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }\n}\n\n::selection { @apply bg-primary text-primary-foreground; }\n");
+    css.push_str(
+        "}\n\n@layer base {\n    * { @apply border-border; }\n    body { \
+         @apply bg-background text-foreground; font-feature-settings: \
+         \"rlig\" 1, \"calt\" 1; }\n}\n\nhtml { scroll-behavior: smooth; \
+         }\n\n@layer base {\n    *:focus-visible { @apply outline-none ring-2 \
+         ring-ring ring-offset-2 ring-offset-background; }\n}\n\n::selection \
+         { @apply bg-primary text-primary-foreground; }\n",
+    );
 
     css
 }
 
-struct ThemeVars {
-    light: Vec<(&'static str, &'static str)>,
-    dark: Vec<(&'static str, &'static str)>,
+fn light_vars(base_hue: f64, accent_hue: f64) -> Vec<(&'static str, String)> {
+    vec![
+        ("background", format!("{} 0% 100%", base_hue)),
+        ("foreground", format!("{} 84% 4.9%", base_hue)),
+        ("card", format!("{} 0% 100%", base_hue)),
+        ("card-foreground", format!("{} 84% 4.9%", base_hue)),
+        ("popover", format!("{} 0% 100%", base_hue)),
+        ("popover-foreground", format!("{} 84% 4.9%", base_hue)),
+        ("primary", format!("{} 47.4% 11.2%", base_hue)),
+        ("primary-foreground", "210 40% 98%".to_string()),
+        ("secondary", format!("{} 40% 96.1%", base_hue)),
+        ("secondary-foreground", format!("{} 47.4% 11.2%", base_hue)),
+        ("muted", format!("{} 40% 96.1%", base_hue)),
+        ("muted-foreground", format!("{} 16.3% 46.9%", base_hue)),
+        ("accent", format!("{} 40% 96.1%", accent_hue)),
+        ("accent-foreground", format!("{} 47.4% 11.2%", accent_hue)),
+        ("destructive", "0 84.2% 60.2%".to_string()),
+        ("destructive-foreground", "210 40% 98%".to_string()),
+        ("border", format!("{} 31.8% 91.4%", base_hue)),
+        ("input", format!("{} 31.8% 91.4%", base_hue)),
+        ("ring", format!("{} 84% 4.9%", base_hue)),
+    ]
 }
 
-fn theme_vars(base_color: &str, _accent_color: &str) -> ThemeVars {
-    // Default neutral theme
-    let light = vec![
-        ("background", "0 0% 100%"),
-        ("foreground", "222.2 84% 4.9%"),
-        ("card", "0 0% 100%"),
-        ("card-foreground", "222.2 84% 4.9%"),
-        ("popover", "0 0% 100%"),
-        ("popover-foreground", "222.2 84% 4.9%"),
-        ("primary", "222.2 47.4% 11.2%"),
-        ("primary-foreground", "210 40% 98%"),
-        ("secondary", "210 40% 96.1%"),
-        ("secondary-foreground", "222.2 47.4% 11.2%"),
-        ("muted", "210 40% 96.1%"),
-        ("muted-foreground", "215.4 16.3% 46.9%"),
-        ("accent", "210 40% 96.1%"),
-        ("accent-foreground", "222.2 47.4% 11.2%"),
-        ("destructive", "0 84.2% 60.2%"),
-        ("destructive-foreground", "210 40% 98%"),
-        ("border", "214.3 31.8% 91.4%"),
-        ("input", "214.3 31.8% 91.4%"),
-        ("ring", "222.2 84% 4.9%"),
-    ];
-
-    let dark = vec![
-        ("background", "222.2 84% 4.9%"),
-        ("foreground", "210 40% 98%"),
-        ("card", "222.2 84% 4.9%"),
-        ("card-foreground", "210 40% 98%"),
-        ("popover", "222.2 84% 4.9%"),
-        ("popover-foreground", "210 40% 98%"),
-        ("primary", "210 40% 98%"),
-        ("primary-foreground", "222.2 47.4% 11.2%"),
-        ("secondary", "217.2 32.6% 17.5%"),
-        ("secondary-foreground", "210 40% 98%"),
-        ("muted", "217.2 32.6% 17.5%"),
-        ("muted-foreground", "215 20.2% 65.1%"),
-        ("accent", "217.2 32.6% 17.5%"),
-        ("accent-foreground", "210 40% 98%"),
-        ("destructive", "0 62.8% 30.6%"),
-        ("destructive-foreground", "210 40% 98%"),
-        ("border", "217.2 32.6% 17.5%"),
-        ("input", "217.2 32.6% 17.5%"),
-        ("ring", "212.7 26.8% 83.9%"),
-    ];
-
-    // TODO: Support different base colors and accent colors from montrs-ui's theme::colors
-    let _ = base_color;
-    let _ = _accent_color;
-
-    ThemeVars { light, dark }
+fn dark_vars(base_hue: f64, accent_hue: f64) -> Vec<(&'static str, String)> {
+    vec![
+        ("background", format!("{} 84% 4.9%", base_hue)),
+        ("foreground", "210 40% 98%".to_string()),
+        ("card", format!("{} 84% 4.9%", base_hue)),
+        ("card-foreground", "210 40% 98%".to_string()),
+        ("popover", format!("{} 84% 4.9%", base_hue)),
+        ("popover-foreground", "210 40% 98%".to_string()),
+        ("primary", "210 40% 98%".to_string()),
+        ("primary-foreground", format!("{} 47.4% 11.2%", base_hue)),
+        ("secondary", format!("{} 32.6% 17.5%", base_hue)),
+        ("secondary-foreground", "210 40% 98%".to_string()),
+        ("muted", format!("{} 32.6% 17.5%", base_hue)),
+        ("muted-foreground", "215 20.2% 65.1%".to_string()),
+        ("accent", format!("{} 32.6% 17.5%", accent_hue)),
+        ("accent-foreground", "210 40% 98%".to_string()),
+        ("destructive", "0 62.8% 30.6%".to_string()),
+        ("destructive-foreground", "210 40% 98%".to_string()),
+        ("border", format!("{} 32.6% 17.5%", base_hue)),
+        ("input", format!("{} 32.6% 17.5%", base_hue)),
+        ("ring", "212.7 26.8% 83.9%".to_string()),
+    ]
 }
 
 fn generate_tailwind_toml() -> String {
@@ -210,5 +249,6 @@ foreground = "hsl(var(--card-foreground))"
 lg = "var(--radius)"
 md = "calc(var(--radius) - 2px)"
 sm = "calc(var(--radius) - 4px)"
-"#.to_string()
+"#
+    .to_string()
 }

@@ -1,10 +1,5 @@
 use crate::types::{HapticsProvider, ImpactStyle};
 
-#[cfg(target_os = "windows")]
-extern "system" {
-    fn MessageBeep(uType: u32) -> i32;
-}
-
 pub struct DesktopHapticsProvider;
 
 impl Default for DesktopHapticsProvider {
@@ -21,45 +16,104 @@ impl DesktopHapticsProvider {
 
 impl HapticsProvider for DesktopHapticsProvider {
     fn vibrate(&self, _duration_ms: u32) {
-        // TODO(#61): wire to montrs-desktop engine once available
         #[cfg(target_os = "windows")]
-        unsafe {
-            // Temporary: WinAPI MessageBeep for basic audible/tactile feedback
-            MessageBeep(0xFFFFFFFF);
+        {
+            extern "system" {
+                fn MessageBeep(uType: u32) -> i32;
+            }
+            unsafe {
+                MessageBeep(0xFFFFFFFF);
+            }
         }
         #[cfg(target_os = "macos")]
         {
-            // Placeholder: will use NSHapticFeedbackManager via montrs-desktop engine
-            // See montrs-desktop for the proper integration
-        }
-        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
-        {
-            // Linux/other: no universal haptics API without the desktop engine
+            use objc2::{msg_send, rc::autoreleasepool, runtime::Sel};
+            use objc2_foundation::NSObject;
+
+            autoreleasepool(|_| {
+                let cls =
+                    objc2::runtime::AnyClass::get("NSHapticFeedbackManager")
+                        .unwrap();
+                let performer: *mut NSObject =
+                    unsafe { msg_send![cls, defaultPerformer] };
+                if !performer.is_null() {
+                    let _: () = unsafe {
+                        msg_send![performer, performFeedbackPattern: 0]
+                    };
+                }
+            });
         }
     }
 
     fn vibrate_pattern(&self, pattern: &[u32]) {
-        // TODO(#61): wire to montrs-desktop engine once available
         for &ms in pattern {
             self.vibrate(ms);
         }
     }
 
     fn impact(&self, style: ImpactStyle) {
-        // TODO(#61): wire to montrs-desktop engine once available
-        let ms = match style {
-            ImpactStyle::Light => 10,
-            ImpactStyle::Medium => 20,
-            ImpactStyle::Heavy => 40,
-            ImpactStyle::Rigid => 30,
-            ImpactStyle::Soft => 15,
-        };
-        self.vibrate(ms);
+        #[cfg(target_os = "macos")]
+        {
+            use objc2::{msg_send, rc::autoreleasepool, runtime::Sel};
+            use objc2_foundation::NSObject;
+
+            let style_val = match style {
+                ImpactStyle::Light => 0,
+                ImpactStyle::Medium => 1,
+                ImpactStyle::Heavy => 2,
+                ImpactStyle::Rigid => 0,
+                ImpactStyle::Soft => 0,
+            };
+
+            autoreleasepool(|_| {
+                let cls =
+                    objc2::runtime::AnyClass::get("NSHapticFeedbackManager")
+                        .unwrap();
+                let performer: *mut NSObject =
+                    unsafe { msg_send![cls, defaultPerformer] };
+                if !performer.is_null() {
+                    let _: () = unsafe {
+                        msg_send![performer, performFeedbackPattern: style_val]
+                    };
+                }
+            });
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            let ms = match style {
+                ImpactStyle::Light => 10,
+                ImpactStyle::Medium => 20,
+                ImpactStyle::Heavy => 40,
+                ImpactStyle::Rigid => 30,
+                ImpactStyle::Soft => 15,
+            };
+            self.vibrate(ms);
+        }
     }
 
     fn selection_changed(&self) {
-        // TODO(#61): wire to montrs-desktop engine once available
-        self.vibrate(5);
+        #[cfg(target_os = "macos")]
+        {
+            use objc2::{msg_send, rc::autoreleasepool, runtime::Sel};
+            use objc2_foundation::NSObject;
+
+            autoreleasepool(|_| {
+                let cls =
+                    objc2::runtime::AnyClass::get("NSHapticFeedbackManager")
+                        .unwrap();
+                let performer: *mut NSObject =
+                    unsafe { msg_send![cls, defaultPerformer] };
+                if !performer.is_null() {
+                    let _: () = unsafe {
+                        msg_send![performer, performFeedbackPattern: 1]
+                    };
+                }
+            });
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            self.vibrate(5);
+        }
     }
 
     fn is_supported(&self) -> bool {
@@ -67,7 +121,6 @@ impl HapticsProvider for DesktopHapticsProvider {
     }
 
     fn description(&self) -> &str {
-        "Desktop haptics via OS-native APIs (temporary until montrs-desktop \
-         engine)"
+        "Desktop haptics via OS-native APIs"
     }
 }

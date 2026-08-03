@@ -182,9 +182,20 @@ impl<C: AppConfig> Route<C> for {route_name_pascal}Route {{
     Ok(())
 }
 
-pub async fn haptics(name: String, _target: String) -> Result<()> {
+pub async fn haptics(name: String, target: String) -> Result<()> {
     let name_pascal = to_pascal_case(&name);
     let name_snake = to_snake_case(&name);
+
+    let target_expr = match target.to_lowercase().as_str() {
+        "web" => "HapticsTarget::Web",
+        "mobile" => "HapticsTarget::Mobile",
+        "desktop" => "HapticsTarget::Desktop",
+        other => {
+            return Err(anyhow!(
+                "Unknown target '{other}'. Use 'web', 'desktop', or 'mobile'."
+            ));
+        }
+    };
     println!(
         "{} Generating haptics provider: {}",
         style("H").bold(),
@@ -211,7 +222,7 @@ impl {0}Haptics {{
         Self {{
             provider: create_haptics_provider(&HapticsConfig {{
                 enabled: true,
-                target: HapticsTarget::Desktop,
+                target: {1},
             }}),
         }}
     }}
@@ -223,7 +234,7 @@ impl {0}Haptics {{
     pub fn is_supported(&self) -> bool {{ self.provider.is_supported(); }}
 }}
 ",
-        name_pascal,
+        name_pascal, target_expr,
     );
     std::fs::write(&file_path, &content)?;
     println!(

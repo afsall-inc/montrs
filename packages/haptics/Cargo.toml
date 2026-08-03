@@ -11,12 +11,16 @@ description = "Cross-platform haptic feedback for web, desktop, and mobile"
 default = []
 web = ["dep:wasm-bindgen", "dep:web-sys"]
 desktop = []
-mobile = []
+mobile = ["dep:jni", "dep:objc2", "dep:objc2-foundation", "dep:objc2-ui-kit"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 wasm-bindgen = { version = "0.2", optional = true }
-web-sys = { version = "0.3", features = ["Navigator"], optional = true }
+web-sys = { version = "0.3", features = ["Navigator", "Window"], optional = true }
+jni = { version = "0.21", optional = true }
+objc2 = { version = "0.5", optional = true }
+objc2-foundation = { version = "0.2", optional = true }
+objc2-ui-kit = { version = "0.2", optional = true }
 
 [dev-dependencies]
 serde_json.workspace = true
