@@ -4932,10 +4932,13 @@ version = "0.1.0"
 dependencies = [
  "montrs-cli",
  "montrs-core",
+ "montrs-desktop",
  "montrs-haptics",
  "montrs-icons",
+ "montrs-mobile",
  "montrs-motion",
  "montrs-orm",
+ "montrs-renderer",
  "montrs-test",
  "montrs-ui",
  "montrs-validator",

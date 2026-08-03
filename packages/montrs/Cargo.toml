@@ -17,6 +17,9 @@ montrs-cli = { path = "../cli", version = "0.1.0", optional = true }
 montrs-icons = { path = "../icons", version = "0.1.0", optional = true }
 montrs-ui = { path = "../ui", version = "0.1.0", optional = true }
 montrs-motion = { path = "../motion", version = "0.1.0", optional = true }
+montrs-renderer = { path = "../renderer", version = "0.1.0", optional = true }
+montrs-desktop = { path = "../desktop", version = "0.1.0", optional = true }
+montrs-mobile = { path = "../mobile", version = "0.1.0", optional = true }
 
 [[bin]]
 name = "montrs"
@@ -38,6 +41,9 @@ cli = ["dep:montrs-cli"]
 icons = ["dep:montrs-icons"]
 ui = ["dep:montrs-ui", "icons"]
 motion = ["dep:montrs-motion"]
+renderer = ["dep:montrs-renderer"]
+desktop = ["dep:montrs-desktop", "renderer"]
+mobile = ["dep:montrs-mobile", "renderer"]
 
 # --- Forwarded Features ---
 

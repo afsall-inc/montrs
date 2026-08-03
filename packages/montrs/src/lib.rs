@@ -13,6 +13,14 @@ pub use montrs_validator as validator;
 pub use montrs_icons as icons;
 #[cfg(feature = "ui")]
 pub use montrs_ui as ui;
+#[cfg(feature = "motion")]
+pub use montrs_motion as motion;
+#[cfg(feature = "renderer")]
+pub use montrs_renderer as renderer;
+#[cfg(feature = "desktop")]
+pub use montrs_desktop as desktop;
+#[cfg(feature = "mobile")]
+pub use montrs_mobile as mobile;
 
 /// A convenience plate for importing the most commonly used types and traits.
 pub mod prelude {
@@ -28,4 +36,6 @@ pub mod prelude {
     pub use montrs_icons::*;
     #[cfg(feature = "ui")]
     pub use montrs_ui::prelude::*;
+    #[cfg(feature = "motion")]
+    pub use montrs_motion::*;
 }
