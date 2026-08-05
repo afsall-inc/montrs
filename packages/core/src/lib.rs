@@ -37,6 +37,10 @@ use serde::{Deserialize, Serialize};
 use std::{error::Error as StdError, sync::Arc};
 pub use validation::{Validator, ValidatorError};
 
+// Re-export Target from montrs-platform so existing code continues to work.
+#[doc(inline)]
+pub use montrs_platform::Target;
+
 /// A trait for errors that provide agent-accessible metadata.
 pub trait AgentError: StdError {
     /// A stable identifier for the error type.
@@ -70,21 +74,9 @@ pub trait AgentError: StdError {
 /// The execution environment context for the application.
 /// Used to differentiate logic between server-side rendering, WASM hydration,
 /// and other deployment targets like Edge or Mobile.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Target {
-    /// Server-side rendering (SSR) context.
-    Server,
-    /// Client-side WASM hydration or CSR context.
-    Wasm,
-    /// Edge computing environments (e.g., Cloudflare Workers).
-    Edge,
-    /// Desktop applications (e.g., via Tauri).
-    Desktop,
-    /// Android mobile platform.
-    MobileAndroid,
-    /// iOS mobile platform.
-    MobileIos,
-}
+///
+/// This type is re-exported from `montrs-platform`.
+pub use montrs_platform::Target;
 
 /// The unit of composition in MontRS.
 ///

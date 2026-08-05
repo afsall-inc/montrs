@@ -103,6 +103,7 @@ impl Route<AppConfig> for HelloRoute {
 | Package | Purpose |
 | :--- | :--- |
 | [core](packages/core/README.md) | The architectural engine (Plates, Routing, AppSpec). |
+| [platform](packages/platform/README.md) | Platform abstraction (Target enum, PlatformAdapter trait). |
 | [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
 | [agent](packages/agent/README.md) | Agent-first logic, snapshotting, and error tracking. |
 | [agentignore](packages/agentignore/README.md) | Agent-first file ignore patterns with IDE-specific export. |
@@ -111,6 +112,10 @@ impl Route<AppConfig> for HelloRoute {
 | [validator](packages/validator/README.md) | Compile-time validation and data modeling. |
 | [prdoc](packages/prdoc/README.md) | Structured PR documentation, auto-generation, changelog. |
 | [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
+| [build](packages/build/README.md) | Build pipeline facade (re-exports build-core, build-watch, build-serve). |
+| [build-core](packages/build-core/README.md) | Build pipeline trait and configuration. |
+| [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
+| [build-serve](packages/build-serve/README.md) | Dev server (static file serving via axum). |
 
 ---
 

@@ -4,7 +4,7 @@
 `montrs-core` is the foundational engine of the framework. It defines the core traits, data structures, and contracts that all other packages must follow.
 
 ## 2. Invariants
-- **Zero Local Dependencies**: This package must remain the root of the workspace. It cannot depend on any other package in `packages/`.
+- **Single Allowed Dependency**: The only `montrs-*` dependency permitted is `montrs-platform` (layer-0, target enum + platform adapter trait). No other `montrs-*` packages may be imported.
 - **Trait-Driven Design**: All framework capabilities (Plates, Routes, Config) must be defined via traits to ensure extensibility and agent-readiness.
 - **Mandatory Metadata**: Every public trait intended for application use MUST implement `.description()` and `.metadata()` methods.
 - **Structured Errors**: All error types must implement the `AgentError` trait, providing stable error codes and suggested fixes.

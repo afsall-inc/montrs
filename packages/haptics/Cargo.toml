@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Cross-platform haptic feedback for web, desktop, and mobile"
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
 [features]
 default = []
 web = ["dep:wasm-bindgen", "dep:web-sys"]

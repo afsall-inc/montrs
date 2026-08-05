@@ -1,5 +1,8 @@
 use crate::{copy_dir, run_cargo, run_tailwind};
 use anyhow::{Result, anyhow};
+use montrs_build_core::{
+    BuildPipeline, BuildStep, find_workspace_target_dir,
+};
 use montrs_metadata::MontrsMetadata;
 use std::{
     path::{Path, PathBuf},
@@ -39,42 +42,6 @@ impl Pipeline {
             server_bin_name,
             workspace_target_dir: workspace_target,
         })
-    }
-
-    /// Build the SSR server binary (`cargo build --package <pkg> --features ssr`).
-    pub fn build_server(&self) -> Result<()> {
-        println!(" Building SSR server...");
-        let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
-        let mut args = vec![
-            "build".to_string(),
-            "--package".to_string(),
-            pkg.to_string(),
-            "--features".to_string(),
-        ];
-        let features = if self.meta.serve.bin_features.is_empty() {
-            "ssr".to_string()
-        } else {
-            self.meta.serve.bin_features.join(",")
-        };
-        args.push(features);
-        if !self.meta.serve.bin_default_features {
-            args.push("--no-default-features".to_string());
-        }
-        run_cargo(&args)?;
-        println!(" SSR server built successfully");
-        Ok(())
-    }
-
-    /// Build the WASM frontend.
-    pub fn build_frontend(&self) -> Result<()> {
-        println!(" Building frontend (WASM)...");
-        run_cargo(&self.build_frontend_args())?;
-
-        println!(" Bundling WASM with wasm-bindgen...");
-        self.bundle_wasm()?;
-
-        println!(" Frontend built successfully");
-        Ok(())
     }
 
     fn build_frontend_args(&self) -> Vec<String> {
@@ -171,8 +138,42 @@ impl Pipeline {
         }
         Ok(())
     }
+}
 
-    pub fn process_tailwind(&self) -> Result<()> {
+impl BuildPipeline for Pipeline {
+    fn build_server(&self) -> Result<()> {
+        println!(" Building SSR server...");
+        let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
+        let mut args = vec![
+            "build".to_string(),
+            "--package".to_string(),
+            pkg.to_string(),
+            "--features".to_string(),
+        ];
+        let features = if self.meta.serve.bin_features.is_empty() {
+            "ssr".to_string()
+        } else {
+            self.meta.serve.bin_features.join(",")
+        };
+        args.push(features);
+        if !self.meta.serve.bin_default_features {
+            args.push("--no-default-features".to_string());
+        }
+        run_cargo(&args)?;
+        println!(" SSR server built successfully");
+        Ok(())
+    }
+
+    fn build_frontend(&self) -> Result<()> {
+        println!(" Building frontend (WASM)...");
+        run_cargo(&self.build_frontend_args())?;
+        println!(" Bundling WASM with wasm-bindgen...");
+        self.bundle_wasm()?;
+        println!(" Frontend built successfully");
+        Ok(())
+    }
+
+    fn process_tailwind(&self) -> Result<()> {
         if let Some(tw_input) = &self.meta.serve.tailwind_input_file {
             let input = self.project_root.join(tw_input);
             let output = self.site_root.join("main.css");
@@ -186,7 +187,7 @@ impl Pipeline {
         Ok(())
     }
 
-    pub fn copy_assets(&self) -> Result<()> {
+    fn copy_assets(&self) -> Result<()> {
         if let Some(assets) = &self.meta.serve.assets_dir {
             let src = self.project_root.join(assets);
             if src.exists() {
@@ -195,20 +196,6 @@ impl Pipeline {
                 println!(" Assets copied");
             }
         }
-        Ok(())
-    }
-
-    pub fn build_all(&self) -> Result<()> {
-        std::fs::create_dir_all(&self.site_root)?;
-        std::fs::create_dir_all(&self.pkg_dir)?;
-
-        self.build_server()?;
-        self.build_frontend()?;
-        self.process_tailwind()?;
-        self.copy_assets()?;
-        self.generate_index_html()?;
-
-        println!(" Build complete");
         Ok(())
     }
 
@@ -240,21 +227,34 @@ impl Pipeline {
         println!(" Generated index.html");
         Ok(())
     }
-}
 
-fn find_workspace_target_dir(app_root: &Path) -> Result<PathBuf> {
-    let mut current = app_root.to_path_buf();
-    loop {
-        let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists()
-            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-            && content.contains("[workspace]")
-        {
-            return Ok(current.join("target"));
-        }
-        if !current.pop() {
-            break;
-        }
+    fn build_all(&self) -> Result<()> {
+        std::fs::create_dir_all(&self.site_root)?;
+        std::fs::create_dir_all(&self.pkg_dir)?;
+
+        self.build_server()?;
+        self.build_frontend()?;
+        self.process_tailwind()?;
+        self.copy_assets()?;
+        self.generate_index_html()?;
+
+        println!(" Build complete");
+        Ok(())
     }
-    Ok(app_root.join("target"))
+
+    fn metadata(&self) -> &MontrsMetadata {
+        &self.meta
+    }
+
+    fn project_root(&self) -> &Path {
+        &self.project_root
+    }
+
+    fn site_root(&self) -> &Path {
+        &self.site_root
+    }
+
+    fn pkg_dir(&self) -> &Path {
+        &self.pkg_dir
+    }
 }

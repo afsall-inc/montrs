@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core", "montrs-orm", "montrs-bench"]
+
 [dependencies]
 montrs-core = { path = "../core" }
 thiserror = "1.0"

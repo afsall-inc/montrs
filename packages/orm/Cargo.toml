@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core"]
+
 [dependencies]
 rusqlite = { version = "0.31", features = ["bundled"], optional = true }
 tokio-postgres = { version = "0.7", optional = true }

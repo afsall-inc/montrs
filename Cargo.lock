@@ -4891,6 +4891,7 @@ dependencies = [
  "leptos",
  "leptos_axum",
  "leptos_router",
+ "montrs-platform",
  "nonzero_ext",
  "regex",
  "serde",
@@ -5011,6 +5012,14 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio-postgres",
  "tracing",
+]
+
+[[package]]
+name = "montrs-platform"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

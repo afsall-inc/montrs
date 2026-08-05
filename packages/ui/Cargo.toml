@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "UI component library for MontRS — Tailwind CSS macros, theming, and component system"
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-icons"]
+
 [dependencies]
 leptos.workspace = true
 tw_merge.workspace = true

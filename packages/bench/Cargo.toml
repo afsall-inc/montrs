@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Professional-grade benchmarking utilities for MontRS"
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core"]
+
 [dependencies]
 montrs-core = { path = "../core" }
 thiserror = "1.0"

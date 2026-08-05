@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-core", "montrs-agent", "montrs-agentignore", "montrs-bench", "montrs-fmt", "montrs-utils", "montrs-runner", "montrs-metadata", "montrs-build"]
+
 [[bin]]
 name = "montrs"
 path = "src/bin/montrs.rs"

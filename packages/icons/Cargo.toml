@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Lucide icons for MontRS applications — 1600+ icons with category-based features"
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-motion"]
+
 [dependencies]
 leptos.workspace = true
 strum = { workspace = true, features = ["derive"] }

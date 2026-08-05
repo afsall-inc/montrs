@@ -273,6 +273,12 @@ pub enum AgentSubcommand {
         #[command(subcommand)]
         subcommand: IgnoreSubcommand,
     },
+    /// Check package dependency graph for layer violations.
+    Deps {
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]

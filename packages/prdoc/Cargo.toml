@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Structured PR documentation, auto-generation, changelog, and SemVer bumping for Rust projects."
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
 [[bin]]
 name = "prdoc"
 path = "src/bin/prdoc.rs"

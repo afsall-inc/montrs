@@ -58,6 +58,30 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Pure Rust macros and components. No JavaScript, no Objective-C, no external runtime dependencies. Relies on `montrs-icons` for icon rendering.
 - **When to modify**: When adding new UI macros, updating the theming system, or adding new component patterns.
 
+## 📦 `montrs-platform`
+- **Responsibility**: Platform abstraction — `Target` enum, `PlatformAdapter` trait, `NoopPlatformAdapter`.
+- **Key Components**: `Target`, `PlatformAdapter`, `NoopPlatformAdapter`, `NativeMenuItem`.
+- **Boundary**: Layer-0 package with zero MontRS dependencies. Used by `core` for target identification and by `desktop`/`mobile` for platform-specific behavior.
+- **When to modify**: When adding a new target variant or platform capability.
+
+## 📦 `montrs-build-core`
+- **Responsibility**: `BuildPipeline` trait and `BuildConfig` types — the interface for the build system.
+- **Key Components**: `BuildPipeline`, `BuildStep`, `BuildConfig`, `find_workspace_target_dir`.
+- **Boundary**: Trait-only, no heavy dependencies (no axum, no notify). Used by `build-watch` and `build-serve` to avoid depending on the concrete Pipeline.
+- **When to modify**: When adding new build steps or changing the build interface.
+
+## 📦 `montrs-build-watch`
+- **Responsibility**: File system watcher with debounced rebuild triggers.
+- **Key Components**: `watch_directory`, `watch_and_rebuild`.
+- **Boundary**: Depends on `montrs-build-core` for the `BuildPipeline` trait. Uses `notify` for cross-platform file watching.
+- **When to modify**: When changing the watch strategy or debounce behavior.
+
+## 📦 `montrs-build-serve`
+- **Responsibility**: HTTP dev server for static file serving.
+- **Key Components**: `ServeConfig`, `serve_static`, `serve_with_callback`.
+- **Boundary**: Depends on `montrs-build-core` for configuration types. Uses `axum` + `tower-http` for serving.
+- **When to modify**: When adding server features (live reload, proxy, HTTPS).
+
 ---
 
 ## How Packages Interact
@@ -66,11 +90,25 @@ Every package in the workspace maintains its own **[Local Invariants](file:///pa
 
 MontRS follows a **Dependency Inversion** pattern. `montrs-core` defines the traits, and other packages (like `orm` or `validator`) provide implementations or tools that work with those traits.
 
+### Dependency Hierarchy
+
+Packages are organized into layers. A package at layer N may depend on packages at layer N or below, but never on packages at a higher layer.
+
+| Layer | Packages | Rules |
+|---|---|---|
+| **0 (Core)** | `core`, `validator`, `platform` | No montrs-* deps (except platform → core re-export) |
+| **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner` | Only core/validator/platform |
+| **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve` | Only layers 0-1 |
+| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs` | Any layer |
+
+### Dependency Flow
+
 1.  **CLI** reads **Config** and **Core** to understand the app.
 2.  **Core** uses **Validator** to validate data at the boundaries.
 3.  **Plates** use **ORM** to persist data.
 4.  **UI** uses **Icons** for icon rendering.
 5.  **Agent** scans everything to produce the **Spec Snapshot**.
+6.  **Build** orchestrates **Build-core** (pipeline trait), **Build-watch** (file watcher), and **Build-serve** (dev server).
 
 ---
 

@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core", "montrs-prdoc", "montrs-agentignore"]
+
 [features]
 default = []
 

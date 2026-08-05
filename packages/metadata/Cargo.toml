@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "MontRS metadata — abstract all project metadata into montrs.toml, replacing cargo-leptos metadata"
 
+[package.metadata.montrs]
+layer = "1"
+allowed_deps = []
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true

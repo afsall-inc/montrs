@@ -6,7 +6,12 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "0"
+allowed_deps = ["montrs-platform"]
+
 [dependencies]
+montrs-platform = { path = "../platform" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

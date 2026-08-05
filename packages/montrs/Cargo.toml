@@ -7,7 +7,12 @@ authors.workspace = true
 repository.workspace = true
 description = "The main entry point for the MontRS framework."
 
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-platform", "montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile"]
+
 [dependencies]
+montrs-platform = { path = "../platform", version = "0.1.0" }
 montrs-haptics = { path = "../haptics", optional = true }
 montrs-core = { path = "../core", version = "0.1.0" }
 montrs-orm = { path = "../orm", version = "0.1.0", optional = true }

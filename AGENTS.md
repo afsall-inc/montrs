@@ -45,7 +45,8 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 
 | Package | Role |
 |---------|------|
-| `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **No deps on other packages.** |
+| `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **Dep on platform only.** |
+| `platform` | Target enum, PlatformAdapter trait. **No deps on other packages.** |
 | `cli` | Binary entrypoint (`montrs` command), delegates to core/agent. |
 | `agent` | Sidecar: snapshots, error tracking, tool curation, PRDoc. **No LLM inference**. |
 | `montrs` | Facade crate — re-exports. Minimal logic. |
@@ -59,6 +60,10 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `runner` | Custom task runner config. |
 | `haptics` | Cross-platform haptic feedback. |
 | `utils` | Generic pure functions. |
+| `build` | Build pipeline facade (re-exports sub-packages). |
+| `build-core` | BuildPipeline trait + BuildConfig. |
+| `build-watch` | File watcher with debounced rebuild (notify). |
+| `build-serve` | Dev server (axum static file serving). |
 
 Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `packages/core/src/lib.rs`.
 

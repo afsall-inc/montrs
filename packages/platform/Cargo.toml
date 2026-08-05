@@ -1,0 +1,16 @@
+[package]
+name = "montrs-platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Platform abstraction for MontRS — Target enum, PlatformAdapter trait, and per-platform shells"
+
+[package.metadata.montrs]
+layer = "0"
+allowed_deps = []
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

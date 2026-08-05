@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Cross-platform rendering engine for MontRS — wgpu GPU backend + tiny-skia CPU fallback"
 
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = []
+
 [dependencies]
 wgpu = { version = "0.19", optional = true }
 tiny-skia = { version = "0.11", optional = true }

@@ -1,4 +1,50 @@
+use montrs_platform::{PlatformAdapter, Target};
 use thiserror::Error;
+
+/// Desktop platform adapter implementing PlatformAdapter.
+///
+/// Uses wry (webview) or winit + wgpu (native) depending on feature flags.
+pub struct DesktopAdapter {
+    target: Target,
+}
+
+impl DesktopAdapter {
+    pub fn new() -> Self {
+        Self {
+            target: Target::Desktop,
+        }
+    }
+}
+
+impl Default for DesktopAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PlatformAdapter for DesktopAdapter {
+    fn target(&self) -> Target {
+        Target::Desktop
+    }
+
+    fn open_url(&self, url: &str) {
+        if let Err(e) = open::that(url) {
+            eprintln!("Failed to open URL '{url}': {e}");
+        }
+    }
+
+    fn set_title(&self, _title: &str) {
+        // Title is set at window creation time via run_webview / run_native
+    }
+
+    fn set_size(&self, _width: u32, _height: u32) {
+        // Size is set at window creation time
+    }
+
+    fn description(&self) -> &'static str {
+        "Desktop platform (wry webview or winit + wgpu native)"
+    }
+}
 
 /// Launch a desktop application with the given HTML content.
 #[cfg(feature = "webview")]

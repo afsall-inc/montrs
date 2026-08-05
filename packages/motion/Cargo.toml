@@ -7,6 +7,10 @@ authors.workspace = true
 repository.workspace = true
 description = "Animation library for MontRS — spring physics, tweening, gestures, SVG, and video"
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core"]
+
 [dependencies]
 montrs-core = { path = "../core" }
 leptos.workspace = true

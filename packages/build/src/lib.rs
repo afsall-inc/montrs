@@ -1,27 +1,22 @@
-//! montrs-build: Native Rust build pipeline for MontRS applications.
+//! montrs-build: Facade crate for the MontRS build system.
 //!
-//! Replaces `cargo-leptos` entirely. Handles:
-//! - Reading `montrs.toml` for project metadata
-//! - Building the server binary with `cargo build`
-//! - Building the WASM frontend with `cargo build --target wasm32-unknown-unknown`
-//! - Running Tailwind CSS v4 CLI
-//! - Copying assets to the site root
-//! - File watching with auto-rebuild
-//! - Dev server with hot-reload
+//! Re-exports `montrs-build-core`, `montrs-build-watch`, and `montrs-build-serve`
+//! for convenience, and provides the concrete `Pipeline` struct that implements
+//! `BuildPipeline`.
 
-pub mod pipeline;
-pub mod watch;
+pub use montrs_build_core::*;
+pub use montrs_build_watch::*;
+pub use montrs_build_serve::*;
 
-use anyhow::Result;
-pub use pipeline::*;
-use std::{path::Path, process::Command};
-pub use watch::*;
+mod pipeline;
+
+pub use pipeline::Pipeline;
 
 /// Run a cargo command and stream output.
 /// Automatically sets RUSTFLAGS to enable Leptos `erase_components`
 /// for reduced type-depth and faster compiles.
-pub fn run_cargo(args: &[String]) -> Result<()> {
-    let status = Command::new("cargo")
+pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
+    let status = std::process::Command::new("cargo")
         .env("RUSTFLAGS", "--cfg erase_components")
         .args(args)
         .stdout(std::process::Stdio::inherit())
@@ -34,8 +29,8 @@ pub fn run_cargo(args: &[String]) -> Result<()> {
 }
 
 /// Run tailwindcss CLI on the input file to produce the output file.
-pub fn run_tailwind(input: &Path, output: &Path) -> Result<()> {
-    let status = Command::new("tailwindcss")
+pub fn run_tailwind(input: &std::path::Path, output: &std::path::Path) -> anyhow::Result<()> {
+    let status = std::process::Command::new("tailwindcss")
         .arg("-i")
         .arg(input)
         .arg("-o")
@@ -50,7 +45,7 @@ pub fn run_tailwind(input: &Path, output: &Path) -> Result<()> {
 }
 
 /// Copy a directory recursively.
-pub fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
+pub fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> anyhow::Result<()> {
     if src.exists() {
         fs_extra::dir::copy(
             src,

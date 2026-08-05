@@ -7,10 +7,16 @@ authors.workspace = true
 repository.workspace = true
 description = "Desktop shell for MontRS — webview (wry) or native (winit + wgpu)"
 
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-platform", "montrs-renderer"]
+
 [dependencies]
+montrs-platform = { path = "../platform" }
 montrs-renderer = { path = "../renderer", optional = true }
 serde.workspace = true
 thiserror.workspace = true
+open.workspace = true
 wry = { version = "0.43", optional = true }
 winit = { version = "0.30", optional = true }
 

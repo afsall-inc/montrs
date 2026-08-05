@@ -1,4 +1,46 @@
+use montrs_platform::{PlatformAdapter, Target};
 use thiserror::Error;
+
+/// Mobile platform adapter implementing PlatformAdapter.
+///
+/// For now, this is a stub that provides the adapter interface. Real
+/// Android/iOS native bridges will be added in future releases.
+pub struct MobileAdapter {
+    target: Target,
+}
+
+impl MobileAdapter {
+    pub fn new(target: Target) -> Self {
+        debug_assert!(target.is_mobile(), "MobileAdapter requires a mobile target");
+        Self { target }
+    }
+}
+
+impl PlatformAdapter for MobileAdapter {
+    fn target(&self) -> Target {
+        self.target
+    }
+
+    fn open_url(&self, _url: &str) {
+        // Stub — will use Android Intents / iOS UIApplication
+    }
+
+    fn set_title(&self, _title: &str) {
+        // Stub — will set native window title
+    }
+
+    fn set_size(&self, _width: u32, _height: u32) {
+        // Stub — mobile sizes are fixed by device
+    }
+
+    fn description(&self) -> &'static str {
+        match self.target {
+            Target::MobileAndroid => "Android mobile platform",
+            Target::MobileIos => "iOS mobile platform",
+            _ => "Mobile platform (unknown target)",
+        }
+    }
+}
 
 /// Launch a mobile application with the given HTML content.
 #[cfg(feature = "webview")]

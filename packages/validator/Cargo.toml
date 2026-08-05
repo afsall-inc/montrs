@@ -6,6 +6,10 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "0"
+allowed_deps = []
+
 [lib]
 proc-macro = true
 

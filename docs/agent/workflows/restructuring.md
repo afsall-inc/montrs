@@ -22,11 +22,14 @@ This guide defines how to safely reorganize code, move routes, and refactor pack
 1.  **Refactor Boundaries**: When moving logic between packages (e.g., from `core` to `utils`):
     -   Update `Cargo.toml` dependencies for all affected packages.
     -   Ensure public APIs remain stable or provide a migration path.
+    -   Add `[package.metadata.montrs]` with `layer` and `allowed_deps` to the new package.
 2.  **Maintain Annotations**: Ensure `@agent-tool` markers are moved along with the code.
-3.  **Global Check**: Run `montrs agent doctor` for the entire workspace.
-4.  **Verification**: 
+3.  **Layer Check**: Run `montrs agent deps` to verify no layer violations were introduced.
+4.  **Global Check**: Run `montrs agent doctor` for the entire workspace.
+5.  **Verification**: 
     -   Run `cargo test --workspace`.
     -   Run `montrs spec` and compare the new `agent.json` with a previous version to ensure no unintended metadata loss.
+    -   Run `montrs agent check` to verify invariants.
 
 ---
 

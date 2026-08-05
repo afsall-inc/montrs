@@ -1,6 +1,7 @@
 //! The MontRS Framework - A full-stack Rust framework.
 
 pub use montrs_core as core;
+pub use montrs_platform as platform;
 #[cfg(feature = "desktop")]
 pub use montrs_desktop as desktop;
 #[cfg(feature = "haptics")]
@@ -25,6 +26,7 @@ pub use montrs_validator as validator;
 /// A convenience plate for importing the most commonly used types and traits.
 pub mod prelude {
     pub use montrs_core::*;
+    pub use montrs_platform::{PlatformAdapter, Target};
     #[cfg(feature = "haptics")]
     pub use montrs_haptics::{HapticsConfig, HapticsProvider, ImpactStyle};
     #[cfg(feature = "icons")]
