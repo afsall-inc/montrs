@@ -4,6 +4,8 @@ pub use montrs_core as core;
 pub use montrs_platform as platform;
 #[cfg(feature = "desktop")]
 pub use montrs_desktop as desktop;
+#[cfg(feature = "edge")]
+pub use montrs_edge as edge;
 #[cfg(feature = "haptics")]
 pub use montrs_haptics as haptics;
 #[cfg(feature = "icons")]
@@ -22,6 +24,8 @@ pub use montrs_test as test;
 pub use montrs_ui as ui;
 #[cfg(feature = "validator")]
 pub use montrs_validator as validator;
+#[cfg(feature = "web")]
+pub use montrs_web as web;
 
 /// A convenience plate for importing the most commonly used types and traits.
 pub mod prelude {

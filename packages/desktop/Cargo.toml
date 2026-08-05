@@ -23,4 +23,4 @@ winit = { version = "0.30", optional = true }
 [features]
 default = []
 webview = ["dep:wry"]
-native = ["dep:montrs-renderer", "dep:winit"]
+native = ["dep:montrs-renderer", "dep:winit", "montrs-renderer/tiny-skia-backend"]

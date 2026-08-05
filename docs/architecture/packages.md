@@ -76,7 +76,29 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Depends on `montrs-build-core` for the `BuildPipeline` trait. Uses `notify` for cross-platform file watching.
 - **When to modify**: When changing the watch strategy or debounce behavior.
 
-## 📦 `montrs-build-serve`
+## 📦 `montrs-web`
+- **Responsibility**: Web platform adapter — `PlatformAdapter` for browser/WASM targets.
+- **Key Components**: `WebAdapter`.
+- **Boundary**: Uses `web-sys` and `wasm-bindgen` for DOM/browser API. No Leptos dependency.
+- **When to modify**: When adding new browser capabilities to the PlatformAdapter.
+
+## 📦 `montrs-edge`
+- **Responsibility**: Edge runtime adapter — `PlatformAdapter` for Cloudflare Workers, Deno, etc.
+- **Key Components**: `EdgeAdapter`, `EdgeRequest`, `EdgeResponse`, `handle_edge_request`.
+- **Boundary**: Lightweight, `fetch`-compatible request/response model. No heavy server dependencies.
+- **When to modify**: When adding new edge platform integrations or changing the request/response model.
+
+## 📦 `montrs-renderer`
+- **Responsibility**: Cross-platform rendering engine with `CompositorRenderer` wrapper.
+- **Key Components**: `Renderer` trait, `Compositor`, `CompositorRenderer`, `SkiaRenderer`, `WgpuRenderer`, `Viewport`.
+- **Boundary**: Provides the `Renderer` trait and `CompositorRenderer` that buffers drawing commands through a compositor layer stack and flushes them to a backend. `tiny-skia` (CPU, portable) is the default; `wgpu` (GPU) is opt-in.
+- **When to modify**: When adding new rendering primitives, backends, or compositor features.
+
+## 📦 `montrs-desktop`
+- **Responsibility**: Desktop shell — `PlatformAdapter` implementation + `run_webview`/`run_native`/`run_native_compositor` entry points.
+- **Key Components**: `DesktopAdapter`, `DesktopError`.
+- **Boundary**: Feature-gated backends: `webview` (wry) and `native` (winit + wgpu/tiny-skia).
+- **When to modify**: When adding new desktop capabilities or window management features.
 - **Responsibility**: HTTP dev server for static file serving.
 - **Key Components**: `ServeConfig`, `serve_static`, `serve_with_callback`.
 - **Boundary**: Depends on `montrs-build-core` for configuration types. Uses `axum` + `tower-http` for serving.
@@ -99,7 +121,7 @@ Packages are organized into layers. A package at layer N may depend on packages 
 | **0 (Core)** | `core`, `validator`, `platform` | No montrs-* deps (except platform → core re-export) |
 | **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner` | Only core/validator/platform |
 | **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve` | Only layers 0-1 |
-| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs` | Any layer |
+| **3 (Shell)** | `cli`, `desktop`, `mobile`, `web`, `edge`, `renderer`, `build`, `montrs` | Any layer |
 
 ### Dependency Flow
 
@@ -109,6 +131,8 @@ Packages are organized into layers. A package at layer N may depend on packages 
 4.  **UI** uses **Icons** for icon rendering.
 5.  **Agent** scans everything to produce the **Spec Snapshot**.
 6.  **Build** orchestrates **Build-core** (pipeline trait), **Build-watch** (file watcher), and **Build-serve** (dev server).
+7.  **Platform** provides the adapter trait consumed by **Desktop**, **Mobile**, **Web**, and **Edge**.
+8.  **Web** implements `PlatformAdapter` for browser/WASM; **Edge** implements it for serverless/fetch runtimes.
 
 ---
 
