@@ -1,2 +1,1 @@
-pub use super::header::*;
-pub use super::footer::*;
+pub use super::{footer::*, header::*};

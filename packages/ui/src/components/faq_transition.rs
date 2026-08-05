@@ -1,12 +1,13 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn FaqTransition(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("divide-y divide-border rounded-lg border", class.get());
+    let merged =
+        move || cn!("divide-y divide-border rounded-lg border", class.get());
     view! {
         <div class=merged data-name="FaqTransition">
             {children()}

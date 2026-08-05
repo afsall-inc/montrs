@@ -1,8 +1,10 @@
 use crate::{copy_dir, run_cargo, run_tailwind};
 use anyhow::{Result, anyhow};
 use montrs_metadata::MontrsMetadata;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 /// The MontRS build pipeline.
 pub struct Pipeline {
@@ -10,52 +12,60 @@ pub struct Pipeline {
     pub project_root: PathBuf,
     pub site_root: PathBuf,
     pub pkg_dir: PathBuf,
-    pub server_bin_path: PathBuf,
+    pub server_bin_name: String,
     pub workspace_target_dir: PathBuf,
 }
 
 impl Pipeline {
     pub fn from_root(root: &Path) -> Result<Self> {
+        let root = root.canonicalize()?;
         let meta = MontrsMetadata::from_file(root.join("montrs.toml"))?;
         let site_root = root.join(&meta.serve.site_root);
         let pkg_dir = site_root.join(&meta.serve.site_pkg_dir);
-        let workspace_target = find_workspace_target_dir(root)?;
-        let server_bin_path = workspace_target.join("debug").join(
-            meta.serve.bin_package.as_deref().unwrap_or("montrs-server")
-        );
+        let workspace_target = find_workspace_target_dir(&root)?;
+        let server_bin_name = meta
+            .serve
+            .package
+            .as_deref()
+            .unwrap_or("app")
+            .replace('-', "_")
+            + "-ssr";
 
         Ok(Self {
             meta,
             project_root: root.to_path_buf(),
             site_root,
             pkg_dir,
-            server_bin_path,
+            server_bin_name,
             workspace_target_dir: workspace_target,
         })
     }
 
+    /// Build the SSR server binary (`cargo build --package <pkg> --features ssr`).
     pub fn build_server(&self) -> Result<()> {
-        println!(" Building server...");
-        run_cargo(&self.build_server_args())?;
-        println!(" Server built successfully");
-        Ok(())
-    }
-
-    fn build_server_args(&self) -> Vec<String> {
-        let mut args = vec!["build".to_string(), "--package".to_string()];
-        if let Some(bin) = &self.meta.serve.bin_package {
-            args.push(bin.clone());
-        }
-        if !self.meta.serve.bin_features.is_empty() {
-            args.push("--features".to_string());
-            args.push(self.meta.serve.bin_features.join(","));
-        }
+        println!(" Building SSR server...");
+        let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
+        let mut args = vec![
+            "build".to_string(),
+            "--package".to_string(),
+            pkg.to_string(),
+            "--features".to_string(),
+        ];
+        let features = if self.meta.serve.bin_features.is_empty() {
+            "ssr".to_string()
+        } else {
+            self.meta.serve.bin_features.join(",")
+        };
+        args.push(features);
         if !self.meta.serve.bin_default_features {
             args.push("--no-default-features".to_string());
         }
-        args
+        run_cargo(&args)?;
+        println!(" SSR server built successfully");
+        Ok(())
     }
 
+    /// Build the WASM frontend.
     pub fn build_frontend(&self) -> Result<()> {
         println!(" Building frontend (WASM)...");
         run_cargo(&self.build_frontend_args())?;
@@ -68,19 +78,21 @@ impl Pipeline {
     }
 
     fn build_frontend_args(&self) -> Vec<String> {
+        let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
         let mut args = vec![
             "build".to_string(),
             "--target".to_string(),
             "wasm32-unknown-unknown".to_string(),
+            "--package".to_string(),
+            pkg.to_string(),
+            "--features".to_string(),
         ];
-        if let Some(lib) = &self.meta.serve.lib_package {
-            args.push("--package".to_string());
-            args.push(lib.clone());
-        }
-        if !self.meta.serve.lib_features.is_empty() {
-            args.push("--features".to_string());
-            args.push(self.meta.serve.lib_features.join(","));
-        }
+        let features = if self.meta.serve.lib_features.is_empty() {
+            "hydrate".to_string()
+        } else {
+            self.meta.serve.lib_features.join(",")
+        };
+        args.push(features);
         if !self.meta.serve.lib_default_features {
             args.push("--no-default-features".to_string());
         }
@@ -90,11 +102,16 @@ impl Pipeline {
     fn bundle_wasm(&self) -> Result<()> {
         std::fs::create_dir_all(&self.pkg_dir)?;
 
-        let lib_name = self.meta.serve.lib_package.as_deref()
+        let lib_name = self
+            .meta
+            .serve
+            .package
+            .as_deref()
             .unwrap_or("app")
             .replace('-', "_");
 
-        let wasm_target_dir = self.workspace_target_dir
+        let wasm_target_dir = self
+            .workspace_target_dir
             .join("wasm32-unknown-unknown")
             .join("debug");
 
@@ -102,12 +119,12 @@ impl Pipeline {
 
         if !wasm_file.exists() {
             return Err(anyhow!(
-                "WASM file not found at {}. Did the wasm32-unknown-unknown build succeed?",
+                "WASM file not found at {}. Did the wasm32-unknown-unknown \
+                 build succeed?",
                 wasm_file.display()
             ));
         }
 
-        // Run wasm-bindgen to produce the JS glue + bundled WASM
         let status = Command::new("wasm-bindgen")
             .arg("--target")
             .arg("web")
@@ -128,7 +145,9 @@ impl Pipeline {
                 self.fallback_copy_wasm(&wasm_file, &lib_name)?;
             }
             Err(_e) => {
-                println!(" wasm-bindgen not found — falling back to manual copy");
+                println!(
+                    " wasm-bindgen not found — falling back to manual copy"
+                );
                 self.fallback_copy_wasm(&wasm_file, &lib_name)?;
             }
         }
@@ -136,9 +155,14 @@ impl Pipeline {
         Ok(())
     }
 
-    fn fallback_copy_wasm(&self, wasm_file: &Path, lib_name: &str) -> Result<()> {
+    fn fallback_copy_wasm(
+        &self,
+        wasm_file: &Path,
+        lib_name: &str,
+    ) -> Result<()> {
         std::fs::copy(wasm_file, self.pkg_dir.join("front.wasm"))?;
-        let wasm_target_dir = self.workspace_target_dir
+        let wasm_target_dir = self
+            .workspace_target_dir
             .join("wasm32-unknown-unknown")
             .join("debug");
         let js_bindings = wasm_target_dir.join(format!("{}.js", lib_name));
@@ -177,67 +201,60 @@ impl Pipeline {
     pub fn build_all(&self) -> Result<()> {
         std::fs::create_dir_all(&self.site_root)?;
         std::fs::create_dir_all(&self.pkg_dir)?;
-        if self.meta.serve.bin_package.is_some() {
-            self.build_server()?;
-        }
-        if self.meta.serve.lib_package.is_some() {
-            self.build_frontend()?;
-        }
+
+        self.build_server()?;
+        self.build_frontend()?;
         self.process_tailwind()?;
         self.copy_assets()?;
-
-        self.generate_fallback_html()?;
+        self.generate_index_html()?;
 
         println!(" Build complete");
         Ok(())
     }
 
-    fn generate_fallback_html(&self) -> Result<()> {
+    fn generate_index_html(&self) -> Result<()> {
         let index_path = self.site_root.join("index.html");
-        if index_path.exists() {
-            return Ok(());
-        }
-        let project_name = self.meta.project.name.as_deref().unwrap_or("MontRS App");
+        let project_name =
+            self.meta.project.name.as_deref().unwrap_or("MontRS App");
+
         let html = format!(
             r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{}</title>
+    <title>{project_name}</title>
     <link rel="stylesheet" href="/main.css" />
+    <link rel="modulepreload" href="/pkg/front.js" />
+    <script type="module">
+        import init, {{ hydrate }} from '/pkg/front.js';
+        init('/pkg/front.wasm').then(() => hydrate());
+    </script>
 </head>
 <body>
-    <div id="app">
-        <h1 style="text-align:center;margin-top:20vh;font-family:sans-serif">{}</h1>
-        <p style="text-align:center;font-family:sans-serif;color:#666">Static dev server — build the WASM frontend or SSR server to see full content.</p>
-    </div>
+    <div id="app"></div>
 </body>
 </html>"#,
-            project_name, project_name
         );
         std::fs::write(&index_path, html)?;
-        println!(" Generated fallback index.html");
+        println!(" Generated index.html");
         Ok(())
     }
 }
 
 fn find_workspace_target_dir(app_root: &Path) -> Result<PathBuf> {
-    // Walk up from app root looking for the workspace root (has Cargo.toml with [workspace])
     let mut current = app_root.to_path_buf();
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Ok(current.join("target"));
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return Ok(current.join("target"));
         }
         if !current.pop() {
             break;
         }
     }
-    // Fallback to app's own target
     Ok(app_root.join("target"))
 }

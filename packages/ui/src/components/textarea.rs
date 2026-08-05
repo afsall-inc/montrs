@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Multi-line text input component.
 ///
@@ -31,12 +31,18 @@ pub fn Textarea(
     let input_id = id.unwrap_or_else(crate::utils::Utils::use_random_id);
     let error_for_merged = error.clone();
     let merged = move || {
-        let base = "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-        let error_class = if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
-            "border-destructive"
-        } else {
-            ""
-        };
+        let base = "flex min-h-[80px] w-full rounded-md border border-input \
+                    bg-background px-3 py-2 text-sm ring-offset-background \
+                    placeholder:text-muted-foreground \
+                    focus-visible:outline-none focus-visible:ring-2 \
+                    focus-visible:ring-ring focus-visible:ring-offset-2 \
+                    disabled:cursor-not-allowed disabled:opacity-50";
+        let error_class =
+            if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
+                "border-destructive"
+            } else {
+                ""
+            };
         cn!(base, error_class, class.get())
     };
 

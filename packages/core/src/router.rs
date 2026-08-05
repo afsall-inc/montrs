@@ -157,13 +157,87 @@ impl<P: RouteParams, C: AppConfig> RouteAction<P, C> for NoopAction {
 }
 
 // ---------------------------------------------------------------------------
+// Path segment types for pattern matching
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, PartialEq)]
+enum Segment {
+    Static(String),
+    Param(String),
+    Splat(String),
+}
+
+fn parse_pattern(pattern: &str) -> Vec<Segment> {
+    pattern
+        .split('/')
+        .filter(|s| !s.is_empty())
+        .map(|seg| {
+            if let Some(name) = seg.strip_prefix(':') {
+                Segment::Param(name.to_string())
+            } else if let Some(name) = seg.strip_prefix('*') {
+                Segment::Splat(name.to_string())
+            } else {
+                Segment::Static(seg.to_string())
+            }
+        })
+        .collect()
+}
+
+fn match_path(
+    pattern: &[Segment],
+    url_path: &str,
+) -> Option<HashMap<String, String>> {
+    let url_segs: Vec<&str> =
+        url_path.split('/').filter(|s| !s.is_empty()).collect();
+
+    let mut params = HashMap::new();
+    let mut pi = 0;
+    let mut ui = 0;
+
+    while pi < pattern.len() {
+        match &pattern[pi] {
+            Segment::Static(s) => {
+                if ui >= url_segs.len() || url_segs[ui] != s {
+                    return None;
+                }
+                ui += 1;
+                pi += 1;
+            }
+            Segment::Param(name) => {
+                if ui >= url_segs.len() {
+                    return None;
+                }
+                params.insert(name.clone(), url_segs[ui].to_string());
+                ui += 1;
+                pi += 1;
+            }
+            Segment::Splat(name) => {
+                let rest: Vec<&str> = url_segs[ui..].to_vec();
+                params.insert(name.clone(), rest.join("/"));
+                return Some(params);
+            }
+        }
+    }
+
+    if ui != url_segs.len() {
+        return None;
+    }
+
+    Some(params)
+}
+
+// ---------------------------------------------------------------------------
 // The Application Router
 // ---------------------------------------------------------------------------
+
+type RouteEntry<C> = (String, Vec<Segment>, Arc<dyn RouteInfo<C>>);
 
 /// The Application Router which maintains the static route graph.
 #[derive(Clone)]
 pub struct Router<C: AppConfig> {
-    routes: HashMap<&'static str, Arc<dyn RouteInfo<C>>>,
+    routes: Vec<RouteEntry<C>>,
+    /// Fast lookup for exact-match static routes (no params).
+    exact_routes: HashMap<&'static str, Arc<dyn RouteInfo<C>>>,
 }
 
 /// Internal trait to erase the associated types of a Route for storage in the Router.
@@ -247,53 +321,99 @@ impl<C: AppConfig> Default for Router<C> {
 impl<C: AppConfig> Router<C> {
     pub fn new() -> Self {
         Self {
-            routes: HashMap::new(),
+            routes: Vec::new(),
+            exact_routes: HashMap::new(),
         }
     }
 
     pub fn register<R: Route<C>>(&mut self, route: R) {
-        self.routes.insert(R::path(), Arc::new(route));
+        let path = R::path();
+        let segments = parse_pattern(path);
+        let arc: Arc<dyn RouteInfo<C>> = Arc::new(route);
+
+        // Static routes go into fast lookup
+        let has_params = segments
+            .iter()
+            .any(|s| matches!(s, Segment::Param(_) | Segment::Splat(_)));
+        if !has_params {
+            self.exact_routes.insert(path, arc.clone());
+        }
+
+        self.routes.push((path.to_string(), segments, arc));
     }
 
-    /// Resolves a path to a `RouteView` renderer and returns its view.
-    /// Falls back to a catch-all route registered at `"*"`, or a built-in 404.
+    /// Resolves a path to a `RouteView` and returns its view.
+    /// Supports static routes, `:param` patterns, `*splat` catch-all, and built-in 404.
     pub fn render_view(&self, path: &str) -> AnyView {
-        // Try exact match first
-        if let Some(route) = self.routes.get(path) {
+        // 1. Try fast exact match
+        if let Some(route) = self.exact_routes.get(path) {
             return (route.render())();
         }
-        // Try catch-all
-        if let Some(catch_all) = self.routes.get("*") {
+
+        // 2. Try pattern matching (params, optional params, splats)
+        for (_, segments, route) in &self.routes {
+            if match_path(segments, path).is_some() {
+                return (route.render())();
+            }
+        }
+
+        // 3. Try catch-all
+        if let Some(catch_all) = self.exact_routes.get("*") {
             return (catch_all.render())();
         }
-        // Built-in 404
-        (|| {
-            view! {
-                <div class="flex flex-col items-center justify-center min-h-[60vh]">
-                    <h1 class="text-4xl font-bold">"404"</h1>
-                    <p class="text-muted-foreground">"Page not found"</p>
-                </div>
+        for (path_str, _, route) in &self.routes {
+            if path_str == "*" {
+                return (route.render())();
             }
-            .into_any()
-        })()
+        }
+
+        // 4. Built-in 404
+        view! {
+            <div class="flex flex-col items-center justify-center min-h-[60vh]">
+                <h1 class="text-4xl font-bold">"404"</h1>
+                <p class="text-muted-foreground">"Page not found"</p>
+            </div>
+        }
+        .into_any()
+    }
+
+    /// Convert MontRS routes to Axum route listings for SSR integration.
+    /// Each registered route maps to an AxumRouteListing with SsrMode::OutOfOrder.
+    #[cfg(feature = "ssr")]
+    pub fn to_axum_route_listings(&self) -> Vec<leptos_axum::AxumRouteListing> {
+        use leptos_router::SsrMode;
+        self.routes
+            .iter()
+            .map(|(path, _, _)| {
+                leptos_axum::AxumRouteListing::new(
+                    path.clone(),
+                    SsrMode::OutOfOrder,
+                    [leptos_router::Method::Get],
+                    vec![],
+                )
+            })
+            .collect()
     }
 
     pub fn spec(&self) -> RouterSpec {
         let mut routes = HashMap::new();
-        for (path, route) in &self.routes {
-            routes.insert(path.to_string(), route.metadata());
+        for (path, _, route) in &self.routes {
+            routes.insert(path.clone(), route.metadata());
         }
         RouterSpec { routes }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Reactive client-side components (manual — no #[component] macro)
+// Reactive client-side components
 // ---------------------------------------------------------------------------
 
 /// Reads the MontRS Router from Leptos context.
 pub fn use_montrs_router<C: AppConfig + 'static>() -> Router<C> {
-    use_context::<Router<C>>().expect("MontRS Router not found in context. Did you forget to call AppSpec::mount_with_router?")
+    use_context::<Router<C>>().expect(
+        "MontRS Router not found in context. Did you forget to call \
+         AppSpec::mount_with_router?",
+    )
 }
 
 /// Renders the matched route's view. Place inside your layout.
@@ -305,12 +425,10 @@ pub fn RouterOutlet<C: AppConfig + 'static>() -> impl IntoView {
     let router = use_montrs_router::<C>();
     let location = leptos_router::hooks::use_location();
 
-    let view = move || {
+    move || {
         let path = location.pathname.get();
         router.render_view(&path)
-    };
-
-    view
+    }
 }
 
 /// A client-side navigation link.
@@ -362,7 +480,7 @@ pub fn RouteLink<C: AppConfig + 'static>(
 /// # Example
 /// ```rust,ignore
 /// use montrs_core::*;
-/// 
+///
 /// struct HomeView;
 /// impl RouteView for HomeView {
 ///     fn render(&self) -> impl IntoView {

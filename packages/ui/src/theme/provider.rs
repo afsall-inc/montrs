@@ -23,7 +23,10 @@ impl ThemeMode {
                 #[cfg(target_arch = "wasm32")]
                 {
                     web_sys::window()
-                        .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok()?)
+                        .and_then(|w| {
+                            w.match_media("(prefers-color-scheme: dark)")
+                                .ok()?
+                        })
                         .map(|m| m.matches())
                         .unwrap_or(false)
                 }
@@ -39,9 +42,7 @@ impl ThemeMode {
 /// Wraps the application and applies the `.dark` class to `<html>`.
 /// Supports `localStorage` persistence for user preference.
 #[component]
-pub fn ThemeProvider(
-    children: Children,
-) -> impl IntoView {
+pub fn ThemeProvider(children: Children) -> impl IntoView {
     let theme = RwSignal::new(load_theme_preference());
 
     let is_dark = Memo::new(move |_| theme.get().is_dark());
@@ -89,7 +90,9 @@ pub fn toggle_theme() {
 fn load_theme_preference() -> ThemeMode {
     #[cfg(target_arch = "wasm32")]
     {
-        if let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok()?) {
+        if let Some(storage) =
+            web_sys::window().and_then(|w| w.local_storage().ok()?)
+        {
             if let Ok(Some(value)) = storage.get_item("montrs-theme") {
                 match value.as_str() {
                     "light" => return ThemeMode::Light,
@@ -102,10 +105,13 @@ fn load_theme_preference() -> ThemeMode {
     ThemeMode::System
 }
 
-fn save_theme_preference(_mode: ThemeMode) {
+#[allow(unused_variables)]
+fn save_theme_preference(mode: ThemeMode) {
     #[cfg(target_arch = "wasm32")]
     {
-        if let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok()?) {
+        if let Some(storage) =
+            web_sys::window().and_then(|w| w.local_storage().ok()?)
+        {
             let value = match mode {
                 ThemeMode::Light => "light",
                 ThemeMode::Dark => "dark",

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 crate::variants! {
     Button {
@@ -36,7 +36,10 @@ pub fn Button(
     let computed_class = move || {
         let v = variant.try_get().unwrap_or_default();
         let s = size.try_get().unwrap_or_default();
-        let component_class = ButtonClass { variant: v, size: s };
+        let component_class = ButtonClass {
+            variant: v,
+            size: s,
+        };
         component_class.with_class(class.try_get().unwrap_or_default())
     };
 

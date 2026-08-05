@@ -1,7 +1,5 @@
-use leptos::prelude::*;
-use leptos::text_prop::TextProp;
-
 use crate::glyph::Glyph;
+use leptos::{prelude::*, text_prop::TextProp};
 
 pub const DEFAULT_SIZE: &str = "24";
 pub const DEFAULT_FILL: &str = "none";
@@ -46,7 +44,8 @@ pub fn render_svg(
     let size2 = size.clone();
     let fill = fill.unwrap_or_else(|| DEFAULT_FILL.into());
     let stroke = stroke.unwrap_or_else(|| DEFAULT_STROKE.into());
-    let stroke_width = stroke_width.unwrap_or_else(|| DEFAULT_STROKE_WIDTH.into());
+    let stroke_width =
+        stroke_width.unwrap_or_else(|| DEFAULT_STROKE_WIDTH.into());
 
     view! {
         <svg

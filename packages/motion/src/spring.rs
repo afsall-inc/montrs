@@ -67,7 +67,8 @@ impl Spring {
             let a = 1.0;
             let b = (self.velocity + zeta * w0) / wd;
             let envelope = (-zeta * w0 * t).exp();
-            let result = range * (1.0 - envelope * (a * (wd * t).cos() + b * (wd * t).sin()));
+            let result = range
+                * (1.0 - envelope * (a * (wd * t).cos() + b * (wd * t).sin()));
             self.initial + result
         } else {
             // Critically damped or overdamped

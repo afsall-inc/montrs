@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Breadcrumb navigation component.
 ///
@@ -37,10 +37,13 @@ pub fn BreadcrumbList(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex flex-wrap items-center gap-1.5 break-words text-sm \
+             text-muted-foreground sm:gap-2.5",
+            class.get()
+        )
+    };
 
     view! {
         <ol class=merged data-name="BreadcrumbList">
@@ -71,7 +74,8 @@ pub fn BreadcrumbLink(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("transition-colors hover:text-foreground", class.get());
+    let merged =
+        move || cn!("transition-colors hover:text-foreground", class.get());
 
     view! {
         <a href=href class=merged data-name="BreadcrumbLink">
@@ -110,7 +114,8 @@ pub fn BreadcrumbSeparator(
 pub fn BreadcrumbEllipsis(
     #[prop(into, optional)] class: Signal<String>,
 ) -> impl IntoView {
-    let merged = move || cn!("flex h-9 w-9 items-center justify-center", class.get());
+    let merged =
+        move || cn!("flex h-9 w-9 items-center justify-center", class.get());
 
     view! {
         <li class=merged data-name="BreadcrumbEllipsis" aria-hidden="true">

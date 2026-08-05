@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Range slider component.
 ///
@@ -20,10 +20,12 @@ pub fn Slider(
     #[prop(into, optional)] value: RwSignal<f64>,
     #[prop(optional)] disabled: bool,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative flex w-full touch-none select-none items-center",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex w-full touch-none select-none items-center",
+            class.get()
+        )
+    };
 
     let pct = move || {
         let range = max - min;

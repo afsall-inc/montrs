@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Hover card / tooltip that appears on hover.
 ///
@@ -15,9 +15,7 @@ use crate::cn::*;
 /// }
 /// ```
 #[component]
-pub fn HoverCard(
-    children: Children,
-) -> impl IntoView {
+pub fn HoverCard(children: Children) -> impl IntoView {
     let open = RwSignal::new(false);
     provide_context(open);
 
@@ -60,10 +58,16 @@ pub fn HoverCardContent(
     let open = use_context::<RwSignal<bool>>()
         .expect("HoverCardContent must be inside HoverCard");
 
-    let merged = move || cn!(
-        "z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "z-50 w-64 rounded-md border bg-popover p-4 \
+             text-popover-foreground shadow-md outline-none \
+             data-[state=open]:animate-in data-[state=closed]:animate-out \
+             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 \
+             data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            class.get()
+        )
+    };
 
     view! {
         <div

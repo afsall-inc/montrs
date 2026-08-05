@@ -3,9 +3,19 @@ rust = "1.84"
 
 [env]
 RUST_BACKTRACE = "1"
+MONTRS_LOG = "info"
 
 [tasks]
-dev = "cargo leptos watch"
-build = "cargo leptos build --release"
-fmt = "cargo fmt"
-test = "cargo test"
+dev = "montrs serve"
+build = "montrs build"
+test = "montrs test"
+fmt = "montrs fmt"
+check = "cargo check"
+check-ssr = "cargo check --features ssr"
+check-wasm = "cargo check --target wasm32-unknown-unknown --features hydrate --no-default-features"
+build-ssr = "cargo build --features ssr"
+lint = "cargo clippy -- -D warnings"
+
+[tasks.ci]
+description = "Run all checks"
+depends = ["fmt", "lint", "check", "check-ssr"]

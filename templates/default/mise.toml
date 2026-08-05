@@ -11,6 +11,8 @@ dev = "montrs serve"
 test = "montrs test"
 fmt = "montrs fmt"
 lint = "cargo clippy --workspace -- -D warnings"
+check = "cargo check --workspace"
+check-ssr = "cargo check -p app --features ssr"
 
 [tasks.ci]
 description = "Run all CI checks"

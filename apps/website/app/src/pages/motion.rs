@@ -1,8 +1,7 @@
 use leptos::prelude::*;
 use montrs_icons::*;
-use montrs_ui::prelude::*;
-use montrs_ui::components::slider::Slider;
 use montrs_motion::*;
+use montrs_ui::{components::slider::Slider, prelude::*};
 
 #[component]
 pub fn Motion() -> impl IntoView {

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn DatePickerDualState(
@@ -8,7 +8,8 @@ pub fn DatePickerDualState(
     #[prop(into, optional)] end: RwSignal<String>,
 ) -> impl IntoView {
     let merged = move || cn!("flex items-center gap-2", class.get());
-    let on_start = move |ev: leptos::ev::Event| start.set(event_target_value(&ev));
+    let on_start =
+        move |ev: leptos::ev::Event| start.set(event_target_value(&ev));
     let on_end = move |ev: leptos::ev::Event| end.set(event_target_value(&ev));
     view! {
         <div class=merged data-name="DatePickerDualState">

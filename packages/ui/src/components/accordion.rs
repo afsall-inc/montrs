@@ -1,6 +1,5 @@
-use leptos::prelude::*;
-use leptos::wasm_bindgen::JsCast;
 use crate::cn::*;
+use leptos::{prelude::*, wasm_bindgen::JsCast};
 
 #[derive(Clone)]
 struct AccordionItemData {
@@ -124,7 +123,8 @@ pub fn AccordionTrigger(
         let multiple = ctx.multiple;
         ctx.expanded.update(|v| {
             if multiple {
-                if let Some(pos) = v.iter().position(|x| x == &value_for_toggle) {
+                if let Some(pos) = v.iter().position(|x| x == &value_for_toggle)
+                {
                     v.remove(pos);
                 } else {
                     v.push(value_for_toggle.clone());
@@ -145,13 +145,19 @@ pub fn AccordionTrigger(
         let key = ev.key();
         let items = ctx.items.with(|items| items.clone());
 
-        let current_idx = items.iter().position(|entry| entry.value == value_for_keydown);
+        let current_idx = items
+            .iter()
+            .position(|entry| entry.value == value_for_keydown);
 
         let new_idx = match key.as_str() {
             "ArrowDown" => {
                 ev.prevent_default();
                 if let Some(idx) = current_idx {
-                    if idx + 1 < items.len() { Some(idx + 1) } else { Some(0) }
+                    if idx + 1 < items.len() {
+                        Some(idx + 1)
+                    } else {
+                        Some(0)
+                    }
                 } else {
                     Some(0)
                 }
@@ -159,7 +165,11 @@ pub fn AccordionTrigger(
             "ArrowUp" => {
                 ev.prevent_default();
                 if let Some(idx) = current_idx {
-                    if idx > 0 { Some(idx - 1) } else { Some(items.len() - 1) }
+                    if idx > 0 {
+                        Some(idx - 1)
+                    } else {
+                        Some(items.len() - 1)
+                    }
                 } else {
                     Some(0)
                 }
@@ -187,18 +197,25 @@ pub fn AccordionTrigger(
     let tabindex = move || {
         let focused = ctx.focused_index.get();
         let items = ctx.items.with(|items| items.clone());
-        let current_idx = items.iter().position(|entry| entry.value == value_for_tabindex);
-        if focused == current_idx || focused.is_none() && current_idx == Some(0) {
+        let current_idx = items
+            .iter()
+            .position(|entry| entry.value == value_for_tabindex);
+        if focused == current_idx || focused.is_none() && current_idx == Some(0)
+        {
             "0"
         } else {
             "-1"
         }
     };
 
-    let merged = move || cn!(
-        "flex flex-1 items-center justify-between py-4 text-sm font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex flex-1 items-center justify-between py-4 text-sm \
+             font-medium transition-all hover:underline \
+             [&[data-state=open]>svg]:rotate-180",
+            class.get()
+        )
+    };
 
     view! {
         <button
@@ -248,10 +265,13 @@ pub fn AccordionContent(
 
     let is_open = move || ctx.expanded.with(|v| v.contains(&value));
 
-    let merged = move || cn!(
-        "overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "overflow-hidden text-sm data-[state=closed]:animate-accordion-up \
+             data-[state=open]:animate-accordion-down",
+            class.get()
+        )
+    };
 
     view! {
         <div

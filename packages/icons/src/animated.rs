@@ -3,10 +3,8 @@
 //! Each icon gets a physics-based animation profile on hover.
 //! Requires the `animated` feature flag.
 
-use leptos::prelude::*;
-use leptos::text_prop::TextProp;
-use crate::glyph::Glyph;
-use crate::icon::DEFAULT_SIZE;
+use crate::{glyph::Glyph, icon::DEFAULT_SIZE};
+use leptos::{prelude::*, text_prop::TextProp};
 use montrs_motion::FrameLoop;
 
 /// Animation profile for a glyph.
@@ -76,7 +74,9 @@ pub fn AnimatedIcon(
                     let start = FrameLoop::now();
                     FrameLoop::on_frame(move || {
                         let elapsed = FrameLoop::now() - start;
-                        if elapsed > 0.5 || !spin2.get() { return false; }
+                        if elapsed > 0.5 || !spin2.get() {
+                            return false;
+                        }
                         let angle = (elapsed * 40.0).sin() * 10.0;
                         r2.set(angle);
                         true
@@ -88,7 +88,9 @@ pub fn AnimatedIcon(
                     let spin2 = spin;
                     let start = FrameLoop::now();
                     FrameLoop::on_frame(move || {
-                        if !spin2.get() { return false; }
+                        if !spin2.get() {
+                            return false;
+                        }
                         let elapsed = FrameLoop::now() - start;
                         r2.set((elapsed * 360.0 * 1.5) % 360.0);
                         true
@@ -110,7 +112,10 @@ pub fn AnimatedIcon(
                     FrameLoop::on_frame(move || {
                         let current = po2.get();
                         let next = current - 2.0;
-                        if next <= 0.0 { po2.set(0.0); return false; }
+                        if next <= 0.0 {
+                            po2.set(0.0);
+                            return false;
+                        }
                         po2.set(next);
                         true
                     });
@@ -139,8 +144,12 @@ pub fn AnimatedIcon(
     let style = move || {
         let p = profile.get();
         let mut styles = format!(
-            "display: inline-flex; cursor: pointer; transform: scale({}) rotate({}deg) translateY({}px); transition: all 0.3s cubic-bezier(0.16,1,0.3,1);",
-            scale.get(), rotate.get(), translate_y.get()
+            "display: inline-flex; cursor: pointer; transform: scale({}) \
+             rotate({}deg) translateY({}px); transition: all 0.3s \
+             cubic-bezier(0.16,1,0.3,1);",
+            scale.get(),
+            rotate.get(),
+            translate_y.get()
         );
         if p == AnimationProfile::PathDraw && hovered.get() {
             styles.push_str(&format!(
@@ -174,8 +183,12 @@ pub fn AnimatedIcon(
 
 fn animation_profile(glyph: Glyph) -> AnimationProfile {
     let name = glyph.name();
-    if name.contains("Loader") || name.contains("Spinner") || name.contains("Cog")
-        || name.contains("Refresh") || name.contains("Sync") || name.contains("Rotate")
+    if name.contains("Loader")
+        || name.contains("Spinner")
+        || name.contains("Cog")
+        || name.contains("Refresh")
+        || name.contains("Sync")
+        || name.contains("Rotate")
         || name == "LoaderCircle"
     {
         return AnimationProfile::Spin;
@@ -183,12 +196,17 @@ fn animation_profile(glyph: Glyph) -> AnimationProfile {
     if name.contains("Heart") || name.contains("Thumbs") || name == "Activity" {
         return AnimationProfile::Pulse;
     }
-    if name.contains("Bell") || name.contains("Alert") || name.contains("Alarm")
-        || name.contains("Notification") || name == "Moon"
+    if name.contains("Bell")
+        || name.contains("Alert")
+        || name.contains("Alarm")
+        || name.contains("Notification")
+        || name == "Moon"
     {
         return AnimationProfile::Shake;
     }
-    if name.contains("Search") || name.contains("Navigation") || name.contains("Compass")
+    if name.contains("Search")
+        || name.contains("Navigation")
+        || name.contains("Compass")
         || name.contains("Locate")
     {
         return AnimationProfile::Nod;
@@ -197,15 +215,17 @@ fn animation_profile(glyph: Glyph) -> AnimationProfile {
 }
 
 pub mod animated_registry {
-    use leptos::prelude::*;
-    use crate::glyph::Glyph;
     use super::AnimatedIcon;
+    use crate::glyph::Glyph;
+    use leptos::prelude::*;
 
     macro_rules! def_animated_icon {
         ($name:ident) => {
             #[doc(hidden)]
             #[component]
-            pub fn $name(#[prop(into, optional)] class: String) -> impl IntoView {
+            pub fn $name(
+                #[prop(into, optional)] class: String,
+            ) -> impl IntoView {
                 view! { <AnimatedIcon glyph=Glyph::$name class=class /> }
             }
         };

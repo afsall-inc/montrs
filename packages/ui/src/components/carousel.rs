@@ -1,12 +1,13 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Carousel(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("relative overflow-hidden rounded-lg", class.get());
+    let merged =
+        move || cn!("relative overflow-hidden rounded-lg", class.get());
     view! {
         <div class=merged data-name="Carousel">
             {children()}

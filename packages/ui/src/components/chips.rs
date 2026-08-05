@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Chips(
@@ -20,7 +20,13 @@ pub fn Chip(
     #[prop(into, optional)] on_remove: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("inline-flex items-center gap-1 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium", class.get());
+    let merged = move || {
+        cn!(
+            "inline-flex items-center gap-1 rounded-full border bg-muted/50 \
+             px-2.5 py-0.5 text-xs font-medium",
+            class.get()
+        )
+    };
     view! {
         <span class=merged data-name="Chip">
             {children()}

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Avatar component with image fallback to initials.
 ///
@@ -19,10 +19,12 @@ pub fn Avatar(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="Avatar">
@@ -51,10 +53,13 @@ pub fn AvatarFallback(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "flex h-full w-full items-center justify-center rounded-full bg-muted",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex h-full w-full items-center justify-center rounded-full \
+             bg-muted",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="AvatarFallback">

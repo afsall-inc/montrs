@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Collapsible section with a trigger that toggles content visibility.
 ///
@@ -40,10 +40,13 @@ pub fn CollapsibleTrigger(
         .expect("CollapsibleTrigger must be inside Collapsible");
     let toggle = move |_| open.update(|v| *v = !*v);
 
-    let merged = move || cn!(
-        "flex w-full items-center justify-between py-2 text-sm font-medium [&[data-state=open]>svg]:rotate-180",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex w-full items-center justify-between py-2 text-sm \
+             font-medium [&[data-state=open]>svg]:rotate-180",
+            class.get()
+        )
+    };
 
     let state = move || if open.get() { "open" } else { "closed" };
 
@@ -63,10 +66,13 @@ pub fn CollapsibleContent(
     let open = use_context::<RwSignal<bool>>()
         .expect("CollapsibleContent must be inside Collapsible");
 
-    let merged = move || cn!(
-        "overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "overflow-hidden data-[state=closed]:animate-collapsible-up \
+             data-[state=open]:animate-collapsible-down",
+            class.get()
+        )
+    };
 
     let state = move || if open.get() { "open" } else { "closed" };
 

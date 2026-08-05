@@ -1,8 +1,7 @@
+use crate::pages::*;
+use async_trait::async_trait;
 use leptos::prelude::*;
 use montrs_core::*;
-use async_trait::async_trait;
-
-use crate::pages::*;
 
 // ---------------------------------------------------------------------------
 // RouteView wrappers for each page component

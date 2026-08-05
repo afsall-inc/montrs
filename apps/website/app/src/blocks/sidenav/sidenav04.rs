@@ -6,7 +6,15 @@ use montrs_ui::prelude::*;
 pub fn Sidenav04() -> impl IntoView {
     let query = RwSignal::new(String::new());
     let active = RwSignal::new("Home");
-    let items = vec!["Home", "Search", "Settings", "Messages", "Notifications", "Profile", "Billing"];
+    let items = vec![
+        "Home",
+        "Search",
+        "Settings",
+        "Messages",
+        "Notifications",
+        "Profile",
+        "Billing",
+    ];
 
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">

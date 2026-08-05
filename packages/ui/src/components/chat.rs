@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Chat(
@@ -22,7 +22,11 @@ pub fn ChatMessage(
 ) -> impl IntoView {
     let merged = move || {
         let base = "flex gap-3";
-        let dir = if align == "end" { "flex-row-reverse" } else { "" };
+        let dir = if align == "end" {
+            "flex-row-reverse"
+        } else {
+            ""
+        };
         cn!(base, dir, class.get())
     };
     view! {

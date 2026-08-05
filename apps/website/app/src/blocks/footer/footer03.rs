@@ -1,5 +1,4 @@
 use leptos::prelude::*;
-use montrs_icons::*;
 use montrs_ui::prelude::*;
 
 #[component]

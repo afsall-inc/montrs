@@ -1,12 +1,18 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn BentoGrid(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3", class.get());
+    let merged = move || {
+        cn!(
+            "mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 \
+             lg:grid-cols-3",
+            class.get()
+        )
+    };
     view! {
         <div class=merged data-name="BentoGrid">
             {children()}

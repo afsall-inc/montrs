@@ -1,8 +1,6 @@
-use leptos::prelude::*;
-use montrs_icons::*;
-use montrs_ui::prelude::*;
-
 use crate::blocks::*;
+use leptos::prelude::*;
+use montrs_ui::prelude::*;
 
 #[component]
 pub fn Blocks() -> impl IntoView {
@@ -16,40 +14,40 @@ pub fn Blocks() -> impl IntoView {
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"FAQ"</h2>
                 <div class="space-y-8">
-                    <Faq01 />
-                    <Faq02 />
-                    <Faq03 />
+                    <Faq01 />.into_any()
+                    <Faq02 />.into_any()
+                    <Faq03 />.into_any()
                 </div>
             </section>
 
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"Footers"</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Footer01 />
-                    <Footer02 />
-                    <Footer03 />
-                    <Footer04 />
-                    <Footer05 />
-                    <FooterLogos />
+                    <Footer01 />.into_any()
+                    <Footer02 />.into_any()
+                    <Footer03 />.into_any()
+                    <Footer04 />.into_any()
+                    <Footer05 />.into_any()
+                    <FooterLogos />.into_any()
                 </div>
             </section>
 
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"Headers"</h2>
-                <Header01 />
+                <Header01 />.into_any()
             </section>
 
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"Integrations"</h2>
                 <div class="space-y-8">
-                    <Integration01 />
-                    <Integration02 />
-                    <Integration03 />
-                    <Integration04 />
-                    <Integration05 />
+                    <Integration01 />.into_any()
+                    <Integration02 />.into_any()
+                    <Integration03 />.into_any()
+                    <Integration04 />.into_any()
+                    <Integration05 />.into_any()
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Integration06 />
-                        <Integration07 />
+                        <Integration06 />.into_any()
+                        <Integration07 />.into_any()
                     </div>
                 </div>
             </section>
@@ -57,33 +55,34 @@ pub fn Blocks() -> impl IntoView {
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"Login"</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Login01 />
-                    <Login02 />
-                    <Login03 />
-                    <Login04 />
+                    <Login01 />.into_any()
+                    <Login02 />.into_any()
+                    <Login03 />.into_any()
+                    <Login04 />.into_any()
                 </div>
             </section>
 
             <section class="mb-16">
                 <h2 class="text-2xl font-semibold mb-6">"Sidenav"</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <Sidenav01 />
-                    <Sidenav02 />
-                    <Sidenav03 />
-                    <Sidenav04 />
-                    <Sidenav05 />
-                    <Sidenav06 />
-                    <Sidenav07 />
-                    <Sidenav08 />
-                    <Sidenav09 />
-                    <Sidenav10 />
-                    <Sidenav11 />
-                    <SidenavInsetRight />
-                    <SidenavRoutes />
-                    <SidenavRoutesSelector />
-                    <SidenavRoutesSimplified />
+                    <Sidenav01 />.into_any()
+                    <Sidenav02 />.into_any()
+                    <Sidenav03 />.into_any()
+                    <Sidenav04 />.into_any()
+                    <Sidenav05 />.into_any()
+                    <Sidenav06 />.into_any()
+                    <Sidenav07 />.into_any()
+                    <Sidenav08 />.into_any()
+                    <Sidenav09 />.into_any()
+                    <Sidenav10 />.into_any()
+                    <Sidenav11 />.into_any()
+                    <SidenavInsetRight />.into_any()
+                    <SidenavRoutes />.into_any()
+                    <SidenavRoutesSelector />.into_any()
+                    <SidenavRoutesSimplified />.into_any()
                 </div>
             </section>
         </div>
+        .into_any()
     }
 }

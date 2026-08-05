@@ -1,6 +1,5 @@
-use leptos::prelude::*;
-use leptos::wasm_bindgen::JsCast;
 use crate::cn::*;
+use leptos::{prelude::*, wasm_bindgen::JsCast};
 
 #[derive(Clone)]
 struct DropdownContext {
@@ -10,9 +9,7 @@ struct DropdownContext {
 }
 
 #[component]
-pub fn DropdownMenu(
-    children: Children,
-) -> impl IntoView {
+pub fn DropdownMenu(children: Children) -> impl IntoView {
     let open = RwSignal::new(false);
     let focused_index = RwSignal::new(0usize);
     let item_count = RwSignal::new(0usize);
@@ -44,16 +41,15 @@ pub fn DropdownMenuTrigger(
         }
     };
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" | "Enter" | " " => {
                 ev.prevent_default();
                 ctx.open.set(true);
                 ctx.focused_index.set(0);
             }
             _ => {}
-        }
-    };
+        };
 
     let merged = move || cn!("", class.get());
 
@@ -91,15 +87,21 @@ pub fn DropdownMenuContent(
     let ctx = use_context::<DropdownContext>()
         .expect("DropdownMenuContent must be inside DropdownMenu");
 
-    let merged = move || cn!(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover \
+             p-1 text-popover-foreground shadow-md \
+             data-[state=open]:animate-in data-[state=closed]:animate-out \
+             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 \
+             data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            class.get()
+        )
+    };
 
     let close = move |_| ctx.open.set(false);
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" => {
                 ev.prevent_default();
                 let count = ctx.item_count.get();
@@ -127,8 +129,7 @@ pub fn DropdownMenuContent(
                 ctx.open.set(false);
             }
             _ => {}
-        }
-    };
+        };
 
     view! {
         <div
@@ -172,10 +173,15 @@ pub fn DropdownMenuItem(
 
     let _ = variant;
 
-    let merged = move || cn!(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex cursor-default select-none items-center rounded-sm \
+             px-2 py-1.5 text-sm outline-none transition-colors \
+             focus:bg-accent focus:text-accent-foreground \
+             data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            class.get()
+        )
+    };
 
     let handle_click = move |_| {
         if let Some(cb) = on_select {
@@ -260,10 +266,15 @@ pub fn DropdownMenuRadioItem(
     let idx = ctx.item_count.get();
     ctx.item_count.update(|c| *c += 1);
 
-    let merged = move || cn!(
-        "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex cursor-default select-none items-center rounded-sm \
+             py-1.5 pl-8 pr-2 text-sm outline-none transition-colors \
+             focus:bg-accent focus:text-accent-foreground \
+             data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            class.get()
+        )
+    };
 
     let toggle = move |_| {
         checked.set(true);
@@ -327,10 +338,15 @@ pub fn DropdownMenuCheckboxItem(
     let idx = ctx.item_count.get();
     ctx.item_count.update(|c| *c += 1);
 
-    let merged = move || cn!(
-        "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex cursor-default select-none items-center rounded-sm \
+             py-1.5 pl-8 pr-2 text-sm outline-none transition-colors \
+             focus:bg-accent focus:text-accent-foreground \
+             data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            class.get()
+        )
+    };
 
     let toggle = move |_| {
         checked.update(|v| *v = !*v);
@@ -385,7 +401,12 @@ pub fn DropdownMenuShortcut(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("ml-auto text-xs tracking-widest text-muted-foreground", class.get());
+    let merged = move || {
+        cn!(
+            "ml-auto text-xs tracking-widest text-muted-foreground",
+            class.get()
+        )
+    };
 
     view! {
         <span class=merged data-name="DropdownMenuShortcut">

@@ -6,8 +6,14 @@ use montrs_ui::prelude::*;
 pub fn Integration01() -> impl IntoView {
     let copied = RwSignal::new(Option::<String>::None);
     let icons = vec![
-        Glyph::Search, Glyph::Settings, Glyph::User, Glyph::Bell,
-        Glyph::LayoutDashboard, Glyph::Mail, Glyph::Calendar, Glyph::Clock,
+        Glyph::Search,
+        Glyph::Settings,
+        Glyph::User,
+        Glyph::Bell,
+        Glyph::LayoutDashboard,
+        Glyph::Mail,
+        Glyph::Calendar,
+        Glyph::Clock,
     ];
 
     view! {

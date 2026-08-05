@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Command palette / search component (Cmd+K style).
 ///
@@ -23,10 +23,13 @@ pub fn Command(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex h-full w-full flex-col overflow-hidden rounded-md \
+             bg-popover text-popover-foreground",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="Command">
@@ -41,10 +44,14 @@ pub fn CommandInput(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(optional)] placeholder: &'static str,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "flex h-11 w-full rounded-md bg-transparent py-3 text-sm \
+             outline-none placeholder:text-muted-foreground \
+             disabled:cursor-not-allowed disabled:opacity-50",
+            class.get()
+        )
+    };
 
     view! {
         <div class="flex items-center border-b px-3" cmdk-input-wrapper="">
@@ -77,7 +84,12 @@ pub fn CommandList(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("max-h-[300px] overflow-y-auto overflow-x-hidden", class.get());
+    let merged = move || {
+        cn!(
+            "max-h-[300px] overflow-y-auto overflow-x-hidden",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="CommandList" role="listbox">
@@ -108,10 +120,16 @@ pub fn CommandGroup(
     #[prop(into, optional)] heading: Option<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "overflow-hidden p-1 text-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "overflow-hidden p-1 text-foreground \
+             [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 \
+             [&_[cmdk-group-heading]]:text-xs \
+             [&_[cmdk-group-heading]]:font-medium \
+             [&_[cmdk-group-heading]]:text-muted-foreground",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="CommandGroup" role="group">
@@ -130,10 +148,15 @@ pub fn CommandItem(
     #[prop(into, optional)] on_select: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex cursor-default select-none items-center rounded-sm \
+             px-2 py-1.5 text-sm outline-none aria-selected:bg-accent \
+             aria-selected:text-accent-foreground \
+             data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+            class.get()
+        )
+    };
 
     let handle_click = move |_| {
         if let Some(cb) = on_select {
@@ -171,10 +194,12 @@ pub fn CommandShortcut(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "ml-auto text-xs tracking-widest text-muted-foreground",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "ml-auto text-xs tracking-widest text-muted-foreground",
+            class.get()
+        )
+    };
 
     view! {
         <span class=merged data-name="CommandShortcut">

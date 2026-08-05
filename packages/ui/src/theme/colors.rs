@@ -48,12 +48,18 @@ pub fn merge_accent(base: &ThemeColors, accent: &ThemeColors) -> ThemeColors {
     let mut dark = base.dark.clone();
 
     for (key, value) in &accent.light {
-        if key.starts_with("primary") || key.starts_with("chart") || key.starts_with("sidebar-primary") {
+        if key.starts_with("primary")
+            || key.starts_with("chart")
+            || key.starts_with("sidebar-primary")
+        {
             light.insert(key, value);
         }
     }
     for (key, value) in &accent.dark {
-        if key.starts_with("primary") || key.starts_with("chart") || key.starts_with("sidebar-primary") {
+        if key.starts_with("primary")
+            || key.starts_with("chart")
+            || key.starts_with("sidebar-primary")
+        {
             dark.insert(key, value);
         }
     }

@@ -1,8 +1,7 @@
 //! montrs-metadata: Project metadata abstraction for MontRS.
 //!
 //! Reads `montrs.toml` and provides all configuration needed for building,
-//! serving, and deploying MontRS applications — replacing the need for
-//! `[[workspace.metadata.leptos]]` or `[package.metadata.leptos]`.
+//! serving, and deploying MontRS applications.
 //!
 //! # Example `montrs.toml`
 //! ```toml
@@ -11,13 +10,10 @@
 //!
 //! [serve]
 //! site-addr = "0.0.0.0:3000"
-//! reload-port = 3001
 //! tailwind-input-file = "style/main.css"
-//! bin-package = "server"
-//! lib-package = "app"
 //! site-root = "target/site"
 //! site-pkg-dir = "pkg"
-//! lib-features = ["hydrate"]
+//! package = "app"
 //! ```
 
 use serde::{Deserialize, Serialize};
@@ -37,33 +33,20 @@ pub struct MontrsMetadata {
 }
 
 /// Project identity metadata.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ProjectMeta {
     pub name: Option<String>,
     pub version: Option<String>,
     pub description: Option<String>,
 }
 
-impl Default for ProjectMeta {
-    fn default() -> Self {
-        Self {
-            name: None,
-            version: None,
-            description: None,
-        }
-    }
-}
-
-/// Serve/build configuration equivalent to `[[workspace.metadata.leptos]]`.
+/// Serve/build configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ServeMeta {
-    /// The binary package to build and run as the server.
+    /// The single package name for both WASM and SSR.
     #[serde(default)]
-    pub bin_package: Option<String>,
-    /// The library package to compile to WASM.
-    #[serde(default)]
-    pub lib_package: Option<String>,
+    pub package: Option<String>,
     /// Output name for the WASM binary.
     #[serde(default)]
     pub output_name: Option<String>,
@@ -111,8 +94,7 @@ pub struct ServeMeta {
 impl Default for ServeMeta {
     fn default() -> Self {
         Self {
-            bin_package: None,
-            lib_package: None,
+            package: None,
             output_name: None,
             site_addr: default_site_addr(),
             reload_port: default_reload_port(),
@@ -182,43 +164,50 @@ impl MontrsMetadata {
         let mut meta: Self = toml::from_str(&content)?;
 
         // Auto-detect project name from Cargo.toml if not set
-        if meta.project.name.is_none() {
-            if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
-                if let Some(root) = cargo.root_package() {
-                    meta.project.name = Some(root.name.clone());
-                }
-            }
+        if meta.project.name.is_none()
+            && let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec()
+            && let Some(root) = cargo.root_package()
+        {
+            meta.project.name = Some(root.name.clone());
         }
 
-        // Auto-detect bin/lib packages from Cargo workspace if not set
-        if meta.serve.bin_package.is_none() || meta.serve.lib_package.is_none()
-        {
-            if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
-                let project_path = path
-                        .as_ref()
-                        .canonicalize()
-                        .unwrap_or_default()
-                        .parent()
-                        .map(|p| p.to_path_buf())
-                        .unwrap_or_default();
-                for package in &cargo.packages {
-                    // Only auto-detect packages that are part of the current project directory
-                    if let Some(pkg_path) = package.manifest_path.parent() {
-                        if !pkg_path.starts_with(&project_path) {
-                            continue;
-                        }
+        // If `package` is set, use it for both bin and lib discovery;
+        // otherwise auto-discover from cargo metadata.
+        let pkg_name = meta.serve.package.clone();
+
+        if let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec() {
+            let project_path = path
+                .as_ref()
+                .canonicalize()
+                .unwrap_or_default()
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_default();
+
+            for package in &cargo.packages {
+                if let Some(pkg_path) = package.manifest_path.parent()
+                    && !pkg_path.starts_with(&project_path)
+                {
+                    continue;
+                }
+
+                if let Some(ref name) = pkg_name {
+                    if package.name == *name {
+                        meta.serve.package = Some(package.name.clone());
+                        break;
                     }
-                    for target in &package.targets {
-                        if target.kind.iter().any(|k| k == "bin")
-                            && meta.serve.bin_package.is_none()
-                        {
-                            meta.serve.bin_package = Some(package.name.clone());
-                        }
-                        if target.kind.iter().any(|k| k == "cdylib")
-                            && meta.serve.lib_package.is_none()
-                        {
-                            meta.serve.lib_package = Some(package.name.clone());
-                        }
+                } else {
+                    let has_cdylib = package
+                        .targets
+                        .iter()
+                        .any(|t| t.kind.iter().any(|k| k == "cdylib"));
+                    let has_bin = package
+                        .targets
+                        .iter()
+                        .any(|t| t.kind.iter().any(|k| k == "bin"));
+                    if has_cdylib && has_bin {
+                        meta.serve.package = Some(package.name.clone());
+                        break;
                     }
                 }
             }

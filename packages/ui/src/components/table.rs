@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Table component with header, body, row, and cell.
 ///
@@ -76,7 +76,12 @@ pub fn TableFooter(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("border-t bg-muted/50 font-medium [&>tr]:last:border-b-0", class.get());
+    let merged = move || {
+        cn!(
+            "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+            class.get()
+        )
+    };
 
     view! {
         <tfoot class=merged data-name="TableFooter">
@@ -91,10 +96,13 @@ pub fn TableRow(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "border-b transition-colors hover:bg-muted/50 \
+             data-[state=selected]:bg-muted",
+            class.get()
+        )
+    };
 
     view! {
         <tr class=merged data-name="TableRow">
@@ -109,10 +117,13 @@ pub fn TableHead(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "h-12 px-4 text-left align-middle font-medium \
+             text-muted-foreground [&:has([role=checkbox])]:pr-0",
+            class.get()
+        )
+    };
 
     view! {
         <th class=merged data-name="TableHead">
@@ -127,10 +138,12 @@ pub fn TableCell(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "p-4 align-middle [&:has([role=checkbox])]:pr-0",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "p-4 align-middle [&:has([role=checkbox])]:pr-0",
+            class.get()
+        )
+    };
 
     view! {
         <td class=merged data-name="TableCell">

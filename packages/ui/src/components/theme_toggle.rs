@@ -1,12 +1,19 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ThemeToggle(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] on_toggle: Option<Callback<()>>,
 ) -> impl IntoView {
-    let merged = move || cn!("inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground", class.get());
+    let merged = move || {
+        cn!(
+            "inline-flex h-9 w-9 items-center justify-center rounded-md \
+             border border-input bg-background text-sm font-medium \
+             hover:bg-accent hover:text-accent-foreground",
+            class.get()
+        )
+    };
     let handle = move |_| {
         if let Some(cb) = on_toggle {
             cb.run(());

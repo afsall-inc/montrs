@@ -13,16 +13,18 @@ pub fn Icons() -> impl IntoView {
 
     let icons = Memo::new(move |_| {
         let s = search.get();
-        if s.is_empty() { Glyph::find("") } else { Glyph::find(&s) }
+        if s.is_empty() {
+            Glyph::find("")
+        } else {
+            Glyph::find(&s)
+        }
     });
 
-    let icon_size = move || {
-        match size.get().as_str() {
-            "sm" => "w-4 h-4",
-            "lg" => "w-8 h-8",
-            "xl" => "w-12 h-12",
-            _ => "w-6 h-6",
-        }
+    let icon_size = move || match size.get().as_str() {
+        "sm" => "w-4 h-4",
+        "lg" => "w-8 h-8",
+        "xl" => "w-12 h-12",
+        _ => "w-6 h-6",
     };
 
     let selected_icon = RwSignal::new(None::<Glyph>);

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Bubble(
@@ -10,7 +10,11 @@ pub fn Bubble(
     let merged = move || {
         let base = "max-w-[80%] rounded-2xl px-4 py-2 text-sm";
         let align = if is_user { "ml-auto" } else { "mr-auto" };
-        let style = if is_user { "bg-primary text-primary-foreground" } else { "bg-muted" };
+        let style = if is_user {
+            "bg-primary text-primary-foreground"
+        } else {
+            "bg-muted"
+        };
         cn!(base, align, style, class.get())
     };
     view! {

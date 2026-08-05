@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn DataTable(
@@ -47,7 +47,9 @@ pub fn DataTableRow(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("border-b transition-colors hover:bg-muted/50", class.get());
+    let merged = move || {
+        cn!("border-b transition-colors hover:bg-muted/50", class.get())
+    };
     view! {
         <tr class=merged data-name="DataTableRow">
             {children()}
@@ -62,8 +64,13 @@ pub fn DataTableHead(
     children: Children,
 ) -> impl IntoView {
     let merged = move || {
-        let base = "h-10 px-4 text-left align-middle font-medium text-muted-foreground";
-        let sort = if sortable { "cursor-pointer hover:text-foreground" } else { "" };
+        let base = "h-10 px-4 text-left align-middle font-medium \
+                    text-muted-foreground";
+        let sort = if sortable {
+            "cursor-pointer hover:text-foreground"
+        } else {
+            ""
+        };
         cn!(base, sort, class.get())
     };
     view! {

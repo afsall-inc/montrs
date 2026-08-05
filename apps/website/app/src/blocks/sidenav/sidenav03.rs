@@ -6,7 +6,10 @@ use montrs_ui::prelude::*;
 pub fn Sidenav03() -> impl IntoView {
     let open_sections = RwSignal::new(vec![true, false, false]);
     let sections: Vec<(&str, Vec<&str>)> = vec![
-        ("Getting Started", vec!["Introduction", "Installation", "Quickstart"]),
+        (
+            "Getting Started",
+            vec!["Introduction", "Installation", "Quickstart"],
+        ),
         ("Guides", vec!["Routing", "Components", "State Management"]),
         ("Advanced", vec!["Plugins", "Deployment", "Performance"]),
     ];

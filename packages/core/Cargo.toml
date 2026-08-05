@@ -19,7 +19,14 @@ regex.workspace = true
 
 leptos.workspace = true
 leptos_router.workspace = true
+leptos_axum = { workspace = true, optional = true }
+axum = { version = "0.8", optional = true }
+tower-http = { version = "0.6", features = ["fs"], optional = true }
 
 # Rate limiting
 governor = "0.6"
 nonzero_ext = "0.3"
+
+[features]
+default = []
+ssr = ["dep:leptos_axum", "dep:axum", "dep:tower-http"]

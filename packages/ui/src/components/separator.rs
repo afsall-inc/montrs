@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Horizontal or vertical separator.
 ///
@@ -20,7 +20,11 @@ pub fn Separator(
     let is_horizontal = orientation != "vertical";
     let merged = move || {
         let base = "shrink-0 bg-border";
-        let dir = if is_horizontal { "h-[1px] w-full" } else { "h-full w-[1px]" };
+        let dir = if is_horizontal {
+            "h-[1px] w-full"
+        } else {
+            "h-full w-[1px]"
+        };
         cn!(base, dir, class.get())
     };
 

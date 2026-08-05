@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn RadioButton(
@@ -13,7 +13,11 @@ pub fn RadioButton(
 ) -> impl IntoView {
     let value_for_merged = value.clone();
     let merged = move || {
-        let base = "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+        let base = "aspect-square h-4 w-4 rounded-full border border-primary \
+                    text-primary ring-offset-background focus:outline-none \
+                    focus-visible:ring-2 focus-visible:ring-ring \
+                    focus-visible:ring-offset-2 disabled:cursor-not-allowed \
+                    disabled:opacity-50";
         let checked = if selected.get() == value_for_merged {
             "bg-primary text-primary-foreground"
         } else {
@@ -28,14 +32,13 @@ pub fn RadioButton(
     let value_for_select = value.clone();
     let select = move |_| selected.set(value_for_select.clone());
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" | "ArrowRight" | "ArrowUp" | "ArrowLeft" => {
                 ev.prevent_default();
             }
             _ => {}
-        }
-    };
+        };
 
     let is_selected_for_aria = is_selected.clone();
     let is_selected_for_data_state = is_selected.clone();
@@ -99,14 +102,13 @@ pub fn RadioGroup(
 ) -> impl IntoView {
     let merged = move || cn!("grid gap-2", class.get());
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" | "ArrowRight" | "ArrowUp" | "ArrowLeft" => {
                 ev.prevent_default();
             }
             _ => {}
-        }
-    };
+        };
 
     view! {
         <div

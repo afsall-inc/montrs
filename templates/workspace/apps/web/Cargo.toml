@@ -3,9 +3,43 @@ name = "web"
 version.workspace = true
 edition.workspace = true
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "web-ssr"
+path = "src/main.rs"
+required-features = ["ssr"]
+
 [dependencies]
 montrs-core = { workspace = true }
 montrs-ui = { workspace = true }
 montrs-icons = { workspace = true }
-leptos = { workspace = true }
 ui = { path = "../../packages/ui" }
+leptos = { version = "0.8", features = ["hydrate", "ssr"] }
+leptos_meta = { version = "0.8" }
+leptos_router = { version = "0.8" }
+tokio = { version = "1", features = ["full"], optional = true }
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
+serde = { version = "1", features = ["derive"] }
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2"
+thiserror = "1"
+
+[features]
+default = []
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "montrs-core/ssr",
+    "dep:tokio",
+    "dep:tracing",
+    "dep:tracing-subscriber",
+]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

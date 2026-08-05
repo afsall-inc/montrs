@@ -30,3 +30,6 @@ target
 
 # Agent-first infrastructure
 .agent/errorfiles/
+
+# Environment variables (local overrides)
+.env

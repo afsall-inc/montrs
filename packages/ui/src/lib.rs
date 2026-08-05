@@ -7,20 +7,22 @@ pub use leptos;
 pub use paste;
 pub use tw_merge;
 
-pub mod cn;
 pub mod clx;
+pub mod cn;
+pub mod components;
+pub mod theme;
 pub mod utils;
 pub mod variants;
-pub mod theme;
-pub mod components;
 
 pub use montrs_icons::*;
 
 pub mod prelude {
-    pub use crate::cn::*;
-    pub use crate::clx::*;
-    pub use crate::variants::*;
-    pub use crate::components::*;
-    pub use crate::theme::provider::{ThemeMode, ThemeProvider, use_theme, toggle_theme};
+    pub use crate::{
+        clx::*,
+        cn::*,
+        components::*,
+        theme::provider::{ThemeMode, ThemeProvider, toggle_theme, use_theme},
+        variants::*,
+    };
     pub use montrs_icons::*;
 }

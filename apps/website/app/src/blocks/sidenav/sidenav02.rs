@@ -6,9 +6,26 @@ use montrs_ui::prelude::*;
 pub fn Sidenav02() -> impl IntoView {
     let active = RwSignal::new("Home");
     let sections = vec![
-        ("Main", vec![("Home", Glyph::LayoutDashboard), ("Dashboard", Glyph::LayoutDashboard), ("Analytics", Glyph::ChartColumn)]),
-        ("Workspace", vec![("Files", Glyph::Files), ("Projects", Glyph::Folder), ("Team", Glyph::Users)]),
-        ("Settings", vec![("Account", Glyph::User), ("Preferences", Glyph::Settings)]),
+        (
+            "Main",
+            vec![
+                ("Home", Glyph::LayoutDashboard),
+                ("Dashboard", Glyph::LayoutDashboard),
+                ("Analytics", Glyph::ChartColumn),
+            ],
+        ),
+        (
+            "Workspace",
+            vec![
+                ("Files", Glyph::Files),
+                ("Projects", Glyph::Folder),
+                ("Team", Glyph::Users),
+            ],
+        ),
+        (
+            "Settings",
+            vec![("Account", Glyph::User), ("Preferences", Glyph::Settings)],
+        ),
     ];
 
     view! {

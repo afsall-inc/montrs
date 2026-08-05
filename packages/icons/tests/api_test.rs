@@ -1,6 +1,5 @@
-use montrs_icons::strum::IntoEnumIterator;
-use montrs_icons::{Glyph, Icon};
 use leptos::prelude::*;
+use montrs_icons::{Glyph, Icon, strum::IntoEnumIterator};
 
 #[test]
 fn find_returns_results() {
@@ -30,10 +29,7 @@ fn by_name_known_icon() {
 
 #[test]
 fn by_name_accepts_kebab_case() {
-    assert_eq!(
-        Glyph::by_name("arrow-right"),
-        Glyph::by_name("ArrowRight")
-    );
+    assert_eq!(Glyph::by_name("arrow-right"), Glyph::by_name("ArrowRight"));
 }
 
 #[test]
@@ -47,7 +43,10 @@ fn name_is_pascal_case() {
         let n = g.name();
         assert!(!n.contains('-'), "name contains hyphen: {n}");
         assert!(!n.contains(' '), "name contains space: {n}");
-        assert!(n.chars().next().is_some_and(|c| c.is_uppercase()), "name does not start uppercase: {n}");
+        assert!(
+            n.chars().next().is_some_and(|c| c.is_uppercase()),
+            "name does not start uppercase: {n}"
+        );
     }
 }
 

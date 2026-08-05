@@ -1,6 +1,8 @@
 use leptos::prelude::*;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, AtomicU64, Ordering},
+};
 
 /// A reactive animation value with velocity tracking.
 ///
@@ -44,7 +46,13 @@ impl MotionValue {
     }
 
     /// Start a spring animation toward a target.
-    pub fn animate_to(&self, target: f64, stiffness: f64, damping: f64, mass: f64) {
+    pub fn animate_to(
+        &self,
+        target: f64,
+        stiffness: f64,
+        damping: f64,
+        mass: f64,
+    ) {
         self.target.set(target);
         self.is_animating.store(true, Ordering::SeqCst);
 

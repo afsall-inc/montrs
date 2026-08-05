@@ -584,7 +584,8 @@ pub fn main_entry() {
         }
 
         // Agent: Update tools and snapshot if we are in an existing project
-        if args.len() > 1 && args[1] != "new" && !is_no_agent_command(&args[1]) {
+        if args.len() > 1 && args[1] != "new" && !is_no_agent_command(&args[1])
+        {
             // Check if we're in a MontRS project before doing agent work
             if cwd.join("montrs.toml").exists()
                 || cwd.join("Cargo.toml").exists()

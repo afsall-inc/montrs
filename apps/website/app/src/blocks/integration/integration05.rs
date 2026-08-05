@@ -6,9 +6,29 @@ use montrs_ui::prelude::*;
 pub fn Integration05() -> impl IntoView {
     let selected = RwSignal::new(Option::<&str>::None);
     let plans = vec![
-        ("Starter", "Free", vec!["1 project", "Basic features", "Community support"], false),
-        ("Pro", "$29/mo", vec!["Unlimited projects", "Advanced features", "Priority support", "Team access"], true),
-        ("Enterprise", "Custom", vec!["Everything in Pro", "SSO", "Dedicated support", "SLA"], false),
+        (
+            "Starter",
+            "Free",
+            vec!["1 project", "Basic features", "Community support"],
+            false,
+        ),
+        (
+            "Pro",
+            "$29/mo",
+            vec![
+                "Unlimited projects",
+                "Advanced features",
+                "Priority support",
+                "Team access",
+            ],
+            true,
+        ),
+        (
+            "Enterprise",
+            "Custom",
+            vec!["Everything in Pro", "SSO", "Dedicated support", "SLA"],
+            false,
+        ),
     ];
 
     view! {

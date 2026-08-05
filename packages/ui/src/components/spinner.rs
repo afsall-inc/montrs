@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Loading spinner component.
 ///
@@ -13,10 +13,9 @@ use crate::cn::*;
 /// }
 /// ```
 #[component]
-pub fn Spinner(
-    #[prop(into, optional)] class: Signal<String>,
-) -> impl IntoView {
-    let merged = move || cn!("animate-spin h-4 w-4 text-muted-foreground", class.get());
+pub fn Spinner(#[prop(into, optional)] class: Signal<String>) -> impl IntoView {
+    let merged =
+        move || cn!("animate-spin h-4 w-4 text-muted-foreground", class.get());
 
     view! {
         <svg

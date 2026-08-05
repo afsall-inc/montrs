@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Pagination component with page numbers.
 ///
@@ -76,9 +76,15 @@ pub fn PaginationLink(
     children: Children,
 ) -> impl IntoView {
     let merged = move || {
-        let base = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+        let base = "inline-flex items-center justify-center whitespace-nowrap \
+                    rounded-md text-sm font-medium ring-offset-background \
+                    transition-colors focus-visible:outline-none \
+                    focus-visible:ring-2 focus-visible:ring-ring \
+                    focus-visible:ring-offset-2 disabled:pointer-events-none \
+                    disabled:opacity-50";
         let active = if is_active {
-            "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10"
+            "border border-input bg-background hover:bg-accent \
+             hover:text-accent-foreground h-10 w-10"
         } else {
             "hover:bg-accent hover:text-accent-foreground h-10 w-10"
         };
@@ -100,10 +106,18 @@ pub fn PaginationPrevious(
     href: String,
     #[prop(into, optional)] class: Signal<String>,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1 pl-2.5",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "inline-flex items-center justify-center whitespace-nowrap \
+             rounded-md text-sm font-medium ring-offset-background \
+             transition-colors focus-visible:outline-none \
+             focus-visible:ring-2 focus-visible:ring-ring \
+             focus-visible:ring-offset-2 disabled:pointer-events-none \
+             disabled:opacity-50 hover:bg-accent hover:text-accent-foreground \
+             h-10 px-4 py-2 gap-1 pl-2.5",
+            class.get()
+        )
+    };
 
     view! {
         <a href=href class=merged data-name="PaginationPrevious" aria-label="Go to previous page">
@@ -131,10 +145,18 @@ pub fn PaginationNext(
     href: String,
     #[prop(into, optional)] class: Signal<String>,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 gap-1 pr-2.5",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "inline-flex items-center justify-center whitespace-nowrap \
+             rounded-md text-sm font-medium ring-offset-background \
+             transition-colors focus-visible:outline-none \
+             focus-visible:ring-2 focus-visible:ring-ring \
+             focus-visible:ring-offset-2 disabled:pointer-events-none \
+             disabled:opacity-50 hover:bg-accent hover:text-accent-foreground \
+             h-10 px-4 py-2 gap-1 pr-2.5",
+            class.get()
+        )
+    };
 
     view! {
         <a href=href class=merged data-name="PaginationNext" aria-label="Go to next page">
@@ -161,7 +183,8 @@ pub fn PaginationNext(
 pub fn PaginationEllipsis(
     #[prop(into, optional)] class: Signal<String>,
 ) -> impl IntoView {
-    let merged = move || cn!("flex h-9 w-9 items-center justify-center", class.get());
+    let merged =
+        move || cn!("flex h-9 w-9 items-center justify-center", class.get());
 
     view! {
         <li class=merged data-name="PaginationEllipsis" aria-hidden="true">

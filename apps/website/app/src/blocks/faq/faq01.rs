@@ -6,9 +6,21 @@ use montrs_ui::prelude::*;
 pub fn Faq01() -> impl IntoView {
     let open = RwSignal::new(Option::<usize>::None);
     let items = vec![
-        ("What is MontRS?", "A full-stack Rust web framework for compile-time correctness and agent-first development."),
-        ("How do I install it?", "Run `cargo add montrs` or use `montrs new my-app` to scaffold a new project."),
-        ("Is it production ready?", "Yes — MontRS is used in production by early adopters. The API is stabilizing."),
+        (
+            "What is MontRS?",
+            "A full-stack Rust web framework for compile-time correctness and \
+             agent-first development.",
+        ),
+        (
+            "How do I install it?",
+            "Run `cargo add montrs` or use `montrs new my-app` to scaffold a \
+             new project.",
+        ),
+        (
+            "Is it production ready?",
+            "Yes — MontRS is used in production by early adopters. The API is \
+             stabilizing.",
+        ),
     ];
 
     view! {

@@ -9,6 +9,8 @@ pub mod env;
 pub mod features;
 pub mod limiter;
 pub mod router;
+#[cfg(feature = "ssr")]
+pub mod serve;
 pub mod validation;
 
 use async_trait::async_trait;
@@ -26,10 +28,10 @@ pub use router::{
 /// Users get client-side navigation, query params, and location access
 /// without importing `leptos_router` directly.
 pub mod nav {
-    pub use leptos_router::hooks::{
-        use_location, use_navigate, use_query, use_query_map,
+    pub use leptos_router::{
+        NavigateOptions,
+        hooks::{use_location, use_navigate, use_query, use_query_map},
     };
-    pub use leptos_router::NavigateOptions;
 }
 use serde::{Deserialize, Serialize};
 use std::{error::Error as StdError, sync::Arc};

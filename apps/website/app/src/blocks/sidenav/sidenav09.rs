@@ -5,7 +5,14 @@ use montrs_ui::prelude::*;
 #[component]
 pub fn Sidenav09() -> impl IntoView {
     let active = RwSignal::new(Glyph::LayoutDashboard);
-    let items = vec![Glyph::LayoutDashboard, Glyph::Search, Glyph::Settings, Glyph::Mail, Glyph::Bell, Glyph::User];
+    let items = vec![
+        Glyph::LayoutDashboard,
+        Glyph::Search,
+        Glyph::Settings,
+        Glyph::Mail,
+        Glyph::Bell,
+        Glyph::User,
+    ];
 
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">

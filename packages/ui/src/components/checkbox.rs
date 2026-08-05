@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Checkbox(
@@ -12,21 +12,36 @@ pub fn Checkbox(
     #[prop(optional)] indeterminate: bool,
     #[prop(into, optional)] aria_label: Option<String>,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "peer h-4 w-4 shrink-0 rounded-sm border border-primary \
+             ring-offset-background focus-visible:outline-none \
+             focus-visible:ring-2 focus-visible:ring-ring \
+             focus-visible:ring-offset-2 disabled:cursor-not-allowed \
+             disabled:opacity-50 data-[state=checked]:bg-primary \
+             data-[state=checked]:text-primary-foreground",
+            class.get()
+        )
+    };
 
     let input_id = id.unwrap_or_else(crate::utils::Utils::use_random_id);
     let state = move || {
-        if indeterminate { "indeterminate" }
-        else if checked.get() { "checked" }
-        else { "unchecked" }
+        if indeterminate {
+            "indeterminate"
+        } else if checked.get() {
+            "checked"
+        } else {
+            "unchecked"
+        }
     };
     let aria_checked = move || {
-        if indeterminate { "mixed" }
-        else if checked.get() { "true" }
-        else { "false" }
+        if indeterminate {
+            "mixed"
+        } else if checked.get() {
+            "true"
+        } else {
+            "false"
+        }
     };
 
     let toggle = move |ev: leptos::ev::KeyboardEvent| {

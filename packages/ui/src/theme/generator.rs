@@ -1,14 +1,19 @@
 use crate::theme::colors::{self};
 
 /// Generates a full `style/main.css` with HSL CSS variables.
-pub fn generate_css(base_color: &str, accent_color: Option<&str>, radius: Option<&str>) -> String {
+pub fn generate_css(
+    base_color: &str,
+    accent_color: Option<&str>,
+    radius: Option<&str>,
+) -> String {
     let base = colors::base_colors();
     let base_theme = base.get(base_color).expect("unknown base color");
 
     let theme = match accent_color {
         Some(accent) => {
             let accents = colors::accent_colors();
-            let accent_theme = accents.get(accent).expect("unknown accent color");
+            let accent_theme =
+                accents.get(accent).expect("unknown accent color");
             colors::merge_accent(base_theme, accent_theme)
         }
         None => (*base_theme).clone(),

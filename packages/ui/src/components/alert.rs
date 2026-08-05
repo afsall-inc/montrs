@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 crate::variants! {
     Alert {
@@ -51,7 +51,9 @@ pub fn AlertTitle(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("mb-1 font-medium leading-none tracking-tight", class.get());
+    let merged = move || {
+        cn!("mb-1 font-medium leading-none tracking-tight", class.get())
+    };
 
     view! {
         <h5 class=merged data-name="AlertTitle">

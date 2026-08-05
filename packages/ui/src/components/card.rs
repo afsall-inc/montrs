@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Card component with optional header, content, and footer.
 ///
@@ -23,10 +23,12 @@ pub fn Card(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "rounded-lg border bg-card text-card-foreground shadow-sm",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "rounded-lg border bg-card text-card-foreground shadow-sm",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="Card">
@@ -56,7 +58,12 @@ pub fn CardTitle(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("text-2xl font-semibold leading-none tracking-tight", class.get());
+    let merged = move || {
+        cn!(
+            "text-2xl font-semibold leading-none tracking-tight",
+            class.get()
+        )
+    };
 
     view! {
         <h3 class=merged data-name="CardTitle">

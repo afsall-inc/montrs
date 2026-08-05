@@ -14,7 +14,11 @@ pub fn Login04() -> impl IntoView {
 
     let submit = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
-        if first.get().trim().is_empty() || last.get().trim().is_empty() || email.get().trim().is_empty() || password.get().is_empty() {
+        if first.get().trim().is_empty()
+            || last.get().trim().is_empty()
+            || email.get().trim().is_empty()
+            || password.get().is_empty()
+        {
             error.set("All fields are required.".to_string());
             return;
         }

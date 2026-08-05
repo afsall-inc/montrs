@@ -42,12 +42,20 @@ impl Easing {
             Easing::QuadIn => t * t,
             Easing::QuadOut => 1.0 - (1.0 - t) * (1.0 - t),
             Easing::QuadInOut => {
-                if t < 0.5 { 2.0 * t * t } else { 1.0 - (-2.0 * t + 2.0).powi(2) / 2.0 }
+                if t < 0.5 {
+                    2.0 * t * t
+                } else {
+                    1.0 - (-2.0 * t + 2.0).powi(2) / 2.0
+                }
             }
             Easing::CubicIn => t * t * t,
             Easing::CubicOut => 1.0 - (1.0 - t).powi(3),
             Easing::CubicInOut => {
-                if t < 0.5 { 4.0 * t * t * t } else { 1.0 - (-2.0 * t + 2.0).powi(3) / 2.0 }
+                if t < 0.5 {
+                    4.0 * t * t * t
+                } else {
+                    1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
+                }
             }
             Easing::SineIn => 1.0 - (t * std::f64::consts::FRAC_PI_2).cos(),
             Easing::SineOut => (t * std::f64::consts::FRAC_PI_2).sin(),
@@ -68,29 +76,49 @@ impl Easing {
                 if t < 0.5 {
                     (2.0 * t).powi(2) * ((c2 + 1.0) * 2.0 * t - c2) / 2.0
                 } else {
-                    ((2.0 * t - 2.0).powi(2) * ((c2 + 1.0) * (t * 2.0 - 2.0) + c2) + 2.0) / 2.0
+                    ((2.0 * t - 2.0).powi(2)
+                        * ((c2 + 1.0) * (t * 2.0 - 2.0) + c2)
+                        + 2.0)
+                        / 2.0
                 }
             }
             Easing::ElasticIn => {
                 let c4 = (2.0 * std::f64::consts::PI) / 3.0;
-                if t == 0.0 { 0.0 }
-                else if t == 1.0 { 1.0 }
-                else { -(2.0f64).powf(10.0 * t - 10.0) * ((t * 10.0 - 10.75) * c4).sin() }
+                if t == 0.0 {
+                    0.0
+                } else if t == 1.0 {
+                    1.0
+                } else {
+                    -(2.0f64).powf(10.0 * t - 10.0)
+                        * ((t * 10.0 - 10.75) * c4).sin()
+                }
             }
             Easing::ElasticOut => {
                 let c4 = (2.0 * std::f64::consts::PI) / 3.0;
-                if t == 0.0 { 0.0 }
-                else if t == 1.0 { 1.0 }
-                else { 2.0f64.powf(-10.0 * t) * ((t * 10.0 - 0.75) * c4).sin() + 1.0 }
+                if t == 0.0 {
+                    0.0
+                } else if t == 1.0 {
+                    1.0
+                } else {
+                    2.0f64.powf(-10.0 * t) * ((t * 10.0 - 0.75) * c4).sin()
+                        + 1.0
+                }
             }
             Easing::ElasticInOut => {
                 let c5 = (2.0 * std::f64::consts::PI) / 4.5;
-                if t == 0.0 { 0.0 }
-                else if t == 1.0 { 1.0 }
-                else if t < 0.5 {
-                    -(2.0f64.powf(20.0 * t - 10.0) * ((20.0 * t - 11.125) * c5).sin()) / 2.0
+                if t == 0.0 {
+                    0.0
+                } else if t == 1.0 {
+                    1.0
+                } else if t < 0.5 {
+                    -(2.0f64.powf(20.0 * t - 10.0)
+                        * ((20.0 * t - 11.125) * c5).sin())
+                        / 2.0
                 } else {
-                    2.0f64.powf(-20.0 * t + 10.0) * ((20.0 * t - 11.125) * c5).sin() / 2.0 + 1.0
+                    2.0f64.powf(-20.0 * t + 10.0)
+                        * ((20.0 * t - 11.125) * c5).sin()
+                        / 2.0
+                        + 1.0
                 }
             }
             Easing::BounceIn => 1.0 - bounce_out(1.0 - t),
@@ -102,7 +130,9 @@ impl Easing {
                     (1.0 + bounce_out(2.0 * t - 1.0)) / 2.0
                 }
             }
-            Easing::Bezier(x1, y1, x2, y2) => cubic_bezier(*x1, *y1, *x2, *y2, t),
+            Easing::Bezier(x1, y1, x2, y2) => {
+                cubic_bezier(*x1, *y1, *x2, *y2, t)
+            }
         }
     }
 }
@@ -205,7 +235,12 @@ mod tests {
 
     #[test]
     fn test_easing_bounds() {
-        for easing in &[Easing::EaseIn, Easing::EaseOut, Easing::QuadIn, Easing::BackOut] {
+        for easing in &[
+            Easing::EaseIn,
+            Easing::EaseOut,
+            Easing::QuadIn,
+            Easing::BackOut,
+        ] {
             let tween = Tween::new(0.0, 1.0, 1.0).with_easing(*easing);
             assert!((tween.sample(0.0) - 0.0).abs() < 0.001);
             assert!((tween.sample(1.0) - 1.0).abs() < 0.001);

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Input(
@@ -23,12 +23,19 @@ pub fn Input(
     let error_for_input = error.clone();
     let error_for_display = error;
     let merged = move || {
-        let base = "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-        let error_class = if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
-            "border-destructive"
-        } else {
-            ""
-        };
+        let base = "flex h-10 w-full rounded-md border border-input \
+                    bg-background px-3 py-2 text-sm ring-offset-background \
+                    file:border-0 file:bg-transparent file:text-sm \
+                    file:font-medium placeholder:text-muted-foreground \
+                    focus-visible:outline-none focus-visible:ring-2 \
+                    focus-visible:ring-ring focus-visible:ring-offset-2 \
+                    disabled:cursor-not-allowed disabled:opacity-50";
+        let error_class =
+            if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
+                "border-destructive"
+            } else {
+                ""
+            };
         cn!(base, error_class, class.get())
     };
 
@@ -37,7 +44,11 @@ pub fn Input(
         value.set(target);
     };
 
-    let has_error = move || error_for_has_error.as_ref().map_or(false, |e| !e.is_empty());
+    let has_error = move || {
+        error_for_has_error
+            .as_ref()
+            .map_or(false, |e| !e.is_empty())
+    };
 
     view! {
         <div class="grid gap-1.5">

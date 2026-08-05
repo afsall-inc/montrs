@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Progress bar component.
 ///
@@ -17,12 +17,18 @@ pub fn Progress(
     #[prop(optional)] value: f64,
     #[prop(optional)] max: f64,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
+            class.get()
+        )
+    };
 
-    let pct = if max > 0.0 { (value / max * 100.0).min(100.0) } else { 0.0 };
+    let pct = if max > 0.0 {
+        (value / max * 100.0).min(100.0)
+    } else {
+        0.0
+    };
     let indicator_style = format!("transform: translateX(-{}%)", 100.0 - pct);
 
     view! {

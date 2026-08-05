@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Stepper(
@@ -25,7 +25,13 @@ pub fn Step(
 ) -> impl IntoView {
     let merged = move || {
         let base = "flex items-center gap-2 text-sm";
-        let state = if completed { "text-primary" } else if active { "text-foreground font-medium" } else { "text-muted-foreground" };
+        let state = if completed {
+            "text-primary"
+        } else if active {
+            "text-foreground font-medium"
+        } else {
+            "text-muted-foreground"
+        };
         cn!(base, state, class.get())
     };
     view! {

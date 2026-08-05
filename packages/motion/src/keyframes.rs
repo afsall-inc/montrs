@@ -36,7 +36,11 @@ impl Keyframes {
         self
     }
 
-    pub fn with_extrapolate(mut self, left: Extrapolate, right: Extrapolate) -> Self {
+    pub fn with_extrapolate(
+        mut self,
+        left: Extrapolate,
+        right: Extrapolate,
+    ) -> Self {
         self.extrapolate_left = left;
         self.extrapolate_right = right;
         self
@@ -57,7 +61,8 @@ impl Keyframes {
                 Extrapolate::Clamp => self.output[0],
                 Extrapolate::Identity => t,
                 Extrapolate::Extend => {
-                    let slope = (self.output[1] - self.output[0]) / (self.input[1] - self.input[0]);
+                    let slope = (self.output[1] - self.output[0])
+                        / (self.input[1] - self.input[0]);
                     self.output[0] + slope * (t - self.input[0])
                 }
             };
@@ -76,9 +81,12 @@ impl Keyframes {
 
         for i in 0..len - 1 {
             if t >= self.input[i] && t <= self.input[i + 1] {
-                let segment_t = (t - self.input[i]) / (self.input[i + 1] - self.input[i]);
-                let eased = self.easings[i.min(self.easings.len() - 1)].apply(segment_t);
-                return self.output[i] + (self.output[i + 1] - self.output[i]) * eased;
+                let segment_t =
+                    (t - self.input[i]) / (self.input[i + 1] - self.input[i]);
+                let eased = self.easings[i.min(self.easings.len() - 1)]
+                    .apply(segment_t);
+                return self.output[i]
+                    + (self.output[i + 1] - self.output[i]) * eased;
             }
         }
 

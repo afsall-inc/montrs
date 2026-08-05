@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Context menu triggered by right-click.
 ///
@@ -19,9 +19,7 @@ use crate::cn::*;
 /// }
 /// ```
 #[component]
-pub fn ContextMenu(
-    children: Children,
-) -> impl IntoView {
+pub fn ContextMenu(children: Children) -> impl IntoView {
     let open = RwSignal::new(false);
     let position = RwSignal::new((0.0, 0.0));
     provide_context(open);
@@ -71,10 +69,16 @@ pub fn ContextMenuContent(
     let position = use_context::<RwSignal<(f64, f64)>>()
         .expect("ContextMenuContent must be inside ContextMenu");
 
-    let merged = move || cn!(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover \
+             p-1 text-popover-foreground shadow-md \
+             data-[state=open]:animate-in data-[state=closed]:animate-out \
+             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 \
+             data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            class.get()
+        )
+    };
 
     let style = move || {
         let (x, y) = position.get();
@@ -114,10 +118,15 @@ pub fn ContextMenuItem(
     #[prop(into, optional)] on_select: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative flex cursor-default select-none items-center rounded-sm \
+             px-2 py-1.5 text-sm outline-none focus:bg-accent \
+             focus:text-accent-foreground data-[disabled]:pointer-events-none \
+             data-[disabled]:opacity-50",
+            class.get()
+        )
+    };
 
     let handle_click = move |_| {
         if let Some(cb) = on_select {

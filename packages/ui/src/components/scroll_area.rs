@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Scroll area with custom scrollbar styling.
 ///
@@ -18,12 +18,13 @@ pub fn ScrollArea(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "relative overflow-hidden",
-        class.get()
-    );
+    let merged = move || cn!("relative overflow-hidden", class.get());
 
-    let viewport_class = "h-full w-full rounded-[inherit] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent";
+    let viewport_class = "h-full w-full rounded-[inherit] \
+                          [&::-webkit-scrollbar]:w-2 \
+                          [&::-webkit-scrollbar-thumb]:rounded-full \
+                          [&::-webkit-scrollbar-thumb]:bg-border \
+                          [&::-webkit-scrollbar-track]:bg-transparent";
 
     view! {
         <div class=merged data-name="ScrollArea">

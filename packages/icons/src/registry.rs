@@ -1,9 +1,8 @@
 //! Auto-generated per-icon convenience components.
 //! Generated from glyph.rs -- do not edit by hand.
 
+use crate::{glyph::Glyph, icon::Icon};
 use leptos::prelude::*;
-use crate::glyph::Glyph;
-use crate::icon::Icon;
 
 /// AArrowDown icon component
 #[component]
@@ -25,7 +24,9 @@ pub fn ALargeSmallIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Accessibility icon component
 #[component]
-pub fn AccessibilityIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AccessibilityIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Accessibility class=class /> }
 }
 
@@ -55,25 +56,33 @@ pub fn AirplayIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// AlarmClockCheck icon component
 #[component]
-pub fn AlarmClockCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlarmClockCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlarmClockCheck class=class /> }
 }
 
 /// AlarmClockMinus icon component
 #[component]
-pub fn AlarmClockMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlarmClockMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlarmClockMinus class=class /> }
 }
 
 /// AlarmClockOff icon component
 #[component]
-pub fn AlarmClockOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlarmClockOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlarmClockOff class=class /> }
 }
 
 /// AlarmClockPlus icon component
 #[component]
-pub fn AlarmClockPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlarmClockPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlarmClockPlus class=class /> }
 }
 
@@ -97,133 +106,177 @@ pub fn AlbumIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// AlignCenterHorizontal icon component
 #[component]
-pub fn AlignCenterHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignCenterHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignCenterHorizontal class=class /> }
 }
 
 /// AlignCenterVertical icon component
 #[component]
-pub fn AlignCenterVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignCenterVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignCenterVertical class=class /> }
 }
 
 /// AlignEndHorizontal icon component
 #[component]
-pub fn AlignEndHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignEndHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignEndHorizontal class=class /> }
 }
 
 /// AlignEndVertical icon component
 #[component]
-pub fn AlignEndVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignEndVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignEndVertical class=class /> }
 }
 
 /// AlignHorizontalDistributeCenter icon component
 #[component]
-pub fn AlignHorizontalDistributeCenterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalDistributeCenterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalDistributeCenter class=class /> }
 }
 
 /// AlignHorizontalDistributeEnd icon component
 #[component]
-pub fn AlignHorizontalDistributeEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalDistributeEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalDistributeEnd class=class /> }
 }
 
 /// AlignHorizontalDistributeStart icon component
 #[component]
-pub fn AlignHorizontalDistributeStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalDistributeStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalDistributeStart class=class /> }
 }
 
 /// AlignHorizontalJustifyCenter icon component
 #[component]
-pub fn AlignHorizontalJustifyCenterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalJustifyCenterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalJustifyCenter class=class /> }
 }
 
 /// AlignHorizontalJustifyEnd icon component
 #[component]
-pub fn AlignHorizontalJustifyEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalJustifyEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalJustifyEnd class=class /> }
 }
 
 /// AlignHorizontalJustifyStart icon component
 #[component]
-pub fn AlignHorizontalJustifyStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalJustifyStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalJustifyStart class=class /> }
 }
 
 /// AlignHorizontalSpaceAround icon component
 #[component]
-pub fn AlignHorizontalSpaceAroundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalSpaceAroundIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalSpaceAround class=class /> }
 }
 
 /// AlignHorizontalSpaceBetween icon component
 #[component]
-pub fn AlignHorizontalSpaceBetweenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignHorizontalSpaceBetweenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignHorizontalSpaceBetween class=class /> }
 }
 
 /// AlignStartHorizontal icon component
 #[component]
-pub fn AlignStartHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignStartHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignStartHorizontal class=class /> }
 }
 
 /// AlignStartVertical icon component
 #[component]
-pub fn AlignStartVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignStartVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignStartVertical class=class /> }
 }
 
 /// AlignVerticalDistributeCenter icon component
 #[component]
-pub fn AlignVerticalDistributeCenterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalDistributeCenterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalDistributeCenter class=class /> }
 }
 
 /// AlignVerticalDistributeEnd icon component
 #[component]
-pub fn AlignVerticalDistributeEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalDistributeEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalDistributeEnd class=class /> }
 }
 
 /// AlignVerticalDistributeStart icon component
 #[component]
-pub fn AlignVerticalDistributeStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalDistributeStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalDistributeStart class=class /> }
 }
 
 /// AlignVerticalJustifyCenter icon component
 #[component]
-pub fn AlignVerticalJustifyCenterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalJustifyCenterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalJustifyCenter class=class /> }
 }
 
 /// AlignVerticalJustifyEnd icon component
 #[component]
-pub fn AlignVerticalJustifyEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalJustifyEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalJustifyEnd class=class /> }
 }
 
 /// AlignVerticalJustifyStart icon component
 #[component]
-pub fn AlignVerticalJustifyStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalJustifyStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalJustifyStart class=class /> }
 }
 
 /// AlignVerticalSpaceAround icon component
 #[component]
-pub fn AlignVerticalSpaceAroundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalSpaceAroundIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalSpaceAround class=class /> }
 }
 
 /// AlignVerticalSpaceBetween icon component
 #[component]
-pub fn AlignVerticalSpaceBetweenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AlignVerticalSpaceBetweenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AlignVerticalSpaceBetween class=class /> }
 }
 
@@ -289,7 +342,9 @@ pub fn ApertureIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// AppWindowMac icon component
 #[component]
-pub fn AppWindowMacIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AppWindowMacIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AppWindowMac class=class /> }
 }
 
@@ -307,7 +362,9 @@ pub fn AppleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArchiveRestore icon component
 #[component]
-pub fn ArchiveRestoreIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArchiveRestoreIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArchiveRestore class=class /> }
 }
 
@@ -331,43 +388,57 @@ pub fn ArmchairIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowBigDownDash icon component
 #[component]
-pub fn ArrowBigDownDashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigDownDashIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigDownDash class=class /> }
 }
 
 /// ArrowBigDown icon component
 #[component]
-pub fn ArrowBigDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigDown class=class /> }
 }
 
 /// ArrowBigLeftDash icon component
 #[component]
-pub fn ArrowBigLeftDashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigLeftDashIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigLeftDash class=class /> }
 }
 
 /// ArrowBigLeft icon component
 #[component]
-pub fn ArrowBigLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigLeft class=class /> }
 }
 
 /// ArrowBigRightDash icon component
 #[component]
-pub fn ArrowBigRightDashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigRightDashIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigRightDash class=class /> }
 }
 
 /// ArrowBigRight icon component
 #[component]
-pub fn ArrowBigRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigRight class=class /> }
 }
 
 /// ArrowBigUpDash icon component
 #[component]
-pub fn ArrowBigUpDashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowBigUpDashIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowBigUpDash class=class /> }
 }
 
@@ -397,37 +468,49 @@ pub fn ArrowDownAZIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowDownFromLine icon component
 #[component]
-pub fn ArrowDownFromLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownFromLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownFromLine class=class /> }
 }
 
 /// ArrowDownLeft icon component
 #[component]
-pub fn ArrowDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownLeft class=class /> }
 }
 
 /// ArrowDownNarrowWide icon component
 #[component]
-pub fn ArrowDownNarrowWideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownNarrowWideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownNarrowWide class=class /> }
 }
 
 /// ArrowDownRight icon component
 #[component]
-pub fn ArrowDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownRight class=class /> }
 }
 
 /// ArrowDownToDot icon component
 #[component]
-pub fn ArrowDownToDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownToDotIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownToDot class=class /> }
 }
 
 /// ArrowDownToLine icon component
 #[component]
-pub fn ArrowDownToLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownToLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownToLine class=class /> }
 }
 
@@ -439,7 +522,9 @@ pub fn ArrowDownUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowDownWideNarrow icon component
 #[component]
-pub fn ArrowDownWideNarrowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowDownWideNarrowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowDownWideNarrow class=class /> }
 }
 
@@ -457,19 +542,25 @@ pub fn ArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowLeftFromLine icon component
 #[component]
-pub fn ArrowLeftFromLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowLeftFromLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowLeftFromLine class=class /> }
 }
 
 /// ArrowLeftRight icon component
 #[component]
-pub fn ArrowLeftRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowLeftRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowLeftRight class=class /> }
 }
 
 /// ArrowLeftToLine icon component
 #[component]
-pub fn ArrowLeftToLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowLeftToLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowLeftToLine class=class /> }
 }
 
@@ -481,19 +572,25 @@ pub fn ArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowRightFromLine icon component
 #[component]
-pub fn ArrowRightFromLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowRightFromLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowRightFromLine class=class /> }
 }
 
 /// ArrowRightLeft icon component
 #[component]
-pub fn ArrowRightLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowRightLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowRightLeft class=class /> }
 }
 
 /// ArrowRightToLine icon component
 #[component]
-pub fn ArrowRightToLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowRightToLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowRightToLine class=class /> }
 }
 
@@ -529,13 +626,17 @@ pub fn ArrowUpDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowUpFromDot icon component
 #[component]
-pub fn ArrowUpFromDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpFromDotIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpFromDot class=class /> }
 }
 
 /// ArrowUpFromLine icon component
 #[component]
-pub fn ArrowUpFromLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpFromLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpFromLine class=class /> }
 }
 
@@ -547,25 +648,33 @@ pub fn ArrowUpLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowUpNarrowWide icon component
 #[component]
-pub fn ArrowUpNarrowWideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpNarrowWideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpNarrowWide class=class /> }
 }
 
 /// ArrowUpRight icon component
 #[component]
-pub fn ArrowUpRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpRight class=class /> }
 }
 
 /// ArrowUpToLine icon component
 #[component]
-pub fn ArrowUpToLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpToLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpToLine class=class /> }
 }
 
 /// ArrowUpWideNarrow icon component
 #[component]
-pub fn ArrowUpWideNarrowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowUpWideNarrowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowUpWideNarrow class=class /> }
 }
 
@@ -583,7 +692,9 @@ pub fn ArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ArrowsUpFromLine icon component
 #[component]
-pub fn ArrowsUpFromLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ArrowsUpFromLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ArrowsUpFromLine class=class /> }
 }
 
@@ -619,7 +730,9 @@ pub fn AudioLinesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// AudioWaveform icon component
 #[component]
-pub fn AudioWaveformIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn AudioWaveformIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::AudioWaveform class=class /> }
 }
 
@@ -673,7 +786,9 @@ pub fn BadgeCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BadgeDollarSign icon component
 #[component]
-pub fn BadgeDollarSignIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeDollarSignIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeDollarSign class=class /> }
 }
 
@@ -685,7 +800,9 @@ pub fn BadgeEuroIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BadgeIndianRupee icon component
 #[component]
-pub fn BadgeIndianRupeeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeIndianRupeeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeIndianRupee class=class /> }
 }
 
@@ -697,7 +814,9 @@ pub fn BadgeInfoIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BadgeJapaneseYen icon component
 #[component]
-pub fn BadgeJapaneseYenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeJapaneseYenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeJapaneseYen class=class /> }
 }
 
@@ -709,7 +828,9 @@ pub fn BadgeMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BadgePercent icon component
 #[component]
-pub fn BadgePercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgePercentIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgePercent class=class /> }
 }
 
@@ -721,31 +842,41 @@ pub fn BadgePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BadgePoundSterling icon component
 #[component]
-pub fn BadgePoundSterlingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgePoundSterlingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgePoundSterling class=class /> }
 }
 
 /// BadgeQuestionMark icon component
 #[component]
-pub fn BadgeQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeQuestionMark class=class /> }
 }
 
 /// BadgeRussianRuble icon component
 #[component]
-pub fn BadgeRussianRubleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeRussianRubleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeRussianRuble class=class /> }
 }
 
 /// BadgeSwissFranc icon component
 #[component]
-pub fn BadgeSwissFrancIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeSwissFrancIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeSwissFranc class=class /> }
 }
 
 /// BadgeTurkishLira icon component
 #[component]
-pub fn BadgeTurkishLiraIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BadgeTurkishLiraIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BadgeTurkishLira class=class /> }
 }
 
@@ -763,7 +894,9 @@ pub fn BadgeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BaggageClaim icon component
 #[component]
-pub fn BaggageClaimIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BaggageClaimIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BaggageClaim class=class /> }
 }
 
@@ -793,19 +926,25 @@ pub fn BandageIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BanknoteArrowDown icon component
 #[component]
-pub fn BanknoteArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BanknoteArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BanknoteArrowDown class=class /> }
 }
 
 /// BanknoteArrowUp icon component
 #[component]
-pub fn BanknoteArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BanknoteArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BanknoteArrowUp class=class /> }
 }
 
 /// BanknoteCheck icon component
 #[component]
-pub fn BanknoteCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BanknoteCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BanknoteCheck class=class /> }
 }
 
@@ -847,7 +986,9 @@ pub fn BathIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BatteryCharging icon component
 #[component]
-pub fn BatteryChargingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BatteryChargingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BatteryCharging class=class /> }
 }
 
@@ -865,7 +1006,9 @@ pub fn BatteryLowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BatteryMedium icon component
 #[component]
-pub fn BatteryMediumIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BatteryMediumIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BatteryMedium class=class /> }
 }
 
@@ -877,7 +1020,9 @@ pub fn BatteryPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BatteryWarning icon component
 #[component]
-pub fn BatteryWarningIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BatteryWarningIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BatteryWarning class=class /> }
 }
 
@@ -961,7 +1106,9 @@ pub fn BellDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BellElectric icon component
 #[component]
-pub fn BellElectricIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BellElectricIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BellElectric class=class /> }
 }
 
@@ -997,31 +1144,41 @@ pub fn BellIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BetweenHorizontalEnd icon component
 #[component]
-pub fn BetweenHorizontalEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BetweenHorizontalEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BetweenHorizontalEnd class=class /> }
 }
 
 /// BetweenHorizontalStart icon component
 #[component]
-pub fn BetweenHorizontalStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BetweenHorizontalStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BetweenHorizontalStart class=class /> }
 }
 
 /// BetweenVerticalEnd icon component
 #[component]
-pub fn BetweenVerticalEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BetweenVerticalEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BetweenVerticalEnd class=class /> }
 }
 
 /// BetweenVerticalStart icon component
 #[component]
-pub fn BetweenVerticalStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BetweenVerticalStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BetweenVerticalStart class=class /> }
 }
 
 /// BicepsFlexed icon component
 #[component]
-pub fn BicepsFlexedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BicepsFlexedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BicepsFlexed class=class /> }
 }
 
@@ -1093,19 +1250,25 @@ pub fn BlocksIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BluetoothConnected icon component
 #[component]
-pub fn BluetoothConnectedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BluetoothConnectedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BluetoothConnected class=class /> }
 }
 
 /// BluetoothOff icon component
 #[component]
-pub fn BluetoothOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BluetoothOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BluetoothOff class=class /> }
 }
 
 /// BluetoothSearching icon component
 #[component]
-pub fn BluetoothSearchingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BluetoothSearchingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BluetoothSearching class=class /> }
 }
 
@@ -1135,7 +1298,9 @@ pub fn BombIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BoneFracture icon component
 #[component]
-pub fn BoneFractureIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BoneFractureIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BoneFracture class=class /> }
 }
 
@@ -1189,7 +1354,9 @@ pub fn BookDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BookHeadphones icon component
 #[component]
-pub fn BookHeadphonesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookHeadphonesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookHeadphones class=class /> }
 }
 
@@ -1231,13 +1398,17 @@ pub fn BookMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BookOpenCheck icon component
 #[component]
-pub fn BookOpenCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookOpenCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookOpenCheck class=class /> }
 }
 
 /// BookOpenText icon component
 #[component]
-pub fn BookOpenTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookOpenTextIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookOpenText class=class /> }
 }
 
@@ -1303,13 +1474,17 @@ pub fn BookIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BookmarkCheck icon component
 #[component]
-pub fn BookmarkCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookmarkCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookmarkCheck class=class /> }
 }
 
 /// BookmarkMinus icon component
 #[component]
-pub fn BookmarkMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookmarkMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookmarkMinus class=class /> }
 }
 
@@ -1321,7 +1496,9 @@ pub fn BookmarkOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BookmarkPlus icon component
 #[component]
-pub fn BookmarkPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BookmarkPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BookmarkPlus class=class /> }
 }
 
@@ -1345,7 +1522,9 @@ pub fn BoomBoxIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BotMessageSquare icon component
 #[component]
-pub fn BotMessageSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BotMessageSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BotMessageSquare class=class /> }
 }
 
@@ -1399,7 +1578,9 @@ pub fn BracketsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BrainCircuit icon component
 #[component]
-pub fn BrainCircuitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BrainCircuitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BrainCircuit class=class /> }
 }
 
@@ -1417,13 +1598,17 @@ pub fn BrainIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BrickWallFire icon component
 #[component]
-pub fn BrickWallFireIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BrickWallFireIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BrickWallFire class=class /> }
 }
 
 /// BrickWallShield icon component
 #[component]
-pub fn BrickWallShieldIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BrickWallShieldIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BrickWallShield class=class /> }
 }
 
@@ -1435,19 +1620,25 @@ pub fn BrickWallIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BriefcaseBusiness icon component
 #[component]
-pub fn BriefcaseBusinessIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BriefcaseBusinessIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BriefcaseBusiness class=class /> }
 }
 
 /// BriefcaseConveyorBelt icon component
 #[component]
-pub fn BriefcaseConveyorBeltIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BriefcaseConveyorBeltIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BriefcaseConveyorBelt class=class /> }
 }
 
 /// BriefcaseMedical icon component
 #[component]
-pub fn BriefcaseMedicalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BriefcaseMedicalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BriefcaseMedical class=class /> }
 }
 
@@ -1459,7 +1650,9 @@ pub fn BriefcaseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BringToFront icon component
 #[component]
-pub fn BringToFrontIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BringToFrontIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BringToFront class=class /> }
 }
 
@@ -1471,7 +1664,9 @@ pub fn BroccoliIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// BrushCleaning icon component
 #[component]
-pub fn BrushCleaningIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn BrushCleaningIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::BrushCleaning class=class /> }
 }
 
@@ -1567,31 +1762,41 @@ pub fn Calendar1Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CalendarArrowDown icon component
 #[component]
-pub fn CalendarArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarArrowDown class=class /> }
 }
 
 /// CalendarArrowUp icon component
 #[component]
-pub fn CalendarArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarArrowUp class=class /> }
 }
 
 /// CalendarCheck2 icon component
 #[component]
-pub fn CalendarCheck2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarCheck2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarCheck2 class=class /> }
 }
 
 /// CalendarCheck icon component
 #[component]
-pub fn CalendarCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarCheck class=class /> }
 }
 
 /// CalendarClock icon component
 #[component]
-pub fn CalendarClockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarClockIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarClock class=class /> }
 }
 
@@ -1603,31 +1808,41 @@ pub fn CalendarCogIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CalendarDays icon component
 #[component]
-pub fn CalendarDaysIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarDaysIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarDays class=class /> }
 }
 
 /// CalendarFold icon component
 #[component]
-pub fn CalendarFoldIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarFoldIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarFold class=class /> }
 }
 
 /// CalendarHeart icon component
 #[component]
-pub fn CalendarHeartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarHeartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarHeart class=class /> }
 }
 
 /// CalendarMinus2 icon component
 #[component]
-pub fn CalendarMinus2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarMinus2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarMinus2 class=class /> }
 }
 
 /// CalendarMinus icon component
 #[component]
-pub fn CalendarMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarMinus class=class /> }
 }
 
@@ -1639,31 +1854,41 @@ pub fn CalendarOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CalendarPlus2 icon component
 #[component]
-pub fn CalendarPlus2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarPlus2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarPlus2 class=class /> }
 }
 
 /// CalendarPlus icon component
 #[component]
-pub fn CalendarPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarPlus class=class /> }
 }
 
 /// CalendarRange icon component
 #[component]
-pub fn CalendarRangeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarRangeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarRange class=class /> }
 }
 
 /// CalendarSearch icon component
 #[component]
-pub fn CalendarSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarSearch class=class /> }
 }
 
 /// CalendarSync icon component
 #[component]
-pub fn CalendarSyncIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CalendarSyncIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CalendarSync class=class /> }
 }
 
@@ -1753,7 +1978,9 @@ pub fn CarFrontIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CarTaxiFront icon component
 #[component]
-pub fn CarTaxiFrontIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CarTaxiFrontIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CarTaxiFront class=class /> }
 }
 
@@ -1789,7 +2016,9 @@ pub fn CaseLowerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CaseSensitive icon component
 #[component]
-pub fn CaseSensitiveIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CaseSensitiveIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CaseSensitive class=class /> }
 }
 
@@ -1801,7 +2030,9 @@ pub fn CaseUpperIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CassetteTape icon component
 #[component]
-pub fn CassetteTapeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CassetteTapeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CassetteTape class=class /> }
 }
 
@@ -1849,19 +2080,25 @@ pub fn ChartBarBigIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChartBarDecreasing icon component
 #[component]
-pub fn ChartBarDecreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartBarDecreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartBarDecreasing class=class /> }
 }
 
 /// ChartBarIncreasing icon component
 #[component]
-pub fn ChartBarIncreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartBarIncreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartBarIncreasing class=class /> }
 }
 
 /// ChartBarStacked icon component
 #[component]
-pub fn ChartBarStackedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartBarStackedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartBarStacked class=class /> }
 }
 
@@ -1873,31 +2110,41 @@ pub fn ChartBarIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChartCandlestick icon component
 #[component]
-pub fn ChartCandlestickIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartCandlestickIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartCandlestick class=class /> }
 }
 
 /// ChartColumnBig icon component
 #[component]
-pub fn ChartColumnBigIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartColumnBigIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartColumnBig class=class /> }
 }
 
 /// ChartColumnDecreasing icon component
 #[component]
-pub fn ChartColumnDecreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartColumnDecreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartColumnDecreasing class=class /> }
 }
 
 /// ChartColumnIncreasing icon component
 #[component]
-pub fn ChartColumnIncreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartColumnIncreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartColumnIncreasing class=class /> }
 }
 
 /// ChartColumnStacked icon component
 #[component]
-pub fn ChartColumnStackedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartColumnStackedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartColumnStacked class=class /> }
 }
 
@@ -1921,37 +2168,49 @@ pub fn ChartLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChartNetwork icon component
 #[component]
-pub fn ChartNetworkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNetworkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNetwork class=class /> }
 }
 
 /// ChartNoAxesColumnDecreasing icon component
 #[component]
-pub fn ChartNoAxesColumnDecreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNoAxesColumnDecreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNoAxesColumnDecreasing class=class /> }
 }
 
 /// ChartNoAxesColumnIncreasing icon component
 #[component]
-pub fn ChartNoAxesColumnIncreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNoAxesColumnIncreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNoAxesColumnIncreasing class=class /> }
 }
 
 /// ChartNoAxesColumn icon component
 #[component]
-pub fn ChartNoAxesColumnIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNoAxesColumnIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNoAxesColumn class=class /> }
 }
 
 /// ChartNoAxesCombined icon component
 #[component]
-pub fn ChartNoAxesCombinedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNoAxesCombinedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNoAxesCombined class=class /> }
 }
 
 /// ChartNoAxesGantt icon component
 #[component]
-pub fn ChartNoAxesGanttIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartNoAxesGanttIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartNoAxesGantt class=class /> }
 }
 
@@ -1963,7 +2222,9 @@ pub fn ChartPieIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChartScatter icon component
 #[component]
-pub fn ChartScatterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChartScatterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChartScatter class=class /> }
 }
 
@@ -2047,7 +2308,9 @@ pub fn ChevronDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChevronFirst icon component
 #[component]
-pub fn ChevronFirstIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronFirstIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronFirst class=class /> }
 }
 
@@ -2065,7 +2328,9 @@ pub fn ChevronLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChevronRight icon component
 #[component]
-pub fn ChevronRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronRight class=class /> }
 }
 
@@ -2077,49 +2342,65 @@ pub fn ChevronUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ChevronsDownUp icon component
 #[component]
-pub fn ChevronsDownUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsDownUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsDownUp class=class /> }
 }
 
 /// ChevronsDown icon component
 #[component]
-pub fn ChevronsDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsDown class=class /> }
 }
 
 /// ChevronsLeftRightEllipsis icon component
 #[component]
-pub fn ChevronsLeftRightEllipsisIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsLeftRightEllipsisIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsLeftRightEllipsis class=class /> }
 }
 
 /// ChevronsLeftRight icon component
 #[component]
-pub fn ChevronsLeftRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsLeftRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsLeftRight class=class /> }
 }
 
 /// ChevronsLeft icon component
 #[component]
-pub fn ChevronsLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsLeft class=class /> }
 }
 
 /// ChevronsRightLeft icon component
 #[component]
-pub fn ChevronsRightLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsRightLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsRightLeft class=class /> }
 }
 
 /// ChevronsRight icon component
 #[component]
-pub fn ChevronsRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsRight class=class /> }
 }
 
 /// ChevronsUpDown icon component
 #[component]
-pub fn ChevronsUpDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ChevronsUpDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ChevronsUpDown class=class /> }
 }
 
@@ -2137,7 +2418,9 @@ pub fn ChurchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CigaretteOff icon component
 #[component]
-pub fn CigaretteOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CigaretteOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CigaretteOff class=class /> }
 }
 
@@ -2155,55 +2438,73 @@ pub fn CircleAlertIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleArrowDown icon component
 #[component]
-pub fn CircleArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowDown class=class /> }
 }
 
 /// CircleArrowLeft icon component
 #[component]
-pub fn CircleArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowLeft class=class /> }
 }
 
 /// CircleArrowOutDownLeft icon component
 #[component]
-pub fn CircleArrowOutDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowOutDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowOutDownLeft class=class /> }
 }
 
 /// CircleArrowOutDownRight icon component
 #[component]
-pub fn CircleArrowOutDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowOutDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowOutDownRight class=class /> }
 }
 
 /// CircleArrowOutUpLeft icon component
 #[component]
-pub fn CircleArrowOutUpLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowOutUpLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowOutUpLeft class=class /> }
 }
 
 /// CircleArrowOutUpRight icon component
 #[component]
-pub fn CircleArrowOutUpRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowOutUpRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowOutUpRight class=class /> }
 }
 
 /// CircleArrowRight icon component
 #[component]
-pub fn CircleArrowRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowRight class=class /> }
 }
 
 /// CircleArrowUp icon component
 #[component]
-pub fn CircleArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleArrowUp class=class /> }
 }
 
 /// CircleCheckBig icon component
 #[component]
-pub fn CircleCheckBigIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleCheckBigIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleCheckBig class=class /> }
 }
 
@@ -2215,49 +2516,65 @@ pub fn CircleCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleChevronDown icon component
 #[component]
-pub fn CircleChevronDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleChevronDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleChevronDown class=class /> }
 }
 
 /// CircleChevronLeft icon component
 #[component]
-pub fn CircleChevronLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleChevronLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleChevronLeft class=class /> }
 }
 
 /// CircleChevronRight icon component
 #[component]
-pub fn CircleChevronRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleChevronRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleChevronRight class=class /> }
 }
 
 /// CircleChevronUp icon component
 #[component]
-pub fn CircleChevronUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleChevronUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleChevronUp class=class /> }
 }
 
 /// CircleDashed icon component
 #[component]
-pub fn CircleDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleDashed class=class /> }
 }
 
 /// CircleDivide icon component
 #[component]
-pub fn CircleDivideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleDivideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleDivide class=class /> }
 }
 
 /// CircleDollarSign icon component
 #[component]
-pub fn CircleDollarSignIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleDollarSignIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleDollarSign class=class /> }
 }
 
 /// CircleDotDashed icon component
 #[component]
-pub fn CircleDotDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleDotDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleDotDashed class=class /> }
 }
 
@@ -2269,7 +2586,9 @@ pub fn CircleDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleEllipsis icon component
 #[component]
-pub fn CircleEllipsisIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleEllipsisIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleEllipsis class=class /> }
 }
 
@@ -2281,13 +2600,17 @@ pub fn CircleEqualIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleFadingArrowUp icon component
 #[component]
-pub fn CircleFadingArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleFadingArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleFadingArrowUp class=class /> }
 }
 
 /// CircleFadingPlus icon component
 #[component]
-pub fn CircleFadingPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleFadingPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleFadingPlus class=class /> }
 }
 
@@ -2311,13 +2634,17 @@ pub fn CircleOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleParkingOff icon component
 #[component]
-pub fn CircleParkingOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleParkingOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleParkingOff class=class /> }
 }
 
 /// CircleParking icon component
 #[component]
-pub fn CircleParkingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleParkingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleParking class=class /> }
 }
 
@@ -2329,7 +2656,9 @@ pub fn CirclePauseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CirclePercent icon component
 #[component]
-pub fn CirclePercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CirclePercentIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CirclePercent class=class /> }
 }
 
@@ -2353,7 +2682,9 @@ pub fn CirclePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CirclePoundSterling icon component
 #[component]
-pub fn CirclePoundSterlingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CirclePoundSterlingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CirclePoundSterling class=class /> }
 }
 
@@ -2365,13 +2696,17 @@ pub fn CirclePowerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleQuestionMark icon component
 #[component]
-pub fn CircleQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleQuestionMark class=class /> }
 }
 
 /// CircleSlash2 icon component
 #[component]
-pub fn CircleSlash2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleSlash2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleSlash2 class=class /> }
 }
 
@@ -2401,7 +2736,9 @@ pub fn CircleStopIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircleUserRound icon component
 #[component]
-pub fn CircleUserRoundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircleUserRoundIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircleUserRound class=class /> }
 }
 
@@ -2425,7 +2762,9 @@ pub fn CircleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CircuitBoard icon component
 #[component]
-pub fn CircuitBoardIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CircuitBoardIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CircuitBoard class=class /> }
 }
 
@@ -2437,67 +2776,89 @@ pub fn CitrusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Clapperboard icon component
 #[component]
-pub fn ClapperboardIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClapperboardIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Clapperboard class=class /> }
 }
 
 /// ClipboardCheck icon component
 #[component]
-pub fn ClipboardCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardCheck class=class /> }
 }
 
 /// ClipboardClock icon component
 #[component]
-pub fn ClipboardClockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardClockIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardClock class=class /> }
 }
 
 /// ClipboardCopy icon component
 #[component]
-pub fn ClipboardCopyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardCopyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardCopy class=class /> }
 }
 
 /// ClipboardList icon component
 #[component]
-pub fn ClipboardListIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardListIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardList class=class /> }
 }
 
 /// ClipboardMinus icon component
 #[component]
-pub fn ClipboardMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardMinus class=class /> }
 }
 
 /// ClipboardPaste icon component
 #[component]
-pub fn ClipboardPasteIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardPasteIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardPaste class=class /> }
 }
 
 /// ClipboardPenLine icon component
 #[component]
-pub fn ClipboardPenLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardPenLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardPenLine class=class /> }
 }
 
 /// ClipboardPen icon component
 #[component]
-pub fn ClipboardPenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardPenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardPen class=class /> }
 }
 
 /// ClipboardPlus icon component
 #[component]
-pub fn ClipboardPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardPlus class=class /> }
 }
 
 /// ClipboardType icon component
 #[component]
-pub fn ClipboardTypeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClipboardTypeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClipboardType class=class /> }
 }
 
@@ -2593,25 +2954,33 @@ pub fn ClockAlertIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ClockArrowDown icon component
 #[component]
-pub fn ClockArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClockArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClockArrowDown class=class /> }
 }
 
 /// ClockArrowLeft icon component
 #[component]
-pub fn ClockArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClockArrowLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClockArrowLeft class=class /> }
 }
 
 /// ClockArrowRight icon component
 #[component]
-pub fn ClockArrowRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClockArrowRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClockArrowRight class=class /> }
 }
 
 /// ClockArrowUp icon component
 #[component]
-pub fn ClockArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClockArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClockArrowUp class=class /> }
 }
 
@@ -2641,7 +3010,9 @@ pub fn ClockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ClosedCaption icon component
 #[component]
-pub fn ClosedCaptionIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ClosedCaptionIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ClosedCaption class=class /> }
 }
 
@@ -2671,13 +3042,17 @@ pub fn CloudCogIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CloudDownload icon component
 #[component]
-pub fn CloudDownloadIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudDownloadIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudDownload class=class /> }
 }
 
 /// CloudDrizzle icon component
 #[component]
-pub fn CloudDrizzleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudDrizzleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudDrizzle class=class /> }
 }
 
@@ -2695,13 +3070,17 @@ pub fn CloudHailIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CloudLightning icon component
 #[component]
-pub fn CloudLightningIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudLightningIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudLightning class=class /> }
 }
 
 /// CloudMoonRain icon component
 #[component]
-pub fn CloudMoonRainIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudMoonRainIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudMoonRain class=class /> }
 }
 
@@ -2719,7 +3098,9 @@ pub fn CloudOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CloudRainWind icon component
 #[component]
-pub fn CloudRainWindIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudRainWindIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudRainWind class=class /> }
 }
 
@@ -2737,7 +3118,9 @@ pub fn CloudSnowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CloudSunRain icon component
 #[component]
-pub fn CloudSunRainIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CloudSunRainIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CloudSunRain class=class /> }
 }
 
@@ -2869,7 +3252,9 @@ pub fn ComputerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ConciergeBell icon component
 #[component]
-pub fn ConciergeBellIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ConciergeBellIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ConciergeBell class=class /> }
 }
 
@@ -2881,13 +3266,17 @@ pub fn ConeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Construction icon component
 #[component]
-pub fn ConstructionIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ConstructionIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Construction class=class /> }
 }
 
 /// ContactRound icon component
 #[component]
-pub fn ContactRoundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ContactRoundIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ContactRound class=class /> }
 }
 
@@ -2971,49 +3360,65 @@ pub fn CopyrightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CornerDownLeft icon component
 #[component]
-pub fn CornerDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerDownLeft class=class /> }
 }
 
 /// CornerDownRight icon component
 #[component]
-pub fn CornerDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerDownRight class=class /> }
 }
 
 /// CornerLeftDown icon component
 #[component]
-pub fn CornerLeftDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerLeftDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerLeftDown class=class /> }
 }
 
 /// CornerLeftUp icon component
 #[component]
-pub fn CornerLeftUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerLeftUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerLeftUp class=class /> }
 }
 
 /// CornerRightDown icon component
 #[component]
-pub fn CornerRightDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerRightDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerRightDown class=class /> }
 }
 
 /// CornerRightUp icon component
 #[component]
-pub fn CornerRightUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerRightUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerRightUp class=class /> }
 }
 
 /// CornerUpLeft icon component
 #[component]
-pub fn CornerUpLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerUpLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerUpLeft class=class /> }
 }
 
 /// CornerUpRight icon component
 #[component]
-pub fn CornerUpRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CornerUpRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CornerUpRight class=class /> }
 }
 
@@ -3025,7 +3430,9 @@ pub fn CpuIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// CreativeCommons icon component
 #[component]
-pub fn CreativeCommonsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn CreativeCommonsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::CreativeCommons class=class /> }
 }
 
@@ -3097,43 +3504,57 @@ pub fn DamIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// DatabaseArrowDown icon component
 #[component]
-pub fn DatabaseArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseArrowDown class=class /> }
 }
 
 /// DatabaseArrowUp icon component
 #[component]
-pub fn DatabaseArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseArrowUp class=class /> }
 }
 
 /// DatabaseBackup icon component
 #[component]
-pub fn DatabaseBackupIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseBackupIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseBackup class=class /> }
 }
 
 /// DatabaseCheck icon component
 #[component]
-pub fn DatabaseCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseCheck class=class /> }
 }
 
 /// DatabaseMinus icon component
 #[component]
-pub fn DatabaseMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseMinus class=class /> }
 }
 
 /// DatabasePlus icon component
 #[component]
-pub fn DatabasePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabasePlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabasePlus class=class /> }
 }
 
 /// DatabaseSearch icon component
 #[component]
-pub fn DatabaseSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DatabaseSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DatabaseSearch class=class /> }
 }
 
@@ -3157,13 +3578,17 @@ pub fn DatabaseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// DecimalsArrowLeft icon component
 #[component]
-pub fn DecimalsArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DecimalsArrowLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DecimalsArrowLeft class=class /> }
 }
 
 /// DecimalsArrowRight icon component
 #[component]
-pub fn DecimalsArrowRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DecimalsArrowRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DecimalsArrowRight class=class /> }
 }
 
@@ -3187,13 +3612,17 @@ pub fn DiameterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// DiamondMinus icon component
 #[component]
-pub fn DiamondMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DiamondMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DiamondMinus class=class /> }
 }
 
 /// DiamondPercent icon component
 #[component]
-pub fn DiamondPercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DiamondPercentIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DiamondPercent class=class /> }
 }
 
@@ -3325,7 +3754,9 @@ pub fn DonutIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// DoorClosedLocked icon component
 #[component]
-pub fn DoorClosedLockedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DoorClosedLockedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DoorClosedLocked class=class /> }
 }
 
@@ -3355,7 +3786,9 @@ pub fn DownloadIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// DraftingCompass icon component
 #[component]
-pub fn DraftingCompassIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn DraftingCompassIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::DraftingCompass class=class /> }
 }
 
@@ -3469,7 +3902,9 @@ pub fn EllipseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// EllipsisVertical icon component
 #[component]
-pub fn EllipsisVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn EllipsisVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::EllipsisVertical class=class /> }
 }
 
@@ -3481,7 +3916,9 @@ pub fn EllipsisIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// EqualApproximately icon component
 #[component]
-pub fn EqualApproximatelyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn EqualApproximatelyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::EqualApproximately class=class /> }
 }
 
@@ -3505,7 +3942,9 @@ pub fn EraserIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// EthernetPort icon component
 #[component]
-pub fn EthernetPortIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn EthernetPortIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::EthernetPort class=class /> }
 }
 
@@ -3529,7 +3968,9 @@ pub fn ExpandIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ExternalLink icon component
 #[component]
-pub fn ExternalLinkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ExternalLinkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ExternalLink class=class /> }
 }
 
@@ -3619,7 +4060,9 @@ pub fn FileBoxIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileBracesCorner icon component
 #[component]
-pub fn FileBracesCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileBracesCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileBracesCorner class=class /> }
 }
 
@@ -3631,31 +4074,41 @@ pub fn FileBracesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileChartColumnIncreasing icon component
 #[component]
-pub fn FileChartColumnIncreasingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileChartColumnIncreasingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileChartColumnIncreasing class=class /> }
 }
 
 /// FileChartColumn icon component
 #[component]
-pub fn FileChartColumnIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileChartColumnIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileChartColumn class=class /> }
 }
 
 /// FileChartLine icon component
 #[component]
-pub fn FileChartLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileChartLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileChartLine class=class /> }
 }
 
 /// FileChartPie icon component
 #[component]
-pub fn FileChartPieIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileChartPieIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileChartPie class=class /> }
 }
 
 /// FileCheckCorner icon component
 #[component]
-pub fn FileCheckCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileCheckCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileCheckCorner class=class /> }
 }
 
@@ -3673,7 +4126,9 @@ pub fn FileClockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileCodeCorner icon component
 #[component]
-pub fn FileCodeCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileCodeCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileCodeCorner class=class /> }
 }
 
@@ -3709,13 +4164,17 @@ pub fn FileDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileExclamationPoint icon component
 #[component]
-pub fn FileExclamationPointIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileExclamationPointIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileExclamationPoint class=class /> }
 }
 
 /// FileHeadphone icon component
 #[component]
-pub fn FileHeadphoneIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileHeadphoneIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileHeadphone class=class /> }
 }
 
@@ -3751,7 +4210,9 @@ pub fn FileLockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileMinusCorner icon component
 #[component]
-pub fn FileMinusCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileMinusCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileMinusCorner class=class /> }
 }
 
@@ -3793,7 +4254,9 @@ pub fn FilePlayIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FilePlusCorner icon component
 #[component]
-pub fn FilePlusCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FilePlusCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FilePlusCorner class=class /> }
 }
 
@@ -3805,7 +4268,9 @@ pub fn FilePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileQuestionMark icon component
 #[component]
-pub fn FileQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileQuestionMark class=class /> }
 }
 
@@ -3817,7 +4282,9 @@ pub fn FileScanIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileSearchCorner icon component
 #[component]
-pub fn FileSearchCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileSearchCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileSearchCorner class=class /> }
 }
 
@@ -3841,7 +4308,9 @@ pub fn FileSlidersIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileSpreadsheet icon component
 #[component]
-pub fn FileSpreadsheetIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileSpreadsheetIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileSpreadsheet class=class /> }
 }
 
@@ -3859,7 +4328,9 @@ pub fn FileSymlinkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileTerminal icon component
 #[component]
-pub fn FileTerminalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileTerminalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileTerminal class=class /> }
 }
 
@@ -3871,7 +4342,9 @@ pub fn FileTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileTypeCorner icon component
 #[component]
-pub fn FileTypeCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileTypeCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileTypeCorner class=class /> }
 }
 
@@ -3895,7 +4368,9 @@ pub fn FileUserIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FileVideoCamera icon component
 #[component]
-pub fn FileVideoCameraIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FileVideoCameraIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FileVideoCamera class=class /> }
 }
 
@@ -3937,13 +4412,17 @@ pub fn FilmIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FingerprintPattern icon component
 #[component]
-pub fn FingerprintPatternIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FingerprintPatternIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FingerprintPattern class=class /> }
 }
 
 /// FireExtinguisher icon component
 #[component]
-pub fn FireExtinguisherIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FireExtinguisherIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FireExtinguisher class=class /> }
 }
 
@@ -3985,13 +4464,17 @@ pub fn FlagOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FlagTriangleLeft icon component
 #[component]
-pub fn FlagTriangleLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlagTriangleLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlagTriangleLeft class=class /> }
 }
 
 /// FlagTriangleRight icon component
 #[component]
-pub fn FlagTriangleRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlagTriangleRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlagTriangleRight class=class /> }
 }
 
@@ -4003,7 +4486,9 @@ pub fn FlagIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FlameKindling icon component
 #[component]
-pub fn FlameKindlingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlameKindlingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlameKindling class=class /> }
 }
 
@@ -4015,7 +4500,9 @@ pub fn FlameIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FlashlightOff icon component
 #[component]
-pub fn FlashlightOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlashlightOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlashlightOff class=class /> }
 }
 
@@ -4027,13 +4514,17 @@ pub fn FlashlightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FlaskConicalOff icon component
 #[component]
-pub fn FlaskConicalOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlaskConicalOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlaskConicalOff class=class /> }
 }
 
 /// FlaskConical icon component
 #[component]
-pub fn FlaskConicalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlaskConicalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlaskConical class=class /> }
 }
 
@@ -4045,13 +4536,17 @@ pub fn FlaskRoundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FlipHorizontal2 icon component
 #[component]
-pub fn FlipHorizontal2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlipHorizontal2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlipHorizontal2 class=class /> }
 }
 
 /// FlipVertical2 icon component
 #[component]
-pub fn FlipVertical2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FlipVertical2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FlipVertical2 class=class /> }
 }
 
@@ -4075,25 +4570,33 @@ pub fn FocusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FoldHorizontal icon component
 #[component]
-pub fn FoldHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FoldHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FoldHorizontal class=class /> }
 }
 
 /// FoldVertical icon component
 #[component]
-pub fn FoldVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FoldVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FoldVertical class=class /> }
 }
 
 /// FolderArchive icon component
 #[component]
-pub fn FolderArchiveIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderArchiveIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderArchive class=class /> }
 }
 
 /// FolderBookmark icon component
 #[component]
-pub fn FolderBookmarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderBookmarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderBookmark class=class /> }
 }
 
@@ -4111,7 +4614,9 @@ pub fn FolderClockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FolderClosed icon component
 #[component]
-pub fn FolderClosedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderClosedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderClosed class=class /> }
 }
 
@@ -4165,7 +4670,9 @@ pub fn FolderInputIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FolderKanban icon component
 #[component]
-pub fn FolderKanbanIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderKanbanIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderKanban class=class /> }
 }
 
@@ -4189,7 +4696,9 @@ pub fn FolderMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FolderOpenDot icon component
 #[component]
-pub fn FolderOpenDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderOpenDotIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderOpenDot class=class /> }
 }
 
@@ -4201,7 +4710,9 @@ pub fn FolderOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FolderOutput icon component
 #[component]
-pub fn FolderOutputIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderOutputIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderOutput class=class /> }
 }
 
@@ -4225,19 +4736,25 @@ pub fn FolderRootIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// FolderSearch2 icon component
 #[component]
-pub fn FolderSearch2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderSearch2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderSearch2 class=class /> }
 }
 
 /// FolderSearch icon component
 #[component]
-pub fn FolderSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderSearch class=class /> }
 }
 
 /// FolderSymlink icon component
 #[component]
-pub fn FolderSymlinkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn FolderSymlinkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::FolderSymlink class=class /> }
 }
 
@@ -4345,31 +4862,41 @@ pub fn FunnelIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GalleryHorizontalEnd icon component
 #[component]
-pub fn GalleryHorizontalEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GalleryHorizontalEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GalleryHorizontalEnd class=class /> }
 }
 
 /// GalleryHorizontal icon component
 #[component]
-pub fn GalleryHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GalleryHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GalleryHorizontal class=class /> }
 }
 
 /// GalleryThumbnails icon component
 #[component]
-pub fn GalleryThumbnailsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GalleryThumbnailsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GalleryThumbnails class=class /> }
 }
 
 /// GalleryVerticalEnd icon component
 #[component]
-pub fn GalleryVerticalEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GalleryVerticalEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GalleryVerticalEnd class=class /> }
 }
 
 /// GalleryVertical icon component
 #[component]
-pub fn GalleryVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GalleryVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GalleryVertical class=class /> }
 }
 
@@ -4381,7 +4908,9 @@ pub fn Gamepad2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GamepadDirectional icon component
 #[component]
-pub fn GamepadDirectionalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GamepadDirectionalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GamepadDirectional class=class /> }
 }
 
@@ -4411,7 +4940,9 @@ pub fn GemIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GeorgianLari icon component
 #[component]
-pub fn GeorgianLariIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GeorgianLariIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GeorgianLari class=class /> }
 }
 
@@ -4429,13 +4960,17 @@ pub fn GiftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GitBranchMinus icon component
 #[component]
-pub fn GitBranchMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitBranchMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitBranchMinus class=class /> }
 }
 
 /// GitBranchPlus icon component
 #[component]
-pub fn GitBranchPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitBranchPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitBranchPlus class=class /> }
 }
 
@@ -4447,19 +4982,25 @@ pub fn GitBranchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GitCommitHorizontal icon component
 #[component]
-pub fn GitCommitHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitCommitHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitCommitHorizontal class=class /> }
 }
 
 /// GitCommitVertical icon component
 #[component]
-pub fn GitCommitVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitCommitVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitCommitVertical class=class /> }
 }
 
 /// GitCompareArrows icon component
 #[component]
-pub fn GitCompareArrowsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitCompareArrowsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitCompareArrows class=class /> }
 }
 
@@ -4483,7 +5024,9 @@ pub fn GitGraphIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GitMergeConflict icon component
 #[component]
-pub fn GitMergeConflictIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitMergeConflictIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitMergeConflict class=class /> }
 }
 
@@ -4495,37 +5038,49 @@ pub fn GitMergeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GitPullRequestArrow icon component
 #[component]
-pub fn GitPullRequestArrowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestArrowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequestArrow class=class /> }
 }
 
 /// GitPullRequestClosed icon component
 #[component]
-pub fn GitPullRequestClosedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestClosedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequestClosed class=class /> }
 }
 
 /// GitPullRequestCreateArrow icon component
 #[component]
-pub fn GitPullRequestCreateArrowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestCreateArrowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequestCreateArrow class=class /> }
 }
 
 /// GitPullRequestCreate icon component
 #[component]
-pub fn GitPullRequestCreateIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestCreateIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequestCreate class=class /> }
 }
 
 /// GitPullRequestDraft icon component
 #[component]
-pub fn GitPullRequestDraftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestDraftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequestDraft class=class /> }
 }
 
 /// GitPullRequest icon component
 #[component]
-pub fn GitPullRequestIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GitPullRequestIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GitPullRequest class=class /> }
 }
 
@@ -4585,7 +5140,9 @@ pub fn GpuIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GraduationCap icon component
 #[component]
-pub fn GraduationCapIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GraduationCapIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GraduationCap class=class /> }
 }
 
@@ -4597,7 +5154,9 @@ pub fn GrapeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Grid2X2Check icon component
 #[component]
-pub fn Grid2X2CheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn Grid2X2CheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Grid2X2Check class=class /> }
 }
 
@@ -4633,13 +5192,17 @@ pub fn Grid3X3Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// GripHorizontal icon component
 #[component]
-pub fn GripHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GripHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GripHorizontal class=class /> }
 }
 
 /// GripVertical icon component
 #[component]
-pub fn GripVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn GripVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::GripVertical class=class /> }
 }
 
@@ -4741,13 +5304,17 @@ pub fn HandshakeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// HardDriveDownload icon component
 #[component]
-pub fn HardDriveDownloadIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn HardDriveDownloadIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::HardDriveDownload class=class /> }
 }
 
 /// HardDriveUpload icon component
 #[component]
-pub fn HardDriveUploadIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn HardDriveUploadIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::HardDriveUpload class=class /> }
 }
 
@@ -4837,7 +5404,9 @@ pub fn HeadingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// HeadphoneOff icon component
 #[component]
-pub fn HeadphoneOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn HeadphoneOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::HeadphoneOff class=class /> }
 }
 
@@ -4861,7 +5430,9 @@ pub fn HeartCrackIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// HeartHandshake icon component
 #[component]
-pub fn HeartHandshakeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn HeartHandshakeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::HeartHandshake class=class /> }
 }
 
@@ -4993,19 +5564,25 @@ pub fn HouseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// IceCreamBowl icon component
 #[component]
-pub fn IceCreamBowlIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn IceCreamBowlIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::IceCreamBowl class=class /> }
 }
 
 /// IceCreamCone icon component
 #[component]
-pub fn IceCreamConeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn IceCreamConeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::IceCreamCone class=class /> }
 }
 
 /// IdCardLanyard icon component
 #[component]
-pub fn IdCardLanyardIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn IdCardLanyardIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::IdCardLanyard class=class /> }
 }
 
@@ -5053,7 +5630,9 @@ pub fn ImageUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ImageUpscale icon component
 #[component]
-pub fn ImageUpscaleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ImageUpscaleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ImageUpscale class=class /> }
 }
 
@@ -5101,7 +5680,9 @@ pub fn InfoIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// InspectionPanel icon component
 #[component]
-pub fn InspectionPanelIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn InspectionPanelIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::InspectionPanel class=class /> }
 }
 
@@ -5113,7 +5694,9 @@ pub fn ItalicIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// IterationCcw icon component
 #[component]
-pub fn IterationCcwIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn IterationCcwIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::IterationCcw class=class /> }
 }
 
@@ -5167,7 +5750,9 @@ pub fn KeyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// KeyboardMusic icon component
 #[component]
-pub fn KeyboardMusicIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn KeyboardMusicIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::KeyboardMusic class=class /> }
 }
 
@@ -5203,7 +5788,9 @@ pub fn LampFloorIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LampWallDown icon component
 #[component]
-pub fn LampWallDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LampWallDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LampWallDown class=class /> }
 }
 
@@ -5239,13 +5826,17 @@ pub fn LanguagesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LaptopMinimalCheck icon component
 #[component]
-pub fn LaptopMinimalCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LaptopMinimalCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LaptopMinimalCheck class=class /> }
 }
 
 /// LaptopMinimal icon component
 #[component]
-pub fn LaptopMinimalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LaptopMinimalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LaptopMinimal class=class /> }
 }
 
@@ -5299,7 +5890,9 @@ pub fn LayersIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LayoutDashboard icon component
 #[component]
-pub fn LayoutDashboardIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LayoutDashboardIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LayoutDashboard class=class /> }
 }
 
@@ -5317,19 +5910,25 @@ pub fn LayoutListIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LayoutPanelLeft icon component
 #[component]
-pub fn LayoutPanelLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LayoutPanelLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LayoutPanelLeft class=class /> }
 }
 
 /// LayoutPanelTop icon component
 #[component]
-pub fn LayoutPanelTopIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LayoutPanelTopIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LayoutPanelTop class=class /> }
 }
 
 /// LayoutTemplate icon component
 #[component]
-pub fn LayoutTemplateIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LayoutTemplateIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LayoutTemplate class=class /> }
 }
 
@@ -5389,7 +5988,9 @@ pub fn LigatureIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LightbulbOff icon component
 #[component]
-pub fn LightbulbOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LightbulbOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LightbulbOff class=class /> }
 }
 
@@ -5401,13 +6002,17 @@ pub fn LightbulbIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LineDotRightHorizontal icon component
 #[component]
-pub fn LineDotRightHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LineDotRightHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LineDotRightHorizontal class=class /> }
 }
 
 /// LineSquiggle icon component
 #[component]
-pub fn LineSquiggleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LineSquiggleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LineSquiggle class=class /> }
 }
 
@@ -5449,19 +6054,25 @@ pub fn ListChecksIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ListChevronsDownUp icon component
 #[component]
-pub fn ListChevronsDownUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListChevronsDownUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListChevronsDownUp class=class /> }
 }
 
 /// ListChevronsUpDown icon component
 #[component]
-pub fn ListChevronsUpDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListChevronsUpDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListChevronsUpDown class=class /> }
 }
 
 /// ListCollapse icon component
 #[component]
-pub fn ListCollapseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListCollapseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListCollapse class=class /> }
 }
 
@@ -5473,7 +6084,9 @@ pub fn ListEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ListFilterPlus icon component
 #[component]
-pub fn ListFilterPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListFilterPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListFilterPlus class=class /> }
 }
 
@@ -5485,13 +6098,17 @@ pub fn ListFilterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ListIndentDecrease icon component
 #[component]
-pub fn ListIndentDecreaseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListIndentDecreaseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListIndentDecrease class=class /> }
 }
 
 /// ListIndentIncrease icon component
 #[component]
-pub fn ListIndentIncreaseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListIndentIncreaseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListIndentIncrease class=class /> }
 }
 
@@ -5527,13 +6144,17 @@ pub fn ListRestartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ListSortAscending icon component
 #[component]
-pub fn ListSortAscendingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListSortAscendingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListSortAscending class=class /> }
 }
 
 /// ListSortDescending icon component
 #[component]
-pub fn ListSortDescendingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ListSortDescendingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ListSortDescending class=class /> }
 }
 
@@ -5575,13 +6196,17 @@ pub fn ListIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LoaderCircle icon component
 #[component]
-pub fn LoaderCircleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LoaderCircleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LoaderCircle class=class /> }
 }
 
 /// LoaderPinwheel icon component
 #[component]
-pub fn LoaderPinwheelIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LoaderPinwheelIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LoaderPinwheel class=class /> }
 }
 
@@ -5611,7 +6236,9 @@ pub fn LocateIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// LockKeyholeOpen icon component
 #[component]
-pub fn LockKeyholeOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn LockKeyholeOpenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::LockKeyholeOpen class=class /> }
 }
 
@@ -5695,7 +6322,9 @@ pub fn MailPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MailQuestionMark icon component
 #[component]
-pub fn MailQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MailQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MailQuestionMark class=class /> }
 }
 
@@ -5743,7 +6372,9 @@ pub fn MapMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MapPinCheckInside icon component
 #[component]
-pub fn MapPinCheckInsideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MapPinCheckInsideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MapPinCheckInside class=class /> }
 }
 
@@ -5761,7 +6392,9 @@ pub fn MapPinHouseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MapPinMinusInside icon component
 #[component]
-pub fn MapPinMinusInsideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MapPinMinusInsideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MapPinMinusInside class=class /> }
 }
 
@@ -5785,7 +6418,9 @@ pub fn MapPinPenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MapPinPlusInside icon component
 #[component]
-pub fn MapPinPlusInsideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MapPinPlusInsideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MapPinPlusInside class=class /> }
 }
 
@@ -5797,13 +6432,17 @@ pub fn MapPinPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MapPinSearch icon component
 #[component]
-pub fn MapPinSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MapPinSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MapPinSearch class=class /> }
 }
 
 /// MapPinXInside icon component
 #[component]
-pub fn MapPinXInsideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MapPinXInsideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MapPinXInside class=class /> }
 }
 
@@ -5875,7 +6514,9 @@ pub fn MedalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MegaphoneOff icon component
 #[component]
-pub fn MegaphoneOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MegaphoneOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MegaphoneOff class=class /> }
 }
 
@@ -5911,181 +6552,241 @@ pub fn MergeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MessageCircleCheck icon component
 #[component]
-pub fn MessageCircleCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleCheck class=class /> }
 }
 
 /// MessageCircleCode icon component
 #[component]
-pub fn MessageCircleCodeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleCodeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleCode class=class /> }
 }
 
 /// MessageCircleDashed icon component
 #[component]
-pub fn MessageCircleDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleDashed class=class /> }
 }
 
 /// MessageCircleHeart icon component
 #[component]
-pub fn MessageCircleHeartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleHeartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleHeart class=class /> }
 }
 
 /// MessageCircleMore icon component
 #[component]
-pub fn MessageCircleMoreIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleMoreIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleMore class=class /> }
 }
 
 /// MessageCircleOff icon component
 #[component]
-pub fn MessageCircleOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleOff class=class /> }
 }
 
 /// MessageCirclePlus icon component
 #[component]
-pub fn MessageCirclePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCirclePlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCirclePlus class=class /> }
 }
 
 /// MessageCircleQuestionMark icon component
 #[component]
-pub fn MessageCircleQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleQuestionMark class=class /> }
 }
 
 /// MessageCircleReply icon component
 #[component]
-pub fn MessageCircleReplyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleReplyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleReply class=class /> }
 }
 
 /// MessageCircleWarning icon component
 #[component]
-pub fn MessageCircleWarningIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleWarningIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleWarning class=class /> }
 }
 
 /// MessageCircleX icon component
 #[component]
-pub fn MessageCircleXIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleXIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircleX class=class /> }
 }
 
 /// MessageCircle icon component
 #[component]
-pub fn MessageCircleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageCircleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageCircle class=class /> }
 }
 
 /// MessageSquareCheck icon component
 #[component]
-pub fn MessageSquareCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareCheck class=class /> }
 }
 
 /// MessageSquareCode icon component
 #[component]
-pub fn MessageSquareCodeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareCodeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareCode class=class /> }
 }
 
 /// MessageSquareDashed icon component
 #[component]
-pub fn MessageSquareDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareDashed class=class /> }
 }
 
 /// MessageSquareDiff icon component
 #[component]
-pub fn MessageSquareDiffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareDiffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareDiff class=class /> }
 }
 
 /// MessageSquareDot icon component
 #[component]
-pub fn MessageSquareDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareDotIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareDot class=class /> }
 }
 
 /// MessageSquareHeart icon component
 #[component]
-pub fn MessageSquareHeartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareHeartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareHeart class=class /> }
 }
 
 /// MessageSquareLock icon component
 #[component]
-pub fn MessageSquareLockIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareLockIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareLock class=class /> }
 }
 
 /// MessageSquareMore icon component
 #[component]
-pub fn MessageSquareMoreIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareMoreIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareMore class=class /> }
 }
 
 /// MessageSquareOff icon component
 #[component]
-pub fn MessageSquareOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareOff class=class /> }
 }
 
 /// MessageSquarePlus icon component
 #[component]
-pub fn MessageSquarePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquarePlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquarePlus class=class /> }
 }
 
 /// MessageSquareQuote icon component
 #[component]
-pub fn MessageSquareQuoteIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareQuoteIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareQuote class=class /> }
 }
 
 /// MessageSquareReply icon component
 #[component]
-pub fn MessageSquareReplyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareReplyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareReply class=class /> }
 }
 
 /// MessageSquareShare icon component
 #[component]
-pub fn MessageSquareShareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareShareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareShare class=class /> }
 }
 
 /// MessageSquareText icon component
 #[component]
-pub fn MessageSquareTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareTextIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareText class=class /> }
 }
 
 /// MessageSquareWarning icon component
 #[component]
-pub fn MessageSquareWarningIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareWarningIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareWarning class=class /> }
 }
 
 /// MessageSquareX icon component
 #[component]
-pub fn MessageSquareXIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareXIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquareX class=class /> }
 }
 
 /// MessageSquare icon component
 #[component]
-pub fn MessageSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessageSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessageSquare class=class /> }
 }
 
 /// MessagesSquare icon component
 #[component]
-pub fn MessagesSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MessagesSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MessagesSquare class=class /> }
 }
 
@@ -6169,7 +6870,9 @@ pub fn MinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MirrorRectangular icon component
 #[component]
-pub fn MirrorRectangularIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MirrorRectangularIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MirrorRectangular class=class /> }
 }
 
@@ -6181,13 +6884,17 @@ pub fn MirrorRoundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MonitorCheck icon component
 #[component]
-pub fn MonitorCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MonitorCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MonitorCheck class=class /> }
 }
 
 /// MonitorCloud icon component
 #[component]
-pub fn MonitorCloudIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MonitorCloudIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MonitorCloud class=class /> }
 }
 
@@ -6217,7 +6924,9 @@ pub fn MonitorOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MonitorPause icon component
 #[component]
-pub fn MonitorPauseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MonitorPauseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MonitorPause class=class /> }
 }
 
@@ -6229,13 +6938,17 @@ pub fn MonitorPlayIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MonitorSmartphone icon component
 #[component]
-pub fn MonitorSmartphoneIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MonitorSmartphoneIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MonitorSmartphone class=class /> }
 }
 
 /// MonitorSpeaker icon component
 #[component]
-pub fn MonitorSpeakerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MonitorSpeakerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MonitorSpeaker class=class /> }
 }
 
@@ -6283,7 +6996,9 @@ pub fn MotorbikeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MountainSnow icon component
 #[component]
-pub fn MountainSnowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MountainSnowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MountainSnow class=class /> }
 }
 
@@ -6307,31 +7022,41 @@ pub fn MouseOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MousePointer2Off icon component
 #[component]
-pub fn MousePointer2OffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MousePointer2OffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MousePointer2Off class=class /> }
 }
 
 /// MousePointer2 icon component
 #[component]
-pub fn MousePointer2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MousePointer2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MousePointer2 class=class /> }
 }
 
 /// MousePointerBan icon component
 #[component]
-pub fn MousePointerBanIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MousePointerBanIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MousePointerBan class=class /> }
 }
 
 /// MousePointerClick icon component
 #[component]
-pub fn MousePointerClickIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MousePointerClickIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MousePointerClick class=class /> }
 }
 
 /// MousePointer icon component
 #[component]
-pub fn MousePointerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MousePointerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MousePointer class=class /> }
 }
 
@@ -6355,25 +7080,33 @@ pub fn Move3DIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MoveDiagonal2 icon component
 #[component]
-pub fn MoveDiagonal2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveDiagonal2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveDiagonal2 class=class /> }
 }
 
 /// MoveDiagonal icon component
 #[component]
-pub fn MoveDiagonalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveDiagonalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveDiagonal class=class /> }
 }
 
 /// MoveDownLeft icon component
 #[component]
-pub fn MoveDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveDownLeft class=class /> }
 }
 
 /// MoveDownRight icon component
 #[component]
-pub fn MoveDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveDownRight class=class /> }
 }
 
@@ -6385,7 +7118,9 @@ pub fn MoveDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MoveHorizontal icon component
 #[component]
-pub fn MoveHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveHorizontal class=class /> }
 }
 
@@ -6421,7 +7156,9 @@ pub fn MoveUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// MoveVertical icon component
 #[component]
-pub fn MoveVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn MoveVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::MoveVertical class=class /> }
 }
 
@@ -6457,7 +7194,9 @@ pub fn MusicIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Navigation2Off icon component
 #[component]
-pub fn Navigation2OffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn Navigation2OffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Navigation2Off class=class /> }
 }
 
@@ -6469,7 +7208,9 @@ pub fn Navigation2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// NavigationOff icon component
 #[component]
-pub fn NavigationOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn NavigationOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::NavigationOff class=class /> }
 }
 
@@ -6511,13 +7252,17 @@ pub fn NotebookPenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// NotebookTabs icon component
 #[component]
-pub fn NotebookTabsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn NotebookTabsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::NotebookTabs class=class /> }
 }
 
 /// NotebookText icon component
 #[component]
-pub fn NotebookTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn NotebookTextIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::NotebookText class=class /> }
 }
 
@@ -6529,7 +7274,9 @@ pub fn NotebookIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// NotepadTextDashed icon component
 #[component]
-pub fn NotepadTextDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn NotepadTextDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::NotepadTextDashed class=class /> }
 }
 
@@ -6553,19 +7300,25 @@ pub fn NutIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// OctagonAlert icon component
 #[component]
-pub fn OctagonAlertIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn OctagonAlertIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::OctagonAlert class=class /> }
 }
 
 /// OctagonMinus icon component
 #[component]
-pub fn OctagonMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn OctagonMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::OctagonMinus class=class /> }
 }
 
 /// OctagonPause icon component
 #[component]
-pub fn OctagonPauseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn OctagonPauseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::OctagonPause class=class /> }
 }
 
@@ -6613,13 +7366,17 @@ pub fn Package2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PackageCheck icon component
 #[component]
-pub fn PackageCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PackageCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PackageCheck class=class /> }
 }
 
 /// PackageMinus icon component
 #[component]
-pub fn PackageMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PackageMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PackageMinus class=class /> }
 }
 
@@ -6637,7 +7394,9 @@ pub fn PackagePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PackageSearch icon component
 #[component]
-pub fn PackageSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PackageSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PackageSearch class=class /> }
 }
 
@@ -6667,7 +7426,9 @@ pub fn PaintRollerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PaintbrushVertical icon component
 #[component]
-pub fn PaintbrushVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PaintbrushVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PaintbrushVertical class=class /> }
 }
 
@@ -6691,19 +7452,25 @@ pub fn PandaIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PanelBottomClose icon component
 #[component]
-pub fn PanelBottomCloseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelBottomCloseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelBottomClose class=class /> }
 }
 
 /// PanelBottomDashed icon component
 #[component]
-pub fn PanelBottomDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelBottomDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelBottomDashed class=class /> }
 }
 
 /// PanelBottomOpen icon component
 #[component]
-pub fn PanelBottomOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelBottomOpenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelBottomOpen class=class /> }
 }
 
@@ -6715,25 +7482,33 @@ pub fn PanelBottomIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PanelLeftClose icon component
 #[component]
-pub fn PanelLeftCloseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelLeftCloseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelLeftClose class=class /> }
 }
 
 /// PanelLeftDashed icon component
 #[component]
-pub fn PanelLeftDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelLeftDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelLeftDashed class=class /> }
 }
 
 /// PanelLeftOpen icon component
 #[component]
-pub fn PanelLeftOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelLeftOpenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelLeftOpen class=class /> }
 }
 
 /// PanelLeftRightDashed icon component
 #[component]
-pub fn PanelLeftRightDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelLeftRightDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelLeftRightDashed class=class /> }
 }
 
@@ -6745,19 +7520,25 @@ pub fn PanelLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PanelRightClose icon component
 #[component]
-pub fn PanelRightCloseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelRightCloseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelRightClose class=class /> }
 }
 
 /// PanelRightDashed icon component
 #[component]
-pub fn PanelRightDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelRightDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelRightDashed class=class /> }
 }
 
 /// PanelRightOpen icon component
 #[component]
-pub fn PanelRightOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelRightOpenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelRightOpen class=class /> }
 }
 
@@ -6769,25 +7550,33 @@ pub fn PanelRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PanelTopBottomDashed icon component
 #[component]
-pub fn PanelTopBottomDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelTopBottomDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelTopBottomDashed class=class /> }
 }
 
 /// PanelTopClose icon component
 #[component]
-pub fn PanelTopCloseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelTopCloseIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelTopClose class=class /> }
 }
 
 /// PanelTopDashed icon component
 #[component]
-pub fn PanelTopDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelTopDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelTopDashed class=class /> }
 }
 
 /// PanelTopOpen icon component
 #[component]
-pub fn PanelTopOpenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelTopOpenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelTopOpen class=class /> }
 }
 
@@ -6799,19 +7588,25 @@ pub fn PanelTopIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PanelsLeftBottom icon component
 #[component]
-pub fn PanelsLeftBottomIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelsLeftBottomIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelsLeftBottom class=class /> }
 }
 
 /// PanelsRightBottom icon component
 #[component]
-pub fn PanelsRightBottomIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelsRightBottomIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelsRightBottom class=class /> }
 }
 
 /// PanelsTopLeft icon component
 #[component]
-pub fn PanelsTopLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PanelsTopLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PanelsTopLeft class=class /> }
 }
 
@@ -6835,7 +7630,9 @@ pub fn ParenthesesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ParkingMeter icon component
 #[component]
-pub fn ParkingMeterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ParkingMeterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ParkingMeter class=class /> }
 }
 
@@ -6907,7 +7704,9 @@ pub fn PencilRulerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PencilSparkles icon component
 #[component]
-pub fn PencilSparklesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PencilSparklesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PencilSparkles class=class /> }
 }
 
@@ -6931,13 +7730,17 @@ pub fn PercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PersonStanding icon component
 #[component]
-pub fn PersonStandingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PersonStandingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PersonStanding class=class /> }
 }
 
 /// PhilippinePeso icon component
 #[component]
-pub fn PhilippinePesoIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PhilippinePesoIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PhilippinePeso class=class /> }
 }
 
@@ -6949,13 +7752,17 @@ pub fn PhoneCallIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PhoneForwarded icon component
 #[component]
-pub fn PhoneForwardedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PhoneForwardedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PhoneForwarded class=class /> }
 }
 
 /// PhoneIncoming icon component
 #[component]
-pub fn PhoneIncomingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PhoneIncomingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PhoneIncoming class=class /> }
 }
 
@@ -6973,7 +7780,9 @@ pub fn PhoneOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PhoneOutgoing icon component
 #[component]
-pub fn PhoneOutgoingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PhoneOutgoingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PhoneOutgoing class=class /> }
 }
 
@@ -7003,13 +7812,17 @@ pub fn PickaxeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PictureInPicture2 icon component
 #[component]
-pub fn PictureInPicture2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PictureInPicture2Icon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PictureInPicture2 class=class /> }
 }
 
 /// PictureInPicture icon component
 #[component]
-pub fn PictureInPictureIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PictureInPictureIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PictureInPicture class=class /> }
 }
 
@@ -7027,7 +7840,9 @@ pub fn PilcrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PilcrowRight icon component
 #[component]
-pub fn PilcrowRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PilcrowRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PilcrowRight class=class /> }
 }
 
@@ -7075,13 +7890,17 @@ pub fn PizzaIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PlaneLanding icon component
 #[component]
-pub fn PlaneLandingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PlaneLandingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PlaneLanding class=class /> }
 }
 
 /// PlaneTakeoff icon component
 #[component]
-pub fn PlaneTakeoffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PlaneTakeoffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PlaneTakeoff class=class /> }
 }
 
@@ -7171,7 +7990,9 @@ pub fn PopsicleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// PoundSterling icon component
 #[component]
-pub fn PoundSterlingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PoundSterlingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PoundSterling class=class /> }
 }
 
@@ -7189,13 +8010,17 @@ pub fn PowerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Presentation icon component
 #[component]
-pub fn PresentationIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PresentationIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Presentation class=class /> }
 }
 
 /// PrinterCheck icon component
 #[component]
-pub fn PrinterCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn PrinterCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::PrinterCheck class=class /> }
 }
 
@@ -7279,7 +8104,9 @@ pub fn RadioOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RadioReceiver icon component
 #[component]
-pub fn RadioReceiverIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RadioReceiverIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RadioReceiver class=class /> }
 }
 
@@ -7333,31 +8160,41 @@ pub fn ReceiptEuroIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ReceiptIndianRupee icon component
 #[component]
-pub fn ReceiptIndianRupeeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptIndianRupeeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptIndianRupee class=class /> }
 }
 
 /// ReceiptJapaneseYen icon component
 #[component]
-pub fn ReceiptJapaneseYenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptJapaneseYenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptJapaneseYen class=class /> }
 }
 
 /// ReceiptPoundSterling icon component
 #[component]
-pub fn ReceiptPoundSterlingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptPoundSterlingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptPoundSterling class=class /> }
 }
 
 /// ReceiptRussianRuble icon component
 #[component]
-pub fn ReceiptRussianRubleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptRussianRubleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptRussianRuble class=class /> }
 }
 
 /// ReceiptSwissFranc icon component
 #[component]
-pub fn ReceiptSwissFrancIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptSwissFrancIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptSwissFranc class=class /> }
 }
 
@@ -7369,7 +8206,9 @@ pub fn ReceiptTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ReceiptTurkishLira icon component
 #[component]
-pub fn ReceiptTurkishLiraIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ReceiptTurkishLiraIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ReceiptTurkishLira class=class /> }
 }
 
@@ -7381,31 +8220,41 @@ pub fn ReceiptIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RectangleCircle icon component
 #[component]
-pub fn RectangleCircleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RectangleCircleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RectangleCircle class=class /> }
 }
 
 /// RectangleEllipsis icon component
 #[component]
-pub fn RectangleEllipsisIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RectangleEllipsisIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RectangleEllipsis class=class /> }
 }
 
 /// RectangleGoggles icon component
 #[component]
-pub fn RectangleGogglesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RectangleGogglesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RectangleGoggles class=class /> }
 }
 
 /// RectangleHorizontal icon component
 #[component]
-pub fn RectangleHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RectangleHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RectangleHorizontal class=class /> }
 }
 
 /// RectangleVertical icon component
 #[component]
-pub fn RectangleVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RectangleVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RectangleVertical class=class /> }
 }
 
@@ -7435,7 +8284,9 @@ pub fn RedoIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RefreshCcwDot icon component
 #[component]
-pub fn RefreshCcwDotIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RefreshCcwDotIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RefreshCcwDot class=class /> }
 }
 
@@ -7447,7 +8298,9 @@ pub fn RefreshCcwIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RefreshCwOff icon component
 #[component]
-pub fn RefreshCwOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RefreshCwOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RefreshCwOff class=class /> }
 }
 
@@ -7459,7 +8312,9 @@ pub fn RefreshCwIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// Refrigerator icon component
 #[component]
-pub fn RefrigeratorIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RefrigeratorIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Refrigerator class=class /> }
 }
 
@@ -7471,7 +8326,9 @@ pub fn RegexIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RemoveFormatting icon component
 #[component]
-pub fn RemoveFormattingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RemoveFormattingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RemoveFormatting class=class /> }
 }
 
@@ -7549,13 +8406,17 @@ pub fn RocketIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RockingChair icon component
 #[component]
-pub fn RockingChairIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RockingChairIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RockingChair class=class /> }
 }
 
 /// RollerCoaster icon component
 #[component]
-pub fn RollerCoasterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RollerCoasterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RollerCoaster class=class /> }
 }
 
@@ -7573,13 +8434,17 @@ pub fn Rotate3DIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RotateCcwKey icon component
 #[component]
-pub fn RotateCcwKeyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RotateCcwKeyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RotateCcwKey class=class /> }
 }
 
 /// RotateCcwSquare icon component
 #[component]
-pub fn RotateCcwSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RotateCcwSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RotateCcwSquare class=class /> }
 }
 
@@ -7591,7 +8456,9 @@ pub fn RotateCcwIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RotateCwSquare icon component
 #[component]
-pub fn RotateCwSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RotateCwSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RotateCwSquare class=class /> }
 }
 
@@ -7645,7 +8512,9 @@ pub fn RssIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RulerDimensionLine icon component
 #[component]
-pub fn RulerDimensionLineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RulerDimensionLineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RulerDimensionLine class=class /> }
 }
 
@@ -7657,7 +8526,9 @@ pub fn RulerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// RussianRuble icon component
 #[component]
-pub fn RussianRubleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn RussianRubleIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::RussianRuble class=class /> }
 }
 
@@ -7681,7 +8552,9 @@ pub fn SandwichIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SatelliteDish icon component
 #[component]
-pub fn SatelliteDishIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SatelliteDishIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SatelliteDish class=class /> }
 }
 
@@ -7813,7 +8686,9 @@ pub fn SchoolIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ScissorsLineDashed icon component
 #[component]
-pub fn ScissorsLineDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ScissorsLineDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ScissorsLineDashed class=class /> }
 }
 
@@ -7831,7 +8706,9 @@ pub fn ScooterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ScreenShareOff icon component
 #[component]
-pub fn ScreenShareOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ScreenShareOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ScreenShareOff class=class /> }
 }
 
@@ -7897,7 +8774,9 @@ pub fn SectionIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SendHorizontal icon component
 #[component]
-pub fn SendHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SendHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SendHorizontal class=class /> }
 }
 
@@ -7915,13 +8794,17 @@ pub fn SendIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SeparatorHorizontal icon component
 #[component]
-pub fn SeparatorHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SeparatorHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SeparatorHorizontal class=class /> }
 }
 
 /// SeparatorVertical icon component
 #[component]
-pub fn SeparatorVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SeparatorVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SeparatorVertical class=class /> }
 }
 
@@ -7993,7 +8876,9 @@ pub fn ShellIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ShelvingUnit icon component
 #[component]
-pub fn ShelvingUnitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShelvingUnitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShelvingUnit class=class /> }
 }
 
@@ -8017,7 +8902,9 @@ pub fn ShieldCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ShieldCogCorner icon component
 #[component]
-pub fn ShieldCogCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShieldCogCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShieldCogCorner class=class /> }
 }
 
@@ -8029,7 +8916,9 @@ pub fn ShieldCogIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ShieldEllipsis icon component
 #[component]
-pub fn ShieldEllipsisIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShieldEllipsisIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShieldEllipsis class=class /> }
 }
 
@@ -8059,7 +8948,9 @@ pub fn ShieldPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ShieldQuestionMark icon component
 #[component]
-pub fn ShieldQuestionMarkIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShieldQuestionMarkIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShieldQuestionMark class=class /> }
 }
 
@@ -8107,13 +8998,17 @@ pub fn ShoppingBagIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ShoppingBasket icon component
 #[component]
-pub fn ShoppingBasketIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShoppingBasketIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShoppingBasket class=class /> }
 }
 
 /// ShoppingCart icon component
 #[component]
-pub fn ShoppingCartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ShoppingCartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ShoppingCart class=class /> }
 }
 
@@ -8179,7 +9074,9 @@ pub fn SignalLowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SignalMedium icon component
 #[component]
-pub fn SignalMediumIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SignalMediumIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SignalMedium class=class /> }
 }
 
@@ -8251,25 +9148,33 @@ pub fn SliceIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SlidersHorizontal icon component
 #[component]
-pub fn SlidersHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SlidersHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SlidersHorizontal class=class /> }
 }
 
 /// SlidersVertical icon component
 #[component]
-pub fn SlidersVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SlidersVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SlidersVertical class=class /> }
 }
 
 /// SmartphoneCharging icon component
 #[component]
-pub fn SmartphoneChargingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SmartphoneChargingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SmartphoneCharging class=class /> }
 }
 
 /// SmartphoneNfc icon component
 #[component]
-pub fn SmartphoneNfcIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SmartphoneNfcIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SmartphoneNfc class=class /> }
 }
 
@@ -8305,7 +9210,9 @@ pub fn SnowflakeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SoapDispenserDroplet icon component
 #[component]
-pub fn SoapDispenserDropletIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SoapDispenserDropletIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SoapDispenserDroplet class=class /> }
 }
 
@@ -8377,7 +9284,9 @@ pub fn SpellCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SplinePointer icon component
 #[component]
-pub fn SplinePointerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SplinePointerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SplinePointer class=class /> }
 }
 
@@ -8425,127 +9334,169 @@ pub fn SproutIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareActivity icon component
 #[component]
-pub fn SquareActivityIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareActivityIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareActivity class=class /> }
 }
 
 /// SquareArrowDownLeft icon component
 #[component]
-pub fn SquareArrowDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowDownLeft class=class /> }
 }
 
 /// SquareArrowDownRight icon component
 #[component]
-pub fn SquareArrowDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowDownRight class=class /> }
 }
 
 /// SquareArrowDown icon component
 #[component]
-pub fn SquareArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowDown class=class /> }
 }
 
 /// SquareArrowLeft icon component
 #[component]
-pub fn SquareArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowLeft class=class /> }
 }
 
 /// SquareArrowOutDownLeft icon component
 #[component]
-pub fn SquareArrowOutDownLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowOutDownLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowOutDownLeft class=class /> }
 }
 
 /// SquareArrowOutDownRight icon component
 #[component]
-pub fn SquareArrowOutDownRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowOutDownRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowOutDownRight class=class /> }
 }
 
 /// SquareArrowOutUpLeft icon component
 #[component]
-pub fn SquareArrowOutUpLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowOutUpLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowOutUpLeft class=class /> }
 }
 
 /// SquareArrowOutUpRight icon component
 #[component]
-pub fn SquareArrowOutUpRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowOutUpRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowOutUpRight class=class /> }
 }
 
 /// SquareArrowRightEnter icon component
 #[component]
-pub fn SquareArrowRightEnterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowRightEnterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowRightEnter class=class /> }
 }
 
 /// SquareArrowRightExit icon component
 #[component]
-pub fn SquareArrowRightExitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowRightExitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowRightExit class=class /> }
 }
 
 /// SquareArrowRight icon component
 #[component]
-pub fn SquareArrowRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowRight class=class /> }
 }
 
 /// SquareArrowUpLeft icon component
 #[component]
-pub fn SquareArrowUpLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowUpLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowUpLeft class=class /> }
 }
 
 /// SquareArrowUpRight icon component
 #[component]
-pub fn SquareArrowUpRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowUpRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowUpRight class=class /> }
 }
 
 /// SquareArrowUp icon component
 #[component]
-pub fn SquareArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareArrowUp class=class /> }
 }
 
 /// SquareAsterisk icon component
 #[component]
-pub fn SquareAsteriskIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareAsteriskIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareAsterisk class=class /> }
 }
 
 /// SquareBottomDashedScissors icon component
 #[component]
-pub fn SquareBottomDashedScissorsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareBottomDashedScissorsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareBottomDashedScissors class=class /> }
 }
 
 /// SquareCenterlineDashedHorizontal icon component
 #[component]
-pub fn SquareCenterlineDashedHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareCenterlineDashedHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareCenterlineDashedHorizontal class=class /> }
 }
 
 /// SquareCenterlineDashedVertical icon component
 #[component]
-pub fn SquareCenterlineDashedVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareCenterlineDashedVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareCenterlineDashedVertical class=class /> }
 }
 
 /// SquareChartGantt icon component
 #[component]
-pub fn SquareChartGanttIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareChartGanttIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareChartGantt class=class /> }
 }
 
 /// SquareCheckBig icon component
 #[component]
-pub fn SquareCheckBigIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareCheckBigIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareCheckBig class=class /> }
 }
 
@@ -8557,25 +9508,33 @@ pub fn SquareCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareChevronDown icon component
 #[component]
-pub fn SquareChevronDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareChevronDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareChevronDown class=class /> }
 }
 
 /// SquareChevronLeft icon component
 #[component]
-pub fn SquareChevronLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareChevronLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareChevronLeft class=class /> }
 }
 
 /// SquareChevronRight icon component
 #[component]
-pub fn SquareChevronRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareChevronRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareChevronRight class=class /> }
 }
 
 /// SquareChevronUp icon component
 #[component]
-pub fn SquareChevronUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareChevronUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareChevronUp class=class /> }
 }
 
@@ -8587,49 +9546,65 @@ pub fn SquareCodeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareDashedBottomCode icon component
 #[component]
-pub fn SquareDashedBottomCodeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedBottomCodeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedBottomCode class=class /> }
 }
 
 /// SquareDashedBottom icon component
 #[component]
-pub fn SquareDashedBottomIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedBottomIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedBottom class=class /> }
 }
 
 /// SquareDashedKanban icon component
 #[component]
-pub fn SquareDashedKanbanIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedKanbanIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedKanban class=class /> }
 }
 
 /// SquareDashedMousePointer icon component
 #[component]
-pub fn SquareDashedMousePointerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedMousePointerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedMousePointer class=class /> }
 }
 
 /// SquareDashedText icon component
 #[component]
-pub fn SquareDashedTextIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedTextIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedText class=class /> }
 }
 
 /// SquareDashedTopSolid icon component
 #[component]
-pub fn SquareDashedTopSolidIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedTopSolidIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashedTopSolid class=class /> }
 }
 
 /// SquareDashed icon component
 #[component]
-pub fn SquareDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDashed class=class /> }
 }
 
 /// SquareDivide icon component
 #[component]
-pub fn SquareDivideIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareDivideIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareDivide class=class /> }
 }
 
@@ -8647,19 +9622,25 @@ pub fn SquareEqualIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareFunction icon component
 #[component]
-pub fn SquareFunctionIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareFunctionIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareFunction class=class /> }
 }
 
 /// SquareKanban icon component
 #[component]
-pub fn SquareKanbanIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareKanbanIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareKanban class=class /> }
 }
 
 /// SquareLibrary icon component
 #[component]
-pub fn SquareLibraryIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareLibraryIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareLibrary class=class /> }
 }
 
@@ -8683,19 +9664,25 @@ pub fn SquareMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareMousePointer icon component
 #[component]
-pub fn SquareMousePointerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareMousePointerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareMousePointer class=class /> }
 }
 
 /// SquareParkingOff icon component
 #[component]
-pub fn SquareParkingOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareParkingOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareParkingOff class=class /> }
 }
 
 /// SquareParking icon component
 #[component]
-pub fn SquareParkingIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareParkingIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareParking class=class /> }
 }
 
@@ -8713,7 +9700,9 @@ pub fn SquarePenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquarePercent icon component
 #[component]
-pub fn SquarePercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquarePercentIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquarePercent class=class /> }
 }
 
@@ -8725,7 +9714,9 @@ pub fn SquarePiIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquarePilcrow icon component
 #[component]
-pub fn SquarePilcrowIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquarePilcrowIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquarePilcrow class=class /> }
 }
 
@@ -8749,19 +9740,25 @@ pub fn SquarePowerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareRadical icon component
 #[component]
-pub fn SquareRadicalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareRadicalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareRadical class=class /> }
 }
 
 /// SquareRoundCorner icon component
 #[component]
-pub fn SquareRoundCornerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareRoundCornerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareRoundCorner class=class /> }
 }
 
 /// SquareScissors icon component
 #[component]
-pub fn SquareScissorsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareScissorsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareScissors class=class /> }
 }
 
@@ -8779,19 +9776,25 @@ pub fn SquareSlashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareSplitHorizontal icon component
 #[component]
-pub fn SquareSplitHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareSplitHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareSplitHorizontal class=class /> }
 }
 
 /// SquareSplitVertical icon component
 #[component]
-pub fn SquareSplitVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareSplitVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareSplitVertical class=class /> }
 }
 
 /// SquareSquare icon component
 #[component]
-pub fn SquareSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareSquare class=class /> }
 }
 
@@ -8815,13 +9818,17 @@ pub fn SquareStopIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquareTerminal icon component
 #[component]
-pub fn SquareTerminalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareTerminalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareTerminal class=class /> }
 }
 
 /// SquareUserRound icon component
 #[component]
-pub fn SquareUserRoundIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquareUserRoundIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquareUserRound class=class /> }
 }
 
@@ -8845,31 +9852,41 @@ pub fn SquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SquaresExclude icon component
 #[component]
-pub fn SquaresExcludeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquaresExcludeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquaresExclude class=class /> }
 }
 
 /// SquaresIntersect icon component
 #[component]
-pub fn SquaresIntersectIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquaresIntersectIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquaresIntersect class=class /> }
 }
 
 /// SquaresSubtract icon component
 #[component]
-pub fn SquaresSubtractIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquaresSubtractIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquaresSubtract class=class /> }
 }
 
 /// SquaresUnite icon component
 #[component]
-pub fn SquaresUniteIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquaresUniteIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquaresUnite class=class /> }
 }
 
 /// SquircleDashed icon component
 #[component]
-pub fn SquircleDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SquircleDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SquircleDashed class=class /> }
 }
 
@@ -8959,25 +9976,33 @@ pub fn StickerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// StickyNoteCheck icon component
 #[component]
-pub fn StickyNoteCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StickyNoteCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StickyNoteCheck class=class /> }
 }
 
 /// StickyNoteMinus icon component
 #[component]
-pub fn StickyNoteMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StickyNoteMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StickyNoteMinus class=class /> }
 }
 
 /// StickyNoteOff icon component
 #[component]
-pub fn StickyNoteOffIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StickyNoteOffIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StickyNoteOff class=class /> }
 }
 
 /// StickyNotePlus icon component
 #[component]
-pub fn StickyNotePlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StickyNotePlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StickyNotePlus class=class /> }
 }
 
@@ -9013,19 +10038,25 @@ pub fn StoreIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// StretchHorizontal icon component
 #[component]
-pub fn StretchHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StretchHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StretchHorizontal class=class /> }
 }
 
 /// StretchVertical icon component
 #[component]
-pub fn StretchVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StretchVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::StretchVertical class=class /> }
 }
 
 /// Strikethrough icon component
 #[component]
-pub fn StrikethroughIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn StrikethroughIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::Strikethrough class=class /> }
 }
 
@@ -9103,7 +10134,9 @@ pub fn SwissFrancIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// SwitchCamera icon component
 #[component]
-pub fn SwitchCameraIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn SwitchCameraIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::SwitchCamera class=class /> }
 }
 
@@ -9133,37 +10166,49 @@ pub fn Table2Icon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TableCellsMerge icon component
 #[component]
-pub fn TableCellsMergeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TableCellsMergeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableCellsMerge class=class /> }
 }
 
 /// TableCellsSplit icon component
 #[component]
-pub fn TableCellsSplitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TableCellsSplitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableCellsSplit class=class /> }
 }
 
 /// TableColumnsSplit icon component
 #[component]
-pub fn TableColumnsSplitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TableColumnsSplitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableColumnsSplit class=class /> }
 }
 
 /// TableOfContents icon component
 #[component]
-pub fn TableOfContentsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TableOfContentsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableOfContents class=class /> }
 }
 
 /// TableProperties icon component
 #[component]
-pub fn TablePropertiesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TablePropertiesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableProperties class=class /> }
 }
 
 /// TableRowsSplit icon component
 #[component]
-pub fn TableRowsSplitIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TableRowsSplitIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TableRowsSplit class=class /> }
 }
 
@@ -9175,7 +10220,9 @@ pub fn TableIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TabletSmartphone icon component
 #[component]
-pub fn TabletSmartphoneIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TabletSmartphoneIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TabletSmartphone class=class /> }
 }
 
@@ -9283,7 +10330,9 @@ pub fn TerminalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TestTubeDiagonal icon component
 #[component]
-pub fn TestTubeDiagonalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TestTubeDiagonalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TestTubeDiagonal class=class /> }
 }
 
@@ -9301,31 +10350,41 @@ pub fn TestTubesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TextAlignCenter icon component
 #[component]
-pub fn TextAlignCenterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TextAlignCenterIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TextAlignCenter class=class /> }
 }
 
 /// TextAlignEnd icon component
 #[component]
-pub fn TextAlignEndIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TextAlignEndIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TextAlignEnd class=class /> }
 }
 
 /// TextAlignJustify icon component
 #[component]
-pub fn TextAlignJustifyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TextAlignJustifyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TextAlignJustify class=class /> }
 }
 
 /// TextAlignStart icon component
 #[component]
-pub fn TextAlignStartIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TextAlignStartIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TextAlignStart class=class /> }
 }
 
 /// TextCursorInput icon component
 #[component]
-pub fn TextCursorInputIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TextCursorInputIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TextCursorInput class=class /> }
 }
 
@@ -9367,13 +10426,17 @@ pub fn TheaterIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ThermometerSnowflake icon component
 #[component]
-pub fn ThermometerSnowflakeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ThermometerSnowflakeIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ThermometerSnowflake class=class /> }
 }
 
 /// ThermometerSun icon component
 #[component]
-pub fn ThermometerSunIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ThermometerSunIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ThermometerSun class=class /> }
 }
 
@@ -9409,7 +10472,9 @@ pub fn TicketMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TicketPercent icon component
 #[component]
-pub fn TicketPercentIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TicketPercentIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TicketPercent class=class /> }
 }
 
@@ -9439,7 +10504,9 @@ pub fn TicketIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TicketsPlane icon component
 #[component]
-pub fn TicketsPlaneIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TicketsPlaneIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TicketsPlane class=class /> }
 }
 
@@ -9535,7 +10602,9 @@ pub fn TowelRackIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TowerControl icon component
 #[component]
-pub fn TowerControlIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TowerControlIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TowerControl class=class /> }
 }
 
@@ -9559,7 +10628,9 @@ pub fn TrafficConeIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TrainFrontTunnel icon component
 #[component]
-pub fn TrainFrontTunnelIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TrainFrontTunnelIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TrainFrontTunnel class=class /> }
 }
 
@@ -9601,7 +10672,9 @@ pub fn TrashIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TreeDeciduous icon component
 #[component]
-pub fn TreeDeciduousIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TreeDeciduousIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TreeDeciduous class=class /> }
 }
 
@@ -9625,13 +10698,17 @@ pub fn TreesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TrendingDown icon component
 #[component]
-pub fn TrendingDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TrendingDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TrendingDown class=class /> }
 }
 
 /// TrendingUpDown icon component
 #[component]
-pub fn TrendingUpDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TrendingUpDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TrendingUpDown class=class /> }
 }
 
@@ -9643,19 +10720,25 @@ pub fn TrendingUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TriangleAlert icon component
 #[component]
-pub fn TriangleAlertIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TriangleAlertIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TriangleAlert class=class /> }
 }
 
 /// TriangleDashed icon component
 #[component]
-pub fn TriangleDashedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TriangleDashedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TriangleDashed class=class /> }
 }
 
 /// TriangleRight icon component
 #[component]
-pub fn TriangleRightIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TriangleRightIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TriangleRight class=class /> }
 }
 
@@ -9673,7 +10756,9 @@ pub fn TrophyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TruckElectric icon component
 #[component]
-pub fn TruckElectricIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TruckElectricIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TruckElectric class=class /> }
 }
 
@@ -9703,7 +10788,9 @@ pub fn TurtleIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// TvMinimalPlay icon component
 #[component]
-pub fn TvMinimalPlayIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn TvMinimalPlayIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::TvMinimalPlay class=class /> }
 }
 
@@ -9769,13 +10856,17 @@ pub fn UndoIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// UnfoldHorizontal icon component
 #[component]
-pub fn UnfoldHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UnfoldHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UnfoldHorizontal class=class /> }
 }
 
 /// UnfoldVertical icon component
 #[component]
-pub fn UnfoldVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UnfoldVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UnfoldVertical class=class /> }
 }
 
@@ -9865,49 +10956,65 @@ pub fn UserPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// UserRoundArrowLeft icon component
 #[component]
-pub fn UserRoundArrowLeftIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundArrowLeftIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundArrowLeft class=class /> }
 }
 
 /// UserRoundCheck icon component
 #[component]
-pub fn UserRoundCheckIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundCheckIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundCheck class=class /> }
 }
 
 /// UserRoundCog icon component
 #[component]
-pub fn UserRoundCogIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundCogIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundCog class=class /> }
 }
 
 /// UserRoundKey icon component
 #[component]
-pub fn UserRoundKeyIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundKeyIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundKey class=class /> }
 }
 
 /// UserRoundMinus icon component
 #[component]
-pub fn UserRoundMinusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundMinusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundMinus class=class /> }
 }
 
 /// UserRoundPen icon component
 #[component]
-pub fn UserRoundPenIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundPenIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundPen class=class /> }
 }
 
 /// UserRoundPlus icon component
 #[component]
-pub fn UserRoundPlusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundPlusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundPlus class=class /> }
 }
 
 /// UserRoundSearch icon component
 #[component]
-pub fn UserRoundSearchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UserRoundSearchIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UserRoundSearch class=class /> }
 }
 
@@ -9961,7 +11068,9 @@ pub fn UsersIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// UtensilsCrossed icon component
 #[component]
-pub fn UtensilsCrossedIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn UtensilsCrossedIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::UtensilsCrossed class=class /> }
 }
 
@@ -9997,7 +11106,9 @@ pub fn VaultIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// VectorSquare icon component
 #[component]
-pub fn VectorSquareIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn VectorSquareIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::VectorSquare class=class /> }
 }
 
@@ -10009,13 +11120,17 @@ pub fn VeganIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// VenetianMask icon component
 #[component]
-pub fn VenetianMaskIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn VenetianMaskIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::VenetianMask class=class /> }
 }
 
 /// VenusAndMars icon component
 #[component]
-pub fn VenusAndMarsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn VenusAndMarsIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::VenusAndMars class=class /> }
 }
 
@@ -10117,7 +11232,9 @@ pub fn WalletCardsIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WalletMinimal icon component
 #[component]
-pub fn WalletMinimalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WalletMinimalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WalletMinimal class=class /> }
 }
 
@@ -10135,7 +11252,9 @@ pub fn WallpaperIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WandSparkles icon component
 #[component]
-pub fn WandSparklesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WandSparklesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WandSparkles class=class /> }
 }
 
@@ -10153,7 +11272,9 @@ pub fn WarehouseIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WashingMachine icon component
 #[component]
-pub fn WashingMachineIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WashingMachineIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WashingMachine class=class /> }
 }
 
@@ -10165,19 +11286,25 @@ pub fn WatchIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WavesArrowDown icon component
 #[component]
-pub fn WavesArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WavesArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WavesArrowDown class=class /> }
 }
 
 /// WavesArrowUp icon component
 #[component]
-pub fn WavesArrowUpIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WavesArrowUpIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WavesArrowUp class=class /> }
 }
 
 /// WavesHorizontal icon component
 #[component]
-pub fn WavesHorizontalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WavesHorizontalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WavesHorizontal class=class /> }
 }
 
@@ -10189,7 +11316,9 @@ pub fn WavesLadderIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WavesVertical icon component
 #[component]
-pub fn WavesVerticalIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WavesVerticalIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WavesVertical class=class /> }
 }
 
@@ -10303,7 +11432,9 @@ pub fn WifiIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// WindArrowDown icon component
 #[component]
-pub fn WindArrowDownIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn WindArrowDownIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::WindArrowDown class=class /> }
 }
 
@@ -10375,7 +11506,9 @@ pub fn ZapIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ZodiacAquarius icon component
 #[component]
-pub fn ZodiacAquariusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacAquariusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacAquarius class=class /> }
 }
 
@@ -10387,19 +11520,25 @@ pub fn ZodiacAriesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ZodiacCancer icon component
 #[component]
-pub fn ZodiacCancerIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacCancerIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacCancer class=class /> }
 }
 
 /// ZodiacCapricorn icon component
 #[component]
-pub fn ZodiacCapricornIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacCapricornIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacCapricorn class=class /> }
 }
 
 /// ZodiacGemini icon component
 #[component]
-pub fn ZodiacGeminiIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacGeminiIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacGemini class=class /> }
 }
 
@@ -10417,31 +11556,41 @@ pub fn ZodiacLibraIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 
 /// ZodiacOphiuchus icon component
 #[component]
-pub fn ZodiacOphiuchusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacOphiuchusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacOphiuchus class=class /> }
 }
 
 /// ZodiacPisces icon component
 #[component]
-pub fn ZodiacPiscesIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacPiscesIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacPisces class=class /> }
 }
 
 /// ZodiacSagittarius icon component
 #[component]
-pub fn ZodiacSagittariusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacSagittariusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacSagittarius class=class /> }
 }
 
 /// ZodiacScorpio icon component
 #[component]
-pub fn ZodiacScorpioIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacScorpioIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacScorpio class=class /> }
 }
 
 /// ZodiacTaurus icon component
 #[component]
-pub fn ZodiacTaurusIcon(#[prop(into, optional)] class: String) -> impl IntoView {
+pub fn ZodiacTaurusIcon(
+    #[prop(into, optional)] class: String,
+) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZodiacTaurus class=class /> }
 }
 
@@ -10462,4 +11611,3 @@ pub fn ZoomInIcon(#[prop(into, optional)] class: String) -> impl IntoView {
 pub fn ZoomOutIcon(#[prop(into, optional)] class: String) -> impl IntoView {
     view! { <Icon glyph=Glyph::ZoomOut class=class /> }
 }
-

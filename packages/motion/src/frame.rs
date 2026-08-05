@@ -57,7 +57,8 @@ impl FrameLoop {
             use wasm_bindgen::JsCast;
             let closure = wasm_bindgen::prelude::Closure::wrap(Box::new(|| {
                 Self::tick();
-            }) as Box<dyn FnMut()>);
+            })
+                as Box<dyn FnMut()>);
             web_sys::window().and_then(|w| {
                 w.request_animation_frame(closure.as_ref().unchecked_ref())
                     .ok()

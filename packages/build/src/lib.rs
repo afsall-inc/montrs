@@ -11,19 +11,18 @@
 
 pub mod pipeline;
 pub mod watch;
-pub mod serve;
-
-pub use pipeline::*;
-pub use watch::*;
-pub use serve::*;
 
 use anyhow::Result;
-use std::path::Path;
-use std::process::Command;
+pub use pipeline::*;
+use std::{path::Path, process::Command};
+pub use watch::*;
 
 /// Run a cargo command and stream output.
+/// Automatically sets RUSTFLAGS to enable Leptos `erase_components`
+/// for reduced type-depth and faster compiles.
 pub fn run_cargo(args: &[String]) -> Result<()> {
     let status = Command::new("cargo")
+        .env("RUSTFLAGS", "--cfg erase_components")
         .args(args)
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
@@ -56,7 +55,9 @@ pub fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
         fs_extra::dir::copy(
             src,
             dst,
-            &fs_extra::dir::CopyOptions::new().overwrite(true).content_only(true),
+            &fs_extra::dir::CopyOptions::new()
+                .overwrite(true)
+                .content_only(true),
         )?;
     }
     Ok(())

@@ -5,10 +5,7 @@ version = "0.1.0"
 [serve]
 site-addr = "127.0.0.1:3000"
 reload-port = 3001
-tailwind-input-file = "apps/website/style/main.css"
+tailwind-input-file = "style/main.css"
 site-root = "target/site"
 site-pkg-dir = "pkg"
-bin-package = "website-server"
-lib-package = "website"
-lib-features = ["hydrate"]
-lib-default-features = false
+package = "website"

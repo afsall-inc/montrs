@@ -1,7 +1,7 @@
-use std::path::Path;
-use std::sync::mpsc;
-use std::time::Duration;
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{
+    Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+};
+use std::{path::Path, sync::mpsc, time::Duration};
 
 /// Watch a directory for changes and trigger rebuilds.
 pub fn watch_directory(
@@ -14,7 +14,10 @@ pub fn watch_directory(
         move |res: Result<Event, notify::Error>| {
             if let Ok(event) = res {
                 // Debounce: only trigger on modify/create events
-                if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
+                if matches!(
+                    event.kind,
+                    EventKind::Modify(_) | EventKind::Create(_)
+                ) {
                     let _ = tx.send(());
                 }
             }

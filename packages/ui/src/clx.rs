@@ -1,8 +1,7 @@
+pub use crate::utils::Utils;
 pub use leptos::prelude::*;
 pub use paste;
 pub use tw_merge::*;
-
-pub use crate::utils::Utils;
 
 /// Creates a component with Tailwind class merging.
 ///

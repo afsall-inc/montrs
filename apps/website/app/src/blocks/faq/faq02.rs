@@ -1,17 +1,34 @@
 use leptos::prelude::*;
-use montrs_icons::*;
 use montrs_ui::prelude::*;
 
 #[component]
 pub fn Faq02() -> impl IntoView {
     let open = RwSignal::new(Option::<usize>::None);
     let items = vec![
-        ("What is MontRS?", "A full-stack Rust web framework for compile-time correctness."),
-        ("How do I get started?", "Run `montrs new my-app` and follow the golden path."),
-        ("Is it production ready?", "Yes — actively used by early adopters."),
-        ("Does it support WASM?", "Yes, MontRS compiles to WASM for full-stack apps."),
-        ("What about databases?", "MontRS ORM supports PostgreSQL, SQLite, and MySQL."),
-        ("Is there a community?", "Join our Discord and GitHub discussions."),
+        (
+            "What is MontRS?",
+            "A full-stack Rust web framework for compile-time correctness.",
+        ),
+        (
+            "How do I get started?",
+            "Run `montrs new my-app` and follow the golden path.",
+        ),
+        (
+            "Is it production ready?",
+            "Yes — actively used by early adopters.",
+        ),
+        (
+            "Does it support WASM?",
+            "Yes, MontRS compiles to WASM for full-stack apps.",
+        ),
+        (
+            "What about databases?",
+            "MontRS ORM supports PostgreSQL, SQLite, and MySQL.",
+        ),
+        (
+            "Is there a community?",
+            "Join our Discord and GitHub discussions.",
+        ),
     ];
 
     view! {

@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Dialog(
@@ -42,10 +42,14 @@ pub fn DialogOverlay(
     let open = use_context::<RwSignal<bool>>()
         .expect("DialogOverlay must be inside Dialog");
 
-    let merged = move || cn!(
-        "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in \
+             data-[state=closed]:animate-out data-[state=closed]:fade-out-0 \
+             data-[state=open]:fade-in-0",
+            class.get()
+        )
+    };
 
     let close = move |_| open.set(false);
 
@@ -68,17 +72,31 @@ pub fn DialogContent(
     let open = use_context::<RwSignal<bool>>()
         .expect("DialogContent must be inside Dialog");
 
-    let merged = move || cn!(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg \
+             translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background \
+             p-6 shadow-lg duration-200 data-[state=open]:animate-in \
+             data-[state=closed]:animate-out data-[state=closed]:fade-out-0 \
+             data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 \
+             data-[state=open]:zoom-in-95 \
+             data-[state=closed]:slide-out-to-left-1/2 \
+             data-[state=closed]:slide-out-to-top-[48%] \
+             data-[state=open]:slide-in-from-left-1/2 \
+             data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+            class.get()
+        )
+    };
 
     let close = move |_| open.set(false);
 
     let title_id = crate::utils::Utils::use_random_id();
     let desc_id = crate::utils::Utils::use_random_id();
 
-    provide_context(DialogIds { title_id: title_id.clone(), desc_id: desc_id.clone() });
+    provide_context(DialogIds {
+        title_id: title_id.clone(),
+        desc_id: desc_id.clone(),
+    });
 
     let handle_key_down = move |ev: leptos::ev::KeyboardEvent| {
         if ev.key() == "Escape" {
@@ -139,7 +157,12 @@ pub fn DialogHeader(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("flex flex-col space-y-1.5 text-center sm:text-left", class.get());
+    let merged = move || {
+        cn!(
+            "flex flex-col space-y-1.5 text-center sm:text-left",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="DialogHeader">
@@ -153,7 +176,12 @@ pub fn DialogFooter(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", class.get());
+    let merged = move || {
+        cn!(
+            "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="DialogFooter">
@@ -170,7 +198,12 @@ pub fn DialogTitle(
     let ids = use_context::<DialogIds>();
     let id = ids.as_ref().map(|ids| ids.title_id.clone());
 
-    let merged = move || cn!("text-lg font-semibold leading-none tracking-tight", class.get());
+    let merged = move || {
+        cn!(
+            "text-lg font-semibold leading-none tracking-tight",
+            class.get()
+        )
+    };
 
     view! {
         <h2 class=merged data-name="DialogTitle" id=id>

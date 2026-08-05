@@ -14,6 +14,10 @@ pub mod sidenav_routes;
 pub mod sidenav_routes_selector;
 pub mod sidenav_routes_simplified;
 
+pub use sidenav_inset_right::*;
+pub use sidenav_routes::*;
+pub use sidenav_routes_selector::*;
+pub use sidenav_routes_simplified::*;
 pub use sidenav01::*;
 pub use sidenav02::*;
 pub use sidenav03::*;
@@ -25,7 +29,3 @@ pub use sidenav08::*;
 pub use sidenav09::*;
 pub use sidenav10::*;
 pub use sidenav11::*;
-pub use sidenav_inset_right::*;
-pub use sidenav_routes::*;
-pub use sidenav_routes_selector::*;
-pub use sidenav_routes_simplified::*;

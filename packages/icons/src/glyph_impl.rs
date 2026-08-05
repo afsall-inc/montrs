@@ -1,11 +1,7 @@
-use std::collections::BTreeMap;
-use std::str::FromStr;
-use std::sync::OnceLock;
-
-use convert_case::{Case, Casing};
-use strum::{EnumProperty, IntoEnumIterator};
-
 use crate::glyph::Glyph;
+use convert_case::{Case, Casing};
+use std::{collections::BTreeMap, str::FromStr, sync::OnceLock};
+use strum::{EnumProperty, IntoEnumIterator};
 
 fn split_csv(raw: &'static str) -> impl Iterator<Item = &'static str> {
     raw.split(',').map(str::trim).filter(|s| !s.is_empty())
@@ -26,7 +22,8 @@ fn build_search_index() -> Vec<SearchEntry> {
             let name: &'static str = glyph.into();
             let name_lower = name.to_lowercase();
             let tags = glyph.get_str("tags").unwrap_or("").to_lowercase();
-            let categories = glyph.get_str("categories").unwrap_or("").to_lowercase();
+            let categories =
+                glyph.get_str("categories").unwrap_or("").to_lowercase();
             let text = format!("{},{},{}", name_lower, tags, categories);
             SearchEntry { glyph, text }
         })
@@ -74,7 +71,8 @@ impl Glyph {
     }
 
     pub fn related(&self, limit: usize) -> Vec<Glyph> {
-        let own_tags: std::collections::HashSet<&'static str> = self.tags().collect();
+        let own_tags: std::collections::HashSet<&'static str> =
+            self.tags().collect();
         if own_tags.is_empty() {
             return Vec::new();
         }

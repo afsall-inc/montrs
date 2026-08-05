@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn InputOtp(
@@ -12,10 +12,16 @@ pub fn InputOtp(
     let chars = move || {
         let v = value.get();
         let chars: Vec<char> = v.chars().collect();
-        (0..len).map(move |i| chars.get(i).copied().unwrap_or(' ')).collect::<Vec<_>>()
+        (0..len)
+            .map(move |i| chars.get(i).copied().unwrap_or(' '))
+            .collect::<Vec<_>>()
     };
     let on_input = move |ev: leptos::ev::Event| {
-        let val: String = event_target_value(&ev).chars().filter(|c| c.is_ascii_digit()).take(len).collect();
+        let val: String = event_target_value(&ev)
+            .chars()
+            .filter(|c| c.is_ascii_digit())
+            .take(len)
+            .collect();
         value.set(val);
     };
     view! {

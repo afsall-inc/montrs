@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Switch(
@@ -10,7 +10,13 @@ pub fn Switch(
     #[prop(into, optional)] aria_label: Option<String>,
 ) -> impl IntoView {
     let merged = move || {
-        let base = "peer inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50";
+        let base = "peer inline-flex h-[24px] w-[44px] shrink-0 \
+                    cursor-pointer items-center rounded-full border-2 \
+                    border-transparent transition-colors \
+                    focus-visible:outline-none focus-visible:ring-2 \
+                    focus-visible:ring-ring focus-visible:ring-offset-2 \
+                    focus-visible:ring-offset-background \
+                    disabled:cursor-not-allowed disabled:opacity-50";
         let state = if checked.get() {
             "bg-primary"
         } else {
@@ -31,8 +37,13 @@ pub fn Switch(
     let id = crate::utils::Utils::use_random_id();
 
     let thumb_class = move || {
-        let base = "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform";
-        let translate = if checked.get() { "translate-x-5" } else { "translate-x-0" };
+        let base = "pointer-events-none block h-5 w-5 rounded-full \
+                    bg-background shadow-lg ring-0 transition-transform";
+        let translate = if checked.get() {
+            "translate-x-5"
+        } else {
+            "translate-x-0"
+        };
         cn!(base, translate)
     };
 

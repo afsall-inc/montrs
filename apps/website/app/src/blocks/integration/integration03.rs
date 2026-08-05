@@ -5,8 +5,12 @@ use montrs_ui::prelude::*;
 #[component]
 pub fn Integration03() -> impl IntoView {
     let paused = RwSignal::new(false);
-    let row1 = vec!["Rust", "WASM", "Tailwind", "Docker", "Postgres", "Redis", "Nginx"];
-    let row2 = vec!["GitHub", "Slack", "Discord", "Figma", "Notion", "Linear", "Vercel"];
+    let row1 = vec![
+        "Rust", "WASM", "Tailwind", "Docker", "Postgres", "Redis", "Nginx",
+    ];
+    let row2 = vec![
+        "GitHub", "Slack", "Discord", "Figma", "Notion", "Linear", "Vercel",
+    ];
 
     view! {
         <div class="rounded-lg border border-border bg-card p-6 shadow-sm overflow-hidden">

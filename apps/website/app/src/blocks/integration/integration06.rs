@@ -6,9 +6,24 @@ use montrs_ui::prelude::*;
 pub fn Integration06() -> impl IntoView {
     let expanded = RwSignal::new(Option::<usize>::None);
     let testimonials = vec![
-        ("Alice Chen", "CTO at TechCorp", "MontRS transformed our development workflow. The compile-time guarantees are a game-changer."),
-        ("Bob Martinez", "Lead Engineer at StartupX", "The agent system is incredible. We built our entire API layer in days, not weeks."),
-        ("Carol Williams", "Founder of WebForge", "Finally, a Rust framework that makes full-stack development feel natural and productive."),
+        (
+            "Alice Chen",
+            "CTO at TechCorp",
+            "MontRS transformed our development workflow. The compile-time \
+             guarantees are a game-changer.",
+        ),
+        (
+            "Bob Martinez",
+            "Lead Engineer at StartupX",
+            "The agent system is incredible. We built our entire API layer in \
+             days, not weeks.",
+        ),
+        (
+            "Carol Williams",
+            "Founder of WebForge",
+            "Finally, a Rust framework that makes full-stack development feel \
+             natural and productive.",
+        ),
     ];
 
     view! {

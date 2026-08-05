@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Button group for grouping related buttons together.
 ///
@@ -20,10 +20,15 @@ pub fn ButtonGroup(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "inline-flex items-center justify-center [&>button]:rounded-none [&>button:first-child]:rounded-l-md [&>button:last-child]:rounded-r-md [&>button:focus-visible]:z-10 [&>button]:border-r [&>button:last-child]:border-r-0",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "inline-flex items-center justify-center [&>button]:rounded-none \
+             [&>button:first-child]:rounded-l-md \
+             [&>button:last-child]:rounded-r-md [&>button:focus-visible]:z-10 \
+             [&>button]:border-r [&>button:last-child]:border-r-0",
+            class.get()
+        )
+    };
 
     view! {
         <div class=merged data-name="ButtonGroup" role="group">

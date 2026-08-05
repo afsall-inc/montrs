@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Pressable(
@@ -7,7 +7,12 @@ pub fn Pressable(
     #[prop(into, optional)] on_press: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("cursor-pointer select-none transition-opacity active:opacity-70", class.get());
+    let merged = move || {
+        cn!(
+            "cursor-pointer select-none transition-opacity active:opacity-70",
+            class.get()
+        )
+    };
     let handle = move |_| {
         if let Some(cb) = on_press {
             cb.run(());

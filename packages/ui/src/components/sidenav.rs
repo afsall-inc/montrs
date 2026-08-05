@@ -1,12 +1,17 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Sidenav(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("flex h-full w-64 flex-col border-r bg-background", class.get());
+    let merged = move || {
+        cn!(
+            "flex h-full w-64 flex-col border-r bg-background",
+            class.get()
+        )
+    };
     view! {
         <nav class=merged data-name="Sidenav">
             {children()}
@@ -21,8 +26,13 @@ pub fn SidenavItem(
     children: Children,
 ) -> impl IntoView {
     let merged = move || {
-        let base = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
-        let state = if active { "bg-muted text-foreground" } else { "text-muted-foreground hover:bg-muted/50 hover:text-foreground" };
+        let base = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm \
+                    font-medium transition-colors";
+        let state = if active {
+            "bg-muted text-foreground"
+        } else {
+            "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        };
         cn!(base, state, class.get())
     };
     view! {

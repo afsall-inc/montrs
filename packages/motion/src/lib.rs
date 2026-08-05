@@ -4,29 +4,28 @@
 //! tweening, keyframe interpolation, gestures, SVG path animation, and
 //! an optional video creation pipeline.
 
-pub mod spring;
-pub mod tween;
-pub mod keyframes;
-pub mod value;
+pub mod animated;
+pub mod css;
 pub mod frame;
 pub mod gesture;
+pub mod keyframes;
+pub mod spring;
 pub mod svg;
-pub mod css;
-pub mod animated;
+pub mod tween;
+pub mod value;
 
 #[cfg(feature = "video")]
 pub mod video;
 
-pub use spring::Spring;
-pub use tween::{Easing, Tween};
-pub use keyframes::Keyframes;
-pub use value::MotionValue;
+pub use animated::*;
+pub use css::*;
 pub use frame::FrameLoop;
 pub use gesture::*;
+pub use keyframes::Keyframes;
+pub use spring::Spring;
 pub use svg::*;
-pub use css::*;
-pub use animated::*;
-
+pub use tween::{Easing, Tween};
+pub use value::MotionValue;
 #[cfg(feature = "video")]
 pub use video::*;
 

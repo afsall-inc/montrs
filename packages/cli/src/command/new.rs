@@ -1,8 +1,6 @@
 use anyhow::{Result, anyhow};
 use console::style;
-use std::fs;
-use std::path::Path;
-use std::process::Command;
+use std::{fs, path::Path, process::Command};
 
 pub async fn run(name: String, template: String) -> Result<()> {
     println!(
@@ -25,7 +23,11 @@ pub async fn run(name: String, template: String) -> Result<()> {
     }
 
     if dest_dir.exists() {
-        return Err(anyhow!("Directory '{}' already exists. Remove it first or choose a different name.", name));
+        return Err(anyhow!(
+            "Directory '{}' already exists. Remove it first or choose a \
+             different name.",
+            name
+        ));
     }
 
     println!("  Copying template '{}' → '{}'", template, name);
@@ -77,7 +79,7 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
         let path = entry.path();
         let dest = dst.join(entry.file_name());
 
-        if path.file_name().map_or(false, |n| n == ".agent") {
+        if path.file_name().is_some_and(|n| n == ".agent") {
             continue;
         }
 
@@ -96,9 +98,7 @@ fn substitute_project_name(dir: &Path, name: &str) -> Result<()> {
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| {
-            e.file_name()
-                .to_str()
-                .map_or(false, |n| n.ends_with(".toml"))
+            e.file_name().to_str().is_some_and(|n| n.ends_with(".toml"))
         })
     {
         let path = entry.path();

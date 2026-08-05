@@ -1,47 +1,54 @@
 //! MontRS website — montrs.com
 
+#![recursion_limit = "512"]
+
+pub mod blocks;
+pub mod components;
 pub mod pages;
 pub mod routes;
-pub mod components;
-pub mod blocks;
 
+use crate::{components::*, routes::*};
 use leptos::prelude::*;
-use montrs_core::*;
+use montrs_core::{
+    AppConfig, AppSpec, EnvConfig, EnvError, Plate, RouterOutlet, Target,
+};
 use montrs_ui::prelude::*;
 
-use crate::components::*;
-use crate::routes::*;
+pub fn build_spec() -> AppSpec<MyConfig> {
+    let mut spec = AppSpec::new(MyConfig, MyEnv)
+        .with_target(Target::Wasm)
+        .with_plate(WebsitePlate);
+    WebsitePlate.register_routes(&mut spec.router);
+    spec
+}
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
     console_error_panic_hook::set_once();
-    leptos::mount::hydrate_body(App);
+    let spec = build_spec();
+    leptos::mount::hydrate_body(move || {
+        provide_context(spec.router);
+        App()
+    });
 }
 
 #[component]
 pub fn App() -> impl IntoView {
-    view! {
-        <ThemeProvider>
-            <leptos_meta::Html attr:lang="en" />
-            <leptos_meta::Meta charset="utf-8" />
-            <leptos_meta::Meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <leptos_meta::Meta name="description" content="MontRS — A full-stack Rust framework for humans and agents" />
-            <leptos_meta::Title text="MontRS" />
-            <leptos_meta::Stylesheet id="leptos" href="/pkg/website.css" />
+    leptos_meta::provide_meta_context();
 
-            <Header />
-            <main class="min-h-screen">
-                {RouterOutlet::<MyConfig>()}
-            </main>
-            <Footer />
-        </ThemeProvider>
+    view! {
+        <leptos_router::components::Router>
+            <ThemeProvider>
+                <Header />
+                <main class="min-h-screen">
+                    {RouterOutlet::<MyConfig>()}
+                </main>
+                <Footer />
+            </ThemeProvider>
+        </leptos_router::components::Router>
     }
 }
-
-// ---------------------------------------------------------------------------
-// AppConfig + AppSpec
-// ---------------------------------------------------------------------------
 
 #[derive(Clone)]
 pub struct MyEnv;
@@ -77,13 +84,3 @@ impl AppConfig for MyConfig {
     type Error = MyAppError;
     type Env = MyEnv;
 }
-
-fn main() {
-    AppSpec::new(MyConfig, MyEnv)
-        .with_target(Target::Wasm)
-        .with_plate(WebsitePlate)
-        .mount_with_router(|| view! { <App /> });
-}
-
-// Re-export for server
-pub use crate::routes::WebsitePlate;

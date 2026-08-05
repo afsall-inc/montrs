@@ -1,6 +1,5 @@
-use leptos::prelude::*;
-use leptos::wasm_bindgen::JsCast;
 use crate::cn::*;
+use leptos::{prelude::*, wasm_bindgen::JsCast};
 
 crate::variants! {
     Select {
@@ -52,8 +51,8 @@ pub fn Select(
         }
     };
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" | "Enter" | " " => {
                 ev.prevent_default();
                 open.set(true);
@@ -64,8 +63,7 @@ pub fn Select(
                 open.set(false);
             }
             _ => {}
-        }
-    };
+        };
 
     view! {
         <div class="relative" data-name="Select">
@@ -121,15 +119,21 @@ pub fn SelectContent(
     let ctx = use_context::<SelectContext>()
         .expect("SelectContent must be inside Select");
 
-    let merged = move || cn!(
-        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md \
+             border bg-popover text-popover-foreground shadow-md \
+             data-[state=open]:animate-in data-[state=closed]:animate-out \
+             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 \
+             data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            class.get()
+        )
+    };
 
     let close = move |_| ctx.open.set(false);
 
-    let on_key_down = move |ev: leptos::ev::KeyboardEvent| {
-        match ev.key().as_str() {
+    let on_key_down =
+        move |ev: leptos::ev::KeyboardEvent| match ev.key().as_str() {
             "ArrowDown" => {
                 ev.prevent_default();
                 let count = ctx.item_count.get();
@@ -157,8 +161,7 @@ pub fn SelectContent(
                 ctx.open.set(false);
             }
             _ => {}
-        }
-    };
+        };
 
     view! {
         <div
@@ -204,8 +207,16 @@ pub fn SelectItem(
     let is_selected = move || ctx.value.get() == value_for_is_selected;
     let is_selected_for_merged = is_selected.clone();
     let merged = move || {
-        let base = "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50";
-        let active = if is_selected_for_merged() { "bg-accent text-accent-foreground" } else { "" };
+        let base = "relative flex w-full cursor-default select-none \
+                    items-center rounded-sm py-1.5 pl-8 pr-2 text-sm \
+                    outline-none focus:bg-accent focus:text-accent-foreground \
+                    data-[disabled]:pointer-events-none \
+                    data-[disabled]:opacity-50";
+        let active = if is_selected_for_merged() {
+            "bg-accent text-accent-foreground"
+        } else {
+            ""
+        };
         cn!(base, active, class.get())
     };
 
@@ -280,7 +291,8 @@ pub fn SelectLabel(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!("py-1.5 pl-8 pr-2 text-sm font-semibold", class.get());
+    let merged =
+        move || cn!("py-1.5 pl-8 pr-2 text-sm font-semibold", class.get());
 
     view! {
         <div class=merged data-name="SelectLabel" role="presentation">

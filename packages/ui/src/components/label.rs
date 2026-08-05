@@ -1,5 +1,5 @@
-use leptos::prelude::*;
 use crate::cn::*;
+use leptos::prelude::*;
 
 /// Form label component.
 ///
@@ -17,10 +17,13 @@ pub fn Label(
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {
-    let merged = move || cn!(
-        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-        class.get()
-    );
+    let merged = move || {
+        cn!(
+            "text-sm font-medium leading-none \
+             peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+            class.get()
+        )
+    };
 
     view! {
         <label for=for_id class=merged data-name="Label">
