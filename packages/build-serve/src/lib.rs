@@ -27,8 +27,7 @@ pub struct ServeConfig {
 /// lightweight static file server — the SSR server binary is spawned
 /// separately by the CLI.
 pub async fn serve_static(config: ServeConfig) -> Result<()> {
-    let app = Router::new()
-        .fallback_service(ServeDir::new(&config.site_root));
+    let app = Router::new().fallback_service(ServeDir::new(&config.site_root));
 
     let listener = tokio::net::TcpListener::bind(&config.addr).await?;
     info!("Dev server listening on {}", config.addr);
@@ -39,12 +38,14 @@ pub async fn serve_static(config: ServeConfig) -> Result<()> {
 }
 
 /// Start the dev server with a callback for when the server is ready.
-pub async fn serve_with_callback<F>(config: ServeConfig, on_ready: F) -> Result<()>
+pub async fn serve_with_callback<F>(
+    config: ServeConfig,
+    on_ready: F,
+) -> Result<()>
 where
     F: FnOnce(),
 {
-    let app = Router::new()
-        .fallback_service(ServeDir::new(&config.site_root));
+    let app = Router::new().fallback_service(ServeDir::new(&config.site_root));
 
     let listener = tokio::net::TcpListener::bind(&config.addr).await?;
     info!("Dev server listening on {}", config.addr);
