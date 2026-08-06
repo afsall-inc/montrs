@@ -5,7 +5,7 @@
 //! 2. Starting the backend server.
 //! 3. Running the E2E test suite against the running server.
 
-use montrs_build::Pipeline;
+use montrs_build::{BuildPipeline, Pipeline};
 use std::path::Path;
 
 /// Executes the E2E tests.

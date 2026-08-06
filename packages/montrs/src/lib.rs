@@ -23,6 +23,7 @@ pub use montrs_ui as ui;
 pub use montrs_validator as validator;
 
 /// A convenience plate for importing the most commonly used types and traits.
+#[allow(ambiguous_glob_reexports)]
 pub mod prelude {
     pub use montrs_core::*;
     #[cfg(feature = "haptics")]

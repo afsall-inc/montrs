@@ -1,4 +1,4 @@
-use montrs_build::Pipeline;
+use montrs_build::{BuildPipeline, Pipeline};
 use std::{path::Path, process::Command};
 
 pub async fn run() -> anyhow::Result<()> {

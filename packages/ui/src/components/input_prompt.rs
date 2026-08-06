@@ -5,7 +5,7 @@ use leptos::prelude::*;
 pub fn InputPrompt(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] value: RwSignal<String>,
-    #[prop(into, optional)] suggestions: Vec<String>,
+    #[prop(into, optional)] _suggestions: Vec<String>,
 ) -> impl IntoView {
     let merged = move || {
         cn!(

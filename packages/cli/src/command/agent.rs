@@ -617,7 +617,7 @@ fn check_dependency_layers(
 
         // Check all path dependencies (montrs-* packages)
         if let Some(deps) = doc.get("dependencies").and_then(|d| d.as_table()) {
-            for (dep_name, dep_value) in deps {
+            for (dep_name, _dep_value) in deps {
                 if dep_name.starts_with("montrs-") {
                     if let Some(dep_layer) = layers.get(dep_name) {
                         if *dep_layer > pkg_layer {
@@ -636,7 +636,7 @@ fn check_dependency_layers(
         if let Some(deps) =
             doc.get("dev-dependencies").and_then(|d| d.as_table())
         {
-            for (dep_name, dep_value) in deps {
+            for (dep_name, _dep_value) in deps {
                 if dep_name.starts_with("montrs-") {
                     if let Some(dep_layer) = layers.get(dep_name) {
                         if *dep_layer > pkg_layer {

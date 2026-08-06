@@ -17,7 +17,7 @@ pub fn DragAndDrop(
 #[component]
 pub fn DraggableItem(
     #[prop(into, optional)] class: Signal<String>,
-    #[prop(into, optional)] drag_id: Option<String>,
+    #[prop(into, optional)] _drag_id: Option<String>,
     children: Children,
 ) -> impl IntoView {
     let merged = move || cn!("cursor-grab active:cursor-grabbing", class.get());

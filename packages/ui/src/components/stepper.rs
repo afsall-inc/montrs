@@ -4,7 +4,7 @@ use leptos::prelude::*;
 #[component]
 pub fn Stepper(
     #[prop(into, optional)] class: Signal<String>,
-    #[prop(optional)] current: usize,
+    #[prop(optional)] _current: usize,
     children: Children,
 ) -> impl IntoView {
     let merged = move || cn!("flex items-center gap-2", class.get());

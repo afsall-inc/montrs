@@ -4,7 +4,7 @@ use leptos::prelude::*;
 #[component]
 pub fn Dialog(
     #[prop(optional)] default_open: bool,
-    #[prop(into, optional)] on_close: Option<Callback<()>>,
+    #[prop(into, optional)] _on_close: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
     let open = RwSignal::new(default_open);

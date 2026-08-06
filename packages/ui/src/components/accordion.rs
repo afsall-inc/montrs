@@ -5,7 +5,6 @@ use leptos::{prelude::*, wasm_bindgen::JsCast};
 struct AccordionItemData {
     value: String,
     trigger_id: String,
-    panel_id: String,
 }
 
 #[derive(Clone)]
@@ -58,7 +57,6 @@ pub fn AccordionItem(
         let entry = AccordionItemData {
             value: value.clone(),
             trigger_id: trigger_id.clone(),
-            panel_id: panel_id.clone(),
         };
         ctx.items.update(|items| items.push(entry));
     }

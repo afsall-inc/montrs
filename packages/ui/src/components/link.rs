@@ -1,4 +1,3 @@
-use crate::cn::*;
 use leptos::prelude::*;
 
 crate::variants! {

@@ -1,4 +1,4 @@
-use montrs_build::Pipeline;
+use montrs_build::{BuildPipeline, Pipeline};
 use std::path::Path;
 use tokio::process::Command as TokioCommand;
 

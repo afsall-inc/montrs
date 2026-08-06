@@ -34,7 +34,7 @@ pub fn InputOtp(
                 value=move || value.get()
                 on:input=on_input
             />
-            {move || chars().into_iter().enumerate().map(|(i, c)| {
+            {move || chars().into_iter().enumerate().map(|(_i, c)| {
                 view! {
                     <div class="flex h-12 w-10 items-center justify-center rounded-md border border-input text-sm font-mono bg-background">
                         {if c != ' ' { c.to_string() } else { String::new() }}

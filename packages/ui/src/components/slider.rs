@@ -43,7 +43,7 @@ pub fn Slider(
         }
     };
 
-    let track_style = move || format!("left: 0%; right: {}%;", 100.0 - pct());
+    let _track_style = move || format!("left: 0%; right: {}%;", 100.0 - pct());
     let range_style = move || format!("left: 0%; width: {}%;", pct());
 
     view! {

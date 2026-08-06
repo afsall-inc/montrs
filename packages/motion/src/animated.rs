@@ -1,12 +1,5 @@
 use crate::value::MotionValue;
 use leptos::prelude::*;
-use std::sync::atomic::{AtomicU64, Ordering};
-
-static NEXT_ID: AtomicU64 = AtomicU64::new(1);
-
-fn next_id() -> u64 {
-    NEXT_ID.fetch_add(1, Ordering::Relaxed)
-}
 
 /// Animated wrapper component for HTML elements.
 ///

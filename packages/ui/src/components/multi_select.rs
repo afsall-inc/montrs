@@ -5,7 +5,7 @@ use leptos::prelude::*;
 pub fn MultiSelect(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(into, optional)] value: RwSignal<Vec<String>>,
-    children: Children,
+    _children: Children,
 ) -> impl IntoView {
     let open = RwSignal::new(false);
     let merged = move || {
@@ -28,7 +28,7 @@ pub fn MultiSelect(
 
 #[component]
 pub fn MultiSelectItem(
-    value: String,
+    _value: String,
     #[prop(into, optional)] class: Signal<String>,
     children: Children,
 ) -> impl IntoView {

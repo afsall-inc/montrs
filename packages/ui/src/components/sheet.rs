@@ -5,7 +5,7 @@ use leptos::prelude::*;
 pub fn Sheet(
     #[prop(into, optional)] class: Signal<String>,
     #[prop(optional)] open: bool,
-    #[prop(into, optional)] on_close: Option<Callback<()>>,
+    #[prop(into, optional)] _on_close: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
     let merged = move || {

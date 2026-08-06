@@ -17,7 +17,7 @@ pub fn Chips(
 #[component]
 pub fn Chip(
     #[prop(into, optional)] class: Signal<String>,
-    #[prop(into, optional)] on_remove: Option<Callback<()>>,
+    #[prop(into, optional)] _on_remove: Option<Callback<()>>,
     children: Children,
 ) -> impl IntoView {
     let merged = move || {
