@@ -37,6 +37,10 @@ use serde::{Deserialize, Serialize};
 use std::{error::Error as StdError, sync::Arc};
 pub use validation::{Validator, ValidatorError};
 
+// Re-export Target from montrs-platform so existing code continues to work.
+#[doc(inline)]
+pub use montrs_platform::Target;
+
 /// A trait for errors that provide agent-accessible metadata.
 pub trait AgentError: StdError {
     /// A stable identifier for the error type.

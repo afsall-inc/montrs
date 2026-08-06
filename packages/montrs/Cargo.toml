@@ -9,12 +9,10 @@ description = "The main entry point for the MontRS framework."
 
 [package.metadata.montrs]
 layer = "3"
-allowed_deps = ["montrs-platform", "montrs-web", "montrs-edge", "montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile"]
+allowed_deps = ["montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile"]
 
 [dependencies]
 montrs-platform = { path = "../platform", version = "0.1.0" }
-montrs-web = { path = "../web", version = "0.1.0", optional = true }
-montrs-edge = { path = "../edge", version = "0.1.0", optional = true }
 montrs-haptics = { path = "../haptics", optional = true }
 montrs-core = { path = "../core", version = "0.1.0" }
 montrs-orm = { path = "../orm", version = "0.1.0", optional = true }
@@ -27,10 +25,6 @@ montrs-motion = { path = "../motion", version = "0.1.0", optional = true }
 montrs-renderer = { path = "../renderer", version = "0.1.0", optional = true }
 montrs-desktop = { path = "../desktop", version = "0.1.0", optional = true }
 montrs-mobile = { path = "../mobile", version = "0.1.0", optional = true }
-
-[dev-dependencies]
-tracing-subscriber = "0.3"
-tracing = "0.1"
 
 [[bin]]
 name = "montrs"
@@ -55,8 +49,6 @@ motion = ["dep:montrs-motion"]
 renderer = ["dep:montrs-renderer"]
 desktop = ["dep:montrs-desktop", "renderer"]
 mobile = ["dep:montrs-mobile", "renderer"]
-web = ["dep:montrs-web"]
-edge = ["dep:montrs-edge"]
 
 # --- Forwarded Features ---
 

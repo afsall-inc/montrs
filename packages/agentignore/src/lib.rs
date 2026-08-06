@@ -1,6 +1,3 @@
-#[cfg(test)]
-pub mod test_helpers;
-
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use std::path::{Path, PathBuf};
 

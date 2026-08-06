@@ -21,8 +21,6 @@ members = [
     "packages/motion",
     "packages/metadata",
     "packages/platform",
-    "packages/web",
-    "packages/edge",
     "packages/build",
     "packages/build-core",
     "packages/build-watch",

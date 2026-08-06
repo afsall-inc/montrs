@@ -4,9 +4,6 @@
 //! for convenience, and provides the concrete `Pipeline` struct that implements
 //! `BuildPipeline`.
 
-#[cfg(test)]
-pub mod test_helpers;
-
 pub use montrs_build_core::*;
 pub use montrs_build_watch::*;
 pub use montrs_build_serve::*;

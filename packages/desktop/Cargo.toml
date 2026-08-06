@@ -20,11 +20,7 @@ open.workspace = true
 wry = { version = "0.43", optional = true }
 winit = { version = "0.30", optional = true }
 
-[dev-dependencies]
-tracing-subscriber = "0.3"
-tracing = "0.1"
-
 [features]
 default = []
 webview = ["dep:wry"]
-native = ["dep:montrs-renderer", "dep:winit", "montrs-renderer/tiny-skia-backend"]
+native = ["dep:montrs-renderer", "dep:winit"]

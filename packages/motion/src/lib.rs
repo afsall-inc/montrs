@@ -1,7 +1,4 @@
 //! montrs-motion: Animation library for MontRS.
-
-#[cfg(test)]
-pub mod test_helpers;
 //!
 //! Inspired by Motion (Framer Motion) and Remotion. Provides spring physics,
 //! tweening, keyframe interpolation, gestures, SVG path animation, and

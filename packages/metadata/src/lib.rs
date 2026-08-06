@@ -16,9 +16,6 @@
 //! package = "app"
 //! ```
 
-#[cfg(test)]
-pub mod test_helpers;
-
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 

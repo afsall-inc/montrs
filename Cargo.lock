@@ -4771,7 +4771,6 @@ dependencies = [
  "montrs-cli",
  "montrs-core",
  "montrs-desktop",
- "montrs-edge",
  "montrs-haptics",
  "montrs-icons",
  "montrs-mobile",
@@ -4782,9 +4781,6 @@ dependencies = [
  "montrs-test",
  "montrs-ui",
  "montrs-validator",
- "montrs-web",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4815,9 +4811,6 @@ version = "0.1.0"
 dependencies = [
  "ignore",
  "serde",
- "tempfile",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4854,7 +4847,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4867,7 +4859,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4884,7 +4875,6 @@ dependencies = [
  "tower",
  "tower-http",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4893,10 +4883,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "montrs-build-core",
- "montrs-metadata",
  "notify",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4976,22 +4964,8 @@ dependencies = [
  "open",
  "serde",
  "thiserror 1.0.69",
- "tracing",
- "tracing-subscriber",
  "winit",
  "wry",
-]
-
-[[package]]
-name = "montrs-edge"
-version = "0.1.0"
-dependencies = [
- "montrs-core",
- "montrs-platform",
- "serde",
- "thiserror 1.0.69",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -5052,8 +5026,6 @@ dependencies = [
  "serde_json",
  "toml 0.8.2",
  "toml_edit 0.22.27",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -5064,8 +5036,6 @@ dependencies = [
  "montrs-renderer",
  "serde",
  "thiserror 1.0.69",
- "tracing",
- "tracing-subscriber",
  "winit",
  "wry",
 ]
@@ -5081,8 +5051,6 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tiny-skia",
- "tracing",
- "tracing-subscriber",
  "usvg",
  "wasm-bindgen",
  "web-sys",
@@ -5101,7 +5069,6 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio-postgres",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -5127,8 +5094,6 @@ dependencies = [
  "tempfile",
  "tera",
  "toml 0.8.2",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -5144,8 +5109,6 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "tiny-skia",
- "tracing",
- "tracing-subscriber",
  "usvg",
  "wgpu",
  "winit",
@@ -5166,8 +5129,6 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "toml 0.8.2",
- "tracing",
- "tracing-subscriber",
  "uuid",
  "walkdir",
 ]
@@ -5196,8 +5157,6 @@ dependencies = [
  "paste",
  "serde",
  "serde_json",
- "tracing",
- "tracing-subscriber",
  "tw_merge",
  "wasm-bindgen-test",
  "web-sys",
@@ -5206,10 +5165,6 @@ dependencies = [
 [[package]]
 name = "montrs-utils"
 version = "0.1.0"
-dependencies = [
- "tracing",
- "tracing-subscriber",
-]
 
 [[package]]
 name = "montrs-validator"
@@ -5220,19 +5175,6 @@ dependencies = [
  "quote",
  "regex",
  "syn 2.0.118",
-]
-
-[[package]]
-name = "montrs-web"
-version = "0.1.0"
-dependencies = [
- "montrs-platform",
- "serde",
- "thiserror 1.0.69",
- "tracing",
- "tracing-subscriber",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]

@@ -4,9 +4,6 @@
 //! Extracted from `montrs-build` to separate the HTTP serving concern
 //! from the build pipeline.
 
-#[cfg(test)]
-pub mod test_helpers;
-
 use anyhow::Result;
 use axum::Router;
 use std::path::PathBuf;

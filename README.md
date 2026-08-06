@@ -116,11 +116,6 @@ impl Route<AppConfig> for HelloRoute {
 | [build-core](packages/build-core/README.md) | Build pipeline trait and configuration. |
 | [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
 | [build-serve](packages/build-serve/README.md) | Dev server (static file serving via axum). |
-| [renderer](packages/renderer/README.md) | Cross-platform rendering engine (wgpu GPU, tiny-skia CPU). |
-| [desktop](packages/desktop/README.md) | Desktop shell (wry webview, winit + wgpu native). |
-| [mobile](packages/mobile/README.md) | Mobile shell (Android, iOS stubs). |
-| [web](packages/web/README.md) | Web platform adapter (WASM browser API). |
-| [edge](packages/edge/README.md) | Edge runtime adapter (Cloudflare Workers, Deno). |
 
 ---
 

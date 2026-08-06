@@ -23,10 +23,6 @@ resvg = { version = "0.44", optional = true }
 usvg = { version = "0.44", optional = true }
 tiny-skia = { version = "0.11", optional = true }
 
-[dev-dependencies]
-tracing-subscriber = "0.3"
-tracing = "0.1"
-
 [features]
 default = []
 video = ["dep:resvg", "dep:usvg", "dep:tiny-skia"]

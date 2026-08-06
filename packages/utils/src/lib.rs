@@ -1,8 +1,5 @@
 //! Reusable utilities for the MontRS framework.
 
-#[cfg(test)]
-pub mod test_helpers;
-
 /// Converts a string to PascalCase.
 pub fn to_pascal_case(s: &str) -> String {
     let mut res = String::new();

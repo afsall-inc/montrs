@@ -64,11 +64,6 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `build-core` | BuildPipeline trait + BuildConfig. |
 | `build-watch` | File watcher with debounced rebuild (notify). |
 | `build-serve` | Dev server (axum static file serving). |
-| `renderer` | Cross-platform rendering engine (wgpu GPU, tiny-skia CPU). |
-| `desktop` | Desktop shell (wry webview, winit + wgpu native). |
-| `mobile` | Mobile shell (Android, iOS stubs). |
-| `web` | Web platform adapter (WASM browser API). |
-| `edge` | Edge runtime adapter (Cloudflare Workers, Deno). |
 
 Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `packages/core/src/lib.rs`.
 

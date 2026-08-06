@@ -1,7 +1,4 @@
 //! montrs-orm: A trait-driven ORM layer for MontRS.
-
-#[cfg(test)]
-pub mod test_helpers;
 //! This crate defines the DbBackend trait and provides implementations for
 //! SQLite and PostgreSQL, enabling unified database access.
 //!

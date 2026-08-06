@@ -1,7 +1,4 @@
 //! montrs-ui: UI component library for MontRS.
-
-#[cfg(test)]
-pub mod test_helpers;
 //!
 //! Provides Tailwind CSS macros, theming, and a component system inspired by
 //! shadcn/ui. Re-exports `montrs-icons` for convenience.

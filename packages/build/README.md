@@ -1,15 +1,16 @@
 # montrs-build
 
-Facade crate for the MontRS build system. Re-exports `montrs-build-core`, `montrs-build-watch`, and `montrs-build-serve` for convenience, and provides the concrete `Pipeline` struct.
+Native Rust build pipeline for MontRS applications. Replaces `cargo-leptos` entirely.
 
-## Sub-packages
+## What it does
 
-| Package | Description |
-|---------|-------------|
-| `montrs-build-core` | `BuildPipeline` trait + `BuildConfig` types |
-| `montrs-build-watch` | File watcher with debounced rebuild (notify) |
-| `montrs-build-serve` | Dev server (axum static file serving) |
-| `montrs-build` (this) | Facade — re-exports all three + concrete `Pipeline` |
+- Reads `montrs.toml` for project metadata
+- Builds the server binary with `cargo build`
+- Builds the WASM frontend with `cargo build --target wasm32-unknown-unknown`
+- Runs Tailwind CSS v4 CLI (native binary, no JS)
+- Copies assets to the site root
+- Watches files for changes with auto-rebuild
+- Serves the site with a lightweight Axum dev server
 
 ## Usage
 
@@ -36,4 +37,4 @@ montrs watch    # build + watch for changes
 2. **`build_frontend()`** — Compiles the WASM frontend
 3. **`process_tailwind()`** — Processes Tailwind CSS via `tailwindcss` CLI
 4. **`copy_assets()`** — Copies static assets to the site root
-5. **`generate_index_html()`** — Generates the index.html entry point
+5. **`copy_wasm_package()`** — Copies the WASM package to the site directory
