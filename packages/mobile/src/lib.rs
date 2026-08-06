@@ -11,7 +11,10 @@ pub struct MobileAdapter {
 
 impl MobileAdapter {
     pub fn new(target: Target) -> Self {
-        debug_assert!(target.is_mobile(), "MobileAdapter requires a mobile target");
+        debug_assert!(
+            target.is_mobile(),
+            "MobileAdapter requires a mobile target"
+        );
         Self { target }
     }
 }
