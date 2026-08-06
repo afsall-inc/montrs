@@ -499,15 +499,17 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             if json {
                 Ok(serde_json::to_string_pretty(&violations)?)
             } else if violations.is_empty() {
-                Ok("All packages comply with declared layer dependencies.".to_string())
+                Ok("All packages comply with declared layer dependencies."
+                    .to_string())
             } else {
-                let mut out = "Dependency layer violations found:\n".to_string();
+                let mut out =
+                    "Dependency layer violations found:\n".to_string();
                 for v in &violations {
                     out.push_str(&format!("  - {}\n", v));
                 }
                 Ok(out)
             }
-        },
+        }
     }
 }
 
@@ -555,7 +557,9 @@ fn update_crate_version(
 ///
 /// Reads `[package.metadata.montrs]` from each `packages/*/Cargo.toml` and
 /// verifies that dependencies only target packages at the same or lower layer.
-fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>> {
+fn check_dependency_layers(
+    root: &std::path::Path,
+) -> anyhow::Result<Vec<String>> {
     let mut violations = Vec::new();
     let packages_dir = root.join("packages");
     if !packages_dir.exists() {
@@ -563,7 +567,8 @@ fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>
     }
 
     // First pass: collect layer info for all packages
-    let mut layers: std::collections::HashMap<String, u32> = std::collections::HashMap::new();
+    let mut layers: std::collections::HashMap<String, u32> =
+        std::collections::HashMap::new();
     let mut cargo_files: Vec<std::path::PathBuf> = Vec::new();
 
     for entry in std::fs::read_dir(&packages_dir)? {
@@ -572,11 +577,13 @@ fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>
         if cargo_toml.exists() {
             let content = std::fs::read_to_string(&cargo_toml)?;
             let doc: toml::Value = toml::from_str(&content)?;
-            let pkg_name = doc.get("package")
+            let pkg_name = doc
+                .get("package")
                 .and_then(|p| p.get("name"))
                 .and_then(|n| n.as_str())
                 .map(|s| s.to_string());
-            let layer = doc.get("package")
+            let layer = doc
+                .get("package")
                 .and_then(|p| p.get("metadata"))
                 .and_then(|m| m.get("montrs"))
                 .and_then(|m| m.get("layer"))
@@ -594,11 +601,13 @@ fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>
     for cargo_toml in &cargo_files {
         let content = std::fs::read_to_string(cargo_toml)?;
         let doc: toml::Value = toml::from_str(&content)?;
-        let pkg_name = doc.get("package")
+        let pkg_name = doc
+            .get("package")
             .and_then(|p| p.get("name"))
             .and_then(|n| n.as_str())
             .unwrap_or("unknown");
-        let pkg_layer = doc.get("package")
+        let pkg_layer = doc
+            .get("package")
             .and_then(|p| p.get("metadata"))
             .and_then(|m| m.get("montrs"))
             .and_then(|m| m.get("layer"))
@@ -613,7 +622,8 @@ fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>
                     if let Some(dep_layer) = layers.get(dep_name) {
                         if *dep_layer > pkg_layer {
                             violations.push(format!(
-                                "{} (layer {}) depends on {} (layer {}) — layer violation",
+                                "{} (layer {}) depends on {} (layer {}) — \
+                                 layer violation",
                                 pkg_name, pkg_layer, dep_name, dep_layer
                             ));
                         }
@@ -623,13 +633,16 @@ fn check_dependency_layers(root: &std::path::Path) -> anyhow::Result<Vec<String>
         }
 
         // Also check dev-dependencies
-        if let Some(deps) = doc.get("dev-dependencies").and_then(|d| d.as_table()) {
+        if let Some(deps) =
+            doc.get("dev-dependencies").and_then(|d| d.as_table())
+        {
             for (dep_name, dep_value) in deps {
                 if dep_name.starts_with("montrs-") {
                     if let Some(dep_layer) = layers.get(dep_name) {
                         if *dep_layer > pkg_layer {
                             violations.push(format!(
-                                "{} (layer {}) dev-depends on {} (layer {}) — layer violation",
+                                "{} (layer {}) dev-depends on {} (layer {}) — \
+                                 layer violation",
                                 pkg_name, pkg_layer, dep_name, dep_layer
                             ));
                         }

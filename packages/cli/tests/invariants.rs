@@ -48,6 +48,9 @@ fn test_cli_error_agent_error_impl() {
 
 #[test]
 fn test_cli_error_display() {
-    let err = error::CliError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "file not found"));
+    let err = error::CliError::Io(std::io::Error::new(
+        std::io::ErrorKind::NotFound,
+        "file not found",
+    ));
     assert!(format!("{}", err).contains("IO error"));
 }
