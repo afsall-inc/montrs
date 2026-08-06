@@ -1,3 +1,6 @@
+#[cfg(test)]
+pub mod test_helpers;
+
 use anyhow::{Context, Result};
 use console::style;
 use serde::{Deserialize, Serialize};

@@ -33,6 +33,9 @@
 //! std::fs::write("prdoc/pr_42.prdoc", rendered).unwrap();
 //! ```
 
+#[cfg(test)]
+pub mod test_helpers;
+
 pub mod analyzer;
 pub mod changelog;
 pub mod config;

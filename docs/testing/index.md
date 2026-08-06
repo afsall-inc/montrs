@@ -291,6 +291,34 @@ MONTRS_SITE_URL=http://localhost:3000 cargo test --package e2e
 
 ---
 
+## Package-Level Testing
+
+Every MontRS framework package follows a consistent testing pattern:
+
+- **`src/test_helpers.rs`** — A module providing `TestContext`, `init_test_tracing()`, and package-specific helpers (mock configs, fixture builders). Imported as `#[cfg(test)] pub mod test_helpers;` in `lib.rs`.
+- **`tests/invariants.rs`** — Tests that validate the package's invariants from `docs/invariants.md`. These verify public types construct, `description()` methods are non-empty, trait implementations behave correctly, and boundary rules are enforced.
+- **`tests/*.rs`** — Additional integration and functional tests as needed.
+
+### Running Package Tests
+
+```bash
+# Single package
+cargo test -p montrs-platform
+cargo test -p montrs-build-core
+
+# All packages
+cargo test --workspace
+```
+
+### Adding Tests to a New Package
+
+1. Create `src/test_helpers.rs` with a `TestContext` and `init_test_tracing()`.
+2. Add `#[cfg(test)] pub mod test_helpers;` to `lib.rs`.
+3. Add `tracing-subscriber` to `[dev-dependencies]` in `Cargo.toml`.
+4. Create `tests/invariants.rs` with tests for each invariant in `docs/invariants.md`.
+
+---
+
 ## CI/CD Integration
 
 MontRS testing tools are designed for CI environments.

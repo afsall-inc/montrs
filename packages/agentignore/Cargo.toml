@@ -14,3 +14,8 @@ allowed_deps = []
 [dependencies]
 ignore = "0.4"
 serde = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+tracing-subscriber = "0.3"
+tracing = "0.1"
+tempfile = "3.10"

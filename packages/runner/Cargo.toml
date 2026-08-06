@@ -26,3 +26,5 @@ chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
+tracing-subscriber = "0.3"
+tracing = "0.1"

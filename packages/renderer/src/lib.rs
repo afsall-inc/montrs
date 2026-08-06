@@ -1,4 +1,7 @@
 //! montrs-renderer: Cross-platform rendering engine for MontRS.
+
+#[cfg(test)]
+pub mod test_helpers;
 //!
 //! Inspired by Floem's renderer trait + Dioxus's mutation boundary + iced's compositor.
 //! Provides a unified `Renderer` trait with multiple backends:

@@ -21,6 +21,10 @@ anyhow.workspace = true
 tracing.workspace = true
 montrs-core = { path = "../core" }
 
+[dev-dependencies]
+tracing-subscriber = "0.3"
+tracing = "0.1"
+
 [features]
 default = []
 sqlite = ["dep:rusqlite"]

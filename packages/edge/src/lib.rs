@@ -4,6 +4,9 @@
 //! environments like Cloudflare Workers and Deno. Also provides a lightweight
 //! request handler compatible with the `fetch` event model used by edge runtimes.
 
+#[cfg(test)]
+pub mod test_helpers;
+
 use montrs_core::AppSpec;
 use montrs_platform::{PlatformAdapter, Target};
 use serde::{Deserialize, Serialize};

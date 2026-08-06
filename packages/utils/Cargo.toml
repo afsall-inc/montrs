@@ -11,3 +11,7 @@ layer = "1"
 allowed_deps = []
 
 [dependencies]
+
+[dev-dependencies]
+tracing-subscriber = "0.3"
+tracing = "0.1"

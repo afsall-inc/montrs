@@ -9,6 +9,9 @@
 
 pub mod config;
 
+#[cfg(test)]
+pub mod test_helpers;
+
 use anyhow::Result;
 use montrs_metadata::MontrsMetadata;
 use std::path::{Path, PathBuf};

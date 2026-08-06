@@ -3,6 +3,9 @@
 //! Implements `PlatformAdapter` from `montrs-platform` for browser/WASM targets.
 //! Uses `web-sys` and `wasm-bindgen` for DOM and browser API access.
 
+#[cfg(test)]
+pub mod test_helpers;
+
 use montrs_platform::{PlatformAdapter, Target};
 
 /// Web platform adapter for browser/WASM environments.

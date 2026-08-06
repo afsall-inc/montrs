@@ -4,6 +4,9 @@
 //! `BuildPipeline` trait. Uses `notify` for cross-platform file watching
 //! with built-in debouncing.
 
+#[cfg(test)]
+pub mod test_helpers;
+
 use anyhow::Result;
 use montrs_build_core::BuildPipeline;
 use notify::{

@@ -16,3 +16,7 @@ montrs-build-core = { path = "../build-core" }
 anyhow.workspace = true
 tracing.workspace = true
 notify = { version = "8", features = ["macos_kqueue"] }
+
+[dev-dependencies]
+tracing-subscriber = "0.3"
+montrs-metadata = { path = "../metadata" }

@@ -1,5 +1,8 @@
 //! The MontRS Framework - A full-stack Rust framework.
 
+#[cfg(test)]
+pub mod test_helpers;
+
 pub use montrs_core as core;
 pub use montrs_platform as platform;
 #[cfg(feature = "desktop")]

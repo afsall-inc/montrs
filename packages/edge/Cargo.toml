@@ -18,6 +18,9 @@ serde.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 
+[dev-dependencies]
+tracing-subscriber = "0.3"
+
 [features]
 default = []
 cloudflare = []

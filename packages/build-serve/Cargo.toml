@@ -22,3 +22,6 @@ axum = "0.8"
 hyper = { version = "1", features = ["full"] }
 console = "0.15"
 camino = "1.1"
+
+[dev-dependencies]
+tracing-subscriber = "0.3"

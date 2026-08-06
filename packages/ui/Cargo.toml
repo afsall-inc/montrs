@@ -21,4 +21,6 @@ web-sys = { version = "0.3", features = ["Document", "Element", "HtmlElement", "
 montrs-icons = { path = "../icons" }
 
 [dev-dependencies]
+tracing-subscriber = "0.3"
+tracing = "0.1"
 wasm-bindgen-test = "0.3"
