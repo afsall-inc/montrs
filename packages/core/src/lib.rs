@@ -71,13 +71,6 @@ pub trait AgentError: StdError {
     }
 }
 
-/// The execution environment context for the application.
-/// Used to differentiate logic between server-side rendering, WASM hydration,
-/// and other deployment targets like Edge or Mobile.
-///
-/// This type is re-exported from `montrs-platform`.
-pub use montrs_platform::Target;
-
 /// The unit of composition in MontRS.
 ///
 /// A `Plate` encapsulates a logical piece of functionality (e.g., Auth, Users, Blog).
