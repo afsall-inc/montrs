@@ -1,7 +1,6 @@
 //! Invariant tests for montrs-prdoc.
 
-use montrs_prdoc::*;
-use montrs_prdoc::types::*;
+use montrs_prdoc::{types::*, *};
 
 #[test]
 fn test_parse_prdoc() {
@@ -99,8 +98,14 @@ fn test_bump_level_dominates() {
 
 #[test]
 fn test_audience_from_str_lossy() {
-    assert_eq!(Audience::from_str_lossy("FrameworkDev"), Audience::FrameworkDev);
-    assert_eq!(Audience::from_str_lossy("frameworkdev"), Audience::FrameworkDev);
+    assert_eq!(
+        Audience::from_str_lossy("FrameworkDev"),
+        Audience::FrameworkDev
+    );
+    assert_eq!(
+        Audience::from_str_lossy("frameworkdev"),
+        Audience::FrameworkDev
+    );
     assert_eq!(Audience::from_str_lossy("AppDev"), Audience::AppDev);
     assert_eq!(Audience::from_str_lossy("appdev"), Audience::AppDev);
     assert_eq!(Audience::from_str_lossy("Operator"), Audience::Operator);
