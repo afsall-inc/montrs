@@ -6,32 +6,23 @@ use montrs_platform::*;
 
 #[test]
 fn test_target_enum_values() {
-    assert!(Target::Server.is_web());
-    assert!(Target::Wasm.is_web());
-    assert!(Target::Edge.is_web());
+    assert!(Target::Web.is_web());
     assert!(Target::Desktop.is_desktop());
-    assert!(Target::MobileAndroid.is_mobile());
-    assert!(Target::MobileIos.is_mobile());
+    assert!(Target::Mobile.is_mobile());
+    assert!(Target::Tui.is_tui());
 }
 
 #[test]
 fn test_target_description_not_empty() {
-    for target in &[
-        Target::Server,
-        Target::Wasm,
-        Target::Edge,
-        Target::Desktop,
-        Target::MobileAndroid,
-        Target::MobileIos,
-    ] {
+    for target in &[Target::Web, Target::Desktop, Target::Mobile, Target::Tui] {
         assert!(!target.description().is_empty());
     }
 }
 
 #[test]
 fn test_noop_platform_adapter() {
-    let adapter = NoopPlatformAdapter::new(Target::Server);
-    assert_eq!(adapter.target(), Target::Server);
+    let adapter = NoopPlatformAdapter::new(Target::Web);
+    assert_eq!(adapter.target(), Target::Web);
     assert!(!adapter.description().is_empty());
     // No-op methods should not panic
     adapter.open_url("https://example.com");
@@ -43,6 +34,6 @@ fn test_noop_platform_adapter() {
 fn test_platform_adapter_trait_is_object_safe() {
     // Verify the trait can be used as a trait object
     let adapter: Box<dyn PlatformAdapter> =
-        Box::new(NoopPlatformAdapter::new(Target::Wasm));
-    assert_eq!(adapter.target(), Target::Wasm);
+        Box::new(NoopPlatformAdapter::new(Target::Web));
+    assert_eq!(adapter.target(), Target::Web);
 }

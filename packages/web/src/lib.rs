@@ -16,7 +16,7 @@ pub struct WebAdapter {
 impl WebAdapter {
     pub fn new() -> Self {
         Self {
-            target: Target::Wasm,
+            target: Target::Web,
         }
     }
 

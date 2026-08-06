@@ -20,7 +20,7 @@ impl TestContext {
     pub fn new() -> Self {
         init_test_tracing();
         Self {
-            adapter: NoopPlatformAdapter::new(Target::Server),
+            adapter: NoopPlatformAdapter::new(Target::Web),
         }
     }
 }

@@ -206,7 +206,7 @@ pub fn create_app() -> AppSpec<{pascal}Config> {{
     let env = {pascal}Env::default();
     
     AppSpec::new(config, env)
-        .with_target(Target::Server)
+        .with_target(Target::Web)
         // .with_plate(Box::new(MyPlate))
 }}
 "#

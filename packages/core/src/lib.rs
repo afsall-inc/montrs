@@ -206,7 +206,7 @@ impl<C: AppConfig> AppSpec<C> {
             plates: Vec::new(),
             env,
             router: Router::new(),
-            target: Target::Server,
+            target: Target::Web,
         }
     }
 

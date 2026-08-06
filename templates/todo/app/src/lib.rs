@@ -17,7 +17,7 @@ pub fn build_spec() -> AppSpec<MyConfig> {
         },
         MyEnv,
     )
-    .with_target(Target::Wasm)
+    .with_target(Target::Web)
     .with_plate(TodoPlate);
     TodoPlate.register_routes(&mut spec.router);
     spec

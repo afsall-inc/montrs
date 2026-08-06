@@ -16,7 +16,7 @@ use montrs_ui::prelude::*;
 
 pub fn build_spec() -> AppSpec<MyConfig> {
     let mut spec = AppSpec::new(MyConfig, MyEnv)
-        .with_target(Target::Wasm)
+        .with_target(Target::Web)
         .with_plate(WebsitePlate);
     WebsitePlate.register_routes(&mut spec.router);
     spec

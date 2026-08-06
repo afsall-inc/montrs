@@ -11,24 +11,21 @@ use serde::{Deserialize, Serialize};
 /// The execution environment target for the application.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Target {
-    /// Server-side rendering (SSR) context.
-    Server,
-    /// Client-side WASM hydration or CSR context.
-    Wasm,
-    /// Edge computing environments (e.g., Cloudflare Workers).
-    Edge,
-    /// Desktop applications (e.g., via Tauri or wry).
+    /// Unified web target — can be SSR or static export. Deployment mode is
+    /// determined at build time by the `montrs.toml [deploy]` section.
+    Web,
+    /// Desktop applications (e.g., via wry or winit).
     Desktop,
-    /// Android mobile platform.
-    MobileAndroid,
-    /// iOS mobile platform.
-    MobileIos,
+    /// Mobile applications (Android + iOS, PlatformAdapter handles OS).
+    Mobile,
+    /// Terminal UI applications.
+    Tui,
 }
 
 impl Target {
     /// Returns true if the target is a mobile platform.
     pub fn is_mobile(self) -> bool {
-        matches!(self, Self::MobileAndroid | Self::MobileIos)
+        matches!(self, Self::Mobile)
     }
 
     /// Returns true if the target is a desktop platform.
@@ -36,20 +33,23 @@ impl Target {
         matches!(self, Self::Desktop)
     }
 
-    /// Returns true if the target is a web platform (server or client).
+    /// Returns true if the target is a web platform.
     pub fn is_web(self) -> bool {
-        matches!(self, Self::Server | Self::Wasm | Self::Edge)
+        matches!(self, Self::Web)
+    }
+
+    /// Returns true if the target is a TUI platform.
+    pub fn is_tui(self) -> bool {
+        matches!(self, Self::Tui)
     }
 
     /// Human-readable description of the target.
     pub fn description(self) -> &'static str {
         match self {
-            Self::Server => "Server-side rendering",
-            Self::Wasm => "Client-side WASM hydration",
-            Self::Edge => "Edge computing environment",
+            Self::Web => "Web application (SSR or static export)",
             Self::Desktop => "Desktop application",
-            Self::MobileAndroid => "Android mobile application",
-            Self::MobileIos => "iOS mobile application",
+            Self::Mobile => "Mobile application",
+            Self::Tui => "Terminal UI application",
         }
     }
 }

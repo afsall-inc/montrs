@@ -173,7 +173,7 @@ async fn main() -> anyhow::Result<()> {
     let env = MyEnv;
 
     let spec = AppSpec::new(config, env)
-        .with_target(Target::Server)
+        .with_target(Target::Web)
         .with_plate(Box::new(TodoPlate));
 
     println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());

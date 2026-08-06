@@ -37,11 +37,7 @@ impl PlatformAdapter for MobileAdapter {
     }
 
     fn description(&self) -> &'static str {
-        match self.target {
-            Target::MobileAndroid => "Android mobile platform",
-            Target::MobileIos => "iOS mobile platform",
-            _ => "Mobile platform (unknown target)",
-        }
+        "Mobile platform"
     }
 }
 

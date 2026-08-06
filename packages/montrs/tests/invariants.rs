@@ -6,12 +6,12 @@
 
 #[test]
 fn test_platform_re_export() {
-    let _target = montrs::platform::Target::Server;
+    let _target = montrs::platform::Target::Web;
 }
 
 #[test]
 fn test_prelude_imports() {
-    let _ = montrs::prelude::Target::Server;
+    let _ = montrs::prelude::Target::Web;
 }
 
 #[test]

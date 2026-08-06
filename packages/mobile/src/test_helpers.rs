@@ -17,7 +17,7 @@ impl TestContext {
     pub fn new() -> Self {
         init_test_tracing();
         Self {
-            adapter: MobileAdapter::new(Target::MobileAndroid),
+            adapter: MobileAdapter::new(Target::Mobile),
         }
     }
 }

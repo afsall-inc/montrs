@@ -11,19 +11,19 @@ use montrs_web::*;
 #[test]
 fn test_web_adapter_construct() {
     let adapter = WebAdapter::new();
-    assert_eq!(adapter.target(), Target::Wasm);
+    assert_eq!(adapter.target(), Target::Web);
 }
 
 #[test]
 fn test_web_adapter_default() {
     let adapter = WebAdapter::default();
-    assert_eq!(adapter.target(), Target::Wasm);
+    assert_eq!(adapter.target(), Target::Web);
 }
 
 #[test]
 fn test_web_adapter_with_target() {
-    let adapter = WebAdapter::with_target(Target::Wasm);
-    assert_eq!(adapter.target(), Target::Wasm);
+    let adapter = WebAdapter::with_target(Target::Web);
+    assert_eq!(adapter.target(), Target::Web);
 }
 
 #[test]
@@ -49,5 +49,5 @@ fn test_web_adapter_noop_non_wasm() {
 #[test]
 fn test_web_adapter_platform_adapter_trait() {
     let adapter: Box<dyn PlatformAdapter> = Box::new(WebAdapter::new());
-    assert_eq!(adapter.target(), Target::Wasm);
+    assert_eq!(adapter.target(), Target::Web);
 }
