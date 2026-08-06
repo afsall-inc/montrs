@@ -5,8 +5,8 @@
 //! `BuildPipeline`.
 
 pub use montrs_build_core::*;
-pub use montrs_build_watch::*;
 pub use montrs_build_serve::*;
+pub use montrs_build_watch::*;
 
 mod pipeline;
 
@@ -29,7 +29,10 @@ pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
 }
 
 /// Run tailwindcss CLI on the input file to produce the output file.
-pub fn run_tailwind(input: &std::path::Path, output: &std::path::Path) -> anyhow::Result<()> {
+pub fn run_tailwind(
+    input: &std::path::Path,
+    output: &std::path::Path,
+) -> anyhow::Result<()> {
     let status = std::process::Command::new("tailwindcss")
         .arg("-i")
         .arg(input)
@@ -45,7 +48,10 @@ pub fn run_tailwind(input: &std::path::Path, output: &std::path::Path) -> anyhow
 }
 
 /// Copy a directory recursively.
-pub fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> anyhow::Result<()> {
+pub fn copy_dir(
+    src: &std::path::Path,
+    dst: &std::path::Path,
+) -> anyhow::Result<()> {
     if src.exists() {
         fs_extra::dir::copy(
             src,
