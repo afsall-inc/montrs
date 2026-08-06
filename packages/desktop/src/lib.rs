@@ -4,15 +4,11 @@ use thiserror::Error;
 /// Desktop platform adapter implementing PlatformAdapter.
 ///
 /// Uses wry (webview) or winit + wgpu (native) depending on feature flags.
-pub struct DesktopAdapter {
-    target: Target,
-}
+pub struct DesktopAdapter;
 
 impl DesktopAdapter {
     pub fn new() -> Self {
-        Self {
-            target: Target::Desktop,
-        }
+        Self
     }
 }
 
