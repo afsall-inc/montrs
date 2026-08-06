@@ -4,10 +4,10 @@ use montrs_ui::prelude::*;
 #[component]
 pub fn Faq03() -> impl IntoView {
     let active = RwSignal::new("Getting Started");
-    let sections = vec![
+    let sections = [
         (
             "Getting Started",
-            vec![
+            &[
                 (
                     "What is MontRS?",
                     "A full-stack Rust web framework for compile-time \
@@ -17,11 +17,11 @@ pub fn Faq03() -> impl IntoView {
                     "How do I install?",
                     "Run `cargo add montrs` or `montrs new my-app`.",
                 ),
-            ],
+            ][..],
         ),
         (
             "Features",
-            vec![
+            &[
                 (
                     "Does it support WASM?",
                     "Yes — full WASM support for client-side rendering.",
@@ -31,17 +31,17 @@ pub fn Faq03() -> impl IntoView {
                     "MontRS has a built-in ORM supporting PostgreSQL, SQLite, \
                      and MySQL.",
                 ),
-            ],
+            ][..],
         ),
         (
             "Community",
-            vec![
+            &[
                 (
                     "How to contribute?",
                     "Check our contributing guide on GitHub.",
                 ),
                 ("Is there a Discord?", "Yes — join us at discord.gg/montrs."),
-            ],
+            ][..],
         ),
     ];
 

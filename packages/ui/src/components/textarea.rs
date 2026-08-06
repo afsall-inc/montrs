@@ -38,7 +38,7 @@ pub fn Textarea(
                     focus-visible:ring-ring focus-visible:ring-offset-2 \
                     disabled:cursor-not-allowed disabled:opacity-50";
         let error_class =
-            if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
+            if error_for_merged.as_ref().is_some_and(|e| !e.is_empty()) {
                 "border-destructive"
             } else {
                 ""

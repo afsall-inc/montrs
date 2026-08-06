@@ -31,7 +31,7 @@ pub fn Input(
                     focus-visible:ring-ring focus-visible:ring-offset-2 \
                     disabled:cursor-not-allowed disabled:opacity-50";
         let error_class =
-            if error_for_merged.as_ref().map_or(false, |e| !e.is_empty()) {
+            if error_for_merged.as_ref().is_some_and(|e| !e.is_empty()) {
                 "border-destructive"
             } else {
                 ""
@@ -44,11 +44,8 @@ pub fn Input(
         value.set(target);
     };
 
-    let has_error = move || {
-        error_for_has_error
-            .as_ref()
-            .map_or(false, |e| !e.is_empty())
-    };
+    let has_error =
+        move || error_for_has_error.as_ref().is_some_and(|e| !e.is_empty());
 
     view! {
         <div class="grid gap-1.5">

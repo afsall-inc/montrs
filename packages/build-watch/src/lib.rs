@@ -23,13 +23,13 @@ pub fn watch_directory(
 
     let mut watcher = RecommendedWatcher::new(
         move |res: Result<Event, notify::Error>| {
-            if let Ok(event) = res {
-                if matches!(
+            if let Ok(event) = res
+                && matches!(
                     event.kind,
                     EventKind::Modify(_) | EventKind::Create(_)
-                ) {
-                    let _ = tx.send(());
-                }
+                )
+            {
+                let _ = tx.send(());
             }
         },
         Config::default().with_poll_interval(Duration::from_millis(500)),
@@ -52,7 +52,7 @@ pub fn watch_directory(
 /// `pipeline.build_all()` on each change.
 pub fn watch_and_rebuild(
     path: &Path,
-    pipeline: &'static (impl BuildPipeline + Send + Sync),
+    pipeline: &'static impl BuildPipeline,
 ) -> Result<()> {
     watch_directory(path, move || {
         println!("Change detected — rebuilding...");

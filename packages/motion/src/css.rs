@@ -3,7 +3,6 @@
 /// Provides utility functions for generating CSS transition properties,
 /// will-change hints, and transform strings — all GPU-accelerated
 /// through compositor-driven properties.
-
 /// Build a CSS `transition` property value.
 pub fn css_transition(
     properties: &[&str],

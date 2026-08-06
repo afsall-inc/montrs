@@ -618,16 +618,15 @@ fn check_dependency_layers(
         // Check all path dependencies (montrs-* packages)
         if let Some(deps) = doc.get("dependencies").and_then(|d| d.as_table()) {
             for (dep_name, _dep_value) in deps {
-                if dep_name.starts_with("montrs-") {
-                    if let Some(dep_layer) = layers.get(dep_name) {
-                        if *dep_layer > pkg_layer {
-                            violations.push(format!(
-                                "{} (layer {}) depends on {} (layer {}) — \
-                                 layer violation",
-                                pkg_name, pkg_layer, dep_name, dep_layer
-                            ));
-                        }
-                    }
+                if dep_name.starts_with("montrs-")
+                    && let Some(dep_layer) = layers.get(dep_name)
+                    && *dep_layer > pkg_layer
+                {
+                    violations.push(format!(
+                        "{} (layer {}) depends on {} (layer {}) — layer \
+                         violation",
+                        pkg_name, pkg_layer, dep_name, dep_layer
+                    ));
                 }
             }
         }
@@ -637,16 +636,15 @@ fn check_dependency_layers(
             doc.get("dev-dependencies").and_then(|d| d.as_table())
         {
             for (dep_name, _dep_value) in deps {
-                if dep_name.starts_with("montrs-") {
-                    if let Some(dep_layer) = layers.get(dep_name) {
-                        if *dep_layer > pkg_layer {
-                            violations.push(format!(
-                                "{} (layer {}) dev-depends on {} (layer {}) — \
-                                 layer violation",
-                                pkg_name, pkg_layer, dep_name, dep_layer
-                            ));
-                        }
-                    }
+                if dep_name.starts_with("montrs-")
+                    && let Some(dep_layer) = layers.get(dep_name)
+                    && *dep_layer > pkg_layer
+                {
+                    violations.push(format!(
+                        "{} (layer {}) dev-depends on {} (layer {}) — layer \
+                         violation",
+                        pkg_name, pkg_layer, dep_name, dep_layer
+                    ));
                 }
             }
         }

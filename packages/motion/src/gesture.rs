@@ -28,6 +28,7 @@ pub fn use_press() -> (
 
 /// Pan/drag tracking with real delta calculation.
 /// Returns `(on_mousedown, on_mousemove, on_mouseup, delta_signal, is_dragging)`.
+#[allow(clippy::type_complexity)]
 pub fn use_pan() -> (
     impl Fn(leptos::ev::MouseEvent) + Clone,
     impl Fn(leptos::ev::MouseEvent) + Clone,

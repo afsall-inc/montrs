@@ -5,7 +5,7 @@ use montrs_ui::prelude::*;
 #[component]
 pub fn FooterLogos() -> impl IntoView {
     let paused = RwSignal::new(false);
-    let logos = vec!["Rust", "WASM", "Tailwind", "Docker", "Postgres", "Redis"];
+    let logos = ["Rust", "WASM", "Tailwind", "Docker", "Postgres", "Redis"];
 
     view! {
         <div class="rounded-lg border border-border bg-card p-6 shadow-sm">

@@ -1,17 +1,12 @@
 use leptos::prelude::*;
 
 /// Theme mode for the application.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum ThemeMode {
     Light,
     Dark,
+    #[default]
     System,
-}
-
-impl Default for ThemeMode {
-    fn default() -> Self {
-        ThemeMode::System
-    }
 }
 
 impl ThemeMode {
@@ -48,13 +43,13 @@ pub fn ThemeProvider(children: Children) -> impl IntoView {
     let is_dark = Memo::new(move |_| theme.get().is_dark());
 
     Effect::new(move |_| {
-        if let Some(document) = document() {
-            if let Some(html) = document.document_element() {
-                if is_dark.get() {
-                    let _ = html.class_list().add_1("dark");
-                } else {
-                    let _ = html.class_list().remove_1("dark");
-                }
+        if let Some(document) = document()
+            && let Some(html) = document.document_element()
+        {
+            if is_dark.get() {
+                let _ = html.class_list().add_1("dark");
+            } else {
+                let _ = html.class_list().remove_1("dark");
             }
         }
     });

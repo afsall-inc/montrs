@@ -70,12 +70,11 @@ pub fn DropdownMenuTrigger(
 
 fn focus_element_by_index(idx: usize) {
     let selector = format!("[data-dropdown-index=\"{}\"]", idx);
-    if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-        if let Ok(Some(el)) = doc.query_selector(&selector) {
-            if let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>() {
-                let _ = html_el.focus();
-            }
-        }
+    if let Some(doc) = web_sys::window().and_then(|w| w.document())
+        && let Ok(Some(el)) = doc.query_selector(&selector)
+        && let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>()
+    {
+        let _ = html_el.focus();
     }
 }
 

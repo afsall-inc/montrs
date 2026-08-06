@@ -5,10 +5,10 @@ use montrs_ui::prelude::*;
 #[component]
 pub fn Integration03() -> impl IntoView {
     let paused = RwSignal::new(false);
-    let row1 = vec![
+    let row1 = [
         "Rust", "WASM", "Tailwind", "Docker", "Postgres", "Redis", "Nginx",
     ];
-    let row2 = vec![
+    let row2 = [
         "GitHub", "Slack", "Discord", "Figma", "Notion", "Linear", "Vercel",
     ];
 

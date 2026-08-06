@@ -83,12 +83,11 @@ pub fn find_workspace_target_dir(app_root: &Path) -> Result<PathBuf> {
     let mut current = app_root.to_path_buf();
     loop {
         let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                if content.contains("[workspace]") {
-                    return Ok(current.join("target"));
-                }
-            }
+        if cargo_toml.exists()
+            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
+            && content.contains("[workspace]")
+        {
+            return Ok(current.join("target"));
         }
         if !current.pop() {
             break;

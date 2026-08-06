@@ -34,12 +34,11 @@ pub fn Tabs(
 }
 
 fn focus_tab_by_id(id: &str) {
-    if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-        if let Some(el) = doc.get_element_by_id(id) {
-            if let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>() {
-                let _ = html_el.focus();
-            }
-        }
+    if let Some(doc) = web_sys::window().and_then(|w| w.document())
+        && let Some(el) = doc.get_element_by_id(id)
+        && let Some(html_el) = el.dyn_ref::<web_sys::HtmlElement>()
+    {
+        let _ = html_el.focus();
     }
 }
 

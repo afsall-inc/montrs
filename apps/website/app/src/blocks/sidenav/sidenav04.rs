@@ -6,7 +6,7 @@ use montrs_ui::prelude::*;
 pub fn Sidenav04() -> impl IntoView {
     let query = RwSignal::new(String::new());
     let active = RwSignal::new("Home");
-    let items = vec![
+    let items = [
         "Home",
         "Search",
         "Settings",

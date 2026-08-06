@@ -2,7 +2,6 @@
 ///
 /// Provides utilities for path drawing (stroke animation) and morphing,
 /// inspired by how Lucide Animated Icons uses `pathLength` and `pathOffset`.
-
 /// Parse an SVG path `d` attribute and compute its total length.
 /// Supports M/m, L/l, C/c, Q/q, A/a, Z/z commands.
 pub fn approximate_path_length(path_d: &str) -> f64 {
@@ -208,6 +207,7 @@ fn line_length(x1: f64, y1: f64, x2: f64, y2: f64) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn cubic_bezier_length(
     x1: f64,
     y1: f64,
