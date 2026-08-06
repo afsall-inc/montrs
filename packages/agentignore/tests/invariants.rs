@@ -6,15 +6,11 @@
 //! - IDE export works correctly
 
 use montrs_agentignore::*;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 fn setup_agentignore(root: &Path) {
-    fs::write(
-        root.join(".agentignore"),
-        "target/\n*.rs.bk\n.secrets/\n",
-    )
-    .expect("failed to write .agentignore");
+    fs::write(root.join(".agentignore"), "target/\n*.rs.bk\n.secrets/\n")
+        .expect("failed to write .agentignore");
 }
 
 #[test]
