@@ -12,16 +12,36 @@ use std::path::Path;
 
 struct MockPipeline;
 impl BuildPipeline for MockPipeline {
-    fn build_server(&self) -> anyhow::Result<()> { Ok(()) }
-    fn build_frontend(&self) -> anyhow::Result<()> { Ok(()) }
-    fn process_tailwind(&self) -> anyhow::Result<()> { Ok(()) }
-    fn copy_assets(&self) -> anyhow::Result<()> { Ok(()) }
-    fn generate_index_html(&self) -> anyhow::Result<()> { Ok(()) }
-    fn build_all(&self) -> anyhow::Result<()> { Ok(()) }
-    fn metadata(&self) -> &MontrsMetadata { unimplemented!() }
-    fn project_root(&self) -> &Path { unimplemented!() }
-    fn site_root(&self) -> &Path { unimplemented!() }
-    fn pkg_dir(&self) -> &Path { unimplemented!() }
+    fn build_server(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn build_frontend(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn process_tailwind(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn copy_assets(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn generate_index_html(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn build_all(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+    fn metadata(&self) -> &MontrsMetadata {
+        unimplemented!()
+    }
+    fn project_root(&self) -> &Path {
+        unimplemented!()
+    }
+    fn site_root(&self) -> &Path {
+        unimplemented!()
+    }
+    fn pkg_dir(&self) -> &Path {
+        unimplemented!()
+    }
 }
 
 #[test]
