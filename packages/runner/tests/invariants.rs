@@ -22,7 +22,11 @@ fn test_task_config_detailed() {
         env: HashMap::new(),
     };
     match config {
-        TaskConfig::Detailed { command, description, .. } => {
+        TaskConfig::Detailed {
+            command,
+            description,
+            ..
+        } => {
             assert_eq!(command, "cargo test");
             assert_eq!(description.unwrap(), "Run tests");
         }
@@ -39,7 +43,10 @@ fn test_task_runner_empty() {
 #[test]
 fn test_task_runner_list() {
     let mut tasks = HashMap::new();
-    tasks.insert("build".to_string(), TaskConfig::Simple("cargo build".to_string()));
+    tasks.insert(
+        "build".to_string(),
+        TaskConfig::Simple("cargo build".to_string()),
+    );
     let runner = TaskRunner::new(tasks);
     assert!(runner.list().is_ok());
 }
