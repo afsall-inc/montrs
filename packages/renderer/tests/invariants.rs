@@ -15,7 +15,12 @@ fn test_viewport_construct() {
 
 #[test]
 fn test_rect_construct() {
-    let rect = Rect { x: 10.0, y: 20.0, width: 100.0, height: 200.0 };
+    let rect = Rect {
+        x: 10.0,
+        y: 20.0,
+        width: 100.0,
+        height: 200.0,
+    };
     assert_eq!(rect.x, 10.0);
     assert_eq!(rect.width, 100.0);
 }
@@ -72,7 +77,12 @@ fn test_path_construct() {
 #[test]
 fn test_quad_construct() {
     let quad = Quad {
-        rect: Rect { x: 0.0, y: 0.0, width: 50.0, height: 50.0 },
+        rect: Rect {
+            x: 0.0,
+            y: 0.0,
+            width: 50.0,
+            height: 50.0,
+        },
         corner_radius: 5.0,
     };
     assert_eq!(quad.corner_radius, 5.0);
@@ -80,7 +90,11 @@ fn test_quad_construct() {
 
 #[test]
 fn test_frame_construct() {
-    let frame = Frame { data: vec![0u8; 100], width: 10, height: 10 };
+    let frame = Frame {
+        data: vec![0u8; 100],
+        width: 10,
+        height: 10,
+    };
     assert_eq!(frame.data.len(), 100);
 }
 
@@ -99,7 +113,13 @@ fn test_renderer_trait_object_safe() {
         fn clear_clip(&mut self) {}
         fn push_layer(&mut self, _a: f32, _t: &[f32; 6]) {}
         fn pop_layer(&mut self) {}
-        fn finish(&mut self) -> Frame { Frame { data: vec![], width: 0, height: 0 } }
+        fn finish(&mut self) -> Frame {
+            Frame {
+                data: vec![],
+                width: 0,
+                height: 0,
+            }
+        }
     }
     let mut renderer: Box<dyn Renderer> = Box::new(MockRenderer);
     let vp = Viewport::new(100.0, 100.0, 1.0);
