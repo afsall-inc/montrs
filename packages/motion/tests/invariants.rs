@@ -37,8 +37,18 @@ fn test_easing_bounds() {
     for easing in &easings {
         let start = easing.apply(0.0);
         let end = easing.apply(1.0);
-        assert!((start - 0.0).abs() < 1e-6, "Easing {:?} apply(0.0) = {}", easing, start);
-        assert!((end - 1.0).abs() < 1e-6, "Easing {:?} apply(1.0) = {}", easing, end);
+        assert!(
+            (start - 0.0).abs() < 1e-6,
+            "Easing {:?} apply(0.0) = {}",
+            easing,
+            start
+        );
+        assert!(
+            (end - 1.0).abs() < 1e-6,
+            "Easing {:?} apply(1.0) = {}",
+            easing,
+            end
+        );
     }
 }
 
