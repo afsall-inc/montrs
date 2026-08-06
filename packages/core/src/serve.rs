@@ -91,8 +91,7 @@ where
             tracing::info!("listening on http://{host}:{port}");
             let local = LocalSet::new();
             let _guard = local.enter();
-            axum::serve(listener, app.clone().into_make_service())
-                .await?;
+            axum::serve(listener, app.clone().into_make_service()).await?;
             return Ok(());
         }
         port += 1;
