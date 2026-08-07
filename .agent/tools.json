@@ -113,7 +113,7 @@
       }
     },
     {
-      "description": "Capability provided by package build. Refer to its README for details.",
+      "description": "Capability provided by package build. MUST follow invariants defined in agent.json under packages['build'].invariants",
       "name": "montrs_pkg_build",
       "parameters": {
         "properties": {},
@@ -121,7 +121,15 @@
       }
     },
     {
-      "description": "Capability provided by package ui. Refer to its README for details.",
+      "description": "Capability provided by package build-core. MUST follow invariants defined in agent.json under packages['build-core'].invariants",
+      "name": "montrs_pkg_build-core",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package ui. MUST follow invariants defined in agent.json under packages['ui'].invariants",
       "name": "montrs_pkg_ui",
       "parameters": {
         "properties": {},
@@ -139,6 +147,14 @@
     {
       "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
       "name": "montrs_pkg_cli",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package build-watch. MUST follow invariants defined in agent.json under packages['build-watch'].invariants",
+      "name": "montrs_pkg_build-watch",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -177,8 +193,16 @@
       }
     },
     {
-      "description": "Capability provided by package desktop. Refer to its README for details.",
+      "description": "Capability provided by package desktop. MUST follow invariants defined in agent.json under packages['desktop'].invariants",
       "name": "montrs_pkg_desktop",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package build-serve. MUST follow invariants defined in agent.json under packages['build-serve'].invariants",
+      "name": "montrs_pkg_build-serve",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -193,7 +217,7 @@
       }
     },
     {
-      "description": "Capability provided by package runner. Refer to its README for details.",
+      "description": "Capability provided by package runner. MUST follow invariants defined in agent.json under packages['runner'].invariants",
       "name": "montrs_pkg_runner",
       "parameters": {
         "properties": {},
@@ -201,7 +225,7 @@
       }
     },
     {
-      "description": "Capability provided by package renderer. Refer to its README for details.",
+      "description": "Capability provided by package renderer. MUST follow invariants defined in agent.json under packages['renderer'].invariants",
       "name": "montrs_pkg_renderer",
       "parameters": {
         "properties": {},
@@ -225,8 +249,24 @@
       }
     },
     {
+      "description": "Capability provided by package platform. MUST follow invariants defined in agent.json under packages['platform'].invariants",
+      "name": "montrs_pkg_platform",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
       "name": "montrs_pkg_montrs",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package web. MUST follow invariants defined in agent.json under packages['web'].invariants",
+      "name": "montrs_pkg_web",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -241,7 +281,7 @@
       }
     },
     {
-      "description": "Capability provided by package mobile. Refer to its README for details.",
+      "description": "Capability provided by package mobile. MUST follow invariants defined in agent.json under packages['mobile'].invariants",
       "name": "montrs_pkg_mobile",
       "parameters": {
         "properties": {},
@@ -321,7 +361,7 @@
       }
     },
     {
-      "description": "Capability provided by package prdoc. Refer to its README for details.",
+      "description": "Capability provided by package prdoc. MUST follow invariants defined in agent.json under packages['prdoc'].invariants",
       "name": "montrs_pkg_prdoc",
       "parameters": {
         "properties": {},
