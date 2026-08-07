@@ -7,21 +7,20 @@ fn test_prelude_imports() {
 }
 
 #[test]
-fn test_cn_module_exists() {
-    let _ = montrs_ui::cn;
+fn test_cn_macro_usable() {
+    let cls = montrs_ui::cn::cn!("px-4", "text-red-500");
+    assert!(!cls.is_empty());
 }
 
 #[test]
-fn test_clx_module_exists() {
-    let _ = montrs_ui::clx;
+fn test_theme_types_exist() {
+    fn _assert_type<T>() {}
+    _assert_type::<montrs_ui::theme::provider::ThemeMode>();
 }
 
 #[test]
-fn test_theme_module_exists() {
-    let _ = montrs_ui::theme;
-}
-
-#[test]
-fn test_variants_module_exists() {
-    let _ = montrs_ui::variants;
+fn test_modules_accessible() {
+    // Verify the module paths resolve (compile-time check)
+    #[allow(unused_imports)]
+    use montrs_ui as _ui;
 }

@@ -1,5 +1,4 @@
-use leptos::prelude::*;
-use montrs_icons::{Glyph, Icon, strum::IntoEnumIterator};
+use montrs_icons::{Glyph, strum::IntoEnumIterator};
 
 #[test]
 fn find_returns_results() {

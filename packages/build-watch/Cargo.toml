@@ -19,3 +19,4 @@ notify = { version = "8", features = ["macos_kqueue"] }
 
 [dev-dependencies]
 montrs-build-core = { path = "../build-core" }
+montrs-metadata = { path = "../metadata" }

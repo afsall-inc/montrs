@@ -8,8 +8,8 @@ use montrs_renderer::*;
 #[test]
 fn test_viewport_construct() {
     let vp = Viewport::new(1920.0, 1080.0, 2.0);
-    assert_eq!(vp.width, 1920.0);
-    assert_eq!(vp.height, 1080.0);
+    assert_eq!(vp.rect.width, 1920.0);
+    assert_eq!(vp.rect.height, 1080.0);
     assert_eq!(vp.scale, 2.0);
 }
 

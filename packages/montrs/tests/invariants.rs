@@ -5,8 +5,11 @@
 //! - Minimal Logic: acts primarily as a facade
 
 #[test]
-fn test_platform_re_export() {
-    let _target = montrs::platform::Target::Web;
+fn test_core_re_export() {
+    // `core` is a module re-export; verify it resolves at compile time.
+    fn _assert_module() {
+        let _ = montrs::core::Target::Web;
+    }
 }
 
 #[test]
@@ -16,5 +19,6 @@ fn test_prelude_imports() {
 
 #[test]
 fn test_core_module_exists() {
-    let _ = montrs::core;
+    // Verify the core module re-export resolves to the platform Target type.
+    let _t: montrs::core::Target = montrs::core::Target::Web;
 }

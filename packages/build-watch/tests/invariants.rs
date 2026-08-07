@@ -6,7 +6,6 @@
 //! - Cross-Platform: uses notify
 
 use montrs_build_core::BuildPipeline;
-use montrs_build_watch::*;
 use montrs_metadata::MontrsMetadata;
 use std::path::Path;
 

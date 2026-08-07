@@ -4811,6 +4811,7 @@ version = "0.1.0"
 dependencies = [
  "ignore",
  "serde",
+ "tempfile",
 ]
 
 [[package]]
@@ -4883,6 +4884,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "montrs-build-core",
+ "montrs-metadata",
  "notify",
  "tracing",
 ]

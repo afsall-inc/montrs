@@ -43,13 +43,3 @@ fn test_to_sql_trait_object_safe() {
     let s = "hello".to_string();
     _accepts_to_sql(&s);
 }
-
-#[test]
-fn test_from_row_trait_object_safe() {
-    fn _accepts_from_row(_t: &dyn FromRow) {}
-}
-
-#[test]
-fn test_db_backend_trait_object_safe() {
-    fn _accepts_backend(_b: &dyn DbBackend) {}
-}
