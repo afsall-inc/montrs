@@ -16,7 +16,8 @@ fn test_spring_construct() {
 
 #[test]
 fn test_spring_solve_is_monotonic() {
-    let spring = Spring::new(100.0, 10.0, 1.0);
+    // Overdamped spring (damping > critical) should be monotonic
+    let spring = Spring::new(100.0, 30.0, 1.0);
     let mut prev = spring.solve(0.0);
     for t in (1..=100).map(|i| i as f64 / 100.0) {
         let val = spring.solve(t);

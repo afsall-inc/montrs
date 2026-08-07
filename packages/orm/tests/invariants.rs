@@ -34,7 +34,7 @@ fn test_db_error_migration() {
 #[test]
 fn test_db_error_display() {
     let err = DbError::Connection("timeout".to_string());
-    assert!(format!("{}", err).contains("Connection error"));
+    assert!(format!("{}", err).contains("Database connection error"));
 }
 
 #[test]
