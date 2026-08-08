@@ -1,14 +1,15 @@
 //! Invariant tests for montrs-runner.
 
-use montrs_runner::types::*;
-use montrs_runner::TaskRunner;
+use montrs_runner::{TaskRunner, types::*};
 use std::collections::HashMap;
 
 #[test]
 fn test_task_config_simple_legacy() {
     let config = montrs_runner::TaskConfig::Simple("cargo build".to_string());
     match config {
-        montrs_runner::TaskConfig::Simple(cmd) => assert_eq!(cmd, "cargo build"),
+        montrs_runner::TaskConfig::Simple(cmd) => {
+            assert_eq!(cmd, "cargo build")
+        }
         _ => panic!("expected Simple variant"),
     }
 }
@@ -74,8 +75,14 @@ fn test_task_config_debug_and_clone() {
 #[test]
 fn test_task_parse_from_toml_string() {
     let mut raw = HashMap::new();
-    raw.insert("hello".to_string(), toml::Value::String("echo hello".to_string()));
-    let tasks = montrs_runner::parser::parse_tasks_from_toml(raw, std::path::Path::new("."));
+    raw.insert(
+        "hello".to_string(),
+        toml::Value::String("echo hello".to_string()),
+    );
+    let tasks = montrs_runner::parser::parse_tasks_from_toml(
+        raw,
+        std::path::Path::new("."),
+    );
     assert_eq!(tasks.len(), 1);
     assert_eq!(tasks[0].name, "hello");
     assert_eq!(tasks[0].command.len(), 1);

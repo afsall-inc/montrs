@@ -1,6 +1,8 @@
 use crate::types::Task;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 /// Discover tasks across a monorepo workspace.
 pub struct Workspace {
@@ -14,9 +16,7 @@ impl Workspace {
         let mut projects = Vec::new();
 
         // Look for a workspace root marker (Cargo.toml with [workspace])
-        let root_is_workspace = root
-            .join("Cargo.toml")
-            .is_file()
+        let root_is_workspace = root.join("Cargo.toml").is_file()
             && std::fs::read_to_string(root.join("Cargo.toml"))
                 .map(|s| s.contains("[workspace]"))
                 .unwrap_or(false);
@@ -48,20 +48,21 @@ impl Workspace {
                 continue;
             }
 
-            if let Ok(content) = std::fs::read_to_string(&montrs_toml) {
-                if let Ok(doc) = content.parse::<toml::Value>() {
-                    if let Some(tasks_table) = doc.get("tasks").and_then(|t| t.as_table()) {
-                        let mut raw = HashMap::new();
-                        for (name, value) in tasks_table {
-                            raw.insert(name.clone(), value.clone());
-                        }
-                        let project_tasks = crate::parser::parse_tasks_from_toml(raw, project);
-                        for task in project_tasks {
-                            if !seen.contains_key(&task.name) {
-                                seen.insert(task.name.clone(), project.clone());
-                                tasks.push(task);
-                            }
-                        }
+            if let Ok(content) = std::fs::read_to_string(&montrs_toml)
+                && let Ok(doc) = content.parse::<toml::Value>()
+                && let Some(tasks_table) =
+                    doc.get("tasks").and_then(|t| t.as_table())
+            {
+                let mut raw = HashMap::new();
+                for (name, value) in tasks_table {
+                    raw.insert(name.clone(), value.clone());
+                }
+                let project_tasks =
+                    crate::parser::parse_tasks_from_toml(raw, project);
+                for task in project_tasks {
+                    if !seen.contains_key(&task.name) {
+                        seen.insert(task.name.clone(), project.clone());
+                        tasks.push(task);
                     }
                 }
             }
@@ -74,10 +75,7 @@ impl Workspace {
 fn discover_cargo_members(root: &Path) -> Option<Vec<std::path::PathBuf>> {
     let content = std::fs::read_to_string(root.join("Cargo.toml")).ok()?;
     let doc: toml::Value = content.parse().ok()?;
-    let members = doc
-        .get("workspace")?
-        .get("members")?
-        .as_array()?;
+    let members = doc.get("workspace")?.get("members")?.as_array()?;
     Some(
         members
             .iter()

@@ -5,10 +5,9 @@ pub mod template;
 pub mod types;
 pub mod workspace;
 
-pub use types::*;
-
 // Backward-compatibility: `TaskRunner` orchestration wrapper.
 use std::collections::HashMap;
+pub use types::*;
 
 /// A simple wrapper around a task map, preserving the legacy API.
 #[derive(Default)]
@@ -53,7 +52,11 @@ impl TaskRunner {
         let mut names: Vec<&String> = self.tasks.keys().collect();
         names.sort();
         for name in names {
-            let desc = self.tasks.get(name).map(|t| t.description.clone()).unwrap_or_default();
+            let desc = self
+                .tasks
+                .get(name)
+                .map(|t| t.description.clone())
+                .unwrap_or_default();
             println!(
                 "    {:<15} {}",
                 console::style(name).cyan(),

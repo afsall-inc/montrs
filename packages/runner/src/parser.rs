@@ -15,7 +15,11 @@ pub fn parse_tasks_from_toml(
     tasks
 }
 
-fn parse_single_task(name: String, value: toml::Value, config_root: &Path) -> Task {
+fn parse_single_task(
+    name: String,
+    value: toml::Value,
+    config_root: &Path,
+) -> Task {
     let mut task = Task {
         name: name.clone(),
         config_source: Some(config_root.join("montrs.toml")),
@@ -28,10 +32,13 @@ fn parse_single_task(name: String, value: toml::Value, config_root: &Path) -> Ta
             task.command = vec![RunEntry::Script(s)];
         }
         toml::Value::Table(table) => {
-            if let Some(val) = table.get("description").and_then(|v| v.as_str()) {
+            if let Some(val) = table.get("description").and_then(|v| v.as_str())
+            {
                 task.description = val.to_string();
             }
-            if let Some(val) = table.get("display_name").and_then(|v| v.as_str()) {
+            if let Some(val) =
+                table.get("display_name").and_then(|v| v.as_str())
+            {
                 task.display_name = val.to_string();
             }
             if let Some(val) = table.get("dir").and_then(|v| v.as_str()) {
@@ -59,12 +66,15 @@ fn parse_single_task(name: String, value: toml::Value, config_root: &Path) -> Ta
             }
 
             // depends
-            if let Some(deps) = table.get("depends").or_else(|| table.get("dependencies")) {
+            if let Some(deps) =
+                table.get("depends").or_else(|| table.get("dependencies"))
+            {
                 task.depends = parse_dep_list(deps);
             }
 
             // command/run
-            if let Some(cmd) = table.get("run").or_else(|| table.get("command")) {
+            if let Some(cmd) = table.get("run").or_else(|| table.get("command"))
+            {
                 task.command = parse_run_entries(cmd);
             }
 
@@ -101,7 +111,8 @@ fn parse_single_task(name: String, value: toml::Value, config_root: &Path) -> Ta
             if let Some(b) = table.get("raw").and_then(|v| v.as_bool()) {
                 task.raw = b;
             }
-            if let Some(b) = table.get("interactive").and_then(|v| v.as_bool()) {
+            if let Some(b) = table.get("interactive").and_then(|v| v.as_bool())
+            {
                 task.interactive = b;
             }
             if let Some(b) = table.get("quiet").and_then(|v| v.as_bool()) {
@@ -115,7 +126,10 @@ fn parse_single_task(name: String, value: toml::Value, config_root: &Path) -> Ta
             if let Some(tools) = table.get("tools").and_then(|v| v.as_table()) {
                 for (k, v) in tools {
                     if let Some(s) = v.as_str() {
-                        task.tools.insert(k.clone(), crate::types::TaskToolValue::String(s.to_string()));
+                        task.tools.insert(
+                            k.clone(),
+                            crate::types::TaskToolValue::String(s.to_string()),
+                        );
                     }
                 }
             }
@@ -156,7 +170,9 @@ fn parse_dep_list(value: &toml::Value) -> Vec<TaskDep> {
                         .and_then(|v| v.as_array())
                         .map(|a| {
                             a.iter()
-                                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                .filter_map(|v| {
+                                    v.as_str().map(|s| s.to_string())
+                                })
                                 .collect()
                         })
                         .unwrap_or_default(),
@@ -189,17 +205,23 @@ fn parse_run_entries(value: &toml::Value) -> Vec<RunEntry> {
                                 .and_then(|v| v.as_array())
                                 .map(|a| {
                                     a.iter()
-                                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                        .filter_map(|v| {
+                                            v.as_str().map(|s| s.to_string())
+                                        })
                                         .collect()
                                 })
                                 .unwrap_or_default(),
                             env: IndexMap::new(),
                         }
-                    } else if let Some(tasks) = t.get("tasks").and_then(|v| v.as_array()) {
+                    } else if let Some(tasks) =
+                        t.get("tasks").and_then(|v| v.as_array())
+                    {
                         RunEntry::TaskGroup {
                             tasks: tasks
                                 .iter()
-                                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                .filter_map(|v| {
+                                    v.as_str().map(|s| s.to_string())
+                                })
                                 .collect(),
                         }
                     } else {

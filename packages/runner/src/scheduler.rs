@@ -1,7 +1,9 @@
 use crate::types::{Task, TaskOutput};
 use petgraph::graph::DiGraph;
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 use tokio::sync::Semaphore;
 
 /// Dependency graph for task scheduling.
@@ -23,10 +25,10 @@ impl Deps {
         for task in tasks {
             for dep in &task.depends {
                 let dep_name = dep.task_name();
-                if let Some(&from) = indices.get(&task.name) {
-                    if let Some(&to) = indices.get(dep_name) {
-                        graph.add_edge(from, to, ());
-                    }
+                if let (Some(&from), Some(&to)) =
+                    (indices.get(&task.name), indices.get(dep_name))
+                {
+                    graph.add_edge(from, to, ());
                 }
             }
         }
@@ -80,10 +82,10 @@ impl Deps {
             let name = &self.graph[node];
             if !visited.contains(name.as_str()) {
                 let mut path = Vec::new();
-                if self.dfs_cycle(name, &mut visited, &mut path) {
-                    if let Some(pos) = path.iter().position(|n| n == name) {
-                        cycles.push(path[pos..].to_vec());
-                    }
+                if self.dfs_cycle(name, &mut visited, &mut path)
+                    && let Some(pos) = path.iter().position(|n| n == name)
+                {
+                    cycles.push(path[pos..].to_vec());
                 }
             }
         }
@@ -106,7 +108,10 @@ impl Deps {
         path.push(name.to_string());
 
         if let Some(&idx) = self.indices.get(name) {
-            for neighbor in self.graph.neighbors_directed(idx, petgraph::Direction::Outgoing) {
+            for neighbor in self
+                .graph
+                .neighbors_directed(idx, petgraph::Direction::Outgoing)
+            {
                 let neighbor_name = &self.graph[neighbor];
                 if self.dfs_cycle(neighbor_name, visited, path) {
                     return true;
@@ -168,10 +173,11 @@ impl Scheduler {
 }
 
 /// Resolve the output style for a task.
-pub fn resolve_output(task: &Task, global_output: Option<TaskOutput>) -> TaskOutput {
-    task.output
-        .or(global_output)
-        .unwrap_or(TaskOutput::Prefix)
+pub fn resolve_output(
+    task: &Task,
+    global_output: Option<TaskOutput>,
+) -> TaskOutput {
+    task.output.or(global_output).unwrap_or(TaskOutput::Prefix)
 }
 
 /// Whether a task needs a semaphore permit.

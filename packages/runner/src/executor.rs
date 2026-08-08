@@ -1,12 +1,12 @@
-use crate::types::{RunEntry, Task, TaskOutput};
-use crate::scheduler::task_needs_permit;
-use std::path::Path;
-use std::sync::Arc;
-use std::time::Instant;
+use crate::{
+    scheduler::task_needs_permit,
+    types::{RunEntry, Task, TaskOutput},
+};
+use std::{path::Path, sync::Arc, time::Instant};
 use tokio::sync::Semaphore;
 
 /// Configuration for task execution.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct TaskExecutorConfig {
     pub force: bool,
     pub cd: Option<std::path::PathBuf>,
@@ -15,20 +15,6 @@ pub struct TaskExecutorConfig {
     pub continue_on_error: bool,
     pub dry_run: bool,
     pub skip_deps: bool,
-}
-
-impl Default for TaskExecutorConfig {
-    fn default() -> Self {
-        Self {
-            force: false,
-            cd: None,
-            shell: None,
-            timings: false,
-            continue_on_error: false,
-            dry_run: false,
-            skip_deps: false,
-        }
-    }
 }
 
 /// Executes a single task.
@@ -92,25 +78,44 @@ pub async fn execute_task(
 
                 let status = cmd.status().await?;
                 if !status.success() && !config.continue_on_error {
-                    anyhow::bail!("Task '{}' failed with status: {}", task.name, status);
+                    anyhow::bail!(
+                        "Task '{}' failed with status: {}",
+                        task.name,
+                        status
+                    );
                 }
             }
             RunEntry::SingleTask { task, args, env } => {
                 // Find and execute the sub-task
-                if let Some(sub_task) = all_tasks.iter().find(|t| t.name == *task) {
+                if let Some(sub_task) =
+                    all_tasks.iter().find(|t| t.name == *task)
+                {
                     let mut sub = sub_task.clone();
                     sub.trailing_args = args.clone();
                     for (k, v) in env {
                         sub.env.insert(k.clone(), v.clone());
                     }
-                    Box::pin(execute_task(&sub, all_tasks, config, semaphore.clone())).await?;
+                    Box::pin(execute_task(
+                        &sub,
+                        all_tasks,
+                        config,
+                        semaphore.clone(),
+                    ))
+                    .await?;
                 }
             }
             RunEntry::TaskGroup { tasks } => {
                 for task_name in tasks {
-                    if let Some(sub_task) = all_tasks.iter().find(|t| t.name == *task_name) {
-                        Box::pin(execute_task(sub_task, all_tasks, config, semaphore.clone()))
-                            .await?;
+                    if let Some(sub_task) =
+                        all_tasks.iter().find(|t| t.name == *task_name)
+                    {
+                        Box::pin(execute_task(
+                            sub_task,
+                            all_tasks,
+                            config,
+                            semaphore.clone(),
+                        ))
+                        .await?;
                     }
                 }
             }
@@ -131,21 +136,30 @@ pub fn display_task_start(task: &Task, output: TaskOutput) {
         TaskOutput::Quiet | TaskOutput::Silent => {}
         _ => {
             let prefix = format!("[{}]", task.name);
-            println!("{} {}", console::style(prefix).cyan().bold(), task.description);
+            println!(
+                "{} {}",
+                console::style(prefix).cyan().bold(),
+                task.description
+            );
         }
     }
 }
 
-pub fn display_task_finish(task: &Task, output: TaskOutput, duration: std::time::Duration) {
+pub fn display_task_finish(
+    task: &Task,
+    output: TaskOutput,
+    duration: std::time::Duration,
+) {
     match output {
         TaskOutput::Quiet | TaskOutput::Silent => {}
         _ => {
             let prefix = format!("[{}]", task.name);
+            let completed = "completed in";
             println!(
                 "{} {} {}",
                 console::style(prefix).green().bold(),
-                "completed in",
-                console::style(format!("{:?}", duration)).dim()
+                completed,
+                console::style(format!("{duration:?}")).dim()
             );
         }
     }

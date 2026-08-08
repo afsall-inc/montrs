@@ -73,18 +73,13 @@ pub enum TaskOutput {
 }
 
 /// Task outputs definition.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(untagged)]
 pub enum TaskOutputs {
     Files(Vec<String>),
     NoFiles,
+    #[default]
     Auto,
-}
-
-impl Default for TaskOutputs {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 /// Task cache configuration.
@@ -114,19 +109,14 @@ pub struct TaskConfirm {
 }
 
 /// Silent mode.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(untagged)]
 pub enum Silent {
+    #[default]
     Off,
     Bool(bool),
     Stdout,
     Stderr,
-}
-
-impl Default for Silent {
-    fn default() -> Self {
-        Self::Off
-    }
 }
 
 /// Full task definition.
