@@ -440,11 +440,11 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         .try_init();
 
     let mut config = config::MontrsConfig::load()?;
-    config.project.verbose = cli.verbose;
-    config.project.log = cli.log.clone();
-    config.project.release = cli.release;
-    config.project.hot_reload = cli.hot_reload;
-    config.project.features = cli.features.clone();
+    config.verbose = cli.verbose;
+    config.log = cli.log.clone();
+    config.release = cli.release;
+    config.hot_reload = cli.hot_reload;
+    config.features = cli.features.clone();
 
     match cli.command {
         Commands::Build => command::build::run().await,
