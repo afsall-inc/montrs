@@ -113,6 +113,14 @@
       }
     },
     {
+      "description": "Capability provided by package registry. Refer to its README for details.",
+      "name": "montrs_pkg_registry",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package build. MUST follow invariants defined in agent.json under packages['build'].invariants",
       "name": "montrs_pkg_build",
       "parameters": {
@@ -147,6 +155,22 @@
     {
       "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
       "name": "montrs_pkg_cli",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package env. Refer to its README for details.",
+      "name": "montrs_pkg_env",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package tui. Refer to its README for details.",
+      "name": "montrs_pkg_tui",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -337,6 +361,14 @@
       }
     },
     {
+      "description": "Capability provided by package plugin. Refer to its README for details.",
+      "name": "montrs_pkg_plugin",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
       "name": "montrs_pkg_test",
       "parameters": {
@@ -355,6 +387,14 @@
     {
       "description": "Capability provided by package metadata. MUST follow invariants defined in agent.json under packages['metadata'].invariants",
       "name": "montrs_pkg_metadata",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package sigstore. Refer to its README for details.",
+      "name": "montrs_pkg_sigstore",
       "parameters": {
         "properties": {},
         "type": "object"
