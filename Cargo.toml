@@ -6,6 +6,7 @@ members = [
     "packages/env",
     "packages/sigstore",
     "packages/registry",
+    "packages/plugin",
     "packages/haptics",
     "packages/bench",
     "packages/cli",

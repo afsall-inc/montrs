@@ -5167,6 +5167,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-plugin"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "dirs 5.0.1",
+ "montrs-registry",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "montrs-prdoc"
 version = "0.1.0"
 dependencies = [
