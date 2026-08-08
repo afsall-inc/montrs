@@ -2,6 +2,7 @@ pub mod agent;
 pub mod bench;
 pub mod build;
 pub mod e2e;
+pub mod env;
 pub mod expand;
 pub mod fmt;
 pub mod generate;

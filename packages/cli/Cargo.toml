@@ -8,7 +8,7 @@ repository.workspace = true
 
 [package.metadata.montrs]
 layer = "3"
-allowed_deps = ["montrs-core", "montrs-agent", "montrs-agentignore", "montrs-bench", "montrs-fmt", "montrs-utils", "montrs-runner", "montrs-metadata", "montrs-build"]
+allowed_deps = ["montrs-core", "montrs-agent", "montrs-agentignore", "montrs-bench", "montrs-fmt", "montrs-utils", "montrs-runner", "montrs-metadata", "montrs-build", "montrs-env"]
 
 [[bin]]
 name = "montrs"
@@ -53,6 +53,7 @@ montrs-utils = { path = "../utils" }
 montrs-runner = { path = "../runner" }
 montrs-metadata = { path = "../metadata" }
 montrs-build = { path = "../build" }
+montrs-env = { path = "../env" }
 colored = "2.1"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"

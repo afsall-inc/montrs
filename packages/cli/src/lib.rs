@@ -197,6 +197,11 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: UiSubcommand,
     },
+    /// Manage environment variables (montrs.toml [env]).
+    Env {
+        #[command(subcommand)]
+        subcommand: EnvSubcommand,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -401,6 +406,27 @@ pub enum UiSubcommand {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum EnvSubcommand {
+    /// List all environment variables from montrs.toml [env].
+    List,
+    /// Set an environment variable (writes to montrs.toml).
+    Set {
+        /// Key=value pair (e.g. FOO=bar).
+        key_value: String,
+    },
+    /// Unset an environment variable (removes from montrs.toml).
+    Unset {
+        /// Key to remove.
+        key: String,
+    },
+    /// Execute a command with the resolved environment.
+    Exec {
+        /// Command to run.
+        args: Vec<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
 pub enum GenerateSubcommand {
     /// Generate a new plate.
     Plate {
@@ -555,6 +581,14 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
                 )
                 .await
             }
+        },
+        Commands::Env { subcommand } => match subcommand {
+            EnvSubcommand::List => command::env::list().await,
+            EnvSubcommand::Set { key_value } => {
+                command::env::set(&key_value).await
+            }
+            EnvSubcommand::Unset { key } => command::env::unset(&key).await,
+            EnvSubcommand::Exec { args } => command::env::exec(&args).await,
         },
     }
 }
