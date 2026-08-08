@@ -15,6 +15,17 @@
 //! site-pkg-dir = "pkg"
 //! package = "app"
 //! ```
+//!
+//! # Extended Schema (Phase 1+)
+//! - `[deploy]` — deployment mode (ssr, static, desktop, mobile, tui)
+//! - `[env]` — environment variables
+//! - `[settings]` — all settings (no separate settings.toml)
+//! - `[monorepo]` — monorepo workspace config
+//! - `[tools]` — tool version definitions (Phase 3)
+//! - `[deps]` — dependency metadata (Phase 3)
+//! - `[aliases]` — tool/version aliases (Phase 3)
+//! - `[services]` — daemon/service definitions (Phase 4)
+//! - `[proxy]` — reverse proxy config (Phase 4)
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -28,6 +39,24 @@ pub struct MontrsMetadata {
     pub serve: ServeMeta,
     #[serde(default)]
     pub build: BuildMeta,
+    #[serde(default)]
+    pub deploy: DeployMeta,
+    #[serde(default)]
+    pub env: EnvSection,
+    #[serde(default)]
+    pub settings: SettingsSection,
+    #[serde(default)]
+    pub monorepo: MonorepoSection,
+    #[serde(default)]
+    pub tools: std::collections::HashMap<String, toml::Value>,
+    #[serde(default)]
+    pub deps: std::collections::HashMap<String, toml::Value>,
+    #[serde(default)]
+    pub aliases: std::collections::HashMap<String, toml::Value>,
+    #[serde(default)]
+    pub services: std::collections::HashMap<String, toml::Value>,
+    #[serde(default)]
+    pub proxy: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
     pub tasks: std::collections::HashMap<String, toml::Value>,
 }
@@ -131,6 +160,54 @@ impl Default for BuildMeta {
             target: "index.html".to_string(),
         }
     }
+}
+
+/// Deployment mode configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct DeployMeta {
+    /// Deployment mode: "ssr" | "static" | "desktop" | "mobile" | "tui"
+    #[serde(default = "default_deploy_mode")]
+    pub mode: String,
+}
+
+impl Default for DeployMeta {
+    fn default() -> Self {
+        Self {
+            mode: default_deploy_mode(),
+        }
+    }
+}
+
+fn default_deploy_mode() -> String {
+    "ssr".to_string()
+}
+
+/// Environment variable section in montrs.toml.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EnvSection {
+    /// Environment variables as key-value pairs.
+    #[serde(default, flatten)]
+    pub vars: std::collections::HashMap<String, toml::Value>,
+}
+
+/// Settings section (replaces standalone settings.toml).
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SettingsSection {
+    #[serde(default, flatten)]
+    pub values: std::collections::HashMap<String, toml::Value>,
+}
+
+/// Monorepo configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct MonorepoSection {
+    /// Directories that are workspace members.
+    #[serde(default)]
+    pub members: Vec<String>,
+    /// Whether to auto-discover workspace members.
+    #[serde(default)]
+    pub auto_discover: bool,
 }
 
 fn default_site_addr() -> String {
