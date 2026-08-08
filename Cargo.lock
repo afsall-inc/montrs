@@ -2289,6 +2289,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fslock"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04412b8935272e3a9bae6f48c7bfff74c2911f60525404edfdd28e49884c3bfb"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "futf"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4981,6 +4991,7 @@ dependencies = [
  "montrs-core",
  "montrs-env",
  "montrs-fmt",
+ "montrs-lockfile",
  "montrs-metadata",
  "montrs-runner",
  "montrs-utils",
@@ -5102,6 +5113,23 @@ dependencies = [
  "montrs-motion",
  "strum",
  "strum_macros",
+]
+
+[[package]]
+name = "montrs-lockfile"
+version = "0.1.0"
+dependencies = [
+ "dirs 5.0.1",
+ "fslock",
+ "hex",
+ "indexmap 2.14.0",
+ "montrs-registry",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml 0.9.12+spec-1.1.0",
 ]
 
 [[package]]

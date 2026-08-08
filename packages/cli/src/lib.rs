@@ -202,6 +202,8 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: EnvSubcommand,
     },
+    /// Generate a lockfile for tool versions.
+    Lock,
 }
 
 #[derive(Subcommand, Debug)]
@@ -590,6 +592,7 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             EnvSubcommand::Unset { key } => command::env::unset(&key).await,
             EnvSubcommand::Exec { args } => command::env::exec(&args).await,
         },
+        Commands::Lock => command::lock::run().await,
     }
 }
 
