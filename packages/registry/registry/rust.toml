@@ -1,0 +1,5 @@
+backends = ["core:rust"]
+bins = ["cargo", "cargo-clippy", "cargo-fmt", "cargo-miri", "clippy-driver", "rls", "rust-analyzer", "rust-gdb", "rust-lldb", "rustc", "rustdoc", "rustfmt", "rustup"]
+description = "Rust is a systems programming language that runs blazingly fast"
+detect = ["Cargo.toml", "rust-toolchain.toml", ".rust-version"]
+idiomatic_files = ["rust-toolchain.toml", ".rust-version"]

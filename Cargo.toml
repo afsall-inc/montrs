@@ -5,6 +5,7 @@ members = [
     "packages/agentignore",
     "packages/env",
     "packages/sigstore",
+    "packages/registry",
     "packages/haptics",
     "packages/bench",
     "packages/cli",
