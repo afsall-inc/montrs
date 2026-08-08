@@ -1,5 +1,6 @@
-[tools]
-rust = "1.84"
+[project]
+name = "montrs"
+version = "0.1.0"
 
 [env]
 RUST_BACKTRACE = "1"
