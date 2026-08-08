@@ -1,6 +1,7 @@
 //! Test helpers for montrs-runner.
 
-use crate::{TaskConfig, TaskRunner};
+use crate::types::Task;
+use crate::TaskRunner;
 use std::collections::HashMap;
 
 pub fn init_test_tracing() {
@@ -15,8 +16,26 @@ pub fn empty_runner() -> TaskRunner {
 
 pub fn simple_task_runner() -> TaskRunner {
     let mut tasks = HashMap::new();
-    tasks.insert("build".to_string(), TaskConfig::Simple("echo build".to_string()));
-    tasks.insert("test".to_string(), TaskConfig::Simple("echo test".to_string()));
+    tasks.insert(
+        "build".to_string(),
+        Task {
+            name: "build".to_string(),
+            command: vec![crate::types::RunEntry::Script(
+                "echo build".to_string(),
+            )],
+            ..Default::default()
+        },
+    );
+    tasks.insert(
+        "test".to_string(),
+        Task {
+            name: "test".to_string(),
+            command: vec![crate::types::RunEntry::Script(
+                "echo test".to_string(),
+            )],
+            ..Default::default()
+        },
+    );
     TaskRunner::new(tasks)
 }
 
