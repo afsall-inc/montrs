@@ -113,7 +113,7 @@
       }
     },
     {
-      "description": "Capability provided by package registry. Refer to its README for details.",
+      "description": "Capability provided by package registry. MUST follow invariants defined in agent.json under packages['registry'].invariants",
       "name": "montrs_pkg_registry",
       "parameters": {
         "properties": {},
@@ -161,7 +161,7 @@
       }
     },
     {
-      "description": "Capability provided by package env. Refer to its README for details.",
+      "description": "Capability provided by package env. MUST follow invariants defined in agent.json under packages['env'].invariants",
       "name": "montrs_pkg_env",
       "parameters": {
         "properties": {},
@@ -169,7 +169,7 @@
       }
     },
     {
-      "description": "Capability provided by package tui. Refer to its README for details.",
+      "description": "Capability provided by package tui. MUST follow invariants defined in agent.json under packages['tui'].invariants",
       "name": "montrs_pkg_tui",
       "parameters": {
         "properties": {},
@@ -361,7 +361,7 @@
       }
     },
     {
-      "description": "Capability provided by package plugin. Refer to its README for details.",
+      "description": "Capability provided by package plugin. MUST follow invariants defined in agent.json under packages['plugin'].invariants",
       "name": "montrs_pkg_plugin",
       "parameters": {
         "properties": {},
@@ -393,7 +393,7 @@
       }
     },
     {
-      "description": "Capability provided by package sigstore. Refer to its README for details.",
+      "description": "Capability provided by package sigstore. MUST follow invariants defined in agent.json under packages['sigstore'].invariants",
       "name": "montrs_pkg_sigstore",
       "parameters": {
         "properties": {},
