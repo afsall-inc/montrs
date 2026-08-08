@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "packages/agentignore",
     "packages/env",
+    "packages/sigstore",
     "packages/haptics",
     "packages/bench",
     "packages/cli",
