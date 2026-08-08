@@ -38,6 +38,16 @@ pub async fn run() -> anyhow::Result<()> {
         .env("MONTRS_SITE_ROOT", &site_root)
         .env("MONTRS_SITE_PKG_DIR", &pkg_dir)
         .env("MONTRS_SITE_ADDR", &addr)
+        .env("MONTRS_RELOAD_PORT", &pipeline.meta.serve.reload_port.to_string())
+        .env(
+            "MONTRS_OUTPUT_NAME",
+            pipeline
+                .meta
+                .serve
+                .output_name
+                .as_deref()
+                .unwrap_or("website"),
+        )
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
         .status()?;

@@ -48,12 +48,3 @@ ssr = [
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
-
-[package.metadata.leptos]
-output-name = "website"
-bin-package = "website"
-lib-package = "website"
-site-root = "target/site"
-site-pkg-dir = "pkg"
-site-addr = "127.0.0.1:3000"
-reload-port = 3001

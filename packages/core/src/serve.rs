@@ -56,15 +56,29 @@ where
     use tokio::task::LocalSet;
     use tower_http::services::ServeDir;
 
-    if std::env::var("LEPTOS_OUTPUT_NAME").is_err() {
-        unsafe { std::env::set_var("LEPTOS_OUTPUT_NAME", "website") };
+    // MontRS is the single source of truth for site config. Derive Leptos
+    // runtime env vars from MONTRS_* values (set by the CLI from montrs.toml)
+    // so the runtime no longer depends on `[package.metadata.leptos]`.
+    let addr = std::env::var("MONTRS_SITE_ADDR")
+        .unwrap_or_else(|_| "0.0.0.0:3000".to_string());
+    let site_root = std::env::var("MONTRS_SITE_ROOT")
+        .unwrap_or_else(|_| "target/site".to_string());
+    let pkg_dir = std::env::var("MONTRS_SITE_PKG_DIR")
+        .unwrap_or_else(|_| "pkg".to_string());
+    let output_name = std::env::var("MONTRS_OUTPUT_NAME")
+        .unwrap_or_else(|_| "website".to_string());
+    let reload_port = std::env::var("MONTRS_RELOAD_PORT")
+        .unwrap_or_else(|_| "3001".to_string());
+
+    unsafe {
+        std::env::set_var("LEPTOS_OUTPUT_NAME", &output_name);
+        std::env::set_var("LEPTOS_SITE_ADDR", &addr);
+        std::env::set_var("LEPTOS_SITE_ROOT", &site_root);
+        std::env::set_var("LEPTOS_SITE_PKG_DIR", &pkg_dir);
+        std::env::set_var("LEPTOS_RELOAD_PORT", &reload_port);
     }
 
     let conf = get_configuration(None).unwrap();
-    let addr = std::env::var("MONTRS_SITE_ADDR")
-        .unwrap_or_else(|_| conf.leptos_options.site_addr.to_string());
-    let site_root = std::env::var("MONTRS_SITE_ROOT")
-        .unwrap_or_else(|_| conf.leptos_options.site_root.to_string());
 
     let axum_routes = router.to_axum_route_listings();
 
