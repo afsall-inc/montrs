@@ -38,7 +38,10 @@ pub async fn run() -> anyhow::Result<()> {
         .env("MONTRS_SITE_ROOT", &site_root)
         .env("MONTRS_SITE_PKG_DIR", &pkg_dir)
         .env("MONTRS_SITE_ADDR", &addr)
-        .env("MONTRS_RELOAD_PORT", &pipeline.meta.serve.reload_port.to_string())
+        .env(
+            "MONTRS_RELOAD_PORT",
+            pipeline.meta.serve.reload_port.to_string(),
+        )
         .env(
             "MONTRS_OUTPUT_NAME",
             pipeline
