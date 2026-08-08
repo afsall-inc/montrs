@@ -28,7 +28,6 @@
 //! - `[proxy]` — reverse proxy config (Phase 4)
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
 use std::path::Path;
 
 /// The full MontRS project metadata, read from `montrs.toml`.
@@ -49,17 +48,17 @@ pub struct MontrsMetadata {
     #[serde(default)]
     pub monorepo: MonorepoSection,
     #[serde(default)]
-    pub tools: std::collections::HashMap<String, JsonValue>,
+    pub tools: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
-    pub deps: std::collections::HashMap<String, JsonValue>,
+    pub deps: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
-    pub aliases: std::collections::HashMap<String, JsonValue>,
+    pub aliases: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
-    pub services: std::collections::HashMap<String, JsonValue>,
+    pub services: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
-    pub proxy: std::collections::HashMap<String, JsonValue>,
+    pub proxy: std::collections::HashMap<String, toml::Value>,
     #[serde(default)]
-    pub tasks: std::collections::HashMap<String, JsonValue>,
+    pub tasks: std::collections::HashMap<String, toml::Value>,
 }
 
 /// Project identity metadata.
@@ -189,7 +188,7 @@ fn default_deploy_mode() -> String {
 pub struct EnvSection {
     /// Environment variables as key-value pairs.
     #[serde(default, flatten)]
-    pub vars: std::collections::HashMap<String, JsonValue>,
+    pub vars: std::collections::HashMap<String, toml::Value>,
 }
 
 /// Settings section (replaces standalone settings.toml).

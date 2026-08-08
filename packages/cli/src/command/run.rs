@@ -2,19 +2,19 @@ use crate::config::MontrsConfig;
 use montrs_runner::{TaskConfig, TaskRunner};
 use std::collections::HashMap;
 
-/// Convert raw `serde_json::Value` task definitions into `TaskConfig`.
+/// Convert raw `toml::Value` task definitions into `TaskConfig`.
 fn to_task_configs(
-    tasks: HashMap<String, serde_json::Value>,
+    tasks: HashMap<String, toml::Value>,
 ) -> HashMap<String, TaskConfig> {
     tasks
         .into_iter()
         .filter_map(|(name, value)| {
-            let config = if value.is_string() {
+            let config = if value.is_str() {
                 TaskConfig::Simple(
                     value.as_str().unwrap_or_default().to_string(),
                 )
             } else {
-                serde_json::from_value(value).ok()?
+                toml::from_str::<TaskConfig>(&value.to_string()).ok()?
             };
             Some((name, config))
         })

@@ -27,4 +27,5 @@ lint = "cargo clippy -- -D warnings"
 
 [tasks.ci]
 description = "Run all checks"
+command = "echo 'CI checks complete'"
 depends = ["fmt", "lint", "check", "check-ssr"]

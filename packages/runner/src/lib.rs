@@ -15,6 +15,8 @@ pub enum TaskConfig {
     /// A detailed task definition.
     Detailed {
         /// The command to execute.
+        /// Accepts both `command` and `run` (mise-compat).
+        #[serde(alias = "run")]
         command: String,
         /// Description of the task.
         #[serde(default)]
@@ -23,7 +25,8 @@ pub enum TaskConfig {
         #[serde(default)]
         category: Option<String>,
         /// List of dependent tasks to run before this one.
-        #[serde(default)]
+        /// Accepts both `dependencies` (MontRS) and `depends` (mise-compat).
+        #[serde(default, alias = "depends")]
         dependencies: Vec<String>,
         /// Environment variables to set for this task.
         #[serde(default)]

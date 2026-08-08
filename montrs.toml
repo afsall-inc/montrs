@@ -21,12 +21,13 @@ clippy-core = "cargo clippy -p montrs-core -p montrs-build -p montrs-cli -p mont
 
 [tasks.dev]
 description = "Start the development server"
-run = "cargo run --package montrs-cli -- serve"
+command = "cargo run --package montrs-cli -- serve"
 
 [tasks.serve-website]
 description = "Serve the MontRS website"
-run = "cd apps/website && cargo run --package montrs-cli -- serve"
+command = "cd apps/website && cargo run --package montrs-cli -- serve"
 
 [tasks.ci]
 description = "Run all CI checks"
+command = "echo 'CI checks complete'"
 depends = ["fmt", "clippy", "test"]
