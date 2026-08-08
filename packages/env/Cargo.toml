@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "MontRS environment variable manager — ported from mise, tailored for MontRS"
+description = "MontRS environment variable manager"
 
 [package.metadata.montrs]
 layer = "2"

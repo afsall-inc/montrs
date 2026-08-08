@@ -1,5 +1,5 @@
-pub mod ascii_font;
 /// Renderable components for the TUI.
+pub mod ascii_font;
 pub mod box_renderable;
 pub mod code;
 pub mod diff;
@@ -15,10 +15,30 @@ pub mod select;
 pub mod slider;
 pub mod tab_select;
 pub mod table;
+pub mod text_buffer;
 pub mod text_renderable;
 pub mod textarea;
 
 use crate::buffer::Buffer;
+pub use ascii_font::{ASCIIFont, ASCIIFontRenderable};
+pub use box_renderable::{BorderStyle, BoxRenderable};
+pub use code::CodeRenderable;
+pub use diff::{DiffLine, DiffLineKind, DiffMode, DiffRenderable};
+pub use editor::EditorRenderable;
+pub use frame_buffer::FrameBufferRenderable;
+pub use image::{ImageMode, ImageRenderable};
+pub use input::InputRenderable;
+pub use line_number::LineNumberRenderable;
+pub use markdown::MarkdownRenderable;
+pub use scrollbar::ScrollBarRenderable;
+pub use scrollbox::ScrollBoxRenderable;
+pub use select::SelectRenderable;
+pub use slider::SliderRenderable;
+pub use tab_select::TabSelectRenderable;
+pub use table::TextTableRenderable;
+pub use text_buffer::TextBufferRenderable;
+pub use text_renderable::TextRenderable;
+pub use textarea::TextareaRenderable;
 
 /// Base trait for all renderable objects.
 pub trait Renderable: Send + Sync {

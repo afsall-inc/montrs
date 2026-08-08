@@ -82,6 +82,36 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Depends on `montrs-build-core` for configuration types. Uses `axum` + `tower-http` for serving.
 - **When to modify**: When adding server features (live reload, proxy, HTTPS).
 
+## 📦 `montrs-env`
+- **Responsibility**: Environment variable management — parse `[env]` from `montrs.toml`, Tera rendering, `.env` loading, apply to process.
+- **Key Components**: `EnvDirective`, `Environment`, `EnvDiff`, `parse_env_section`, `resolve_environment`, `apply_environment`.
+- **Boundary**: Layer 2. Handles parsing, rendering, and applying env vars. No file watching or secret management.
+- **When to modify**: When adding new env directive types or changing the resolution order.
+
+## 📦 `montrs-sigstore`
+- **Responsibility**: Signature verification — cosign, SLSA, GitHub attestations.
+- **Key Components**: `AttestationClient`, `GitHubSource`, `AttestationSource` trait, `verify_github_attestation`, `verify_cosign_signature`, `verify_slsa_provenance`.
+- **Boundary**: Layer 2. Verification only — no signing, key generation, or certificate management.
+- **When to modify**: When adding new verification methods or attestation sources.
+
+## 📦 `montrs-registry`
+- **Responsibility**: Tool registry — baked and floating metadata for version management.
+- **Key Components**: `Registry`, `RegistryTool`, `BAKED_REGISTRY`, `load_registry_from_dir`, `fetch_floating_registry`.
+- **Boundary**: Layer 2. Tool metadata only — no installation or version resolution.
+- **When to modify**: When adding new registry tool entries or changing the registry format.
+
+## 📦 `montrs-plugin`
+- **Responsibility**: Plugin system — asdf-compatible tool plugin management.
+- **Key Components**: `Plugin` trait, `PluginRegistry`, `PluginType`, `PluginSource`, `install_git_plugin`, `uninstall_plugin`.
+- **Boundary**: Layer 2. Plugin lifecycle only — no tool version management or binary execution.
+- **When to modify**: When adding new plugin types or install methods.
+
+## 📦 `montrs-tui`
+- **Responsibility**: Terminal UI library — buffer, rendering, events, widgets.
+- **Key Components**: `Buffer`, `CliRenderer`, `EventBus`, `Renderable` trait, `TuiAdapter`, 21 renderable components.
+- **Boundary**: Layer 3. Pure Rust ANSI terminal output — no external dependencies like ncurses.
+- **When to modify**: When adding new widgets, rendering features, or event types.
+
 ---
 
 ## How Packages Interact
@@ -97,9 +127,9 @@ Packages are organized into layers. A package at layer N may depend on packages 
 | Layer | Packages | Rules |
 |---|---|---|
 | **0 (Core)** | `core`, `validator`, `platform` | No montrs-* deps (except platform → core re-export) |
-| **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner` | Only core/validator/platform |
+| **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner`, `env`, `sigstore`, `registry`, `plugin` | Only core/validator/platform |
 | **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve` | Only layers 0-1 |
-| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs` | Any layer |
+| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs`, `tui` | Any layer |
 
 ### Dependency Flow
 

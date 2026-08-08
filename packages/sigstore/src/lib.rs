@@ -3,8 +3,6 @@ use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue, USER_AGENT};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 /// MontRS sigstore — signature verification for cosign, SLSA, and GitHub attestations.
-///
-/// Ported from mise-sigstore, tailored for MontRS.
 use std::path::Path;
 use std::time::Duration;
 use thiserror::Error;

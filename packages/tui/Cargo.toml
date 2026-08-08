@@ -5,7 +5,7 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "MontRS Terminal UI library — ported from OpenTUI, tailored for MontRS"
+description = "MontRS Terminal UI library"
 
 [package.metadata.montrs]
 layer = "3"

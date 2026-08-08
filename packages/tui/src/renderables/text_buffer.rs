@@ -1,38 +1,39 @@
-/// Code renderable — syntax-highlighted code display.
+/// Text buffer renderable — scrollable text display.
 use crate::buffer::{Buffer, Cell, CharAttribute, Color};
 use crate::renderables::Renderable;
 
-pub struct CodeRenderable {
+pub struct TextBufferRenderable {
     pub lines: Vec<String>,
-    pub language: Option<String>,
     pub scroll_offset: usize,
+    pub fg: Color,
+    pub bg: Color,
 }
 
-impl CodeRenderable {
+impl TextBufferRenderable {
     pub fn new() -> Self {
         Self {
             lines: Vec::new(),
-            language: None,
             scroll_offset: 0,
+            fg: Color::Reset,
+            bg: Color::Reset,
         }
     }
-    pub fn with_code(mut self, code: &str) -> Self {
-        self.lines = code.lines().map(|s| s.to_string()).collect();
+    pub fn with_lines(mut self, lines: Vec<String>) -> Self {
+        self.lines = lines;
         self
     }
-    pub fn with_language(mut self, lang: &str) -> Self {
-        self.language = Some(lang.to_string());
-        self
+    pub fn scroll_to(&mut self, offset: usize) {
+        self.scroll_offset = offset;
     }
 }
 
-impl Default for CodeRenderable {
+impl Default for TextBufferRenderable {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Renderable for CodeRenderable {
+impl Renderable for TextBufferRenderable {
     fn render(
         &self,
         buffer: &mut Buffer,
@@ -49,22 +50,12 @@ impl Renderable for CodeRenderable {
             let line = &self.lines[line_idx];
             let max_chars = width.min(line.len());
             for (i, c) in line.chars().enumerate().take(max_chars) {
-                let fg = simple_highlight(c, &self.language);
                 buffer.set(
                     x + i,
                     y + row,
-                    Cell::styled(c, fg, Color::Reset, CharAttribute::default()),
+                    Cell::styled(c, self.fg, self.bg, CharAttribute::default()),
                 );
             }
         }
-    }
-}
-
-fn simple_highlight(c: char, _lang: &Option<String>) -> Color {
-    match c {
-        '#' | ';' | '/' => Color::Rgb(120, 120, 120), // comments
-        '"' | '\'' => Color::Rgb(210, 180, 140),      // strings
-        '0'..='9' => Color::Rgb(220, 220, 100),       // numbers
-        _ => Color::Reset,
     }
 }
