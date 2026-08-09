@@ -52,7 +52,8 @@ impl ToolBackend for HttpBackend {
         if !self.install_dir.exists() {
             return Ok(versions);
         }
-        for entry in std::fs::read_dir(&self.install_dir)?.flatten() {
+        for entry in std::fs::read_dir(&self.install_dir)? {
+            let entry = entry?;
             if entry.path().is_dir()
                 && let Some(name) = entry.file_name().to_str()
             {

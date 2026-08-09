@@ -12,7 +12,7 @@ fn test_re_exports_build_core() {
 
 #[test]
 fn test_run_cargo_type_check() {
-    let _args = ["build".to_string()];
+    let _args = vec!["build".to_string()];
 }
 
 #[test]

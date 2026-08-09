@@ -121,6 +121,14 @@
       }
     },
     {
+      "description": "Capability provided by package lockfile. MUST follow invariants defined in agent.json under packages['lockfile'].invariants",
+      "name": "montrs_pkg_lockfile",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package build. MUST follow invariants defined in agent.json under packages['build'].invariants",
       "name": "montrs_pkg_build",
       "parameters": {
@@ -211,6 +219,14 @@
     {
       "description": "description",
       "name": "skill_name",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package tool. MUST follow invariants defined in agent.json under packages['tool'].invariants",
+      "name": "montrs_pkg_tool",
       "parameters": {
         "properties": {},
         "type": "object"
