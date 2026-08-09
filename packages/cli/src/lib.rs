@@ -204,6 +204,20 @@ pub enum Commands {
     },
     /// Generate a lockfile for tool versions.
     Lock,
+    /// Generate shell activation script (eval this in your shell rc).
+    Activate {
+        /// Shell type (bash, zsh, fish, pwsh). Defaults to auto-detect.
+        #[arg(short, long, default_value = "auto")]
+        shell: String,
+    },
+    /// Generate shell deactivation script.
+    Deactivate {
+        /// Shell type (bash, zsh, fish, pwsh). Defaults to auto-detect.
+        #[arg(short, long, default_value = "auto")]
+        shell: String,
+    },
+    /// Rebuild all tool shims.
+    Reshim,
 }
 
 #[derive(Subcommand, Debug)]
@@ -593,6 +607,11 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             EnvSubcommand::Exec { args } => command::env::exec(&args).await,
         },
         Commands::Lock => command::lock::run().await,
+        Commands::Activate { shell } => command::shell::activate(&shell).await,
+        Commands::Deactivate { shell } => {
+            command::shell::deactivate(&shell).await
+        }
+        Commands::Reshim => command::shell::reshim().await,
     }
 }
 

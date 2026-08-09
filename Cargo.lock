@@ -5004,6 +5004,7 @@ dependencies = [
  "montrs-lockfile",
  "montrs-metadata",
  "montrs-runner",
+ "montrs-shell",
  "montrs-utils",
  "openssl",
  "proc-macro2",
@@ -5295,6 +5296,19 @@ dependencies = [
  "toml 0.9.12+spec-1.1.0",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "montrs-shell"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs 5.0.1",
+ "montrs-env",
+ "montrs-tool",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
