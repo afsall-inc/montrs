@@ -11,6 +11,7 @@ members = [
     "packages/tool",
     "packages/shell",
     "packages/deps",
+    "packages/i18n",
     "packages/tui",
     "packages/haptics",
     "packages/bench",

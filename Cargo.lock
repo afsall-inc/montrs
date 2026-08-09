@@ -5132,6 +5132,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-i18n"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "indexmap 2.14.0",
+ "leptos",
+ "leptos_meta",
+ "leptos_router",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 0.9.12+spec-1.1.0",
+]
+
+[[package]]
 name = "montrs-icons"
 version = "0.1.0"
 dependencies = [
