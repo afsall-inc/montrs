@@ -1,83 +1,84 @@
-//! MontRS internationalization — runtime translation loading, locale switching,
-//! pluralization, scoping, and interpolation.
+//! MontRS internationalization — reactive translations for MontRS applications.
 //!
-//! # Features
-//! - Load translations from JSON, TOML files at runtime
-//! - Locale detection from Accept-Language, URL path
-//! - Variable interpolation (`{name}` in templates)
-//! - Pluralization (zero, one, few, many, other forms)
-//! - Scoping (prefix-based key namespaces)
-//! - Language negotiation for SSR
+//! Provides locale detection, pluralization, interpolation, scoping,
+//! formatting, and signal-powered locale switching for MontRS apps.
+//!
+//! # Key features
+//! - `declare_locales!` macro for compile-time locale definition
+//! - `I18nContext<RwSignal<Locale>>` for reactive locale switching
+//! - `t!`, `td!`, `tu!` macros for translations
+//! - `t_plural!`, `t_format!` macros for pluralization + formatting
+//! - Scoping (`use_i18n_scoped!`, `scope_i18n!`)
+//! - Cookie-based locale persistence
+//! - SSR `Accept-Language` detection
 //!
 //! # Example
 //! ```rust,ignore
-//! use montrs_i18n::{I18nContext, Locale, Locales};
+//! use montrs_i18n::prelude::*;
+//! use montrs_i18n::declare_locales;
 //!
-//! let ctx = I18nContext::from_dir("locales", "en", &["en", "fr"], "json")?;
-//! let greeting = ctx.t("greeting", &[("name", "World")])?;
-//! ```
+//! declare_locales! {
+//!     path: "locales",
+//!     default: "en",
+//!     locales: ["en", "fr"],
+//!     en: {
+//!         hello: "Hello!",
+//!         click_count: "You clicked {{ count }} times",
+//!     },
+//!     fr: {
+//!         hello: "Bonjour!",
+//!         click_count: "Vous avez cliqué {{ count }} fois",
+//!     },
+//! }
 //!
-//! # Translation file format (JSON)
-//! ```json
-//! {
-//!   "greeting": "Hello, {name}!",
-//!   "items.one": "You have 1 item",
-//!   "items.other": "You have {count} items"
+//! #[component]
+//! fn App() -> impl IntoView {
+//!     view! {
+//!         <I18nContextProvider>
+//!             <Home />
+//!         </I18nContextProvider>
+//!     }
 //! }
 //! ```
 
 mod context;
+mod display;
+mod fetch_locale;
+mod locale;
+pub mod locale_traits;
+mod macro_helpers;
+mod macros;
+mod scopes;
 
-use indexmap::IndexMap;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
-/// A locale identifier.
-#[derive(
-    Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord,
-)]
-pub struct Locale {
-    pub code: String,
-    pub display_name: String,
-}
-
-impl Locale {
-    pub fn new(code: &str, display_name: &str) -> Self {
-        Self {
-            code: code.to_string(),
-            display_name: display_name.to_string(),
-        }
-    }
-}
-
-impl std::fmt::Display for Locale {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.display_name, self.code)
-    }
-}
-
-/// A map of translation keys to values for a single locale.
-pub type TranslationMap = IndexMap<String, String>;
-
-/// All loaded translations keyed by locale code.
-pub type LocaleTranslations = HashMap<String, TranslationMap>;
-
-/// Errors from i18n operations.
-#[derive(Debug, thiserror::Error)]
-pub enum I18nError {
-    #[error("Locale '{0}' not found")]
-    LocaleNotFound(String),
-    #[error("Translation key '{0}' not found")]
-    KeyNotFound(String),
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("Parse error: {0}")]
-    Parse(String),
-    #[error("Missing interpolation variable: {0}")]
-    MissingVar(String),
-}
+pub mod formatting;
+pub mod plural;
+pub mod router;
 
 pub use context::{
-    I18nContext, Locales, ScopedContext, interpolate,
-    resolve_locale_from_request,
+    I18nContext, I18nContextOptions, provide_i18n_context, use_i18n_context,
+    use_i18n_with_scope,
 };
+pub use display::LangDisplay;
+pub use locale_traits::{Direction, Locale, LocaleKeys};
+pub use scopes::ScopedLocale;
+
+#[doc(hidden)]
+pub mod __private {
+    pub use crate::{locale_traits::TranslationUnitId, macro_helpers::*};
+
+    pub trait AnyBound {}
+    impl<T: ?Sized> AnyBound for T {}
+}
+
+pub mod prelude {
+    pub use crate::{
+        Direction, I18nContext, I18nContextOptions, LangDisplay, Locale,
+        LocaleKeys, ScopedLocale, define_scope, formatting, plural, router,
+        scope_i18n, scope_locale, t, t_display, t_format, t_format_display,
+        t_format_string, t_plural, t_plural_ordinal, t_string, td, td_display,
+        td_format, td_format_display, td_format_string, td_plural,
+        td_plural_ordinal, td_string, tu, tu_display, tu_format,
+        tu_format_display, tu_format_string, tu_plural, tu_plural_ordinal,
+        tu_string, use_i18n_context, use_i18n_scoped, use_i18n_with_scope,
+    };
+}

@@ -1,298 +1,179 @@
-//! I18nContext — manages locale state and provides translations.
+//! I18nContext — reactive locale state and translation access.
 
-use crate::{I18nError, Locale, LocaleTranslations, TranslationMap};
-use std::{collections::HashMap, path::Path};
+use crate::{
+    fetch_locale::{self, signal_maybe_once_then},
+    locale_traits::*,
+    scopes::Scope,
+};
+use leptos::prelude::*;
+use leptos_meta::Html;
+use std::borrow::Cow;
 
-/// The internationalization context — holds translations and active locale.
-#[derive(Clone)]
-pub struct I18nContext {
-    /// The currently active locale code.
-    pub locale_code: String,
-    /// All loaded translations, keyed by locale code.
-    pub translations: LocaleTranslations,
-    /// All available locales.
-    pub locales: Vec<Locale>,
-    /// The default locale code.
-    pub default_locale: String,
+const COOKIE_PREFERRED_LANG: &str = "montrs_pref_locale";
+
+/// The heart of the i18n system. A reactive signal to the current locale.
+#[derive(Debug)]
+pub struct I18nContext<L: Locale> {
+    locale_signal: RwSignal<L>,
 }
 
-impl I18nContext {
-    /// Create a new context from pre-loaded translations.
-    pub fn new(
-        translations: LocaleTranslations,
-        default_locale: &str,
-        locales: Vec<Locale>,
-    ) -> Self {
+impl<L: Locale> Clone for I18nContext<L> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<L: Locale> Copy for I18nContext<L> {}
+
+impl<L: Locale> I18nContext<L> {
+    pub fn get_locale(self) -> L {
+        self.locale_signal.get()
+    }
+    pub fn get_locale_untracked(self) -> L {
+        self.locale_signal.get_untracked()
+    }
+    pub fn get_keys(self) -> L::Keys {
+        LocaleKeys::from_locale(self.get_locale())
+    }
+    pub fn get_keys_untracked(self) -> L::Keys {
+        LocaleKeys::from_locale(self.get_locale_untracked())
+    }
+    pub fn set_locale(self, lang: L) {
+        self.locale_signal.set(lang);
+    }
+    pub fn set_locale_untracked(self, lang: L) {
+        *self.locale_signal.write_untracked() = lang;
+    }
+    pub fn scope<NS: Scope<L>>(self) -> I18nContext<L> {
+        self
+    }
+    pub(crate) fn from_context() -> Option<Self> {
+        use_context()
+    }
+    pub(crate) fn provide(this: Self) {
+        provide_context(this);
+    }
+}
+
+/// Options to init or provide an I18nContext.
+pub struct I18nContextOptions<'a, L: Locale> {
+    pub enable_cookie: bool,
+    pub cookie_name: Cow<'a, str>,
+    pub _marker: std::marker::PhantomData<L>,
+}
+
+impl<L: Locale> Default for I18nContextOptions<'_, L> {
+    fn default() -> Self {
         Self {
-            locale_code: default_locale.to_string(),
-            translations,
-            locales,
-            default_locale: default_locale.to_string(),
+            enable_cookie: false,
+            cookie_name: Cow::Borrowed(COOKIE_PREFERRED_LANG),
+            _marker: std::marker::PhantomData,
         }
-    }
-
-    /// Create from a directory of translation files (e.g., `locales/en.json`, `locales/fr.json`).
-    pub fn from_dir(
-        dir: &Path,
-        default_locale: &str,
-        locale_codes: &[&str],
-        format: &str,
-    ) -> Result<Self, I18nError> {
-        let mut translations: LocaleTranslations = HashMap::new();
-        let mut locales = Vec::new();
-
-        for code in locale_codes {
-            let file = dir.join(format!("{code}.{format}"));
-            if !file.exists() {
-                continue;
-            }
-            let content = std::fs::read_to_string(&file)?;
-            let map: TranslationMap = match format {
-                "json" => serde_json::from_str(&content)
-                    .map_err(|e| I18nError::Parse(e.to_string()))?,
-                "toml" => toml::from_str(&content)
-                    .map_err(|e| I18nError::Parse(e.to_string()))?,
-                _ => {
-                    return Err(I18nError::Parse(format!(
-                        "unsupported format: {format}"
-                    )));
-                }
-            };
-            translations.insert(code.to_string(), map);
-            locales.push(Locale::new(code, code));
-        }
-
-        Ok(Self::new(translations, default_locale, locales))
-    }
-
-    /// Translate a key with optional interpolation variables.
-    pub fn t(
-        &self,
-        key: &str,
-        vars: &[(&str, &str)],
-    ) -> Result<String, I18nError> {
-        let map = self
-            .translations
-            .get(&self.locale_code)
-            .or_else(|| self.translations.get(&self.default_locale))
-            .ok_or_else(|| {
-                I18nError::LocaleNotFound(self.locale_code.clone())
-            })?;
-
-        let template = map
-            .get(key)
-            .ok_or_else(|| I18nError::KeyNotFound(key.to_string()))?;
-
-        Ok(interpolate(template, vars))
-    }
-
-    /// Translate with pluralization.
-    pub fn t_plural(
-        &self,
-        key: &str,
-        count: i64,
-        vars: &[(&str, &str)],
-    ) -> Result<String, I18nError> {
-        let form = match count {
-            0 => "zero",
-            1 => "one",
-            2 => "two",
-            3..=10 => "few",
-            _ => "other",
-        };
-        let mut all_vars: Vec<(&str, String)> =
-            vars.iter().map(|(k, v)| (*k, v.to_string())).collect();
-        all_vars.push(("count", count.to_string()));
-        let refs: Vec<(&str, &str)> =
-            all_vars.iter().map(|(k, v)| (&k[..], &v[..])).collect();
-
-        // Try specific form, then "other", then fall back to the map's default.
-        for suffix in [form, "other"] {
-            let plural_key = format!("{key}.{suffix}");
-            if let Ok(result) = self.t(&plural_key, &refs) {
-                return Ok(result);
-            }
-        }
-        Err(I18nError::KeyNotFound(format!("{key}.{form}")))
-    }
-
-    /// Set the active locale.
-    pub fn set_locale(&mut self, code: &str) -> Result<(), I18nError> {
-        if !self.locales.iter().any(|l| l.code == code) {
-            return Err(I18nError::LocaleNotFound(code.to_string()));
-        }
-        self.locale_code = code.to_string();
-        Ok(())
-    }
-
-    /// Get all translation keys for the current locale.
-    pub fn keys(&self) -> Vec<String> {
-        self.translations
-            .get(&self.locale_code)
-            .map(|m| m.keys().cloned().collect())
-            .unwrap_or_default()
-    }
-
-    /// Get the current locale object.
-    pub fn current_locale(&self) -> Option<&Locale> {
-        self.locales.iter().find(|l| l.code == self.locale_code)
     }
 }
 
-/// A list of supported locales with a default.
-#[derive(Clone)]
-pub struct Locales {
-    pub available: Vec<Locale>,
-    pub default: Locale,
+fn init_context_inner<L: Locale>(
+    set_lang_cookie: WriteSignal<Option<L>>,
+    initial_locale: Memo<L>,
+) -> I18nContext<L> {
+    let locale_signal = RwSignal::new(initial_locale.get_untracked());
+    Effect::new(move |_| {
+        locale_signal.set(initial_locale.get());
+    });
+    Effect::new_isomorphic(move |_| {
+        set_lang_cookie.set(Some(locale_signal.get()));
+    });
+    I18nContext { locale_signal }
 }
 
-impl Locales {
-    pub fn new(available: Vec<Locale>, default: Locale) -> Self {
-        Self { available, default }
-    }
-
-    /// Simple convenience from code strings.
-    pub fn from_codes(
-        codes: &[&str],
-        names: &[&str],
-        default_code: &str,
-    ) -> Self {
-        let locales: Vec<Locale> = codes
-            .iter()
-            .zip(names.iter())
-            .map(|(c, n)| Locale::new(c, n))
-            .collect();
-        let default = locales
-            .iter()
-            .find(|l| l.code == default_code)
-            .cloned()
-            .unwrap_or_else(|| Locale::new(default_code, default_code));
-        Self {
-            available: locales,
-            default,
-        }
-    }
-
-    /// Detect the best locale from an Accept-Language header.
-    pub fn from_accept_language(&self, header: &str) -> &Locale {
-        for part in header.split(',') {
-            let lang =
-                part.split(';').next().unwrap_or("").trim().to_lowercase();
-            if let Some(locale) = self
-                .available
-                .iter()
-                .find(|l| l.code.to_lowercase() == lang)
-            {
-                return locale;
-            }
-            if let Some(base) = lang.split('-').next() {
-                if let Some(locale) = self
-                    .available
-                    .iter()
-                    .find(|l| l.code.to_lowercase() == base)
-                {
-                    return locale;
-                }
-            }
-        }
-        &self.default
-    }
-
-    /// Detect locale from URL path prefix (e.g., "/fr/about" → "fr").
-    pub fn from_url_path(&self, path: &str) -> &Locale {
-        let segments: Vec<&str> =
-            path.split('/').filter(|s| !s.is_empty()).collect();
-        if let Some(first) = segments.first() {
-            if let Some(locale) =
-                self.available.iter().find(|l| l.code == *first)
-            {
-                return locale;
-            }
-        }
-        &self.default
-    }
+pub fn init_i18n_context_with_options<L: Locale>(
+    _options: I18nContextOptions<L>,
+) -> I18nContext<L> {
+    let (lang_cookie, set_lang_cookie) = signal::<Option<L>>(None);
+    let initial: L = lang_cookie.get_untracked().unwrap_or_default();
+    let memo = Memo::new(move |_| initial);
+    init_context_inner(set_lang_cookie, memo)
 }
 
-/// Resolve locale from HTTP request headers (SSR).
-pub fn resolve_locale_from_request(
-    headers: &HashMap<String, String>,
-    cookie_name: &str,
-    available: &[&str],
-    default: &str,
-) -> String {
-    for (header, value) in headers {
-        if header.to_lowercase() == "cookie" {
-            for pair in value.split(';') {
-                let pair = pair.trim();
-                if let Some((k, v)) = pair.split_once('=') {
-                    if k.trim() == cookie_name {
-                        let locale = v.trim();
-                        if available.contains(&locale) {
-                            return locale.to_string();
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if let Some(al) = headers.get("accept-language") {
-        for part in al.split(',') {
-            let lang = part.split(';').next().unwrap_or("").trim();
-            let base = lang.split('-').next().unwrap_or(lang);
-            if available.contains(&base) {
-                return base.to_string();
-            }
-            if available.contains(&lang) {
-                return lang.to_string();
-            }
-        }
-    }
-    default.to_string()
+pub fn init_i18n_context<L: Locale>() -> I18nContext<L> {
+    init_i18n_context_with_options(Default::default())
 }
 
-/// Interpolate variables into a template string: `Hello, {name}!`
-pub fn interpolate(template: &str, vars: &[(&str, &str)]) -> String {
-    let mut result = template.to_string();
-    for (key, value) in vars {
-        result = result.replace(&format!("{{{key}}}"), value);
-        result = result.replace(&format!("{{ {key} }}"), value);
-    }
-    result
+pub fn provide_i18n_context<L: Locale>() -> I18nContext<L> {
+    leptos_meta::provide_meta_context();
+    I18nContext::from_context().unwrap_or_else(|| {
+        let ctx = init_i18n_context_with_options(Default::default());
+        I18nContext::provide(ctx);
+        ctx
+    })
 }
 
-/// A scoped wrapper around I18nContext that prefixes keys.
-#[derive(Clone)]
-pub struct ScopedContext {
-    pub ctx: I18nContext,
-    pub prefix: String,
+pub fn use_i18n_context<L: Locale>() -> I18nContext<L> {
+    I18nContext::from_context().expect("MontRS I18n context is missing")
 }
 
-impl ScopedContext {
-    pub fn new(ctx: I18nContext, prefix: &str) -> Self {
-        Self {
-            ctx,
-            prefix: prefix.to_string(),
-        }
-    }
+pub fn use_i18n_with_scope<L: Locale>() -> I18nContext<L> {
+    use_i18n_context::<L>()
+}
 
-    pub fn t(
-        &self,
-        key: &str,
-        vars: &[(&str, &str)],
-    ) -> Result<String, I18nError> {
-        let full_key = if key.is_empty() {
-            self.prefix.clone()
+fn derive_initial_locale_signal<L: Locale>(
+    init: Option<Signal<L>>,
+) -> Signal<Option<L>> {
+    init.map(|s| Signal::derive(move || Some(s.get())))
+        .unwrap_or_default()
+}
+
+pub fn init_i18n_subcontext_with_options<L: Locale>(
+    initial_locale: Option<Signal<L>>,
+    _cookie_name: Option<Cow<str>>,
+    _cookie_options: Option<()>,
+    _ssr_lang_header: Option<()>,
+) -> I18nContext<L> {
+    let initial_locale = derive_initial_locale_signal(initial_locale);
+    let (lang_cookie, set_lang_cookie) = signal(None);
+    let parent =
+        I18nContext::<L>::from_context().map(|c| c.get_locale_untracked());
+    let fetch_memo = fetch_locale::fetch_locale(None);
+    let parent = signal_maybe_once_then(parent, fetch_memo);
+    let listener = Memo::new(move |prev| {
+        let cookie: Option<L> = lang_cookie.get_untracked();
+        let p = parent.get();
+        if prev.is_none() {
+            cookie.or(initial_locale.get()).unwrap_or(p)
         } else {
-            format!("{}.{}", self.prefix, key)
-        };
-        self.ctx.t(&full_key, vars)
-    }
+            initial_locale.get().or(cookie).unwrap_or(p)
+        }
+    });
+    init_context_inner(set_lang_cookie, listener)
+}
 
-    pub fn set_locale(&mut self, code: &str) -> Result<(), I18nError> {
-        self.ctx.set_locale(code)
-    }
+pub fn init_i18n_subcontext<L: Locale>(
+    initial_locale: Option<Signal<L>>,
+) -> I18nContext<L> {
+    init_i18n_subcontext_with_options::<L>(initial_locale, None, None, None)
+}
 
-    pub fn current_locale(&self) -> Option<&Locale> {
-        self.ctx.current_locale()
+pub fn provide_i18n_context_component<L: Locale, Chil>(
+    set_lang_attr: Option<bool>,
+    set_dir_attr: Option<bool>,
+    _enable_cookie: Option<bool>,
+    _cookie_name: Option<Cow<str>>,
+    _cookie_options: Option<()>,
+    _ssr_lang_header: Option<()>,
+    children: impl FnOnce() -> Chil + Send,
+) -> impl IntoView
+where
+    Chil: IntoView,
+{
+    let i18n = provide_i18n_context::<L>();
+    let lang = set_lang_attr
+        .unwrap_or(true)
+        .then(|| move || i18n.get_locale().as_str());
+    let dir = set_dir_attr
+        .unwrap_or(true)
+        .then(|| move || i18n.get_locale().direction().as_str());
+    view! {
+        {children()}
+        <Html attr:lang=lang attr:dir=dir />
     }
 }

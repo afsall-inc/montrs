@@ -1,191 +1,98 @@
 //! Invariant tests for montrs-i18n.
 
-use montrs_i18n::*;
-use std::collections::HashMap;
+use montrs_i18n::{prelude::*, *};
 
-#[test]
-fn test_locale_new_and_display() {
-    let locale = Locale::new("en", "English");
-    assert_eq!(locale.code, "en");
-    assert_eq!(locale.display_name, "English");
-    assert_eq!(locale.to_string(), "English (en)");
+// Generate the test locale module once.
+declare_locales! {
+    path: "locales",
+    default: "en",
+    locales: ["en", "fr", "ar"],
+    en: { hello: "Hello", bye: "Goodbye" },
+    fr: { hello: "Bonjour", bye: "Au revoir" },
+    ar: { hello: "As-salamu alaykum", bye: "Maa as-salaama" },
 }
 
 #[test]
-fn test_locale_ordering() {
-    let en = Locale::new("en", "English");
-    let fr = Locale::new("fr", "French");
-    assert!(en < fr);
+fn test_direction_display() {
+    assert_eq!(Direction::LeftToRight.as_str(), "ltr");
+    assert_eq!(Direction::RightToLeft.as_str(), "rtl");
+    assert_eq!(Direction::Auto.as_str(), "auto");
 }
 
 #[test]
-fn test_i18n_context_new() {
-    let translations: LocaleTranslations = HashMap::new();
-    let locales = vec![Locale::new("en", "English")];
-    let ctx = I18nContext::new(translations, "en", locales);
-    assert_eq!(ctx.locale_code, "en");
-    assert!(ctx.keys().is_empty());
+fn test_locale_enum() {
+    assert_eq!(i18n::Locale::en.as_str(), "en");
+    assert_eq!(i18n::Locale::fr.as_str(), "fr");
+    assert_eq!(i18n::Locale::ar.as_str(), "ar");
+    assert_eq!(i18n::Locale::ALL.len(), 3);
+    assert_eq!(i18n::Locale::default(), i18n::Locale::en);
 }
 
 #[test]
-fn test_i18n_context_set_locale() {
-    let translations: LocaleTranslations = HashMap::new();
-    let locales =
-        vec![Locale::new("en", "English"), Locale::new("fr", "French")];
-    let mut ctx = I18nContext::new(translations, "en", locales);
-    ctx.set_locale("fr").unwrap();
-    assert_eq!(ctx.locale_code, "fr");
+fn test_locale_parse() {
+    let parsed: i18n::Locale = "fr".parse().unwrap();
+    assert_eq!(parsed, i18n::Locale::fr);
+    assert!("xx".parse::<i18n::Locale>().is_err());
 }
 
 #[test]
-fn test_i18n_context_set_locale_invalid() {
-    let translations: LocaleTranslations = HashMap::new();
-    let locales = vec![Locale::new("en", "English")];
-    let mut ctx = I18nContext::new(translations, "en", locales);
-    assert!(ctx.set_locale("de").is_err());
+fn test_locale_direction() {
+    assert_eq!(i18n::Locale::en.direction(), Direction::LeftToRight);
 }
 
 #[test]
-fn test_interpolate_simple() {
-    let result = interpolate("Hello, {name}!", &[("name", "World")]);
-    assert_eq!(result, "Hello, World!");
+fn test_locale_get_all() {
+    let all = i18n::Locale::get_all();
+    assert_eq!(all.len(), 3);
 }
 
 #[test]
-fn test_interpolate_multiple() {
-    let template = "You have {count} {items}";
-    let result = interpolate(template, &[("count", "5"), ("items", "apples")]);
-    assert_eq!(result, "You have 5 apples");
+fn test_plural_module() {
+    assert_eq!(plural::get_plural_category(0), "zero");
+    assert_eq!(plural::get_plural_category(1), "one");
+    assert_eq!(plural::get_plural_category(5), "few");
+    assert_eq!(plural::get_plural_category(100), "other");
 }
 
 #[test]
-fn test_translate_with_vars() {
-    let mut en: TranslationMap = indexmap::IndexMap::new();
-    en.insert("greeting".to_string(), "Hello, {name}!".to_string());
-    let mut translations = HashMap::new();
-    translations.insert("en".to_string(), en);
-
-    let locales = vec![Locale::new("en", "English")];
-    let ctx = I18nContext::new(translations, "en", locales);
-
-    let result = ctx.t("greeting", &[("name", "Alice")]).unwrap();
-    assert_eq!(result, "Hello, Alice!");
+fn test_formatting() {
+    let n = formatting::number(42.5, "en");
+    assert!(n.contains("42"));
+    let l = formatting::list(&["a", "b", "c"], "en");
+    assert_eq!(l, "a, b, c");
 }
 
 #[test]
-fn test_translate_key_not_found() {
-    let translations: LocaleTranslations = HashMap::new();
-    let locales = vec![Locale::new("en", "English")];
-    let ctx = I18nContext::new(translations, "en", locales);
-
-    assert!(ctx.t("nonexistent", &[]).is_err());
+fn test_macro_helpers() {
+    use montrs_i18n::__private::*;
+    let w = LitWrapper::new("hello");
+    assert_eq!(w.inner(), "hello");
+    assert_eq!(format!("{}", w), "hello");
+    assert_eq!(get_key_component("foo.bar"), "foo.bar");
 }
 
 #[test]
-fn test_translate_fallback_to_default() {
-    let mut en: TranslationMap = indexmap::IndexMap::new();
-    en.insert("hello".to_string(), "Hello!".to_string());
-    let mut translations = HashMap::new();
-    translations.insert("en".to_string(), en);
-
-    let locales =
-        vec![Locale::new("en", "English"), Locale::new("fr", "French")];
-    let mut ctx = I18nContext::new(translations, "en", locales);
-    ctx.set_locale("fr").unwrap();
-
-    // Falls back to default locale (en) since fr has no translations.
-    let result = ctx.t("hello", &[]).unwrap();
-    assert_eq!(result, "Hello!");
+fn test_scoped_locale() {
+    let s = i18n::ScopedLocale::new(i18n::Locale::en);
+    assert_eq!(s.inner(), i18n::Locale::en);
+    assert_eq!(s.as_str(), "en");
+    let s2: i18n::ScopedLocale<i18n::Locale> =
+        ScopedLocale::new(i18n::Locale::fr);
+    assert_eq!(s2.as_str(), "fr");
 }
 
 #[test]
-fn test_pluralize() {
-    let mut en: TranslationMap = indexmap::IndexMap::new();
-    en.insert("items.one".to_string(), "{count} item".to_string());
-    en.insert("items.other".to_string(), "{count} items".to_string());
-    let mut translations = HashMap::new();
-    translations.insert("en".to_string(), en);
-
-    let locales = vec![Locale::new("en", "English")];
-    let ctx = I18nContext::new(translations, "en", locales);
-
-    let result = ctx.t_plural("items", 1, &[]).unwrap();
-    assert_eq!(result, "1 item");
-    let result = ctx.t_plural("items", 5, &[]).unwrap();
-    assert_eq!(result, "5 items");
+fn test_translation_unit_id() {
+    use montrs_i18n::locale_traits::TranslationUnitId;
+    assert!(().to_str().is_none());
 }
 
 #[test]
-fn test_locales_from_codes() {
-    let locales =
-        Locales::from_codes(&["en", "fr"], &["English", "French"], "en");
-    assert_eq!(locales.default.code, "en");
-    assert_eq!(locales.available.len(), 2);
-}
-
-#[test]
-fn test_locales_from_accept_language() {
-    let locales = Locales::from_codes(
-        &["en", "fr", "ar"],
-        &["English", "French", "Arabic"],
-        "en",
-    );
-    let detected = locales.from_accept_language("fr-FR,fr;q=0.9,en;q=0.8");
-    assert_eq!(detected.code, "fr");
-}
-
-#[test]
-fn test_locales_from_url_path() {
-    let locales =
-        Locales::from_codes(&["en", "fr"], &["English", "French"], "en");
-    let detected = locales.from_url_path("/fr/about/page");
-    assert_eq!(detected.code, "fr");
-}
-
-#[test]
-fn test_resolve_locale_from_request_cookie() {
-    let mut headers = HashMap::new();
-    headers.insert("cookie".to_string(), "locale=fr; session=abc".to_string());
-    let result =
-        resolve_locale_from_request(&headers, "locale", &["en", "fr"], "en");
-    assert_eq!(result, "fr");
-}
-
-#[test]
-fn test_scoped_context() {
-    let mut en: TranslationMap = indexmap::IndexMap::new();
-    en.insert("auth.login".to_string(), "Sign in".to_string());
-    en.insert("auth.logout".to_string(), "Sign out".to_string());
-    let mut translations = HashMap::new();
-    translations.insert("en".to_string(), en);
-
-    let locales = vec![Locale::new("en", "English")];
-    let ctx = I18nContext::new(translations, "en", locales);
-    let scoped = ScopedContext::new(ctx, "auth");
-
-    let result = scoped.t("login", &[]).unwrap();
-    assert_eq!(result, "Sign in");
-}
-
-#[test]
-fn test_from_dir() {
-    let dir = tempfile::tempdir().unwrap();
-    let en_file = dir.path().join("en.json");
-    std::fs::write(&en_file, r#"{"hello": "Hello!", "bye": "Goodbye!"}"#)
-        .unwrap();
-
-    let ctx = I18nContext::from_dir(dir.path(), "en", &["en"], "json").unwrap();
-    assert_eq!(ctx.t("hello", &[]).unwrap(), "Hello!");
-    assert_eq!(ctx.t("bye", &[]).unwrap(), "Goodbye!");
-    assert_eq!(ctx.keys().len(), 2);
-}
-
-#[test]
-fn test_error_display() {
-    let err = I18nError::LocaleNotFound("xx".to_string());
-    assert!(err.to_string().contains("xx"));
-    let err = I18nError::KeyNotFound("key".to_string());
-    assert!(err.to_string().contains("key"));
-    let err = I18nError::MissingVar("var".to_string());
-    assert!(err.to_string().contains("var"));
+fn test_locale_impls() {
+    let loc = i18n::Locale::en;
+    assert_eq!(loc.as_ref() as &str, "en");
+    assert_eq!(loc.to_string(), "en");
+    assert_eq!(serde_json::to_string(&loc).unwrap(), "\"en\"");
+    let deser: i18n::Locale = serde_json::from_str("\"fr\"").unwrap();
+    assert_eq!(deser, i18n::Locale::fr);
 }
