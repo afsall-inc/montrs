@@ -5050,6 +5050,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-deps"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hex",
+ "montrs-metadata",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml 0.9.12+spec-1.1.0",
+ "walkdir",
+]
+
+[[package]]
 name = "montrs-desktop"
 version = "0.1.0"
 dependencies = [

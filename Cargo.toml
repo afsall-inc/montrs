@@ -10,6 +10,7 @@ members = [
     "packages/lockfile",
     "packages/tool",
     "packages/shell",
+    "packages/deps",
     "packages/tui",
     "packages/haptics",
     "packages/bench",
