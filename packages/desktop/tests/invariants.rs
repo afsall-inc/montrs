@@ -16,7 +16,7 @@ fn test_desktop_adapter_construct() {
 
 #[test]
 fn test_desktop_adapter_default() {
-    let adapter = DesktopAdapter::default();
+    let adapter: DesktopAdapter = Default::default();
     assert_eq!(adapter.target(), Target::Desktop);
 }
 
