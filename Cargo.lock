@@ -5329,6 +5329,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-runtime"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "dashmap",
+ "futures",
+ "hex",
+ "once_cell",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "montrs-shell"
 version = "0.1.0"
 dependencies = [

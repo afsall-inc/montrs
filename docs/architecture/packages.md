@@ -112,6 +112,12 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Layer 3. Pure Rust ANSI terminal output — no external dependencies like ncurses.
 - **When to modify**: When adding new widgets, rendering features, or event types.
 
+## 📦 `montrs-runtime`
+- **Responsibility**: General-purpose Rust runtime — ops, extensions, resource table, event loop, memory primitives.
+- **Key Components**: `MontrsRuntime`, `RuntimeExtension`, `OpDecl`, `OpState`, `ResourceTable`, `EventLoop`, `ModuleLoader`, `Arena`, `TaggedValue`.
+- **Boundary**: Layer 0. Pure Rust runtime with no JS/V8. Extensions add ops and state. No application logic.
+- **When to modify**: When adding new runtime features, extension types, or memory optimization primitives.
+
 ---
 
 ## How Packages Interact
@@ -126,7 +132,7 @@ Packages are organized into layers. A package at layer N may depend on packages 
 
 | Layer | Packages | Rules |
 |---|---|---|
-| **0 (Core)** | `core`, `validator`, `platform` | No montrs-* deps (except platform → core re-export) |
+| **0 (Core)** | `core`, `validator`, `platform`, `runtime` | No montrs-* deps (except platform → core re-export) |
 | **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner`, `env`, `sigstore`, `registry`, `plugin` | Only core/validator/platform |
 | **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve` | Only layers 0-1 |
 | **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs`, `tui` | Any layer |

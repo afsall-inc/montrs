@@ -12,6 +12,7 @@ members = [
     "packages/shell",
     "packages/deps",
     "packages/i18n",
+    "packages/runtime",
     "packages/tui",
     "packages/haptics",
     "packages/bench",
