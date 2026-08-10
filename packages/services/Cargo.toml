@@ -1,0 +1,35 @@
+[package]
+name = "montrs-services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS service supervisor — background process management"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-metadata", "montrs-build-watch"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = "1.0"
+toml = "0.9"
+thiserror = "2"
+anyhow.workspace = true
+tokio = { workspace = true, features = ["full"] }
+async-trait.workspace = true
+indexmap = { version = "2", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.10"
+cron = "0.17"
+dirs = "5"
+parking_lot = "0.12"
+montrs-metadata = { path = "../metadata" }
+
+[features]
+default = ["ipc"]
+ipc = ["tokio/net"]
+
+[dev-dependencies]
+tempfile = "3"
