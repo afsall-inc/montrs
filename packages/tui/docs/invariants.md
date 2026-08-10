@@ -4,7 +4,7 @@
 Provide a terminal UI library for MontRS: buffer management, rendering, event handling, and composable widgets.
 
 ## 2. Invariants
-- **No backend dependency**: Pure Rust ANSI output — no ncurses, termion, crossterm.
+- **Pure Rust ANSI output**: Terminal output is rendered directly to stdout.
 - **Diff-based rendering**: Only changed cells are written to the terminal.
 - **Event thread**: Input events are read on a background thread and sent via channels.
 - **PlatformAdapter**: `TuiAdapter` implements `PlatformAdapter` for `Target::Tui`.

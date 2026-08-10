@@ -1,7 +1,7 @@
 # montrs-motion Invariants
 
 ## What It Enforces
-- All animation primitives are pure Rust — no JS dependencies
+- All animation primitives are pure Rust
 - Spring physics uses Newton's method for accurate duration-based springs
 - Easing functions match standard CSS easing curves exactly
 - `MotionValue` is a reactive wrapper around Leptos signals with velocity tracking

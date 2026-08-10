@@ -8,7 +8,7 @@ Provide a general-purpose Rust runtime: ops, extensions, resource table, event l
 - **Extension-driven**: All functionality is added via `RuntimeExtension` — the core has no built-in ops.
 - **Typed resources**: `ResourceTable` stores `Box<dyn Resource>` keyed by `ResourceId`.
 - **Tokio event loop**: All async tasks run on tokio's runtime.
-- **Memory primitives only**: `Arena` (bump allocation), `TaggedValue` (NaN-boxed u64), `BitField` (packed fields). No garbage collector.
+- **Memory primitives**: `Arena` (bump allocation), `TaggedValue` (NaN-boxed u64), `BitField` (packed fields).
 
 ## 3. Boundary
 - **In-Scope**: Runtime struct, extensions, ops, resources, event loop, module loader, memory primitives.
