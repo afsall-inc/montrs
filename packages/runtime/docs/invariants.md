@@ -4,7 +4,6 @@
 Provide a general-purpose Rust runtime: ops, extensions, resource table, event loop, module loading, and memory primitives.
 
 ## 2. Invariants
-- **No JS/V8**: This is a pure Rust runtime. No JavaScript engine, no Node.js.
 - **TypeMap-based OpState**: Extension state is stored in a `TypeMap` (one value per type).
 - **Extension-driven**: All functionality is added via `RuntimeExtension` — the core has no built-in ops.
 - **Typed resources**: `ResourceTable` stores `Box<dyn Resource>` keyed by `ResourceId`.

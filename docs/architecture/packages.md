@@ -115,7 +115,7 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 ## 📦 `montrs-runtime`
 - **Responsibility**: General-purpose Rust runtime — ops, extensions, resource table, event loop, memory primitives.
 - **Key Components**: `MontrsRuntime`, `RuntimeExtension`, `OpDecl`, `OpState`, `ResourceTable`, `EventLoop`, `ModuleLoader`, `Arena`, `TaggedValue`.
-- **Boundary**: Layer 0. Pure Rust runtime with no JS/V8. Extensions add ops and state. No application logic.
+- **Boundary**: Layer 0. Extensions add ops and state. No application logic.
 - **When to modify**: When adding new runtime features, extension types, or memory optimization primitives.
 
 ---
