@@ -11,6 +11,7 @@ pub mod mcp;
 pub mod new;
 pub mod run;
 pub mod serve;
+pub mod services;
 pub mod shell;
 pub mod sketch;
 pub mod spec;

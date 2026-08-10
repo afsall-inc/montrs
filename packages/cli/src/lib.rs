@@ -218,6 +218,48 @@ pub enum Commands {
     },
     /// Rebuild all tool shims.
     Reshim,
+    /// Manage services (daemons) defined in montrs.toml.
+    Services {
+        #[command(subcommand)]
+        subcommand: ServicesSubcommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ServicesSubcommand {
+    /// List all services and their status.
+    List,
+    /// Start a service (or all with --all).
+    Start {
+        /// Service name (or "all").
+        name: Option<String>,
+        /// Start all services.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Stop a service (or all with --all).
+    Stop {
+        /// Service name (or "all").
+        name: Option<String>,
+        /// Stop all services.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Restart a service.
+    Restart {
+        /// Service name.
+        name: String,
+    },
+    /// Show the status of a service (or all if no name).
+    Status {
+        /// Service name (optional).
+        name: Option<String>,
+    },
+    /// View service logs.
+    Logs {
+        /// Service name (optional — shows all if not specified).
+        name: Option<String>,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -612,6 +654,36 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             command::shell::deactivate(&shell).await
         }
         Commands::Reshim => command::shell::reshim().await,
+        Commands::Services { subcommand } => match subcommand {
+            ServicesSubcommand::List => command::services::list().await,
+            ServicesSubcommand::Start { name, all } => {
+                if all || name.as_deref() == Some("all") {
+                    command::services::start_all().await
+                } else if let Some(name) = name {
+                    command::services::start(&name).await
+                } else {
+                    anyhow::bail!("Specify a service name or --all");
+                }
+            }
+            ServicesSubcommand::Stop { name, all } => {
+                if all || name.as_deref() == Some("all") {
+                    command::services::stop_all().await
+                } else if let Some(name) = name {
+                    command::services::stop(&name).await
+                } else {
+                    anyhow::bail!("Specify a service name or --all");
+                }
+            }
+            ServicesSubcommand::Restart { name } => {
+                command::services::restart(&name).await
+            }
+            ServicesSubcommand::Status { name } => {
+                command::services::status(name.as_deref()).await
+            }
+            ServicesSubcommand::Logs { name } => {
+                command::services::logs(name.as_deref()).await
+            }
+        },
     }
 }
 

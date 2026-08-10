@@ -1,115 +1,136 @@
-//! ServiceId — a qualified identifier for a service (namespace/name).
+//! Service identifier — namespace/name with safe-path encoding.
 
+use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
-/// A service identifier: `namespace/name` or just `name`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+/// A unique identifier for a service, with optional namespace.
+///
+/// Format: `name` or `namespace/name`.
+/// The name is encoded into a safe filesystem path.
+#[derive(Debug, Clone, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ServiceId {
-    pub namespace: String,
+    /// Optional namespace (e.g., "project", "system").
+    pub namespace: Option<String>,
+    /// Service name.
     pub name: String,
 }
 
 impl ServiceId {
-    pub fn new(namespace: &str, name: &str) -> Self {
-        Self { namespace: namespace.to_string(), name: name.to_string() }
-    }
-
-    /// Parse from a string: `namespace/name` or just `name`.
-    pub fn parse(s: &str) -> Self {
-        if let Some((ns, n)) = s.split_once('/') {
-            Self::new(ns, n)
-        } else {
-            Self::new("default", s)
+    /// Create a new ServiceId from a namespace and name.
+    pub fn new(namespace: Option<impl Into<String>>, name: impl Into<String>) -> Self {
+        Self {
+            namespace: namespace.map(|n| n.into()),
+            name: name.into(),
         }
     }
 
-    /// Full identifier string: `namespace/name`.
-    pub fn full(&self) -> String {
-        format!("{}/{}", self.namespace, self.name)
+    /// Create a ServiceId from just a name (no namespace).
+    pub fn from_name(name: impl Into<String>) -> Self {
+        Self {
+            namespace: None,
+            name: name.into(),
+        }
     }
 
-    /// Safe path encoding for filesystem paths.
-    pub fn safe_path(&self) -> PathBuf {
-        Path::new(&self.namespace).join(&self.name)
+    /// Return the safe-path-encoded form of this ID.
+    /// Used for log files, state files, and socket paths.
+    pub fn encoded(&self) -> String {
+        match &self.namespace {
+            Some(ns) => format!("{}/{}", sanitize(ns), sanitize(&self.name)),
+            None => sanitize(&self.name),
+        }
     }
 
-    /// Display name for CLI output.
-    pub fn display(&self) -> &str {
-        &self.name
+    /// Return the display name: `namespace/name` or `name`.
+    pub fn display_name(&self) -> String {
+        match &self.namespace {
+            Some(ns) => format!("{ns}/{}", self.name),
+            None => self.name.clone(),
+        }
+    }
+
+    /// Return this ID as a filesystem-safe path component.
+    pub fn to_path_component(&self) -> String {
+        self.encoded().replace('/', "_")
     }
 }
 
 impl fmt::Display for ServiceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}/{}", self.namespace, self.name)
+        write!(f, "{}", self.display_name())
     }
 }
 
-impl From<&str> for ServiceId {
-    fn from(s: &str) -> Self { Self::parse(s) }
+impl FromStr for ServiceId {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.is_empty() {
+            return Err("service ID cannot be empty".to_string());
+        }
+        if let Some((ns, name)) = s.split_once('/') {
+            if ns.is_empty() || name.is_empty() {
+                return Err("namespace and name must not be empty".to_string());
+            }
+            Ok(Self {
+                namespace: Some(ns.to_string()),
+                name: name.to_string(),
+            })
+        } else {
+            Ok(Self {
+                namespace: None,
+                name: s.to_string(),
+            })
+        }
+    }
 }
 
-// ---------------------------------------------------------------------------
-// Service state
-// ---------------------------------------------------------------------------
-
-/// The current state of a service.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ServiceState {
-    Stopped,
-    Starting,
-    Running,
-    Stopping,
-    Failed,
-    Cron,
+fn sanitize(s: &str) -> String {
+    s.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
 }
 
-impl Default for ServiceState {
-    fn default() -> Self { Self::Stopped }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-/// Service status information.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct ServiceStatus {
-    pub id: ServiceId,
-    pub state: ServiceState,
-    pub pid: Option<u32>,
-    pub uptime_ms: Option<u64>,
-    pub port: Option<u16>,
-    pub restart_count: u32,
-    pub memory_kb: Option<u64>,
-    pub cpu_percent: Option<f64>,
-    pub started_at: Option<String>,
-    pub error: Option<String>,
-}
+    #[test]
+    fn test_parse() {
+        let id: ServiceId = "redis".parse().unwrap();
+        assert_eq!(id.name, "redis");
+        assert!(id.namespace.is_none());
 
-/// A running service instance.
-#[derive(Debug, Clone)]
-pub struct Service {
-    pub id: ServiceId,
-    pub command: String,
-    pub args: Vec<String>,
-    pub dir: Option<PathBuf>,
-    pub env: std::collections::HashMap<String, String>,
-    pub auto: bool,
-    pub retry: super::config_types::Retry,
-    pub stop_config: super::config_types::StopConfig,
-    pub ready_http: Option<super::config_types::ReadyHttp>,
-    pub ready_port: Option<super::config_types::ReadyPort>,
-    pub ready_output: Option<super::config_types::ReadyOutput>,
-    pub ready_cmd: Option<super::config_types::ReadyCmd>,
-    pub hooks: super::config_types::Hooks,
-    pub cron: Option<super::config_types::CronConfig>,
-    pub watch_paths: Vec<PathBuf>,
-    pub pty: bool,
-    pub resource_limits: ResourceLimits,
-}
+        let id: ServiceId = "project/api".parse().unwrap();
+        assert_eq!(id.namespace, Some("project".into()));
+        assert_eq!(id.name, "api");
+    }
 
-/// Resource limits for a service.
-#[derive(Debug, Clone, Default)]
-pub struct ResourceLimits {
-    pub cpu: Option<super::config_types::CpuLimit>,
-    pub memory: Option<super::config_types::MemoryLimit>,
+    #[test]
+    fn test_encoded() {
+        let id = ServiceId::new(Some("my-project"), "web-api");
+        assert_eq!(id.encoded(), "my-project/web-api");
+    }
+
+    #[test]
+    fn test_display() {
+        let id = ServiceId::from_name("redis");
+        assert_eq!(id.to_string(), "redis");
+
+        let id = ServiceId::new(Some("dev"), "api");
+        assert_eq!(id.to_string(), "dev/api");
+    }
+
+    #[test]
+    fn test_path_component() {
+        let id = ServiceId::new(Some("ns"), "svc");
+        assert_eq!(id.to_path_component(), "ns_svc");
+    }
 }
