@@ -6,7 +6,6 @@
 use crate::config::ServiceConfig;
 use crate::hooks::{HookRunner, LifecycleEvent};
 use crate::ready;
-use crate::retry::RetryState;
 use crate::service::{Service, ServiceStatus};
 use crate::service_id::ServiceId;
 use crate::state::StateFile;
@@ -30,6 +29,7 @@ struct SupervisorInner {
     services: HashMap<ServiceId, Service>,
     state_file: StateFile,
     configs: HashMap<ServiceId, ServiceConfig>,
+    #[allow(dead_code)]
     data_dir: PathBuf,
 }
 
@@ -128,7 +128,7 @@ impl Supervisor {
         // Start dependencies first (non-recursive to avoid Send issues).
         for dep in &config.depends {
             let dep_id = ServiceId::from_name(dep.clone());
-            let mut inner = self.inner.write().await;
+            let inner = self.inner.write().await;
             if let Some(dep_svc) = inner.services.get(&dep_id) {
                 if !dep_svc.status.is_active() {
                     drop(inner);
@@ -161,7 +161,7 @@ impl Supervisor {
             command.env(k, v);
         }
 
-        let mut child = command
+        let child = command
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()?;

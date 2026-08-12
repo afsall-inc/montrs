@@ -13,7 +13,6 @@ members = [
     "packages/deps",
     "packages/i18n",
     "packages/runtime",
-    "packages/services",
     "packages/tui",
     "packages/haptics",
     "packages/bench",
@@ -40,6 +39,10 @@ members = [
     "packages/renderer",
     "packages/desktop",
     "packages/mobile",
+    "packages/services",
+    "packages/log",
+    "packages/proxy",
+    "packages/auth",
     "apps/website",
 ]
 

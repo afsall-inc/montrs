@@ -58,12 +58,28 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `prdoc` | PR doc parser/generator/changelog. |
 | `agentignore` | `.agentignore` patterns + IDE export. |
 | `runner` | Custom task runner config. |
+| `metadata` | `montrs.toml` single source of truth (all sections incl. services/proxy). |
 | `haptics` | Cross-platform haptic feedback. |
 | `utils` | Generic pure functions. |
 | `build` | Build pipeline facade (re-exports sub-packages). |
 | `build-core` | BuildPipeline trait + BuildConfig. |
 | `build-watch` | File watcher with debounced rebuild (notify). |
 | `build-serve` | Dev server (axum static file serving). |
+| `env` | Environment variable parsing + `.env` loading + Tera templates. |
+| `tool` | Tool version manager (5 backends: core, cargo, github, http, ubi). |
+| `registry` | Tool registry (baked + floating). |
+| `lockfile` | Deterministic tool version locking. |
+| `plugin` | Tool plugin system (asdf/vfox-compatible). |
+| `sigstore` | GitHub attestation, cosign, SLSA verification. |
+| `deps` | Dependency freshness checking. |
+| `shell` | Shell integration (bash/zsh/fish/pwsh) + shims. |
+| `runtime` | Native Rust runtime (Deno-inspired ops, memory-optimized). |
+| `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
+| `i18n` | Internationalization with macros, plurals, formatting, scoping. |
+| `services` | Service supervisor (daemon management, ready checks, retry, hooks, cron). |
+| `log` | Structured log store with retention, streaming, rotate. |
+| `proxy` | Reverse proxy routing `<slug>.localhost` to ports. |
+| `auth` | Authentication system (email/password, OAuth, 2FA, sessions, RBAC). |
 
 Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `packages/core/src/lib.rs`.
 

@@ -145,6 +145,14 @@
       }
     },
     {
+      "description": "Capability provided by package runtime. MUST follow invariants defined in agent.json under packages['runtime'].invariants",
+      "name": "montrs_pkg_runtime",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package ui. MUST follow invariants defined in agent.json under packages['ui'].invariants",
       "name": "montrs_pkg_ui",
       "parameters": {
@@ -153,8 +161,24 @@
       }
     },
     {
+      "description": "Capability provided by package log. MUST follow invariants defined in agent.json under packages['log'].invariants",
+      "name": "montrs_pkg_log",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package motion. MUST follow invariants defined in agent.json under packages['motion'].invariants",
       "name": "montrs_pkg_motion",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package shell. MUST follow invariants defined in agent.json under packages['shell'].invariants",
+      "name": "montrs_pkg_shell",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -193,6 +217,14 @@
       }
     },
     {
+      "description": "Capability provided by package deps. MUST follow invariants defined in agent.json under packages['deps'].invariants",
+      "name": "montrs_pkg_deps",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package haptics. MUST follow invariants defined in agent.json under packages['haptics'].invariants",
       "name": "montrs_pkg_haptics",
       "parameters": {
@@ -225,6 +257,14 @@
       }
     },
     {
+      "description": "Capability provided by package services. MUST follow invariants defined in agent.json under packages['services'].invariants",
+      "name": "montrs_pkg_services",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package tool. MUST follow invariants defined in agent.json under packages['tool'].invariants",
       "name": "montrs_pkg_tool",
       "parameters": {
@@ -235,6 +275,14 @@
     {
       "description": "Capability provided by package desktop. MUST follow invariants defined in agent.json under packages['desktop'].invariants",
       "name": "montrs_pkg_desktop",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package proxy. MUST follow invariants defined in agent.json under packages['proxy'].invariants",
+      "name": "montrs_pkg_proxy",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -257,8 +305,24 @@
       }
     },
     {
+      "description": "Capability provided by package i18n. MUST follow invariants defined in agent.json under packages['i18n'].invariants",
+      "name": "montrs_pkg_i18n",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package runner. MUST follow invariants defined in agent.json under packages['runner'].invariants",
       "name": "montrs_pkg_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package auth. MUST follow invariants defined in agent.json under packages['auth'].invariants",
+      "name": "montrs_pkg_auth",
       "parameters": {
         "properties": {},
         "type": "object"
