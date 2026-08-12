@@ -3,6 +3,7 @@
 //! Inspired by Deno's `deno_core::ResourceTable`. Each resource is identified
 //! by a `ResourceId` and can be any type implementing `Resource`.
 
+use crate::error::RuntimeError;
 use std::{
     any::Any,
     collections::HashMap,
@@ -15,7 +16,10 @@ pub type ResourceId = u32;
 /// Trait for resources stored in the resource table.
 pub trait Resource: Any + Send + Sync {
     fn name(&self) -> &str;
-    fn close(&self) {}
+    /// Close the resource. Return an error if closing fails (B12 fix).
+    fn close(&self) -> Result<(), RuntimeError> {
+        Ok(())
+    }
 }
 
 /// The global resource table — stores typed handles on behalf of extensions.
@@ -58,10 +62,7 @@ impl ResourceTable {
     }
 
     /// Get a resource downcasted to a specific type (mutable).
-    pub fn get_typed_mut<T: Resource>(
-        &mut self,
-        id: ResourceId,
-    ) -> Option<&mut T> {
+    pub fn get_typed_mut<T: Resource>(&mut self, id: ResourceId) -> Option<&mut T> {
         self.resources
             .get_mut(&id)
             .and_then(|r| r.as_mut_any().downcast_mut::<T>())
@@ -72,11 +73,12 @@ impl ResourceTable {
         self.resources.remove(&id)
     }
 
-    /// Close a resource (removes and calls close handler).
-    pub fn close(&mut self, id: ResourceId) {
+    /// Close a resource (removes and calls close handler). Errors propagate (B12 fix).
+    pub fn close(&mut self, id: ResourceId) -> Result<(), RuntimeError> {
         if let Some(resource) = self.resources.remove(&id) {
-            resource.close();
+            resource.close()?;
         }
+        Ok(())
     }
 
     pub fn len(&self) -> usize {

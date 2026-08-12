@@ -1,12 +1,14 @@
 //! Invariant tests for montrs-runtime.
 
-use montrs_runtime::{prelude::*, *};
+use montrs_runtime::error::{RuntimeError, RuntimeErrorKind};
+use montrs_runtime::prelude::*;
+use montrs_runtime::*;
 
 #[test]
 fn test_arena_alloc() {
     let arena = Arena::new(1024);
     let (_ptr, size) = arena.alloc(100).expect("alloc");
-    assert_eq!(size, 104); // aligned to 8
+    assert_eq!(size, 104);
     assert!(arena.used() >= 104);
     assert!(arena.remaining() < 1024);
 }
@@ -23,8 +25,18 @@ fn test_arena_reset() {
 #[test]
 fn test_arena_overflow() {
     let arena = Arena::new(64);
-    // Allocate more than the arena size.
     assert!(arena.alloc(100).is_none());
+}
+
+#[test]
+fn test_arena_overflow_does_not_corrupt() {
+    // B9 fix: overflow should not advance the cursor.
+    let arena = Arena::new(64);
+    // Request more than capacity (aligned size > 64).
+    assert!(arena.alloc(65).is_none());
+    assert_eq!(arena.used(), 0);
+    assert!(arena.alloc(32).is_some());
+    assert_eq!(arena.used(), 32);
 }
 
 #[test]
@@ -39,6 +51,16 @@ fn test_tagged_value_float() {
     let v = TaggedValue::from_float(3.14);
     assert!(v.is_float());
     assert!((v.as_float().unwrap() - 3.14).abs() < 1e-9);
+}
+
+#[test]
+fn test_tagged_value_nan() {
+    // B10 fix: NaN should be recognized as float, not int/bool.
+    let v = TaggedValue::from_float(f64::NAN);
+    assert!(v.is_float());
+    assert!(v.as_float().unwrap().is_nan());
+    assert!(!v.is_int());
+    assert!(!v.is_bool());
 }
 
 #[test]
@@ -94,8 +116,26 @@ fn test_resource_table() {
     assert_eq!(table.len(), 1);
     let res = table.get(id).expect("resource");
     assert_eq!(res.name(), "my_resource");
-    table.close(id);
+    table.close(id).unwrap();
     assert_eq!(table.len(), 0);
+}
+
+#[test]
+fn test_resource_close_result() {
+    // B12 fix: close() returns Result, not void.
+    use montrs_runtime::resource_table::Resource;
+    struct Closeable;
+    impl Resource for Closeable {
+        fn name(&self) -> &str {
+            "closeable"
+        }
+        fn close(&self) -> Result<(), RuntimeError> {
+            Ok(())
+        }
+    }
+    let mut table = ResourceTable::new();
+    let id = table.add(Box::new(Closeable));
+    assert!(table.close(id).is_ok());
 }
 
 #[test]
@@ -124,9 +164,24 @@ fn test_op_decl_sync_with_input() {
 }
 
 #[test]
-fn test_op_error_display() {
-    let err = OpError("boom".to_string());
-    assert!(err.to_string().contains("boom"));
+fn test_op_id_uniqueness() {
+    // B1 fix: all constructors share a single global counter.
+    let op1 = OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
+    let op2 = OpDecl::new_async("b", |_s: &mut OpState| {
+        Box::pin(async { Ok(serde_json::json!({})) })
+    });
+    let op3 = OpDecl::new_sync_with_input("c", |_s: &mut OpState, _i: serde_json::Value| {
+        Ok(serde_json::json!({}))
+    });
+    let op4 = OpDecl::new_async_with_input("d", |_s: &mut OpState, _i: serde_json::Value| {
+        Box::pin(async { Ok(serde_json::json!({})) })
+    });
+    let mut ids = std::collections::HashSet::new();
+    assert!(ids.insert(op1.id));
+    assert!(ids.insert(op2.id));
+    assert!(ids.insert(op3.id));
+    assert!(ids.insert(op4.id));
+    assert_eq!(ids.len(), 4);
 }
 
 #[test]
@@ -148,11 +203,24 @@ fn test_extension_set_resolve() {
     let mut set = ExtensionSet::new();
     set.add(ext_a);
     set.add(ext_b);
-    let resolved = set.resolve();
+    let resolved = set.resolve().unwrap();
     assert_eq!(resolved.len(), 2);
-    // "a" must come before "b".
     assert_eq!(resolved[0].name, "a");
     assert_eq!(resolved[1].name, "b");
+}
+
+#[test]
+fn test_extension_cycle_detection() {
+    // B3 fix: detect cycles.
+    let ext_a = RuntimeExtension::builder("a").deps(&["b"]).build();
+    let ext_b = RuntimeExtension::builder("b").deps(&["a"]).build();
+    let mut set = ExtensionSet::new();
+    set.add(ext_a);
+    set.add(ext_b);
+    let result = set.resolve();
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), RuntimeErrorKind::ExtensionCycle);
 }
 
 #[test]
@@ -164,13 +232,65 @@ fn test_extension_set_ops() {
         .build();
     let mut set = ExtensionSet::new();
     set.add(ext);
-    assert_eq!(set.get_all_ops().len(), 1);
+    assert_eq!(set.get_all_ops().unwrap().len(), 1);
+}
+
+#[test]
+fn test_extension_set_ops_in_dep_order() {
+    // B2 fix: ops from extensions should be retrievable in resolve order.
+    let ext_a = RuntimeExtension::builder("a")
+        .ops(vec![OpDecl::new_sync("a.op", |_s: &mut OpState| {
+            Ok(serde_json::json!({}))
+        })])
+        .build();
+    let ext_b = RuntimeExtension::builder("b")
+        .deps(&["a"])
+        .ops(vec![OpDecl::new_sync("b.op", |_s: &mut OpState| {
+            Ok(serde_json::json!({}))
+        })])
+        .build();
+    let mut set = ExtensionSet::new();
+    set.add(ext_b);
+    set.add(ext_a);
+    let ops = set.get_all_ops().unwrap();
+    assert_eq!(ops[0].name, "a.op");
+    assert_eq!(ops[1].name, "b.op");
+}
+
+#[test]
+fn test_extension_set_lifecycle_order() {
+    // B2 fix: lifecycle hooks run in dependency order.
+    let init_order = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let ext_a = RuntimeExtension::builder("a")
+        .init_state({
+            let order = init_order.clone();
+            move |_state: &mut OpState| {
+                order.lock().unwrap().push("a_init");
+            }
+        })
+        .build();
+    let ext_b = RuntimeExtension::builder("b")
+        .deps(&["a"])
+        .init_state({
+            let order = init_order.clone();
+            move |_state: &mut OpState| {
+                order.lock().unwrap().push("b_init");
+            }
+        })
+        .build();
+    let mut set = ExtensionSet::new();
+    set.add(ext_b);
+    set.add(ext_a);
+    let mut state = OpState::new();
+    set.init_all_states(&mut state).unwrap();
+    let order = init_order.lock().unwrap().clone();
+    assert_eq!(order, vec!["a_init", "b_init"]);
 }
 
 #[test]
 fn test_runtime_new() {
-    let mut rt = MontrsRuntime::new(RuntimeOptions::default());
-    rt.init();
+    let mut rt = MontrsRuntime::new(RuntimeOptions::default()).unwrap();
+    rt.init().unwrap();
     assert!(rt.is_initialized());
     assert_eq!(rt.op_count(), 0);
 }
@@ -181,8 +301,9 @@ fn test_runtime_with_extension() {
     let mut rt = MontrsRuntime::new(RuntimeOptions {
         extensions: vec![montrs],
         ..Default::default()
-    });
-    rt.init();
+    })
+    .unwrap();
+    rt.init().unwrap();
     let result = rt.op_sync("montrs.ping", None).unwrap();
     assert_eq!(result["ok"], true);
     assert!(rt.op_count() >= 3);
@@ -190,7 +311,7 @@ fn test_runtime_with_extension() {
 
 #[test]
 fn test_runtime_register_op() {
-    let mut rt = MontrsRuntime::new(RuntimeOptions::default());
+    let mut rt = MontrsRuntime::new(RuntimeOptions::default()).unwrap();
     rt.register_op(OpDecl::new_sync("custom", |_s: &mut OpState| {
         Ok(serde_json::json!({"custom":true}))
     }));
@@ -200,16 +321,78 @@ fn test_runtime_register_op() {
 
 #[test]
 fn test_runtime_op_not_found() {
-    let mut rt = MontrsRuntime::new(RuntimeOptions::default());
+    let mut rt = MontrsRuntime::new(RuntimeOptions::default()).unwrap();
     let result = rt.op_sync("nonexistent", None);
     assert!(result.is_err());
+    assert_eq!(result.unwrap_err().kind(), RuntimeErrorKind::OpNotFound);
 }
 
 #[test]
 fn test_runtime_shutdown() {
-    let mut rt = MontrsRuntime::new(RuntimeOptions::default());
-    rt.init();
+    let mut rt = MontrsRuntime::new(RuntimeOptions::default()).unwrap();
+    rt.init().unwrap();
     assert!(rt.is_initialized());
-    rt.shutdown();
+    rt.shutdown().unwrap();
     assert!(!rt.is_initialized());
+}
+
+#[test]
+fn test_extension_count() {
+    // B7 fix: extension_count() returns extension count, not op count.
+    let ext = RuntimeExtension::builder("test")
+        .ops(vec![OpDecl::new_sync("t.op", |_s: &mut OpState| {
+            Ok(serde_json::json!({}))
+        })])
+        .build();
+    let rt = MontrsRuntime::new(RuntimeOptions {
+        extensions: vec![ext],
+        ..Default::default()
+    })
+    .unwrap();
+    assert_eq!(rt.extension_count(), 1);
+    assert_eq!(rt.op_count(), 1);
+}
+
+#[test]
+fn test_runtime_error_codes() {
+    let err = RuntimeError::op_not_found("test");
+    assert_eq!(err.code(), "op_not_found");
+    let err = RuntimeError::resource("broken");
+    assert_eq!(err.code(), "resource");
+    let err = RuntimeError::out_of_memory();
+    assert_eq!(err.code(), "out_of_memory");
+    assert!(!err.suggested_fixes().is_empty());
+}
+
+#[test]
+fn test_runtime_error_suggested_fixes() {
+    let err = RuntimeError::op_not_found("x");
+    let fixes = err.suggested_fixes();
+    assert!(!fixes.is_empty());
+    assert!(fixes[0].contains("op"));
+}
+
+#[tokio::test]
+async fn test_op_result_async_mismatch() {
+    // B13 fix: executing a sync op as async returns RuntimeError.
+    let mut state = OpState::new();
+    let op = OpDecl::new_sync("sync_op", |_s: &mut OpState| {
+        Ok(serde_json::json!({}))
+    });
+    let result = op.execute_async(&mut state, None).await;
+    assert!(result.is_err());
+    assert_eq!(result.unwrap_err().kind(), RuntimeErrorKind::OpMismatch);
+}
+
+#[tokio::test]
+async fn test_runtime_op_async() {
+    let montrs = montrs_runtime::montrs_ext::init();
+    let mut rt = MontrsRuntime::new(RuntimeOptions {
+        extensions: vec![montrs],
+        ..Default::default()
+    })
+    .unwrap();
+    rt.init().unwrap();
+    let result = rt.op_async("montrs.sleep_ms", None).await.unwrap();
+    assert_eq!(result["slept"], true);
 }

@@ -3,7 +3,10 @@
 //! Inspired by Deno's `deno_core::extensions`. Each extension provides
 //! ops, state initialization, and lifecycle hooks.
 
-use crate::{ops::OpDecl, type_map::OpState};
+use crate::error::RuntimeError;
+use crate::ops::OpDecl;
+use crate::type_map::OpState;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 /// A state initialization/teardown callback.
@@ -101,7 +104,8 @@ impl RuntimeExtensionBuilder {
     }
 }
 
-/// ExtensionSet — manages a collection of extensions with dependency resolution.
+/// ExtensionSet — manages a collection of extensions with dependency resolution
+/// and cycle detection. Lifecycle hooks run in resolved (dependency-first) order.
 pub struct ExtensionSet {
     extensions: Vec<RuntimeExtension>,
 }
@@ -122,46 +126,104 @@ impl ExtensionSet {
     }
 
     /// Resolve all extensions, respecting dependencies. Returns in dependency order.
-    pub fn resolve(&self) -> Vec<&RuntimeExtension> {
-        // Simple topological sort by deps.
+    /// Errors on cycles with a detailed RuntimeError.
+    pub fn resolve(&self) -> Result<Vec<&RuntimeExtension>, RuntimeError> {
         let mut resolved = Vec::new();
-        let mut visited = std::collections::HashSet::new();
+        let mut visited = HashSet::new();
+        // Track the current DFS path for cycle detection.
+        let mut in_stack = HashSet::new();
+
         for ext in &self.extensions {
-            resolve_deps(&self.extensions, ext, &mut visited, &mut resolved);
+            self.resolve_deps(ext, &mut visited, &mut in_stack, &mut resolved)?;
         }
-        resolved
+        Ok(resolved)
     }
 
-    pub fn get_all_ops(&self) -> Vec<&OpDecl> {
+    /// DFS-based topological sort with cycle detection (B3 fix).
+    fn resolve_deps<'a>(
+        &'a self,
+        ext: &'a RuntimeExtension,
+        visited: &mut HashSet<&'static str>,
+        in_stack: &mut HashSet<&'static str>,
+        resolved: &mut Vec<&'a RuntimeExtension>,
+    ) -> Result<(), RuntimeError> {
+        // Cycle detection: if we're already in the current recursion stack, we have a cycle.
+        if in_stack.contains(ext.name) {
+            let cycle_path: Vec<&str> = resolved
+                .iter()
+                .rev()
+                .take_while(|e| e.name != ext.name)
+                .map(|e| e.name)
+                .chain(std::iter::once(ext.name))
+                .collect();
+            return Err(RuntimeError::extension_cycle(&cycle_path));
+        }
+
+        if !visited.insert(ext.name) {
+            return Ok(());
+        }
+
+        in_stack.insert(ext.name);
+
+        for dep_name in ext.deps {
+            let dep = self
+                .extensions
+                .iter()
+                .find(|e| e.name == *dep_name)
+                .ok_or_else(|| RuntimeError::missing_dependency(ext.name, dep_name))?;
+            self.resolve_deps(dep, visited, in_stack, resolved)?;
+        }
+
+        in_stack.remove(ext.name);
+        resolved.push(ext);
+        Ok(())
+    }
+
+    /// Returns all ops in dependency order (B2 fix).
+    pub fn get_all_ops(&self) -> Result<Vec<&OpDecl>, RuntimeError> {
+        let resolved = self.resolve()?;
         let mut ops = Vec::new();
-        for ext in &self.extensions {
+        for ext in resolved {
             ops.extend(ext.ops.iter());
         }
-        ops
+        Ok(ops)
     }
 
-    pub fn init_all_states(&self, state: &mut OpState) {
-        for ext in &self.extensions {
+    /// Initialize all extension states in dependency order (B2 fix).
+    pub fn init_all_states(&self, state: &mut OpState) -> Result<(), RuntimeError> {
+        for ext in self.resolve()? {
             if let Some(ref init) = ext.init_state {
                 init(state);
             }
         }
+        Ok(())
     }
 
-    pub fn start_all(&self, state: &mut OpState) {
-        for ext in &self.extensions {
+    /// Start all extensions in dependency order (B2 fix).
+    pub fn start_all(&self, state: &mut OpState) -> Result<(), RuntimeError> {
+        for ext in self.resolve()? {
             if let Some(ref start) = ext.on_start {
                 start(state);
             }
         }
+        Ok(())
     }
 
-    pub fn stop_all(&self, state: &mut OpState) {
-        for ext in &self.extensions {
+    /// Stop all extensions in reverse dependency order (so dependents stop first).
+    pub fn stop_all(&self, state: &mut OpState) -> Result<(), RuntimeError> {
+        let mut resolved = self.resolve()?;
+        resolved.reverse();
+        for ext in resolved {
             if let Some(ref stop) = ext.on_stop {
                 stop(state);
             }
         }
+        Ok(())
+    }
+
+    /// Count of registered extensions.
+    pub fn extension_count(&self) -> usize {
+        self.extensions.len()
     }
 }
 
@@ -169,21 +231,4 @@ impl Default for ExtensionSet {
     fn default() -> Self {
         Self::new()
     }
-}
-
-fn resolve_deps<'a>(
-    all: &'a [RuntimeExtension],
-    ext: &'a RuntimeExtension,
-    visited: &mut std::collections::HashSet<&'static str>,
-    resolved: &mut Vec<&'a RuntimeExtension>,
-) {
-    if !visited.insert(ext.name) {
-        return;
-    }
-    for dep_name in ext.deps {
-        if let Some(dep) = all.iter().find(|e| e.name == *dep_name) {
-            resolve_deps(all, dep, visited, resolved);
-        }
-    }
-    resolved.push(ext);
 }

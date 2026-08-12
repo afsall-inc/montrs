@@ -11,7 +11,9 @@
 //! - `ModuleLoader` — trait for loading Rust/WASM modules
 //! - `Arena` — bump allocator for fast allocation
 //! - `TaggedValue` — 64-bit tagged value representation
+//! - `RuntimeError` — structured error type with stable codes
 
+pub mod error;
 pub mod event_loop;
 pub mod extensions;
 pub mod memory;
@@ -21,13 +23,14 @@ pub mod resource_table;
 pub mod runtime;
 pub mod type_map;
 
+pub use error::{RuntimeError, RuntimeErrorKind};
 pub use event_loop::{EventLoop, EventLoopMsg, TaskId};
 pub use extensions::{ExtensionSet, RuntimeExtension, RuntimeExtensionBuilder};
 pub use memory::{Arena, BitField, TaggedValue};
 pub use modules::{
     FileModuleLoader, Module, ModuleKind, ModuleLoader, ModuleSource,
 };
-pub use ops::{AsyncOpResult, OpDecl, OpError, OpFn, OpId, OpResult};
+pub use ops::{AsyncOpResult, OpDecl, OpFn, OpId, OpResult};
 pub use resource_table::{
     FileResource, Resource, ResourceId, ResourceTable, TcpStreamResource,
 };
@@ -37,9 +40,9 @@ pub use type_map::{OpState, TypeMap};
 /// A convenience re-export for building a MontRS runtime with common extensions.
 pub mod prelude {
     pub use crate::{
-        EventLoop, MontrsRuntime, OpDecl, OpId, OpResult, OpState, Resource,
-        ResourceId, ResourceTable, RuntimeExtension, RuntimeExtensionBuilder,
-        RuntimeOptions, TypeMap,
+        error::*, EventLoop, MontrsRuntime, OpDecl, OpId, OpResult, OpState,
+        Resource, ResourceId, ResourceTable, RuntimeError, RuntimeExtension,
+        RuntimeExtensionBuilder, RuntimeOptions, TypeMap,
     };
 }
 
@@ -47,7 +50,10 @@ pub mod prelude {
 /// MontRS applications: fast routing, plate caching, ORM connection
 /// pooling, env config, and agent integration.
 pub mod montrs_ext {
-    use crate::{OpDecl, OpState, RuntimeExtension};
+    use crate::ops::OpDecl;
+    use crate::resource_table::ResourceTable;
+    use crate::type_map::OpState;
+    use crate::RuntimeExtension;
 
     /// Initialize the MontRS extension.
     pub fn init() -> RuntimeExtension {
@@ -59,8 +65,12 @@ pub mod montrs_ext {
                 OpDecl::new_sync(
                     "montrs.resource_count",
                     |state: &mut OpState| {
+                        let count = state
+                            .get::<ResourceTable>()
+                            .map(|rt| rt.len())
+                            .unwrap_or(0);
                         Ok(serde_json::json!({
-                            "resource_count": state.len(),
+                            "resource_count": count,
                         }))
                     },
                 ),
@@ -86,6 +96,13 @@ pub mod montrs_ext {
     pub struct MontrsState {
         pub init_count: u64,
         pub config: MontrsConfig,
+    }
+
+    impl MontrsState {
+        /// Increment the init counter (called by the extension itself).
+        pub fn increment(&mut self) {
+            self.init_count += 1;
+        }
     }
 
     /// Configuration for MontRS runtime.
