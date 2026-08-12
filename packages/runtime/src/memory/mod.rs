@@ -1,7 +1,7 @@
-//! Memory optimization — arena allocator, tagged values, bit fields.
-//!
-//! Provides fast bump allocation via `Arena`, compact 64-bit tagged
-//! value representation, and packed bit fields.
+//! Memory optimization — arena allocator, tagged values, bit fields, ROM data.
+
+pub mod rom;
+pub use rom::RomData;
 
 use std::sync::atomic::Ordering;
 use std::{

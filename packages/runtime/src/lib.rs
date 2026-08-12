@@ -1,6 +1,7 @@
 //! MontRS runtime — general-purpose Rust runtime with ops, extensions,
 //! resource table, event loop, memory optimization, and module loading.
 
+pub mod code_cache;
 pub mod error;
 pub mod event_loop;
 pub mod ext;
@@ -14,10 +15,11 @@ pub mod runtime;
 pub mod type_map;
 pub mod worker;
 
+pub use code_cache::{CachedModule, CodeCache};
 pub use error::{RuntimeError, RuntimeErrorKind};
 pub use event_loop::{EventLoop, EventLoopMsg, TaskId};
 pub use extensions::{ExtensionSet, RuntimeExtension, RuntimeExtensionBuilder};
-pub use memory::{Arena, BitField, TaggedValue};
+pub use memory::{Arena, BitField, RomData, TaggedValue};
 pub use modules::{
     FileModuleLoader, Module, ModuleKind, ModuleLoader, ModuleSource, RustModule, RustModuleFn,
 };
