@@ -25,6 +25,21 @@ hex = "0.4"
 once_cell = "1"
 parking_lot = "0.12"
 tracing = "0.1"
+base64 = "0.22"
+rand = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"], optional = true }
+
+[features]
+default = ["fs", "net", "os", "console", "crypto", "web"]
+fs = []
+net = []
+os = []
+console = []
+crypto = []
+web = []
+process = []
+http = ["dep:reqwest"]
+full = ["fs", "net", "os", "console", "crypto", "web", "process", "http"]
 
 [dev-dependencies]
 tempfile = "3"

@@ -11,6 +11,8 @@ use crate::modules::ModuleLoader;
 use crate::ops::OpDecl;
 use crate::resource_table::ResourceTable;
 use crate::type_map::OpState;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 /// Options for creating a MontrsRuntime.
 pub struct RuntimeOptions {
@@ -125,7 +127,11 @@ impl MontrsRuntime {
         let op = self.ops_by_name.get(name).cloned().ok_or_else(|| {
             RuntimeError::op_not_found(name)
         })?;
-        op.execute_async(&mut self.state, input).await
+        // Wrap state in Arc<Mutex> for async ops.
+        let shared = Arc::new(Mutex::new(std::mem::take(&mut self.state)));
+        let result = op.execute_async(shared.clone(), input).await;
+        self.state = Arc::try_unwrap(shared).ok().unwrap().into_inner();
+        result
     }
 
     /// Register a new op at runtime.

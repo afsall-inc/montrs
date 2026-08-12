@@ -13,6 +13,7 @@ use std::sync::Arc;
 pub type StateFn = Arc<dyn Fn(&mut OpState) + Send + Sync>;
 
 /// A runtime extension — groups ops, state, and initialization.
+#[derive(Clone)]
 pub struct RuntimeExtension {
     /// Human-readable name of the extension.
     pub name: &'static str,

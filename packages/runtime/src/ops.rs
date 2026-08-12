@@ -2,6 +2,11 @@
 //!
 //! Inspired by Deno's `deno_core::ops`. Ops are functions that can be
 //! called from within the runtime with access to OpState.
+//!
+//! ## State passing
+//! - Sync ops receive `&mut OpState` (borrow ends before returning).
+//! - Async ops receive `Arc<Mutex<OpState>>` so they can mutate state
+//!   across `.await` points (the boxed future must be `'static`).
 
 use crate::error::RuntimeError;
 use crate::type_map::OpState;
@@ -9,6 +14,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU16, Ordering};
+use tokio::sync::Mutex;
 
 /// A unique operation identifier.
 pub type OpId = u16;
@@ -19,19 +25,22 @@ pub type OpResult = Result<serde_json::Value, RuntimeError>;
 /// The result of an asynchronous operation.
 pub type AsyncOpResult = Pin<Box<dyn Future<Output = OpResult> + Send>>;
 
+/// Shared state handle for async ops.
+pub type SharedOpState = Arc<Mutex<OpState>>;
+
 /// Global monotonic op ID counter (shared across ALL constructors — B1 fix).
 static NEXT_OP_ID: AtomicU16 = AtomicU16::new(1);
 
 /// A sync operation function.
 pub type SyncOp = Arc<dyn Fn(&mut OpState) -> OpResult + Send + Sync>;
 /// An async operation function.
-pub type AsyncOp = Arc<dyn Fn(&mut OpState) -> AsyncOpResult + Send + Sync>;
+pub type AsyncOp = Arc<dyn Fn(SharedOpState) -> AsyncOpResult + Send + Sync>;
 /// A sync operation with JSON input.
 pub type SyncOpWithInput =
     Arc<dyn Fn(&mut OpState, serde_json::Value) -> OpResult + Send + Sync>;
 /// An async operation with JSON input.
 pub type AsyncOpWithInput =
-    Arc<dyn Fn(&mut OpState, serde_json::Value) -> AsyncOpResult + Send + Sync>;
+    Arc<dyn Fn(SharedOpState, serde_json::Value) -> AsyncOpResult + Send + Sync>;
 
 /// The function signature for an operation.
 #[derive(Clone)]
@@ -85,7 +94,7 @@ impl OpDecl {
 
     pub fn new_async(
         name: &'static str,
-        f: impl Fn(&mut OpState) -> AsyncOpResult + Send + Sync + 'static,
+        f: impl Fn(SharedOpState) -> AsyncOpResult + Send + Sync + 'static,
     ) -> Self {
         Self {
             id: Self::next_id(),
@@ -109,7 +118,7 @@ impl OpDecl {
 
     pub fn new_async_with_input(
         name: &'static str,
-        f: impl Fn(&mut OpState, serde_json::Value) -> AsyncOpResult + Send + Sync + 'static,
+        f: impl Fn(SharedOpState, serde_json::Value) -> AsyncOpResult + Send + Sync + 'static,
     ) -> Self {
         Self {
             id: Self::next_id(),
@@ -135,10 +144,10 @@ impl OpDecl {
         }
     }
 
-    /// Execute the async operation.
+    /// Execute the async operation. Takes the state as Arc<Mutex<OpState>>.
     pub fn execute_async(
         &self,
-        state: &mut OpState,
+        state: SharedOpState,
         input: Option<serde_json::Value>,
     ) -> AsyncOpResult {
         match &self.op_fn {

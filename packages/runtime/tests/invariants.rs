@@ -3,6 +3,8 @@
 use montrs_runtime::error::{RuntimeError, RuntimeErrorKind};
 use montrs_runtime::prelude::*;
 use montrs_runtime::*;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[test]
 fn test_arena_alloc() {
@@ -167,13 +169,13 @@ fn test_op_decl_sync_with_input() {
 fn test_op_id_uniqueness() {
     // B1 fix: all constructors share a single global counter.
     let op1 = OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
-    let op2 = OpDecl::new_async("b", |_s: &mut OpState| {
+    let op2 = OpDecl::new_async("b", |_s: montrs_runtime::ops::SharedOpState| {
         Box::pin(async { Ok(serde_json::json!({})) })
     });
     let op3 = OpDecl::new_sync_with_input("c", |_s: &mut OpState, _i: serde_json::Value| {
         Ok(serde_json::json!({}))
     });
-    let op4 = OpDecl::new_async_with_input("d", |_s: &mut OpState, _i: serde_json::Value| {
+    let op4 = OpDecl::new_async_with_input("d", |_s: montrs_runtime::ops::SharedOpState, _i: serde_json::Value| {
         Box::pin(async { Ok(serde_json::json!({})) })
     });
     let mut ids = std::collections::HashSet::new();
@@ -379,7 +381,7 @@ async fn test_op_result_async_mismatch() {
     let op = OpDecl::new_sync("sync_op", |_s: &mut OpState| {
         Ok(serde_json::json!({}))
     });
-    let result = op.execute_async(&mut state, None).await;
+    let result = op.execute_async(Arc::new(Mutex::new(state)), None).await;
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().kind(), RuntimeErrorKind::OpMismatch);
 }
