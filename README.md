@@ -102,27 +102,48 @@ impl Route<AppConfig> for HelloRoute {
 
 | Package | Purpose |
 | :--- | :--- |
-| [core](packages/core/README.md) | The architectural engine (Plates, Routing, AppSpec). |
-| [platform](packages/platform/README.md) | Platform abstraction (Target enum, PlatformAdapter trait). |
-| [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
 | [agent](packages/agent/README.md) | Agent-first logic, snapshotting, and error tracking. |
 | [agentignore](packages/agentignore/README.md) | Agent-first file ignore patterns with IDE-specific export. |
-| [haptics](packages/haptics/README.md) | Cross-platform haptic feedback for web, desktop, and mobile. |
-| [orm](packages/orm/README.md) | SQL-centric database abstraction. |
-| [validator](packages/validator/README.md) | Compile-time validation and data modeling. |
-| [prdoc](packages/prdoc/README.md) | Structured PR documentation, auto-generation, changelog. |
-| [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
+| [auth](packages/auth/README.md) | Plugin-based authentication (email/password, OAuth, 2FA, orgs, API keys). |
+| [bench](packages/bench/README.md) | Statistical benchmarking. |
 | [build](packages/build/README.md) | Build pipeline facade (re-exports build-core, build-watch, build-serve). |
 | [build-core](packages/build-core/README.md) | Build pipeline trait and configuration. |
-| [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
 | [build-serve](packages/build-serve/README.md) | Dev server (static file serving via axum). |
+| [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
+| [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
+| [core](packages/core/README.md) | The architectural engine (Plates, Routing, AppSpec). |
+| [deps](packages/deps/README.md) | Dependency freshness checking. |
+| [desktop](packages/desktop/README.md) | Native desktop (wry webview, winit+wgpu window). |
+| [env](packages/env/README.md) | Environment variable parsing + `.env` loading + Tera templates. |
+| [fmt](packages/fmt/README.md) | Custom formatter for Rust + `view!` macros. |
+| [haptics](packages/haptics/README.md) | Cross-platform haptic feedback for web, desktop, and mobile. |
+| [i18n](packages/i18n/README.md) | Internationalization (macros, plurals, formatting, scoping). |
+| [icons](packages/icons/README.md) | 1600+ Lucide icons as Leptos components. |
+| [lockfile](packages/lockfile/README.md) | Deterministic tool version locking. |
+| [log](packages/log/README.md) | Structured log store with retention, streaming, and archiving. |
+| [metadata](packages/metadata/README.md) | `montrs.toml` single source of truth (all sections incl. services/proxy). |
+| [mobile](packages/mobile/README.md) | Mobile platform adapter (Android/iOS shells). |
+| [montrs](packages/montrs/README.md) | Facade crate — re-exports. Minimal logic. |
+| [motion](packages/motion/README.md) | Spring, tween, keyframes, gestures, SVG/CSS animation. |
+| [orm](packages/orm/README.md) | SQL-centric database abstraction. |
+| [platform](packages/platform/README.md) | Platform abstraction (Target enum, PlatformAdapter trait). |
+| [plugin](packages/plugin/README.md) | Tool plugin system (asdf/vfox-compatible). |
+| [prdoc](packages/prdoc/README.md) | Structured PR documentation, auto-generation, changelog. |
+| [proxy](packages/proxy/README.md) | Reverse proxy routing `<slug>.localhost` to service ports. |
+| [registry](packages/registry/README.md) | Tool registry (baked + floating). |
+| [renderer](packages/renderer/README.md) | Renderer trait + geometry primitives (wgpu/tiny-skia backends). |
+| [runner](packages/runner/README.md) | Custom task runner config. |
 | [runtime](packages/runtime/README.md) | Native Rust runtime (ops, extensions, workers, permissions, GC-free memory). |
 | [services](packages/services/README.md) | Service supervisor — daemon lifecycle, ready checks, retries, hooks. |
-| [log](packages/log/README.md) | Structured log store with retention, streaming, and archiving. |
-| [proxy](packages/proxy/README.md) | Reverse proxy routing `<slug>.localhost` to service ports. |
-| [auth](packages/auth/README.md) | Plugin-based authentication (email/password, OAuth, 2FA, orgs, API keys). |
+| [shell](packages/shell/README.md) | Shell integration (bash/zsh/fish/pwsh) + shims. |
+| [sigstore](packages/sigstore/README.md) | GitHub attestation, cosign, SLSA verification. |
+| [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
+| [tool](packages/tool/README.md) | Tool version manager (5 backends: core, cargo, github, http, ubi). |
 | [tui](packages/tui/README.md) | Full terminal UI library (21 renderables, keymap, ssh, qr). |
-| [i18n](packages/i18n/README.md) | Internationalization (macros, plurals, formatting, scoping). |
+| [ui](packages/ui/README.md) | shadcn-inspired component library (91 components) + theme system. |
+| [utils](packages/utils/README.md) | Generic pure functions. |
+| [validator](packages/validator/README.md) | Compile-time validation and data modeling. |
+| [web](packages/web/README.md) | Web platform adapter (WASM browser bindings). |
 
 ---
 

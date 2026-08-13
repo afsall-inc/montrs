@@ -45,48 +45,48 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 
 | Package | Role |
 |---------|------|
-| `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **Dep on platform only.** |
-| `platform` | Target enum, PlatformAdapter trait. **No deps on other packages.** |
-| `cli` | Binary entrypoint (`montrs` command), delegates to core/agent. |
 | `agent` | Sidecar: snapshots, error tracking, tool curation, PRDoc. **No LLM inference**. |
-| `montrs` | Facade crate — re-exports. Minimal logic. |
-| `orm` | SQL-first, backend-agnostic DB abstraction. |
-| `validator` | Proc-macros (`#[derive(Validator)]`), compile-time validation. |
-| `test` | Deterministic TestRuntime, fixtures, E2E orchestration (Playwright). |
-| `fmt` | Custom formatter for Rust + `view!` macros. |
-| `bench` | Statistical benchmarking. |
-| `prdoc` | PR doc parser/generator/changelog. |
 | `agentignore` | `.agentignore` patterns + IDE export. |
-| `runner` | Custom task runner config. |
-| `metadata` | `montrs.toml` single source of truth (all sections incl. services/proxy). |
-| `haptics` | Cross-platform haptic feedback. |
-| `utils` | Generic pure functions. |
+| `auth` | Authentication system (email/password, OAuth, 2FA, sessions, RBAC). |
+| `bench` | Statistical benchmarking. |
 | `build` | Build pipeline facade (re-exports sub-packages). |
 | `build-core` | BuildPipeline trait + BuildConfig. |
-| `build-watch` | File watcher with debounced rebuild (notify). |
 | `build-serve` | Dev server (axum static file serving). |
-| `env` | Environment variable parsing + `.env` loading + Tera templates. |
-| `tool` | Tool version manager (5 backends: core, cargo, github, http, ubi). |
-| `registry` | Tool registry (baked + floating). |
-| `lockfile` | Deterministic tool version locking. |
-| `plugin` | Tool plugin system (asdf/vfox-compatible). |
-| `sigstore` | GitHub attestation, cosign, SLSA verification. |
+| `build-watch` | File watcher with debounced rebuild (notify). |
+| `cli` | Binary entrypoint (`montrs` command), delegates to core/agent. |
+| `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **Dep on platform only.** |
 | `deps` | Dependency freshness checking. |
-| `shell` | Shell integration (bash/zsh/fish/pwsh) + shims. |
-| `runtime` | Native Rust runtime (Deno-inspired ops, memory-optimized). |
-| `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
-| `i18n` | Internationalization with macros, plurals, formatting, scoping. |
-| `services` | Service supervisor (daemon management, ready checks, retry, hooks, cron). |
-| `log` | Structured log store with retention, streaming, rotate. |
-| `proxy` | Reverse proxy routing `<slug>.localhost` to ports. |
-| `auth` | Authentication system (email/password, OAuth, 2FA, sessions, RBAC). |
-| `ui` | shadcn-inspired component library (91 components) + theme system. |
-| `icons` | 1600+ Lucide icons as Leptos components. |
-| `motion` | Spring, tween, keyframes, gestures, SVG/CSS animation. |
-| `web` | Web platform adapter (WASM browser bindings). |
 | `desktop` | Native desktop (wry webview, winit+wgpu window). |
+| `env` | Environment variable parsing + `.env` loading + Tera templates. |
+| `fmt` | Custom formatter for Rust + `view!` macros. |
+| `haptics` | Cross-platform haptic feedback. |
+| `i18n` | Internationalization with macros, plurals, formatting, scoping. |
+| `icons` | 1600+ Lucide icons as Leptos components. |
+| `lockfile` | Deterministic tool version locking. |
+| `log` | Structured log store with retention, streaming, rotate. |
+| `metadata` | `montrs.toml` single source of truth (all sections incl. services/proxy). |
 | `mobile` | Mobile platform adapter (Android/iOS shells). |
+| `montrs` | Facade crate — re-exports. Minimal logic. |
+| `motion` | Spring, tween, keyframes, gestures, SVG/CSS animation. |
+| `orm` | SQL-first, backend-agnostic DB abstraction. |
+| `platform` | Target enum, PlatformAdapter trait. **No deps on other packages.** |
+| `plugin` | Tool plugin system (asdf/vfox-compatible). |
+| `prdoc` | PR doc parser/generator/changelog. |
+| `proxy` | Reverse proxy routing `<slug>.localhost` to ports. |
+| `registry` | Tool registry (baked + floating). |
 | `renderer` | Renderer trait + geometry primitives (wgpu/tiny-skia backends). |
+| `runner` | Custom task runner config. |
+| `runtime` | Native Rust runtime (Deno-inspired ops, memory-optimized). |
+| `services` | Service supervisor (daemon management, ready checks, retry, hooks, cron). |
+| `shell` | Shell integration (bash/zsh/fish/pwsh) + shims. |
+| `sigstore` | GitHub attestation, cosign, SLSA verification. |
+| `test` | Deterministic TestRuntime, fixtures, E2E orchestration (Playwright). |
+| `tool` | Tool version manager (5 backends: core, cargo, github, http, ubi). |
+| `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
+| `ui` | shadcn-inspired component library (91 components) + theme system. |
+| `utils` | Generic pure functions. |
+| `validator` | Proc-macros (`#[derive(Validator)]`), compile-time validation. |
+| `web` | Web platform adapter (WASM browser bindings). |
 
 Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `packages/core/src/lib.rs`.
 
