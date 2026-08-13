@@ -133,12 +133,15 @@ pub enum Commands {
     New {
         /// Name of the project.
         name: String,
-        /// Template to use.
+        /// Template to use (default, monorepo, todo, api, tui, desktop, saas).
         #[arg(short, long, default_value = "default")]
         template: String,
         /// Initialize with MontRS UI theming system.
         #[arg(long)]
         ui: bool,
+        /// List available templates.
+        #[arg(long)]
+        list_templates: bool,
     },
     /// Run custom tasks defined in montrs.toml.
     Run {
@@ -572,7 +575,11 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             keep_alive,
             browser,
         } => command::e2e::run(headless, keep_alive, browser).await,
-        Commands::New { name, template, ui } => {
+        Commands::New { name, template, ui, list_templates } => {
+            if list_templates {
+                command::new::list().await?;
+                return Ok(());
+            }
             command::new::run(name, template).await?;
             if ui {
                 command::ui_init::run(None, None, None).await?;

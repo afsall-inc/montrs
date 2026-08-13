@@ -1,0 +1,8 @@
+[package]
+name = "{{crate_name}}-e2e"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+montrs-test = { path = "{{project-name}}/packages/test" }
+tokio = { version = "1", features = ["full"] }

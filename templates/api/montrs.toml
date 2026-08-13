@@ -1,0 +1,29 @@
+[project]
+name = "{{project-name}}"
+version = "0.1.0"
+
+[serve]
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+
+[env]
+MONTRS_LOG = "info"
+DATABASE_URL = "sqlite:./data/api.db"
+
+# ── Services ───────────────────────────────────────────────────────────
+[services.api]
+run = "cargo run --bin api"
+auto = "start-stop"
+ready_http = { url = "http://127.0.0.1:3000/health", expected-status = 200 }
+depends = []
+
+[services.postgres]
+run = "docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16"
+auto = "start-stop"
+ready_port = { port = 5432 }
+
+[tasks]
+fmt = { command = "cargo fmt --all", category = "Quality" }
+lint = { command = "cargo clippy -- -D warnings", category = "Quality" }
+test = { command = "cargo test", category = "Testing" }
+serve = { command = "cargo run --bin api", category = "Run" }

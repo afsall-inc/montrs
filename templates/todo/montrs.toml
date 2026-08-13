@@ -14,6 +14,21 @@ lib-default-features = false
 [build]
 target = "index.html"
 
+[env]
+MONTRS_LOG = "info"
+DATABASE_URL = "sqlite:./data/todo.db"
+
+[services.db]
+run = "sqlite3 ./data/todo.db"
+auto = "start-stop"
+ready_port = { port = 3000 }
+
+[services.api]
+run = "cargo run"
+auto = "start-stop"
+ready_http = { url = "http://127.0.0.1:3000/ok", expected-status = 200 }
+depends = []
+
 [tasks]
 fmt = { command = "cargo fmt --all", category = "Quality" }
 lint = { command = "cargo clippy -- -D warnings", category = "Quality" }

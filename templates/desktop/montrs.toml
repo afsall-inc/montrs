@@ -1,0 +1,15 @@
+[project]
+name = "{{project-name}}"
+version = "0.1.0"
+
+[deploy]
+mode = "desktop"
+
+[env]
+MONTRS_LOG = "info"
+
+[tasks]
+fmt = { command = "cargo fmt --all", category = "Quality" }
+lint = { command = "cargo clippy -- -D warnings", category = "Quality" }
+test = { command = "cargo test", category = "Testing" }
+run = { command = "cargo run", category = "Run" }

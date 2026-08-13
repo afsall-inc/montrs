@@ -1,0 +1,40 @@
+[project]
+name = "{{project-name}}"
+version = "0.1.0"
+
+[serve]
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+tailwind-input-file = "style/main.css"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+lib-features = ["hydrate"]
+lib-default-features = false
+
+[build]
+target = "index.html"
+
+[env]
+MONTRS_LOG = "info"
+DATABASE_URL = "sqlite:./data/app.db"
+
+# ── Service definitions (Phase 4) ─────────────────────────────────────
+[services.api]
+run = "cargo run --bin api"
+auto = "start-stop"
+ready_http = { url = "http://127.0.0.1:3000/health" }
+depends = []
+
+[services.postgres]
+run = "docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16"
+auto = "start-stop"
+ready_port = { port = 5432 }
+
+# ── Auth configuration (Phase 5) ───────────────────────────────────────
+[tasks]
+hello = "echo 'Hello from MontRS!'"
+lint = { command = "cargo clippy --workspace -- -D warnings", category = "Quality" }
+fmt = { command = "cargo fmt --all", category = "Quality" }
+test-unit = { command = "cargo test --lib", category = "Testing", description = "Run unit tests" }
+test-all = { command = "cargo test --workspace", category = "Testing", description = "Run all tests", dependencies = ["lint", "fmt"] }
+pre-release = { command = "echo 'Preparing release...'", category = "Release", dependencies = ["test-all"] }

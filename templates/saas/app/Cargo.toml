@@ -1,0 +1,12 @@
+[package]
+name = "{{crate_name}}-app"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+{{crate_name}} = { path = ".." }
+montrs-ui = { path = "{{project-name}}/packages/ui" }
+leptos = { version = "0.8", features = ["ssr"] }
+
+[lib]
+crate-type = ["cdylib", "rlib"]
