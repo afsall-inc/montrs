@@ -151,9 +151,13 @@ impl IntoResponse for AuthError {
             #[serde(skip_serializing_if = "Option::is_none")]
             details: Option<serde_json::Value>,
         }
+
+        // Try to localize via the i18n catalog if registered.
+        let message = crate::plugins::i18n::lookup_message(self.code, "en");
+
         let body = ErrorBody {
             error: serde_json::to_string(&self.code).unwrap_or_default(),
-            message: self.message,
+            message,
             details: self.details,
         };
         (axum::http::StatusCode::from_u16(self.status).unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR), Json(body)).into_response()
