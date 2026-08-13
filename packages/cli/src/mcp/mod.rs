@@ -1,6 +1,8 @@
 pub mod protocol;
 
 use crate::{AgentSubcommand, command::agent};
+use montrs_services::config::ServiceConfig;
+use montrs_services::supervisor::Supervisor;
 use protocol::*;
 use serde_json::{Value, json};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -140,6 +142,102 @@ async fn handle_request(
                     description: "Get the unified entry point for agent \
                                   operations, mapping tasks to guides."
                         .to_string(),
+                    input_validator: json!({ "type": "object", "properties": {} }),
+                },
+                // ── Services tools ──────────────────────────────────────────
+                Tool {
+                    name: "services_list".to_string(),
+                    description: "List all services and their status.".to_string(),
+                    input_validator: json!({ "type": "object", "properties": {} }),
+                },
+                Tool {
+                    name: "services_start".to_string(),
+                    description: "Start a service by name.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Service name" }
+                        },
+                        "required": ["name"]
+                    }),
+                },
+                Tool {
+                    name: "services_stop".to_string(),
+                    description: "Stop a service by name.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Service name" }
+                        },
+                        "required": ["name"]
+                    }),
+                },
+                Tool {
+                    name: "services_status".to_string(),
+                    description: "Get the status of a service (or all if no name).".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Service name (optional)" }
+                        }
+                    }),
+                },
+                Tool {
+                    name: "services_logs".to_string(),
+                    description: "View log entries for a service.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "name": { "type": "string", "description": "Service name (optional)" }
+                        }
+                    }),
+                },
+                // ── Auth tools ──────────────────────────────────────────────
+                Tool {
+                    name: "auth_sign_in".to_string(),
+                    description: "Sign in with email and password.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "email": { "type": "string" },
+                            "password": { "type": "string" }
+                        },
+                        "required": ["email", "password"]
+                    }),
+                },
+                Tool {
+                    name: "auth_sign_up".to_string(),
+                    description: "Sign up a new user with email and password.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "email": { "type": "string" },
+                            "password": { "type": "string" },
+                            "name": { "type": "string" }
+                        },
+                        "required": ["email", "password"]
+                    }),
+                },
+                Tool {
+                    name: "auth_validate_token".to_string(),
+                    description: "Validate a session token and return the user.".to_string(),
+                    input_validator: json!({
+                        "type": "object",
+                        "properties": {
+                            "token": { "type": "string", "description": "Session token" }
+                        },
+                        "required": ["token"]
+                    }),
+                },
+                Tool {
+                    name: "auth_status".to_string(),
+                    description: "Get auth system status and available plugins.".to_string(),
+                    input_validator: json!({ "type": "object", "properties": {} }),
+                },
+                // ── Config tools ────────────────────────────────────────────
+                Tool {
+                    name: "config_read".to_string(),
+                    description: "Read the montrs.toml project configuration.".to_string(),
                     input_validator: json!({ "type": "object", "properties": {} }),
                 },
             ];
@@ -282,6 +380,178 @@ async fn handle_tool_call(
                 is_error: false,
             })
         }
+        // ── Services ───────────────────────────────────────────────────────
+        "services_list" => {
+            let supervisor = create_supervisor()?;
+            let services = supervisor.list().await;
+            if services.is_empty() {
+                return Ok(CallToolResult {
+                    content: vec![ToolContent::Text { text: "No services defined".into() }],
+                    is_error: false,
+                });
+            }
+            let mut lines = vec!["Services:".to_string()];
+            for (id, status, pid) in &services {
+                let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
+                lines.push(format!("  {:<20} {:?} pid={}", id, status, pid_str));
+            }
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: lines.join("\n") }],
+                is_error: false,
+            })
+        }
+        "services_start" => {
+            let name = params
+                .arguments
+                .get("name")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing name argument"))?;
+            let supervisor = create_supervisor()?;
+            let id = montrs_services::ServiceId::from_name(name);
+            supervisor.start(&id).await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: format!("Service {name} started") }],
+                is_error: false,
+            })
+        }
+        "services_stop" => {
+            let name = params
+                .arguments
+                .get("name")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing name argument"))?;
+            let supervisor = create_supervisor()?;
+            let id = montrs_services::ServiceId::from_name(name);
+            supervisor.stop(&id).await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: format!("Service {name} stopped") }],
+                is_error: false,
+            })
+        }
+        "services_status" => {
+            let name = params
+                .arguments
+                .get("name")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let supervisor = create_supervisor()?;
+            let statuses = if let Some(ref name) = name {
+                let id = montrs_services::ServiceId::from_name(name);
+                match supervisor.status(&id).await {
+                    Some(st) => format!("{name}: {:?}", st),
+                    None => format!("Service '{name}' not found"),
+                }
+            } else {
+                let services = supervisor.list().await;
+                if services.is_empty() {
+                    "No services defined".to_string()
+                } else {
+                    let mut lines = vec!["Services:".to_string()];
+                    for (id, status, pid) in &services {
+                        let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
+                        lines.push(format!("  {:<20} {:?} pid={}", id, status, pid_str));
+                    }
+                    lines.join("\n")
+                }
+            };
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: statuses }],
+                is_error: false,
+            })
+        }
+        "services_logs" => {
+            let name = params
+                .arguments
+                .get("name")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+            let output = if let Some(ref name) = name {
+                format!("[logs for {name} — requires montrs-log feature]")
+            } else {
+                "[logs — requires montrs-log feature]".to_string()
+            };
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: output }],
+                is_error: false,
+            })
+        }
+        // ── Auth ───────────────────────────────────────────────────────────
+        "auth_sign_in" => {
+            let email = params
+                .arguments
+                .get("email")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing email argument"))?;
+            let password = params
+                .arguments
+                .get("password")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing password argument"))?;
+            let result = crate::command::auth::sign_in(email, password).await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: result.to_string() }],
+                is_error: false,
+            })
+        }
+        "auth_sign_up" => {
+            let email = params
+                .arguments
+                .get("email")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing email argument"))?;
+            let password = params
+                .arguments
+                .get("password")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing password argument"))?;
+            let name = params
+                .arguments
+                .get("name")
+                .and_then(|v| v.as_str());
+            let result = crate::command::auth::sign_up(email, password, name).await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: result.to_string() }],
+                is_error: false,
+            })
+        }
+        "auth_validate_token" => {
+            let token = params
+                .arguments
+                .get("token")
+                .and_then(|v| v.as_str())
+                .ok_or_else(|| anyhow::anyhow!("Missing token argument"))?;
+            let result = crate::command::auth::validate_token(token).await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: result.to_string() }],
+                is_error: false,
+            })
+        }
+        "auth_status" => {
+            let result = crate::command::auth::status().await?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: result.to_string() }],
+                is_error: false,
+            })
+        }
+        // ── Config ─────────────────────────────────────────────────────────
+        "config_read" => {
+            use montrs_metadata::MontrsMetadata;
+            let path = std::path::Path::new("montrs.toml");
+            if !path.exists() {
+                return Ok(CallToolResult {
+                    content: vec![ToolContent::Text {
+                        text: "No montrs.toml found in current directory".into(),
+                    }],
+                    is_error: true,
+                });
+            }
+            let meta = MontrsMetadata::from_file(path)?;
+            let output = serde_json::to_string_pretty(&meta)?;
+            Ok(CallToolResult {
+                content: vec![ToolContent::Text { text: output }],
+                is_error: false,
+            })
+        }
         _ => Ok(CallToolResult {
             content: vec![ToolContent::Text {
                 text: format!("Unknown tool: {}", params.name),
@@ -289,4 +559,17 @@ async fn handle_tool_call(
             is_error: true,
         }),
     }
+}
+
+/// Helper: load service configs and create a supervisor for the MCP tools.
+fn create_supervisor() -> anyhow::Result<Supervisor> {
+    use crate::config::MontrsConfig;
+    let config = MontrsConfig::load()?;
+    let raw = config.meta.services.clone();
+    if raw.is_empty() {
+        anyhow::bail!("No services defined in [services] section of montrs.toml");
+    }
+    let configs = ServiceConfig::from_toml_map(&raw)?;
+    let data_dir = montrs_services::supervisor::default_data_dir();
+    Supervisor::new(configs, data_dir)
 }

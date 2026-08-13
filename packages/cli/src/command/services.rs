@@ -126,33 +126,25 @@ pub async fn stop_all() -> anyhow::Result<()> {
 
 /// `montrs services logs [name]`
 pub async fn logs(name: Option<&str>) -> anyhow::Result<()> {
-    #[cfg(feature = "log")]
-    {
-        let store = montrs_log::LogStore::default()?;
-        let query = montrs_log::LogQuery {
-            service: name.map(|s| s.to_string()),
-            limit: 50,
-            ..Default::default()
-        };
-        let entries = store.query(query).await?;
-        if entries.is_empty() {
-            println!("No log entries found");
-            return Ok(());
-        }
-        for entry in &entries {
-            let level = match entry.level.to_lowercase().as_str() {
-                "error" => console::style(&entry.level).red().to_string(),
-                "warn" => console::style(&entry.level).yellow().to_string(),
-                "info" => console::style(&entry.level).green().to_string(),
-                _ => entry.level.clone(),
-            };
-            println!("[{}] [{}] {}: {}", entry.ts, level, entry.service, entry.message);
-        }
+    let store = montrs_log::LogStore::default()?;
+    let query = montrs_log::LogQuery {
+        service: name.map(|s| s.to_string()),
+        limit: 50,
+        ..Default::default()
+    };
+    let entries = store.query(query).await?;
+    if entries.is_empty() {
+        println!("No log entries found");
+        return Ok(());
     }
-    #[cfg(not(feature = "log"))]
-    {
-        let _ = name;
-        println!("Log support is not enabled. Rebuild with 'log' feature.");
+    for entry in &entries {
+        let level = match entry.level.to_lowercase().as_str() {
+            "error" => console::style(&entry.level).red().to_string(),
+            "warn" => console::style(&entry.level).yellow().to_string(),
+            "info" => console::style(&entry.level).green().to_string(),
+            _ => entry.level.clone(),
+        };
+        println!("[{}] [{}] {}: {}", entry.ts, level, entry.service, entry.message);
     }
     Ok(())
 }

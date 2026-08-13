@@ -23,6 +23,7 @@ pub mod verification;
 pub use config::AuthConfig;
 pub use context::AuthState;
 pub use error::AuthError;
+pub use error::AuthErrorCode;
 pub use plugin::AuthPlugin;
 
 /// Re-export of core entity traits.
