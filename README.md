@@ -116,6 +116,13 @@ impl Route<AppConfig> for HelloRoute {
 | [build-core](packages/build-core/README.md) | Build pipeline trait and configuration. |
 | [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
 | [build-serve](packages/build-serve/README.md) | Dev server (static file serving via axum). |
+| [runtime](packages/runtime/README.md) | Native Rust runtime (ops, extensions, workers, permissions, GC-free memory). |
+| [services](packages/services/README.md) | Service supervisor — daemon lifecycle, ready checks, retries, hooks. |
+| [log](packages/log/README.md) | Structured log store with retention, streaming, and archiving. |
+| [proxy](packages/proxy/README.md) | Reverse proxy routing `<slug>.localhost` to service ports. |
+| [auth](packages/auth/README.md) | Plugin-based authentication (email/password, OAuth, 2FA, orgs, API keys). |
+| [tui](packages/tui/README.md) | Full terminal UI library (21 renderables, keymap, ssh, qr). |
+| [i18n](packages/i18n/README.md) | Internationalization (macros, plurals, formatting, scoping). |
 
 ---
 

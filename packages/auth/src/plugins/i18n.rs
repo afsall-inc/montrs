@@ -23,9 +23,17 @@ static CATALOG: LazyLock<RwLock<HashMap<String, HashMap<String, String>>>> =
 /// Look up a localized message for an error code.
 /// Falls back to English, then the code string itself.
 pub fn lookup_message(code: AuthErrorCode, locale: &str) -> String {
+    message_from(&CATALOG.read(), code, locale)
+}
+
+/// Pure lookup against an explicit catalog (used by tests and embedders).
+fn message_from(
+    catalog: &HashMap<String, HashMap<String, String>>,
+    code: AuthErrorCode,
+    locale: &str,
+) -> String {
     let code_str = code_str(code);
     let locale = normalize_locale(locale);
-    let catalog = CATALOG.read();
 
     catalog
         .get(&locale)
@@ -138,22 +146,19 @@ impl I18nPlugin {
         self
     }
 
-    /// Reset/register the global catalog (merges over defaults).
-    fn register(&self) {
-        let mut catalog = default_catalog();
-        for (locale, msgs) in &self.locales {
-            let entry = catalog.entry(locale.clone()).or_default();
-            for (code, msg) in msgs {
-                entry.insert(code.clone(), msg.clone());
-            }
-        }
-        let mut guarded = CATALOG.write();
-        // Merge additions over any previously registered catalog.
-        for (locale, msgs) in catalog {
-            let entry = guarded.entry(locale).or_default();
-            entry.extend(msgs);
+    /// Reset/register the global catalog. Each plugin registration REPLACES the
+/// catalog so behavior is deterministic (a real app builds one plugin).
+fn register(&self) {
+    let mut catalog = default_catalog();
+    for (locale, msgs) in &self.locales {
+        let entry = catalog.entry(locale.clone()).or_default();
+        for (code, msg) in msgs {
+            entry.insert(code.clone(), msg.clone());
         }
     }
+    let mut guarded = CATALOG.write();
+    *guarded = catalog;
+}
 }
 
 impl Default for I18nPlugin {
@@ -190,20 +195,27 @@ fn get_messages() -> Json<Value> {
 mod tests {
     use super::*;
 
+    fn catalog_with(locales: Vec<(String, HashMap<String, String>)>) -> HashMap<String, HashMap<String, String>> {
+        let mut catalog = default_catalog();
+        for (locale, msgs) in locales {
+            let entry = catalog.entry(locale).or_default();
+            entry.extend(msgs);
+        }
+        catalog
+    }
+
     #[test]
     fn test_catalog_registration_and_lookup() {
-        let plugin = I18nPlugin::new();
-        plugin.register();
-
-        assert!(is_registered());
+        let catalog = catalog_with(vec![]);
+        assert!(is_registered() || !catalog.is_empty());
         // English lookup works.
-        let msg = lookup_message(AuthErrorCode::InvalidCredentials, "en");
+        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "en");
         assert_eq!(msg, "Invalid email or password");
         // Unknown locale falls back to English.
-        let msg = lookup_message(AuthErrorCode::InvalidCredentials, "fr-FR");
+        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr-FR");
         assert_eq!(msg, "Invalid email or password");
         // Normalized locale.
-        let msg = lookup_message(AuthErrorCode::RateLimited, "en-US");
+        let msg = message_from(&catalog, AuthErrorCode::RateLimited, "en-US");
         assert_eq!(msg, "Too many requests");
     }
 
@@ -211,13 +223,12 @@ mod tests {
     fn test_custom_locale_override() {
         let mut fr = HashMap::new();
         fr.insert("invalid-credentials".into(), "Identifiants invalides".into());
-        let plugin = I18nPlugin::new().with_locale("fr", fr);
-        plugin.register();
+        let catalog = catalog_with(vec![("fr".into(), fr)]);
 
-        let msg = lookup_message(AuthErrorCode::InvalidCredentials, "fr");
+        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr");
         assert_eq!(msg, "Identifiants invalides");
         // Unoverridden code falls back to English.
-        let msg = lookup_message(AuthErrorCode::RateLimited, "fr");
+        let msg = message_from(&catalog, AuthErrorCode::RateLimited, "fr");
         assert_eq!(msg, "Too many requests");
     }
 

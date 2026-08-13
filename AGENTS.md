@@ -41,7 +41,7 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 
 ## Architecture
 
-14 workspace packages under `packages/`:
+42 workspace packages under `packages/`:
 
 | Package | Role |
 |---------|------|
@@ -80,6 +80,13 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `log` | Structured log store with retention, streaming, rotate. |
 | `proxy` | Reverse proxy routing `<slug>.localhost` to ports. |
 | `auth` | Authentication system (email/password, OAuth, 2FA, sessions, RBAC). |
+| `ui` | shadcn-inspired component library (91 components) + theme system. |
+| `icons` | 1600+ Lucide icons as Leptos components. |
+| `motion` | Spring, tween, keyframes, gestures, SVG/CSS animation. |
+| `web` | Web platform adapter (WASM browser bindings). |
+| `desktop` | Native desktop (wry webview, winit+wgpu window). |
+| `mobile` | Mobile platform adapter (Android/iOS shells). |
+| `renderer` | Renderer trait + geometry primitives (wgpu/tiny-skia backends). |
 
 Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `packages/core/src/lib.rs`.
 
