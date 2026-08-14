@@ -1,0 +1,36 @@
+[package]
+name = "montrs-proxy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS reverse proxy — local development proxy with TLS"
+
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = []
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
+futures.workspace = true
+axum = "0.8"
+hyper = { version = "1", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http = "1"
+http-body-util = "0.1"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "cors", "set-header"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rustls = "0.23"
+rustls-pemfile = "2"
+rcgen = "0.13"
+regex.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

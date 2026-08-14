@@ -1,0 +1,54 @@
+use leptos::prelude::*;
+use montrs_icons::*;
+use montrs_ui::prelude::*;
+
+#[component]
+pub fn Sidenav10() -> impl IntoView {
+    let active = RwSignal::new("Home");
+    let items = vec![
+        ("Home", Glyph::LayoutDashboard),
+        ("Profile", Glyph::User),
+        ("Settings", Glyph::Settings),
+        ("Messages", Glyph::Mail),
+    ];
+
+    view! {
+        <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+            <div class="w-56 p-4 space-y-1">
+                <div class="flex items-center gap-3 px-3 py-2 mb-4">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                        <Icon glyph=Glyph::Blocks class="w-4 h-4 text-primary" />
+                    </div>
+                    <span class="font-semibold text-sm">"MontRS"</span>
+                </div>
+                {items.into_iter().map(|(label, icon)| {
+                    let l = label;
+                    let is_active = move || active.get() == l;
+                    let click = move |_| active.set(l);
+                    view! {
+                        <button on:click=click class=move || {
+                            let base = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors";
+                            if is_active() {
+                                format!("{} bg-primary/10 text-primary font-medium", base)
+                            } else {
+                                format!("{} text-muted-foreground hover:text-foreground hover:bg-muted", base)
+                            }
+                        }>
+                            <Icon glyph=icon class="w-4 h-4" />
+                            {label}
+                        </button>
+                    }
+                }).collect::<Vec<_>>()}
+                <div class="mt-4 pt-4 border-t border-border">
+                    <a href="#" class="flex items-center gap-3 rounded-md px-3 py-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">"AK"</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium truncate">"Alex Kim"</p>
+                            <p class="text-xs text-muted-foreground truncate">"alex@montrs.com"</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+}

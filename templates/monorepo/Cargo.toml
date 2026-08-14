@@ -1,0 +1,16 @@
+[workspace]
+resolver = "2"
+members = ["apps/*", "packages/*", "e2e"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace.dependencies]
+montrs-core = { path = "../../../packages/core" }
+montrs-ui = { path = "../../../packages/ui" }
+montrs-icons = { path = "../../../packages/icons" }
+leptos = { version = "0.8", features = ["hydrate", "ssr"] }
+tw_merge = "0.1"
+paste = "1"
+serde = { version = "1", features = ["derive"] }

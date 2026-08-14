@@ -1,39 +1,3 @@
-// This file is part of MontRS.
-
-// Copyright (C) 2025-Present Afsall Labs.
-// SPDX-License-Identifier: Apache-2.0 OR MIT
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Alternatively, this file is available under the MIT License:
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
 //! Configuration plate for MontRS.
 
 //! This plate defines the structure of the `montrs.toml` configuration file
@@ -41,47 +5,31 @@
 //! for project settings, build options, and server configuration.
 
 use anyhow::{Context, Result};
-use cargo_metadata::MetadataCommand;
 use montrs_fmt::FormatterSettings;
-pub use montrs_runner::TaskConfig;
+use montrs_metadata::MontrsMetadata;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-
-pub mod tailwind;
 
 /// The root configuration structure for a MontRS project.
 ///
-/// Corresponds to the `montrs.toml` file.
+/// Corresponds to the `montrs.toml` file. Delegates shared fields to
+/// `MontrsMetadata` (the single source of truth), keeping only CLI-specific
+/// configuration here.
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct MontrsConfig {
-    /// Project identity and core settings.
-    #[serde(default)]
-    pub project: ProjectConfig,
-    /// Build-related configuration (target, assets, etc.).
-    #[serde(default)]
-    pub build: BuildConfig,
-    /// Development server settings.
-    #[serde(default)]
-    pub serve: ServeConfig,
+    /// Core metadata — single source of truth for project identity,
+    /// serve, build, deploy, env, tasks, tools, etc.
+    #[serde(flatten)]
+    pub meta: MontrsMetadata,
+
     /// E2E testing configuration.
     #[serde(default)]
     pub e2e: E2eConfig,
+
     /// Formatting configuration.
     #[serde(default)]
     pub fmt: FormatterSettings,
-    /// Custom task definitions.
-    #[serde(default)]
-    pub tasks: HashMap<String, TaskConfig>,
-}
 
-/// Project metadata and feature flags.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ProjectConfig {
-    /// The name of the project (defaults to package name).
-    #[serde(default = "default_app_name")]
-    pub name: String,
-
-    // Internal fields for cargo-leptos compatibility
+    // Internal CLI fields (not serialized to montrs.toml)
     #[serde(skip)]
     pub verbose: u8,
     #[serde(skip)]
@@ -92,135 +40,6 @@ pub struct ProjectConfig {
     pub hot_reload: bool,
     #[serde(skip)]
     pub features: Vec<String>,
-    #[serde(skip)]
-    pub tailwind_style: Option<TailwindStyle>,
-}
-
-/// Tailwind CSS integration style.
-#[derive(
-    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default,
-)]
-pub enum TailwindStyle {
-    /// Automatically detect style.
-    #[default]
-    Auto,
-    /// Use configuration from `montrs.toml`.
-    Toml,
-    /// Use Tailwind v4 conventions.
-    V4,
-}
-
-impl Default for ProjectConfig {
-    fn default() -> Self {
-        Self {
-            name: default_app_name(),
-            verbose: 0,
-            log: Vec::new(),
-            release: false,
-            hot_reload: false,
-            features: Vec::new(),
-            tailwind_style: None,
-        }
-    }
-}
-
-fn default_app_name() -> String {
-    "app".to_string()
-}
-
-/// Build configuration settings.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct BuildConfig {
-    /// The HTML file to use as the index page (default: "index.html").
-    #[serde(default = "default_target")]
-    pub target: String,
-    /// The directory to output build artifacts (default: "dist").
-    #[serde(default = "default_dist")]
-    pub dist: String,
-    /// The root directory for the site (default: "target/site").
-    #[serde(default = "default_site_root")]
-    pub site_root: String,
-    /// The name of the WASM package directory (default: "pkg").
-    #[serde(default = "default_site_pkg_name")]
-    pub site_pkg_name: String,
-    /// Optional directory containing static assets.
-    #[serde(default = "default_assets_dir")]
-    pub assets_dir: Option<String>,
-    /// Path to the Tailwind CSS input file.
-    #[serde(default)]
-    pub tailwind_input_file: Option<String>,
-    /// Path to the Tailwind CSS config file.
-    #[serde(rename = "tailwind-config-file")]
-    pub tailwind_config_file: Option<String>,
-    /// Path to the main style file (e.g., CSS/SCSS).
-    #[serde(rename = "style-file")]
-    pub style_file: Option<String>,
-    /// Browser compatibility query (default: "defaults").
-    #[serde(default = "default_browserquery")]
-    pub browserquery: String,
-}
-
-impl Default for BuildConfig {
-    fn default() -> Self {
-        Self {
-            target: default_target(),
-            dist: default_dist(),
-            site_root: default_site_root(),
-            site_pkg_name: default_site_pkg_name(),
-            assets_dir: None,
-            tailwind_input_file: None,
-            tailwind_config_file: None,
-            style_file: None,
-            browserquery: default_browserquery(),
-        }
-    }
-}
-
-fn default_browserquery() -> String {
-    "defaults".to_string()
-}
-
-fn default_target() -> String {
-    "index.html".to_string()
-}
-fn default_dist() -> String {
-    "dist".to_string()
-}
-fn default_site_root() -> String {
-    "target/site".to_string()
-}
-fn default_site_pkg_name() -> String {
-    "pkg".to_string()
-}
-fn default_assets_dir() -> Option<String> {
-    None
-}
-
-/// Development server configuration.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ServeConfig {
-    /// The port to listen on (default: 8080).
-    #[serde(default = "default_port")]
-    pub port: u16,
-    /// The address to bind to (default: "127.0.0.1").
-    #[serde(default = "default_addr")]
-    pub addr: String,
-}
-
-impl Default for ServeConfig {
-    fn default() -> Self {
-        Self {
-            port: default_port(),
-            addr: default_addr(),
-        }
-    }
-}
-
-fn default_port() -> u16 {
-    8080
-}
-fn default_addr() -> String {
-    "127.0.0.1".to_string()
 }
 
 /// E2E testing configuration.
@@ -237,8 +56,6 @@ pub struct E2eConfig {
     pub base_url: Option<String>,
 }
 
-/// Configuration for custom tasks.
-// Moved to montrs-tasks crate
 impl MontrsConfig {
     /// Loads configuration from a specific file.
     pub fn from_file(path: impl AsRef<std::path::Path>) -> Result<Self> {
@@ -253,12 +70,12 @@ impl MontrsConfig {
             format!("Failed to parse config file: {}", path.as_ref().display())
         })?;
 
-        // Try to resolve project name if it's default
-        if config.project.name == "app"
-            && let Ok(metadata) = MetadataCommand::new().exec()
-            && let Some(root) = metadata.root_package()
+        // Auto-detect project name from Cargo.toml if not set
+        if config.meta.project.name.is_none()
+            && let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec()
+            && let Some(root) = cargo.root_package()
         {
-            config.project.name = root.name.clone();
+            config.meta.project.name = Some(root.name.clone());
         }
 
         Ok(config)
@@ -284,15 +101,13 @@ impl MontrsConfig {
         }
 
         // Try to resolve project name if still default
-        if config.project.name == "app"
-            && let Ok(metadata) = MetadataCommand::new().exec()
-            && let Some(root) = metadata.root_package()
+        if config.meta.project.name.is_none()
+            && let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec()
+            && let Some(root) = cargo.root_package()
         {
-            config.project.name = root.name.clone();
+            config.meta.project.name = Some(root.name.clone());
         }
 
         Ok(config)
     }
-
-    // to_leptos_config removed as we now use cargo-leptos CLI wrapper
 }

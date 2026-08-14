@@ -6,11 +6,16 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "0"
+allowed_deps = ["montrs-platform"]
+
 [dependencies]
+montrs-platform = { path = "../platform" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
+tokio = { version = "1.0", features = ["rt", "macros", "sync", "time"] }
 async-trait.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
@@ -18,7 +23,15 @@ futures.workspace = true
 regex.workspace = true
 
 leptos.workspace = true
+leptos_router.workspace = true
+leptos_axum = { workspace = true, optional = true }
+axum = { version = "0.8", optional = true }
+tower-http = { version = "0.6", features = ["fs"], optional = true }
 
 # Rate limiting
 governor = "0.6"
 nonzero_ext = "0.3"
+
+[features]
+default = []
+ssr = ["dep:leptos_axum", "dep:axum", "dep:tower-http"]

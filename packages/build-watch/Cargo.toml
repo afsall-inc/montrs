@@ -1,0 +1,22 @@
+[package]
+name = "montrs-build-watch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS file watcher — extracted from montrs-build"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-build-core"]
+
+[dependencies]
+montrs-build-core = { path = "../build-core" }
+anyhow.workspace = true
+tracing.workspace = true
+notify = { version = "8", features = ["macos_kqueue"] }
+
+[dev-dependencies]
+montrs-build-core = { path = "../build-core" }
+montrs-metadata = { path = "../metadata" }

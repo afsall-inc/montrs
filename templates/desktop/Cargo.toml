@@ -1,0 +1,14 @@
+[package]
+name = "{{crate_name}}"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+resolver = "2"
+
+[dependencies]
+montrs-desktop = { path = "{{project-name}}/packages/desktop" }
+
+[[bin]]
+name = "{{crate_name}}"
+path = "src/main.rs"

@@ -7,13 +7,24 @@ authors.workspace = true
 repository.workspace = true
 description = "The main entry point for the MontRS framework."
 
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile"]
+
 [dependencies]
+montrs-platform = { path = "../platform", version = "0.1.0" }
 montrs-haptics = { path = "../haptics", optional = true }
 montrs-core = { path = "../core", version = "0.1.0" }
 montrs-orm = { path = "../orm", version = "0.1.0", optional = true }
 montrs-validator = { path = "../validator", version = "0.1.0", optional = true }
 montrs-test = { path = "../test", version = "0.1.0", optional = true }
 montrs-cli = { path = "../cli", version = "0.1.0", optional = true }
+montrs-icons = { path = "../icons", version = "0.1.0", optional = true }
+montrs-ui = { path = "../ui", version = "0.1.0", optional = true }
+montrs-motion = { path = "../motion", version = "0.1.0", optional = true }
+montrs-renderer = { path = "../renderer", version = "0.1.0", optional = true }
+montrs-desktop = { path = "../desktop", version = "0.1.0", optional = true }
+montrs-mobile = { path = "../mobile", version = "0.1.0", optional = true }
 
 [[bin]]
 name = "montrs"
@@ -25,13 +36,19 @@ haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "validator", "test", "cli"]
+full = ["orm", "validator", "test", "cli", "icons", "ui", "motion"]
 
 # Basic package activation
 orm = ["dep:montrs-orm"]
 validator = ["dep:montrs-validator"]
 test = ["dep:montrs-test"]
 cli = ["dep:montrs-cli"]
+icons = ["dep:montrs-icons"]
+ui = ["dep:montrs-ui", "icons"]
+motion = ["dep:montrs-motion"]
+renderer = ["dep:montrs-renderer"]
+desktop = ["dep:montrs-desktop", "renderer"]
+mobile = ["dep:montrs-mobile", "renderer"]
 
 # --- Forwarded Features ---
 

@@ -5,20 +5,34 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
+description = "MontRS task runner"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-utils", "montrs-fmt", "montrs-metadata"]
 
 [dependencies]
-serde.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json = "1.0"
 anyhow.workspace = true
 console = "0.15"
 thiserror.workspace = true
-toml = "0.8"
+toml = "0.9"
+indexmap = { version = "2", features = ["serde"] }
+tera = "1.20"
+petgraph = "0.6"
+globset = "0.4"
+ignore = "0.4"
+walkdir = "2.5"
+sha2 = "0.10"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4"] }
+tokio = { workspace = true, features = ["full"] }
+async-trait.workspace = true
 montrs-utils = { path = "../utils" }
 montrs-fmt = { path = "../fmt" }
-cargo_metadata = "0.18"
-walkdir = "2.4"
-ignore = "0.4"
-uuid = { version = "1.6", features = ["v4"] }
-chrono = { version = "0.4", features = ["serde"] }
+montrs-metadata = { path = "../metadata" }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["full"] }
+tempfile = "3"

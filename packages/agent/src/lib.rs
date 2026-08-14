@@ -7,7 +7,6 @@ pub mod error_parser;
 pub mod framework;
 pub mod guides;
 pub mod skills;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
     pub project_name: String,

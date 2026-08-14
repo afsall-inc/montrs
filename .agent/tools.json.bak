@@ -1,0 +1,511 @@
+{
+  "tools": [
+    {
+      "description": "Builds the MontRS project.",
+      "name": "montrs_build",
+      "parameters": {
+        "properties": {
+          "release": {
+            "description": "Build in release mode",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Generates a project specification.",
+      "name": "montrs_spec",
+      "parameters": {
+        "properties": {
+          "format": {
+            "enum": [
+              "json",
+              "yaml",
+              "txt"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Formats the project's Rust and view! code.",
+      "name": "montrs_fmt",
+      "parameters": {
+        "properties": {
+          "check": {
+            "description": "Check if files are formatted without modifying them",
+            "type": "boolean"
+          },
+          "path": {
+            "description": "Path to format (default: .)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "description": "Generates a single-file 'sketch' of a MontRS component.",
+      "name": "montrs_sketch",
+      "parameters": {
+        "properties": {
+          "kind": {
+            "description": "Component type",
+            "enum": [
+              "plate",
+              "route",
+              "app"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the sketch file",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Expands a sketch file into a full MontRS workspace structure.",
+      "name": "montrs_expand",
+      "parameters": {
+        "properties": {
+          "path": {
+            "description": "Path to the sketch file",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs a custom task defined in montrs.toml.",
+      "name": "montrs_run",
+      "parameters": {
+        "properties": {
+          "task": {
+            "description": "Name of the task to run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task"
+        ],
+        "type": "object"
+      }
+    },
+    {
+      "description": "Lists available custom tasks from montrs.toml.",
+      "name": "montrs_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package build. Refer to its README for details.",
+      "name": "montrs_pkg_build",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package ui. Refer to its README for details.",
+      "name": "montrs_pkg_ui",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package motion. MUST follow invariants defined in agent.json under packages['motion'].invariants",
+      "name": "montrs_pkg_motion",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
+      "name": "montrs_pkg_cli",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package haptics. MUST follow invariants defined in agent.json under packages['haptics'].invariants",
+      "name": "montrs_pkg_haptics",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package agent. MUST follow invariants defined in agent.json under packages['agent'].invariants",
+      "name": "montrs_pkg_agent",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "description",
+      "name": "name",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "description",
+      "name": "skill_name",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package desktop. Refer to its README for details.",
+      "name": "montrs_pkg_desktop",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package validator. MUST follow invariants defined in agent.json under packages['validator'].invariants",
+      "name": "montrs_pkg_validator",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package runner. Refer to its README for details.",
+      "name": "montrs_pkg_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package renderer. Refer to its README for details.",
+      "name": "montrs_pkg_renderer",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
+      "name": "montrs_pkg_fmt",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Formats Rust and view! code according to MontRS standards.",
+      "name": "code_format",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
+      "name": "montrs_pkg_montrs",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package core. MUST follow invariants defined in agent.json under packages['core'].invariants",
+      "name": "montrs_pkg_core",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package mobile. Refer to its README for details.",
+      "name": "montrs_pkg_mobile",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package bench. MUST follow invariants defined in agent.json under packages['bench'].invariants",
+      "name": "montrs_pkg_bench",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs performance benchmarks for the project or specific targets.",
+      "name": "bench_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
+      "name": "montrs_pkg_orm",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Executes a SQL query on the configured database backend.",
+      "name": "db_query",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
+      "name": "montrs_pkg_utils",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package icons. MUST follow invariants defined in agent.json under packages['icons'].invariants",
+      "name": "montrs_pkg_icons",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
+      "name": "montrs_pkg_test",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs unit, integration, and end-to-end tests for the MontRS project.",
+      "name": "test_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package metadata. MUST follow invariants defined in agent.json under packages['metadata'].invariants",
+      "name": "montrs_pkg_metadata",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package prdoc. Refer to its README for details.",
+      "name": "montrs_pkg_prdoc",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
+      "name": "montrs_pkg_agentignore",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Guides the agent through writing and running tests for MontRS applications.",
+      "name": "skill_testing",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Tests must be deterministic and hermetic",
+          "Integration tests must use TestRuntime for in-process execution",
+          "E2E tests must be tagged with #[cfg(feature = \"e2e\")]"
+        ],
+        "context_prompts": [
+          "What type of test are you writing? (unit, integration, e2e)",
+          "What is the expected behavior you want to verify?"
+        ],
+        "name": "testing",
+        "tags": [
+          "testing",
+          "quality",
+          "verification"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Identify the target: unit test, integration test, or E2E test",
+          "For unit tests: use the test crate's expect() and table_test() macros",
+          "For integration tests: use TestRuntime and Fixture traits",
+          "For E2E tests: use playwright-rs with the e2e crate",
+          "Run tests with `montrs test` or `cargo test --workspace`",
+          "Check test output for failures and iterate"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through deploying a MontRS application to various targets.",
+      "name": "skill_deployment",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Release builds must use --release flag",
+          "Environment variables must be configured via montrs.toml, not hardcoded",
+          "Deployment configuration must be documented in the project README"
+        ],
+        "context_prompts": [
+          "What is your deployment target? (web, desktop, mobile)",
+          "Do you have a domain or server ready for deployment?"
+        ],
+        "name": "deployment",
+        "tags": [
+          "deployment",
+          "devops",
+          "release"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Determine deployment target: web (WASM+server), desktop (Tauri), or mobile",
+          "For web: build with `montrs build --release`, configure static file serving",
+          "For desktop: use Tauri integration with `cargo tauri build`",
+          "Verify the deployment with a health check or smoke test",
+          "Document the deployment configuration in montrs.toml"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through setting up haptic feedback for a MontRS application.",
+      "name": "skill_haptics_setup",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Always call is_supported() before haptic operations",
+          "Use ImpactStyle enum, not raw duration values",
+          "Feature-gate platform imports to avoid cross-compilation issues",
+          "Pass &HapticsConfig to create_haptics_provider, not a raw HapticsTarget",
+          "Use enabled: false in tests to get a NoopHapticsProvider"
+        ],
+        "context_prompts": [
+          "Which platform target does your app use? (web, desktop, mobile)",
+          "Which haptic interactions does the app need? (impact, vibration, selection)"
+        ],
+        "name": "haptics-setup",
+        "tags": [
+          "haptics",
+          "feedback",
+          "ux",
+          "web",
+          "desktop",
+          "mobile"
+        ],
+        "version": "1.1.0",
+        "workflow_steps": [
+          "Check which target the application uses (web, desktop, mobile)",
+          "Enable the corresponding feature gate (haptics-web, haptics-desktop, or haptics-mobile)",
+          "Create a HapticsProvider using create_haptics_provider(&HapticsConfig { enabled: true, target: ... })",
+          "Use config.enabled = false to disable haptics at runtime",
+          "Wrap provider in a Plate for dependency injection",
+          "Configure HapticsConfig with desired settings",
+          "Always call provider.is_supported() before haptic operations",
+          "Test with cargo test --features haptics-desktop"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through setting up and configuring a database backend for a MontRS application.",
+      "name": "skill_database_setup",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Database configuration must be in montrs.toml, not hardcoded",
+          "Connection strings must not be committed to version control"
+        ],
+        "context_prompts": [
+          "Which database backend would you like to use? (sqlite, postgres, mysql)",
+          "What is the connection URL or path for your database?"
+        ],
+        "name": "database-setup",
+        "tags": [
+          "database",
+          "setup",
+          "configuration"
+        ],
+        "version": "1.0.0",
+        "workflow_steps": [
+          "Check montrs.toml for database configuration section",
+          "If no database configured, guide user to add [database] section with backend and URL",
+          "Run `cargo add` for the chosen backend driver",
+          "Verify connection with TestRuntime"
+        ]
+      }
+    }
+  ]
+}

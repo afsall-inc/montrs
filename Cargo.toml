@@ -3,6 +3,17 @@ resolver = "2"
 
 members = [
     "packages/agentignore",
+    "packages/env",
+    "packages/sigstore",
+    "packages/registry",
+    "packages/plugin",
+    "packages/lockfile",
+    "packages/tool",
+    "packages/shell",
+    "packages/deps",
+    "packages/i18n",
+    "packages/runtime",
+    "packages/tui",
     "packages/haptics",
     "packages/bench",
     "packages/cli",
@@ -15,6 +26,23 @@ members = [
     "packages/test",
     "packages/utils",
     "packages/runner",
+    "packages/icons",
+    "packages/ui",
+    "packages/motion",
+    "packages/metadata",
+    "packages/platform",
+    "packages/build",
+    "packages/build-core",
+    "packages/build-watch",
+    "packages/build-serve",
+    "packages/renderer",
+    "packages/desktop",
+    "packages/mobile",
+    "packages/services",
+    "packages/log",
+    "packages/proxy",
+    "packages/auth",
+    "apps/website",
 ]
 
 [workspace.package]
@@ -34,4 +62,13 @@ anyhow = "1.0"
 tracing = "0.1"
 futures = "0.3"
 leptos = { version = "0.8", features = ["hydrate", "ssr"] }
+leptos_axum = "0.8"
+leptos_meta = "0.8"
+leptos_router = "0.8"
 regex = "1.10"
+strum = { version = "0.28", features = ["derive"] }
+strum_macros = "0.28"
+convert_case = "0.11"
+tw_merge = "0.1"
+paste = "1"
+open = "5"

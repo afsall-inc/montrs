@@ -1,0 +1,24 @@
+[package]
+name = "montrs-build"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS build pipeline facade — re-exports build-core, build-watch, build-serve"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-build-core", "montrs-build-watch", "montrs-build-serve", "montrs-metadata"]
+
+[dependencies]
+montrs-build-core = { path = "../build-core" }
+montrs-build-watch = { path = "../build-watch" }
+montrs-build-serve = { path = "../build-serve" }
+montrs-metadata = { path = "../metadata" }
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+camino = "1.1"
+fs_extra = "1.3"

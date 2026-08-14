@@ -1,0 +1,53 @@
+[package]
+name = "montrs-auth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Comprehensive authentication system for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-orm", "montrs-sigstore", "montrs-i18n", "montrs-runtime"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_urlencoded = "0.7"
+anyhow.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
+async-trait.workspace = true
+regex.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+base64 = "0.22"
+rand = "0.8"
+argon2 = "0.5"
+totp-rs = { version = "5.5", features = ["gen_secret", "otpauth"] }
+url = "2.5"
+jsonwebtoken = "9.3"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors"] }
+axum = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+oauth2 = "5.0"
+openidconnect = "3.5"
+parking_lot = "0.12"
+montrs-orm = { path = "../orm", optional = true }
+montrs-sigstore = { path = "../sigstore", optional = true }
+montrs-i18n = { path = "../i18n", optional = true }
+
+[features]
+default = ["orm", "sigstore"]
+orm = ["dep:montrs-orm"]
+sigstore = ["dep:montrs-sigstore"]
+i18n = ["dep:montrs-i18n"]
+
+[dev-dependencies]
+tempfile = "3"

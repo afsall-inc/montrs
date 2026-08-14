@@ -1,0 +1,21 @@
+[package]
+name = "{{crate_name}}"
+version.workspace = true
+edition.workspace = true
+
+[workspace]
+resolver = "2"
+members = [".", "app", "e2e"]
+
+[dependencies]
+montrs-core = { path = "{{project-name}}/packages/core" }
+montrs-auth = { path = "{{project-name}}/packages/auth" }
+montrs-i18n = { path = "{{project-name}}/packages/i18n" }
+montrs-services = { path = "{{project-name}}/packages/services" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+axum = "0.8"
+
+[[bin]]
+name = "api"
+path = "src/main.rs"

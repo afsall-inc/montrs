@@ -1,0 +1,5 @@
+backends = ["core:cargo", "asdf:irod/python"]
+bins = ["cargo"]
+description = "Cargo is the Rust package manager"
+detect = ["Cargo.toml"]
+idiomatic_files = ["Cargo.toml"]

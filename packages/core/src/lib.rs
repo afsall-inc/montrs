@@ -1,39 +1,3 @@
-// This file is part of MontRS.
-
-// Copyright (C) 2025-Present Afsall Labs.
-// SPDX-License-Identifier: Apache-2.0 OR MIT
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Alternatively, this file is available under the MIT License:
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
 //! montrs-core: The core architectural engine for MontRS.
 //!
 //! This crate provides the foundational traits and structs that define how a MontRS
@@ -45,6 +9,8 @@ pub mod env;
 pub mod features;
 pub mod limiter;
 pub mod router;
+#[cfg(feature = "ssr")]
+pub mod serve;
 pub mod validation;
 
 use async_trait::async_trait;
@@ -53,9 +19,23 @@ pub use features::{FeatureFlag, FeatureManager, Rule, Segment, UserContext};
 pub use leptos::prelude::*;
 pub use limiter::{GovernorLimiter, Limiter};
 pub use router::{
-    ActionResponse, LoaderResponse, Route, RouteAction, RouteContext,
-    RouteError, RouteLoader, RouteParams, RouteView, Router,
+    ActionResponse, LoaderResponse, NoParams, NoopAction, NoopLoader, Route,
+    RouteAction, RouteContext, RouteError, RouteLink, RouteLoader, RouteParams,
+    RouteView, Router, RouterOutlet, use_montrs_router,
 };
+
+/// Re-exported Leptos Router hooks for convenience.
+/// Users get client-side navigation, query params, and location access
+/// without importing `leptos_router` directly.
+pub mod nav {
+    pub use leptos_router::{
+        NavigateOptions,
+        hooks::{use_location, use_navigate, use_query, use_query_map},
+    };
+}
+// Re-export Target from montrs-platform so existing code continues to work.
+#[doc(inline)]
+pub use montrs_platform::Target;
 use serde::{Deserialize, Serialize};
 use std::{error::Error as StdError, sync::Arc};
 pub use validation::{Validator, ValidatorError};
@@ -88,25 +68,6 @@ pub trait AgentError: StdError {
     fn documentation_refs(&self) -> Vec<String> {
         Vec::new()
     }
-}
-
-/// The execution environment context for the application.
-/// Used to differentiate logic between server-side rendering, WASM hydration,
-/// and other deployment targets like Edge or Mobile.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Target {
-    /// Server-side rendering (SSR) context.
-    Server,
-    /// Client-side WASM hydration or CSR context.
-    Wasm,
-    /// Edge computing environments (e.g., Cloudflare Workers).
-    Edge,
-    /// Desktop applications (e.g., via Tauri).
-    Desktop,
-    /// Android mobile platform.
-    MobileAndroid,
-    /// iOS mobile platform.
-    MobileIos,
 }
 
 /// The unit of composition in MontRS.
@@ -245,7 +206,7 @@ impl<C: AppConfig> AppSpec<C> {
             plates: Vec::new(),
             env,
             router: Router::new(),
-            target: Target::Server,
+            target: Target::Web,
         }
     }
 
@@ -289,6 +250,37 @@ impl<C: AppConfig> AppSpec<C> {
             }
 
             main_view()
+        });
+    }
+
+    /// Boots the application with the MontRS Router available as a Leptos context.
+    ///
+    /// This is the recommended boot method. It provides the `Router<C>` via
+    /// `provide_context`, wraps the app in Leptos Router for client-side URL
+    /// matching, and renders the `main_view`. Inside your view, use
+    /// [`RouterOutlet`] to render the matched route's view.
+    pub fn mount_with_router<F, IV>(self, main_view: F)
+    where
+        C: 'static,
+        F: FnOnce() -> IV + 'static,
+        IV: IntoView + 'static,
+    {
+        let config = self.config;
+        let env = self.env;
+        let plates = self.plates;
+        let router = self.router;
+
+        leptos::mount::mount_to_body(move || {
+            provide_context(config.clone());
+            provide_context(env.clone());
+            provide_context(router);
+
+            for plate in &plates {
+                println!("Booting plate: {}", plate.name());
+            }
+
+            let view = main_view();
+            view! { <leptos_router::components::Router>{view}</leptos_router::components::Router> }
         });
     }
 }

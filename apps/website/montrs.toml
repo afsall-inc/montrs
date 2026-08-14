@@ -1,0 +1,31 @@
+[project]
+name = "montrs-website"
+version = "0.1.0"
+
+[env]
+RUST_BACKTRACE = "1"
+MONTRS_LOG = "info"
+
+[serve]
+site-addr = "127.0.0.1:3000"
+reload-port = 3001
+tailwind-input-file = "style/main.css"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+package = "website"
+
+[tasks]
+dev = "montrs serve"
+build = "montrs build"
+test = "montrs test"
+fmt = "montrs fmt"
+check = "cargo check"
+check-ssr = "cargo check --features ssr"
+check-wasm = "cargo check --target wasm32-unknown-unknown --features hydrate --no-default-features"
+build-ssr = "cargo build --features ssr"
+lint = "cargo clippy -- -D warnings"
+
+[tasks.ci]
+description = "Run all checks"
+command = "echo 'CI checks complete'"
+depends = ["fmt", "lint", "check", "check-ssr"]

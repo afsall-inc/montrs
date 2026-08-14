@@ -113,72 +113,72 @@
       }
     },
     {
-      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
-      "name": "montrs_pkg_fmt",
+      "description": "Capability provided by package registry. MUST follow invariants defined in agent.json under packages['registry'].invariants",
+      "name": "montrs_pkg_registry",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Formats Rust and view! code according to MontRS standards.",
-      "name": "code_format",
+      "description": "Capability provided by package lockfile. MUST follow invariants defined in agent.json under packages['lockfile'].invariants",
+      "name": "montrs_pkg_lockfile",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Capability provided by package bench. MUST follow invariants defined in agent.json under packages['bench'].invariants",
-      "name": "montrs_pkg_bench",
+      "description": "Capability provided by package build. MUST follow invariants defined in agent.json under packages['build'].invariants",
+      "name": "montrs_pkg_build",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Runs performance benchmarks for the project or specific targets.",
-      "name": "bench_run",
+      "description": "Capability provided by package build-core. MUST follow invariants defined in agent.json under packages['build-core'].invariants",
+      "name": "montrs_pkg_build-core",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
-      "name": "montrs_pkg_agentignore",
+      "description": "Capability provided by package runtime. MUST follow invariants defined in agent.json under packages['runtime'].invariants",
+      "name": "montrs_pkg_runtime",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
-      "name": "montrs_pkg_orm",
+      "description": "Capability provided by package ui. MUST follow invariants defined in agent.json under packages['ui'].invariants",
+      "name": "montrs_pkg_ui",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Executes a SQL query on the configured database backend.",
-      "name": "db_query",
+      "description": "Capability provided by package log. MUST follow invariants defined in agent.json under packages['log'].invariants",
+      "name": "montrs_pkg_log",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Capability provided by package prdoc. Refer to its README for details.",
-      "name": "montrs_pkg_prdoc",
+      "description": "Capability provided by package motion. MUST follow invariants defined in agent.json under packages['motion'].invariants",
+      "name": "montrs_pkg_motion",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
-      "name": "montrs_pkg_montrs",
+      "description": "Capability provided by package shell. MUST follow invariants defined in agent.json under packages['shell'].invariants",
+      "name": "montrs_pkg_shell",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -193,16 +193,40 @@
       }
     },
     {
-      "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
-      "name": "montrs_pkg_test",
+      "description": "Capability provided by package env. MUST follow invariants defined in agent.json under packages['env'].invariants",
+      "name": "montrs_pkg_env",
       "parameters": {
         "properties": {},
         "type": "object"
       }
     },
     {
-      "description": "Runs unit, integration, and end-to-end tests for the MontRS project.",
-      "name": "test_run",
+      "description": "Capability provided by package tui. MUST follow invariants defined in agent.json under packages['tui'].invariants",
+      "name": "montrs_pkg_tui",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package build-watch. MUST follow invariants defined in agent.json under packages['build-watch'].invariants",
+      "name": "montrs_pkg_build-watch",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package deps. MUST follow invariants defined in agent.json under packages['deps'].invariants",
+      "name": "montrs_pkg_deps",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package haptics. MUST follow invariants defined in agent.json under packages['haptics'].invariants",
+      "name": "montrs_pkg_haptics",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -233,8 +257,120 @@
       }
     },
     {
+      "description": "Capability provided by package services. MUST follow invariants defined in agent.json under packages['services'].invariants",
+      "name": "montrs_pkg_services",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package tool. MUST follow invariants defined in agent.json under packages['tool'].invariants",
+      "name": "montrs_pkg_tool",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package desktop. MUST follow invariants defined in agent.json under packages['desktop'].invariants",
+      "name": "montrs_pkg_desktop",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package proxy. MUST follow invariants defined in agent.json under packages['proxy'].invariants",
+      "name": "montrs_pkg_proxy",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package build-serve. MUST follow invariants defined in agent.json under packages['build-serve'].invariants",
+      "name": "montrs_pkg_build-serve",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package validator. MUST follow invariants defined in agent.json under packages['validator'].invariants",
       "name": "montrs_pkg_validator",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package i18n. MUST follow invariants defined in agent.json under packages['i18n'].invariants",
+      "name": "montrs_pkg_i18n",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package runner. MUST follow invariants defined in agent.json under packages['runner'].invariants",
+      "name": "montrs_pkg_runner",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package auth. MUST follow invariants defined in agent.json under packages['auth'].invariants",
+      "name": "montrs_pkg_auth",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package renderer. MUST follow invariants defined in agent.json under packages['renderer'].invariants",
+      "name": "montrs_pkg_renderer",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package fmt. MUST follow invariants defined in agent.json under packages['fmt'].invariants",
+      "name": "montrs_pkg_fmt",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Formats Rust and view! code according to MontRS standards.",
+      "name": "code_format",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package platform. MUST follow invariants defined in agent.json under packages['platform'].invariants",
+      "name": "montrs_pkg_platform",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package montrs. MUST follow invariants defined in agent.json under packages['montrs'].invariants",
+      "name": "montrs_pkg_montrs",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package web. MUST follow invariants defined in agent.json under packages['web'].invariants",
+      "name": "montrs_pkg_web",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -249,6 +385,46 @@
       }
     },
     {
+      "description": "Capability provided by package mobile. MUST follow invariants defined in agent.json under packages['mobile'].invariants",
+      "name": "montrs_pkg_mobile",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package bench. MUST follow invariants defined in agent.json under packages['bench'].invariants",
+      "name": "montrs_pkg_bench",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs performance benchmarks for the project or specific targets.",
+      "name": "bench_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package orm. MUST follow invariants defined in agent.json under packages['orm'].invariants",
+      "name": "montrs_pkg_orm",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Executes a SQL query on the configured database backend.",
+      "name": "db_query",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package utils. MUST follow invariants defined in agent.json under packages['utils'].invariants",
       "name": "montrs_pkg_utils",
       "parameters": {
@@ -257,8 +433,64 @@
       }
     },
     {
-      "description": "Capability provided by package runner. Refer to its README for details.",
-      "name": "montrs_pkg_runner",
+      "description": "Capability provided by package icons. MUST follow invariants defined in agent.json under packages['icons'].invariants",
+      "name": "montrs_pkg_icons",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package plugin. MUST follow invariants defined in agent.json under packages['plugin'].invariants",
+      "name": "montrs_pkg_plugin",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package test. MUST follow invariants defined in agent.json under packages['test'].invariants",
+      "name": "montrs_pkg_test",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Runs unit, integration, and end-to-end tests for the MontRS project.",
+      "name": "test_run",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package metadata. MUST follow invariants defined in agent.json under packages['metadata'].invariants",
+      "name": "montrs_pkg_metadata",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package sigstore. MUST follow invariants defined in agent.json under packages['sigstore'].invariants",
+      "name": "montrs_pkg_sigstore",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package prdoc. MUST follow invariants defined in agent.json under packages['prdoc'].invariants",
+      "name": "montrs_pkg_prdoc",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package agentignore. MUST follow invariants defined in agent.json under packages['agentignore'].invariants",
+      "name": "montrs_pkg_agentignore",
       "parameters": {
         "properties": {},
         "type": "object"
@@ -344,6 +576,55 @@
           "For desktop: use Tauri integration with `cargo tauri build`",
           "Verify the deployment with a health check or smoke test",
           "Document the deployment configuration in montrs.toml"
+        ]
+      }
+    },
+    {
+      "description": "Guides the agent through setting up haptic feedback for a MontRS application.",
+      "name": "skill_haptics_setup",
+      "parameters": {
+        "properties": {
+          "workflow": {
+            "description": "Steps to follow for this skill",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "skill_meta": {
+        "context_invariants": [
+          "Always call is_supported() before haptic operations",
+          "Use ImpactStyle enum, not raw duration values",
+          "Feature-gate platform imports to avoid cross-compilation issues",
+          "Pass &HapticsConfig to create_haptics_provider, not a raw HapticsTarget",
+          "Use enabled: false in tests to get a NoopHapticsProvider"
+        ],
+        "context_prompts": [
+          "Which platform target does your app use? (web, desktop, mobile)",
+          "Which haptic interactions does the app need? (impact, vibration, selection)"
+        ],
+        "name": "haptics-setup",
+        "tags": [
+          "haptics",
+          "feedback",
+          "ux",
+          "web",
+          "desktop",
+          "mobile"
+        ],
+        "version": "1.1.0",
+        "workflow_steps": [
+          "Check which target the application uses (web, desktop, mobile)",
+          "Enable the corresponding feature gate (haptics-web, haptics-desktop, or haptics-mobile)",
+          "Create a HapticsProvider using create_haptics_provider(&HapticsConfig { enabled: true, target: ... })",
+          "Use config.enabled = false to disable haptics at runtime",
+          "Wrap provider in a Plate for dependency injection",
+          "Configure HapticsConfig with desired settings",
+          "Always call provider.is_supported() before haptic operations",
+          "Test with cargo test --features haptics-desktop"
         ]
       }
     },

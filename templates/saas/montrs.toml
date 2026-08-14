@@ -1,0 +1,43 @@
+[project]
+name = "{{project-name}}"
+version = "0.1.0"
+
+[serve]
+site-addr = "0.0.0.0:3000"
+reload-port = 3001
+tailwind-input-file = "style/main.css"
+site-root = "target/site"
+site-pkg-dir = "pkg"
+lib-features = ["hydrate"]
+lib-default-features = false
+
+[build]
+target = "index.html"
+
+[env]
+MONTRS_LOG = "info"
+DATABASE_URL = "sqlite:./data/saas.db"
+
+# ── Services ───────────────────────────────────────────────────────────
+[services.postgres]
+run = "docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:16"
+auto = "start-stop"
+ready_port = { port = 5432 }
+
+[services.redis]
+run = "docker run --rm -p 6379:6379 redis:7"
+auto = "start-stop"
+ready_port = { port = 6379 }
+
+[services.api]
+run = "cargo run --bin api"
+auto = "start-stop"
+ready_http = { url = "http://127.0.0.1:3000/health", expected-status = 200 }
+depends = ["postgres", "redis"]
+
+[tasks]
+fmt = { command = "cargo fmt --all", category = "Quality" }
+lint = { command = "cargo clippy -- -D warnings", category = "Quality" }
+test = { command = "cargo test", category = "Testing" }
+serve = { command = "cargo run --bin api", category = "Run" }
+seed = { command = "cargo run --bin api -- seed", category = "Data" }

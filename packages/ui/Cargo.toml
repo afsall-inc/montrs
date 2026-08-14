@@ -1,0 +1,24 @@
+[package]
+name = "montrs-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "UI component library for MontRS — Tailwind CSS macros, theming, and component system"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-icons"]
+
+[dependencies]
+leptos.workspace = true
+tw_merge.workspace = true
+paste.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+web-sys = { version = "0.3", features = ["Document", "Element", "HtmlElement", "Window", "Storage"] }
+montrs-icons = { path = "../icons" }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"

@@ -3,7 +3,43 @@ name = "app"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "app-ssr"
+path = "src/main.rs"
+required-features = ["ssr"]
+
 [dependencies]
 montrs-core = { path = "../../../packages/core" }
+montrs-ui = { path = "../../../packages/ui" }
+montrs-icons = { path = "../../../packages/icons" }
 leptos = { version = "0.8", features = ["hydrate", "ssr"] }
-tailwind-fuse = { version = "0.3.2", features = ["variant"] }
+leptos_meta = { version = "0.8" }
+leptos_router = { version = "0.8" }
+tokio = { version = "1", features = ["full"], optional = true }
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
+serde = { version = "1", features = ["derive"] }
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlElement"] }
+thiserror = "1"
+
+[features]
+default = []
+hydrate = ["leptos/hydrate", "leptos_meta/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "montrs-core/ssr",
+    "dep:tokio",
+    "dep:tracing",
+    "dep:tracing-subscriber",
+]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

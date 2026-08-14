@@ -6,4 +6,8 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 
+[package.metadata.montrs]
+layer = "1"
+allowed_deps = []
+
 [dependencies]

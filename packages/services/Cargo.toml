@@ -1,0 +1,46 @@
+[package]
+name = "montrs-services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS service supervisor — daemon management with DX"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-env", "montrs-log", "montrs-build-watch"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+regex.workspace = true
+chrono = { version = "0.4", features = ["serde"] }
+toml = "0.9"
+rmp-serde = "1.3"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+sha2 = "0.10"
+hex = "0.4"
+console = "0.15"
+fslock = "0.2"
+nix = { version = "0.29", features = ["signal", "process"] }
+libc = "0.2"
+sysinfo = "0.33"
+montrs-log = { path = "../log", optional = true }
+montrs-env = { path = "../env", optional = true }
+montrs-build-watch = { path = "../build-watch", optional = true }
+
+[features]
+default = ["log", "env", "watch"]
+log = ["dep:montrs-log"]
+env = ["dep:montrs-env"]
+watch = ["dep:montrs-build-watch"]
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,50 @@
+[package]
+name = "website"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "MontRS website — montrs.com"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "app/src/lib.rs"
+
+[[bin]]
+name = "website-ssr"
+path = "app/src/main.rs"
+required-features = ["ssr"]
+
+[dependencies]
+montrs-core = { path = "../../packages/core" }
+montrs-icons = { path = "../../packages/icons", features = ["animated"] }
+montrs-ui = { path = "../../packages/ui" }
+montrs-motion = { path = "../../packages/motion" }
+leptos.workspace = true
+leptos_meta.workspace = true
+leptos_router.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+tw_merge.workspace = true
+tokio = { workspace = true, optional = true }
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
+web-sys = { version = "0.3", features = ["Element", "HtmlElement", "Window", "Storage", "MediaQueryList", "CssStyleDeclaration", "DomTokenList"] }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+[features]
+default = []
+hydrate = ["leptos/hydrate"]
+ssr = [
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "montrs-core/ssr",
+    "dep:tokio",
+    "dep:tracing-subscriber",
+]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

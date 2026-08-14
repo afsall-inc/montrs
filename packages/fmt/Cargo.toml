@@ -6,6 +6,10 @@ authors = ["Afsall Labs"]
 license = "MIT or Apache-2.0"
 description = "A specialized formatter for MontRS projects, supporting view! macros and non-doc comments."
 
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core", "montrs-utils"]
+
 [dependencies]
 syn = { version = "2.0", features = ["full", "extra-traits", "parsing", "visit"] }
 prettyplease = "0.2"

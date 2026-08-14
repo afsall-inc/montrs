@@ -1,4 +1,7 @@
-use crate::{AgentSubcommand, IgnoreSubcommand, RulesSubcommand};
+use crate::{
+    AgentSubcommand, ChangelogSubcommand, IgnoreSubcommand, PrdocSubcommand,
+    RulesSubcommand,
+};
 
 pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
     let mut output = String::new();
@@ -269,6 +272,12 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
             Ok(output)
         }
+        AgentSubcommand::Prdoc { subcommand } => {
+            run_changelogger_prdoc(subcommand).await
+        }
+        AgentSubcommand::Changelog { subcommand } => {
+            run_changelogger_changelog(subcommand).await
+        }
         AgentSubcommand::Ignore { subcommand } => match subcommand {
             IgnoreSubcommand::Setup => {
                 let cwd = std::env::current_dir()?;
@@ -297,5 +306,241 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
                 Ok(result)
             }
         },
+        AgentSubcommand::Deps { json } => {
+            let cwd = std::env::current_dir()?;
+            let violations = check_dependency_layers(&cwd)?;
+            if json {
+                Ok(serde_json::to_string_pretty(&violations)?)
+            } else if violations.is_empty() {
+                Ok("All packages comply with declared layer dependencies."
+                    .to_string())
+            } else {
+                let mut out =
+                    "Dependency layer violations found:\n".to_string();
+                for v in &violations {
+                    out.push_str(&format!("  - {}\n", v));
+                }
+                Ok(out)
+            }
+        }
+    }
+}
+
+/// Check that all packages comply with their declared dependency layers.
+///
+/// Reads `[package.metadata.montrs]` from each `packages/*/Cargo.toml` and
+/// verifies that dependencies only target packages at the same or lower layer.
+fn check_dependency_layers(
+    root: &std::path::Path,
+) -> anyhow::Result<Vec<String>> {
+    let mut violations = Vec::new();
+    let packages_dir = root.join("packages");
+    if !packages_dir.exists() {
+        return Ok(violations);
+    }
+
+    // First pass: collect layer info for all packages
+    let mut layers: std::collections::HashMap<String, u32> =
+        std::collections::HashMap::new();
+    let mut cargo_files: Vec<std::path::PathBuf> = Vec::new();
+
+    for entry in std::fs::read_dir(&packages_dir)? {
+        let entry = entry?;
+        let cargo_toml = entry.path().join("Cargo.toml");
+        if cargo_toml.exists() {
+            let content = std::fs::read_to_string(&cargo_toml)?;
+            let doc: toml::Value = toml::from_str(&content)?;
+            let pkg_name = doc
+                .get("package")
+                .and_then(|p| p.get("name"))
+                .and_then(|n| n.as_str())
+                .map(|s| s.to_string());
+            let layer = doc
+                .get("package")
+                .and_then(|p| p.get("metadata"))
+                .and_then(|m| m.get("montrs"))
+                .and_then(|m| m.get("layer"))
+                .and_then(|l| l.as_str())
+                .and_then(|s| s.parse::<u32>().ok());
+
+            if let (Some(name), Some(layer)) = (pkg_name, layer) {
+                layers.insert(name, layer);
+                cargo_files.push(cargo_toml);
+            }
+        }
+    }
+
+    // Second pass: check each package's dependencies
+    for cargo_toml in &cargo_files {
+        let content = std::fs::read_to_string(cargo_toml)?;
+        let doc: toml::Value = toml::from_str(&content)?;
+        let pkg_name = doc
+            .get("package")
+            .and_then(|p| p.get("name"))
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown");
+        let pkg_layer = doc
+            .get("package")
+            .and_then(|p| p.get("metadata"))
+            .and_then(|m| m.get("montrs"))
+            .and_then(|m| m.get("layer"))
+            .and_then(|l| l.as_str())
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap_or(0);
+
+        // Check all path dependencies (montrs-* packages)
+        if let Some(deps) = doc.get("dependencies").and_then(|d| d.as_table()) {
+            for (dep_name, _dep_value) in deps {
+                if dep_name.starts_with("montrs-")
+                    && let Some(dep_layer) = layers.get(dep_name)
+                    && *dep_layer > pkg_layer
+                {
+                    violations.push(format!(
+                        "{} (layer {}) depends on {} (layer {}) — layer \
+                         violation",
+                        pkg_name, pkg_layer, dep_name, dep_layer
+                    ));
+                }
+            }
+        }
+
+        // Also check dev-dependencies
+        if let Some(deps) =
+            doc.get("dev-dependencies").and_then(|d| d.as_table())
+        {
+            for (dep_name, _dep_value) in deps {
+                if dep_name.starts_with("montrs-")
+                    && let Some(dep_layer) = layers.get(dep_name)
+                    && *dep_layer > pkg_layer
+                {
+                    violations.push(format!(
+                        "{} (layer {}) dev-depends on {} (layer {}) — layer \
+                         violation",
+                        pkg_name, pkg_layer, dep_name, dep_layer
+                    ));
+                }
+            }
+        }
+    }
+
+    Ok(violations)
+}
+
+/// Delegate prdoc subcommands to the changelogger CLI.
+async fn run_changelogger_prdoc(subcommand: PrdocSubcommand) -> anyhow::Result<String> {
+    match subcommand {
+        PrdocSubcommand::Show { path } => {
+            let output = std::process::Command::new("changelogger")
+                .args(["prdoc", "show", &path])
+                .output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+        PrdocSubcommand::Validate { path, branch } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["prdoc", "validate"]);
+            if let Some(ref b) = branch {
+                cmd.args(["--branch", b]);
+            }
+            cmd.arg(&path);
+            let output = cmd.output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+        PrdocSubcommand::Generate { pr, force, .. } => {
+            let pr_number = pr.ok_or_else(|| {
+                anyhow::anyhow!("--pr is required for generation")
+            })?;
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["prdoc", "generate", "--pr", &pr_number.to_string()]);
+            if force {
+                cmd.arg("--force");
+            }
+            let output = cmd.output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+    }
+}
+
+/// Delegate changelog subcommands to the changelogger CLI.
+async fn run_changelogger_changelog(subcommand: ChangelogSubcommand) -> anyhow::Result<String> {
+    match subcommand {
+        ChangelogSubcommand::Generate { from, to, output } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "generate"]);
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            if let Some(t) = to {
+                cmd.args(["--to", &t]);
+            }
+            cmd.args(["--output", &output]);
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
+        ChangelogSubcommand::Bump { current, from, dry_run } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "bump"]);
+            if let Some(c) = current {
+                cmd.args(["--current", &c]);
+            }
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            if dry_run {
+                cmd.arg("--dry-run");
+            }
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
+        ChangelogSubcommand::Verify { from } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "verify"]);
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
     }
 }

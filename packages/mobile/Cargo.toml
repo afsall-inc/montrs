@@ -1,0 +1,25 @@
+[package]
+name = "montrs-mobile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Mobile shell for MontRS — Android and iOS"
+
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-platform", "montrs-renderer"]
+
+[dependencies]
+montrs-platform = { path = "../platform" }
+montrs-renderer = { path = "../renderer", optional = true }
+serde.workspace = true
+thiserror.workspace = true
+wry = { version = "0.43", optional = true }
+winit = { version = "0.30", optional = true }
+
+[features]
+default = []
+webview = ["dep:wry"]
+native = ["dep:montrs-renderer"]

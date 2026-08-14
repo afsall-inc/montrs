@@ -35,6 +35,9 @@ jobs:
     - name: Check formatting
       run: cargo fmt --all -- --check
 
+    - name: Dependency layer check
+      run: cargo run --package montrs-cli -- agent deps
+
     - name: Clippy
       run: cargo clippy --workspace -- -D warnings
 

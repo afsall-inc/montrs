@@ -41,14 +41,6 @@ pub struct MontrsCli {
     /// Output logs from dependencies (multiple --log accepted).
     #[arg(long)]
     pub log: Vec<String>,
-
-    /// Use tailwind.toml to generate tailwind.config.js (Pure Rust config).
-    #[arg(long)]
-    pub tailwind_toml: bool,
-
-    /// Use Tailwind v4 CSS-only configuration (No JS/TOML needed).
-    #[arg(long, conflicts_with = "tailwind_toml")]
-    pub tailwind_v4: bool,
 }
 
 #[derive(Subcommand, Debug)]
@@ -141,9 +133,15 @@ pub enum Commands {
     New {
         /// Name of the project.
         name: String,
-        /// Template to use.
+        /// Template to use (default, monorepo, todo, api, tui, desktop, saas).
         #[arg(short, long, default_value = "default")]
         template: String,
+        /// Initialize with MontRS UI theming system.
+        #[arg(long)]
+        ui: bool,
+        /// List available templates.
+        #[arg(long)]
+        list_templates: bool,
     },
     /// Run custom tasks defined in montrs.toml.
     Run {
@@ -195,6 +193,75 @@ pub enum Commands {
     Mcp {
         #[command(subcommand)]
         subcommand: McpSubcommand,
+    },
+    /// Initialize the MontRS UI theming system.
+    #[command(name = "ui")]
+    Ui {
+        #[command(subcommand)]
+        subcommand: UiSubcommand,
+    },
+    /// Manage environment variables (montrs.toml [env]).
+    Env {
+        #[command(subcommand)]
+        subcommand: EnvSubcommand,
+    },
+    /// Generate a lockfile for tool versions.
+    Lock,
+    /// Generate shell activation script (eval this in your shell rc).
+    Activate {
+        /// Shell type (bash, zsh, fish, pwsh). Defaults to auto-detect.
+        #[arg(short, long, default_value = "auto")]
+        shell: String,
+    },
+    /// Generate shell deactivation script.
+    Deactivate {
+        /// Shell type (bash, zsh, fish, pwsh). Defaults to auto-detect.
+        #[arg(short, long, default_value = "auto")]
+        shell: String,
+    },
+    /// Rebuild all tool shims.
+    Reshim,
+    /// Manage services (daemons) defined in montrs.toml.
+    Services {
+        #[command(subcommand)]
+        subcommand: ServicesSubcommand,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ServicesSubcommand {
+    /// List all services and their status.
+    List,
+    /// Start a service (or all with --all).
+    Start {
+        /// Service name (or "all").
+        name: Option<String>,
+        /// Start all services.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Stop a service (or all with --all).
+    Stop {
+        /// Service name (or "all").
+        name: Option<String>,
+        /// Stop all services.
+        #[arg(long)]
+        all: bool,
+    },
+    /// Restart a service.
+    Restart {
+        /// Service name.
+        name: String,
+    },
+    /// Show the status of a service (or all if no name).
+    Status {
+        /// Service name (optional).
+        name: Option<String>,
+    },
+    /// View service logs.
+    Logs {
+        /// Service name (optional — shows all if not specified).
+        name: Option<String>,
     },
 }
 
@@ -252,15 +319,31 @@ pub enum AgentSubcommand {
         #[arg(short, long)]
         name: Option<String>,
     },
+    /// Manage PR documentation (prdoc.md).
+    Prdoc {
+        #[command(subcommand)]
+        subcommand: PrdocSubcommand,
+    },
     /// Manage agent rules and IDE integration.
     Rules {
         #[command(subcommand)]
         subcommand: RulesSubcommand,
     },
+    /// Generate changelogs and manage version bumps from prdocs.
+    Changelog {
+        #[command(subcommand)]
+        subcommand: ChangelogSubcommand,
+    },
     /// Manage agent ignore patterns (.agentignore).
     Ignore {
         #[command(subcommand)]
         subcommand: IgnoreSubcommand,
+    },
+    /// Check package dependency graph for layer violations.
+    Deps {
+        /// Output in JSON format.
+        #[arg(long)]
+        json: bool,
     },
 }
 
@@ -294,9 +377,114 @@ pub enum IgnoreSubcommand {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum PrdocSubcommand {
+    /// Display a prdoc file as JSON.
+    Show {
+        /// Path to prdoc file.
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
+        path: String,
+    },
+    /// Validate a prdoc file and report issues.
+    Validate {
+        /// Path to prdoc file.
+        #[arg(default_value = "prdoc/pr_1.prdoc")]
+        path: String,
+        /// Branch name for backport validation (e.g., stable, release).
+        #[arg(long)]
+        branch: Option<String>,
+    },
+    /// Auto-generate a prdoc skeleton from PR context.
+    Generate {
+        /// PR number to generate from (uses gh CLI).
+        #[arg(short, long)]
+        pr: Option<u64>,
+        /// Default bump level for all crates.
+        #[arg(short, long, default_value = "minor")]
+        bump: String,
+        /// Target audience (app_dev, framework_dev, agent_user, operator).
+        #[arg(short, long, default_value = "app_dev")]
+        audience: String,
+        /// Overwrite existing prdoc.
+        #[arg(long)]
+        force: bool,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ChangelogSubcommand {
+    /// Generate a CHANGELOG.md from merged prdocs.
+    Generate {
+        /// Git range to collect prdocs from (e.g., v0.1.0..HEAD).
+        #[arg(short, long)]
+        from: Option<String>,
+        /// Git range end tag (used with --from).
+        #[arg(short, long)]
+        to: Option<String>,
+        /// Output file path.
+        #[arg(short, long, default_value = "CHANGELOG.md")]
+        output: String,
+    },
+    /// Compute next version bumps based on prdocs since last release.
+    Bump {
+        /// Current version (defaults to workspace version).
+        #[arg(short, long)]
+        current: Option<String>,
+        /// Git range for prdocs.
+        #[arg(long)]
+        from: Option<String>,
+        /// Show what would change without writing files.
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Verify all merged PRs since last release have prdocs.
+    Verify {
+        /// Git range to check.
+        #[arg(long)]
+        from: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
 pub enum McpSubcommand {
     /// Start the MCP server over stdio.
     Serve,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum UiSubcommand {
+    /// Initialize the MontRS UI theming system (creates components.json, CSS variables, tailwind.toml).
+    Init {
+        /// Base color theme (neutral, stone, zinc, mauve, olive, mist, taupe).
+        #[arg(short, long, default_value = "neutral")]
+        base_color: String,
+        /// Accent color theme (blue, green, red, amber, etc.).
+        #[arg(short, long)]
+        accent_color: Option<String>,
+        /// Base border radius (e.g. "0.5rem").
+        #[arg(short, long, default_value = "0.5rem")]
+        radius: String,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum EnvSubcommand {
+    /// List all environment variables from montrs.toml [env].
+    List,
+    /// Set an environment variable (writes to montrs.toml).
+    Set {
+        /// Key=value pair (e.g. FOO=bar).
+        key_value: String,
+    },
+    /// Unset an environment variable (removes from montrs.toml).
+    Unset {
+        /// Key to remove.
+        key: String,
+    },
+    /// Execute a command with the resolved environment.
+    Exec {
+        /// Command to run.
+        args: Vec<String>,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -339,17 +527,11 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
         .try_init();
 
     let mut config = config::MontrsConfig::load()?;
-    config.project.verbose = cli.verbose;
-    config.project.log = cli.log.clone();
-    config.project.release = cli.release;
-    config.project.hot_reload = cli.hot_reload;
-    config.project.features = cli.features.clone();
-
-    if cli.tailwind_toml {
-        config.project.tailwind_style = Some(config::TailwindStyle::Toml);
-    } else if cli.tailwind_v4 {
-        config.project.tailwind_style = Some(config::TailwindStyle::V4);
-    }
+    config.verbose = cli.verbose;
+    config.log = cli.log.clone();
+    config.release = cli.release;
+    config.hot_reload = cli.hot_reload;
+    config.features = cli.features.clone();
 
     match cli.command {
         Commands::Build => command::build::run().await,
@@ -393,8 +575,16 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             keep_alive,
             browser,
         } => command::e2e::run(headless, keep_alive, browser).await,
-        Commands::New { name, template } => {
-            command::new::run(name, template).await
+        Commands::New { name, template, ui, list_templates } => {
+            if list_templates {
+                command::new::list().await?;
+                return Ok(());
+            }
+            command::new::run(name, template).await?;
+            if ui {
+                command::ui_init::run(None, None, None).await?;
+            }
+            Ok(())
         }
         Commands::Run { task } => command::run::run(task).await,
         Commands::Tasks => command::run::list().await,
@@ -443,7 +633,70 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             }
         }
         Commands::Mcp { subcommand } => command::mcp::run(subcommand).await,
+        Commands::Ui { subcommand } => match subcommand {
+            UiSubcommand::Init {
+                base_color,
+                accent_color,
+                radius,
+            } => {
+                command::ui_init::run(
+                    Some(base_color),
+                    accent_color,
+                    Some(radius),
+                )
+                .await
+            }
+        },
+        Commands::Env { subcommand } => match subcommand {
+            EnvSubcommand::List => command::env::list().await,
+            EnvSubcommand::Set { key_value } => {
+                command::env::set(&key_value).await
+            }
+            EnvSubcommand::Unset { key } => command::env::unset(&key).await,
+            EnvSubcommand::Exec { args } => command::env::exec(&args).await,
+        },
+        Commands::Lock => command::lock::run().await,
+        Commands::Activate { shell } => command::shell::activate(&shell).await,
+        Commands::Deactivate { shell } => {
+            command::shell::deactivate(&shell).await
+        }
+        Commands::Reshim => command::shell::reshim().await,
+        Commands::Services { subcommand } => match subcommand {
+            ServicesSubcommand::List => command::services::list().await,
+            ServicesSubcommand::Start { name, all } => {
+                if all || name.as_deref() == Some("all") {
+                    command::services::start_all().await
+                } else if let Some(name) = name {
+                    command::services::start(&name).await
+                } else {
+                    anyhow::bail!("Specify a service name or --all");
+                }
+            }
+            ServicesSubcommand::Stop { name, all } => {
+                if all || name.as_deref() == Some("all") {
+                    command::services::stop_all().await
+                } else if let Some(name) = name {
+                    command::services::stop(&name).await
+                } else {
+                    anyhow::bail!("Specify a service name or --all");
+                }
+            }
+            ServicesSubcommand::Restart { name } => {
+                command::services::restart(&name).await
+            }
+            ServicesSubcommand::Status { name } => {
+                command::services::status(name.as_deref()).await
+            }
+            ServicesSubcommand::Logs { name } => {
+                command::services::logs(name.as_deref()).await
+            }
+        },
     }
+}
+
+/// Commands that don't need agent snapshot regeneration.
+fn is_no_agent_command(cmd: &str) -> bool {
+    matches!(cmd, "serve" | "watch" | "build" | "bench" | "test" | "fmt")
 }
 
 /// Main entry point for the CLI, handling both standalone and cargo subcommand modes.
@@ -472,7 +725,8 @@ pub fn main_entry() {
         }
 
         // Agent: Update tools and snapshot if we are in an existing project
-        if args.len() > 1 && args[1] != "new" {
+        if args.len() > 1 && args[1] != "new" && !is_no_agent_command(&args[1])
+        {
             // Check if we're in a MontRS project before doing agent work
             if cwd.join("montrs.toml").exists()
                 || cwd.join("Cargo.toml").exists()
