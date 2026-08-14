@@ -99,7 +99,14 @@ pub static BAKED_REGISTRY: Lazy<Registry> = Lazy::new(|| {
     // Use include_str! to embed registry files at compile time
     let cargo_toml = include_str!("../registry/cargo.toml");
     let rust_toml = include_str!("../registry/rust.toml");
-    for (name, content) in [("cargo", cargo_toml), ("rust", rust_toml)] {
+    let forehead_toml = include_str!("../registry/forehead.toml");
+    let changelogger_toml = include_str!("../registry/changelogger.toml");
+    for (name, content) in [
+        ("cargo", cargo_toml),
+        ("rust", rust_toml),
+        ("forehead", forehead_toml),
+        ("changelogger", changelogger_toml),
+    ] {
         if let Ok(mut tool) = toml::from_str::<RegistryTool>(content) {
             tool.name = name.to_string();
             tools.insert(name.to_string(), tool);

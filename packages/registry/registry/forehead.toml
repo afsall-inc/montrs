@@ -1,0 +1,5 @@
+backends = ["cargo:forehead-cli"]
+bins = ["forehead"]
+description = "Forehead is a tool for creating and maintaining file headers for code license"
+detect = ["forehead.toml"]
+idiomatic_files = ["forehead.toml"]

@@ -1,0 +1,21 @@
+[project]
+name = "montrs"
+default_license = "Apache-2.0 OR MIT"
+default_author = "Afsall Inc"
+default_year = 2026
+repository = "https://github.com/afsall-inc/montrs"
+description = "MontRS is a Rust meta-framework for building full-stack applications"
+
+[templates]
+mit-apache = "docs/LICENSES/headers/HEADER-MIT-APACHE"
+
+[[mapping]]
+paths = [".", "apps/", "packages/", "docs/", "skills/", "prdoc/"]
+# montrs templates (project scaffolding), .git and target are excluded:
+# scaffolding templates must not carry MontRS license headers, and VCS/build
+# artifacts are not source files.
+template = "mit-apache"
+
+[header]
+indicators = []
+greetings = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم"

@@ -9,6 +9,8 @@ fn test_baked_registry_has_tools() {
     assert!(!BAKED_REGISTRY.is_empty());
     assert!(BAKED_REGISTRY.has("cargo"));
     assert!(BAKED_REGISTRY.has("rust"));
+    assert!(BAKED_REGISTRY.has("forehead"));
+    assert!(BAKED_REGISTRY.has("changelogger"));
 }
 
 #[test]
@@ -36,7 +38,7 @@ fn test_registry_search() {
 
 #[test]
 fn test_registry_len() {
-    assert!(BAKED_REGISTRY.len() >= 2);
+    assert!(BAKED_REGISTRY.len() >= 4);
 }
 
 #[test]
