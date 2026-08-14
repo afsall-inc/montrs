@@ -38,12 +38,15 @@
 //! - Async ops receive `Arc<Mutex<OpState>>` so they can mutate state
 //!   across `.await` points (the boxed future must be `'static`).
 
-use crate::error::RuntimeError;
-use crate::type_map::OpState;
-use std::future::Future;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU16, Ordering};
+use crate::{error::RuntimeError, type_map::OpState};
+use std::{
+    future::Future,
+    pin::Pin,
+    sync::{
+        Arc,
+        atomic::{AtomicU16, Ordering},
+    },
+};
 use tokio::sync::Mutex;
 
 /// A unique operation identifier.
@@ -69,8 +72,9 @@ pub type AsyncOp = Arc<dyn Fn(SharedOpState) -> AsyncOpResult + Send + Sync>;
 pub type SyncOpWithInput =
     Arc<dyn Fn(&mut OpState, serde_json::Value) -> OpResult + Send + Sync>;
 /// An async operation with JSON input.
-pub type AsyncOpWithInput =
-    Arc<dyn Fn(SharedOpState, serde_json::Value) -> AsyncOpResult + Send + Sync>;
+pub type AsyncOpWithInput = Arc<
+    dyn Fn(SharedOpState, serde_json::Value) -> AsyncOpResult + Send + Sync,
+>;
 
 /// The function signature for an operation.
 #[derive(Clone)]
@@ -136,7 +140,10 @@ impl OpDecl {
 
     pub fn new_sync_with_input(
         name: &'static str,
-        f: impl Fn(&mut OpState, serde_json::Value) -> OpResult + Send + Sync + 'static,
+        f: impl Fn(&mut OpState, serde_json::Value) -> OpResult
+        + Send
+        + Sync
+        + 'static,
     ) -> Self {
         Self {
             id: Self::next_id(),
@@ -148,7 +155,10 @@ impl OpDecl {
 
     pub fn new_async_with_input(
         name: &'static str,
-        f: impl Fn(SharedOpState, serde_json::Value) -> AsyncOpResult + Send + Sync + 'static,
+        f: impl Fn(SharedOpState, serde_json::Value) -> AsyncOpResult
+        + Send
+        + Sync
+        + 'static,
     ) -> Self {
         Self {
             id: Self::next_id(),
@@ -166,11 +176,15 @@ impl OpDecl {
     ) -> OpResult {
         match &self.op_fn {
             OpFn::Sync(f) => f(state),
-            OpFn::Async(_) => Err(RuntimeError::op_mismatch(self.name, "async")),
+            OpFn::Async(_) => {
+                Err(RuntimeError::op_mismatch(self.name, "async"))
+            }
             OpFn::SyncWithInput(f) => {
                 f(state, input.unwrap_or(serde_json::Value::Null))
             }
-            OpFn::AsyncWithInput(_) => Err(RuntimeError::op_mismatch(self.name, "async")),
+            OpFn::AsyncWithInput(_) => {
+                Err(RuntimeError::op_mismatch(self.name, "async"))
+            }
         }
     }
 
@@ -187,9 +201,9 @@ impl OpDecl {
             }
             OpFn::Sync(_) | OpFn::SyncWithInput(_) => {
                 let name = self.name;
-                Box::pin(async move {
-                    Err(RuntimeError::op_mismatch(name, "sync"))
-                })
+                Box::pin(
+                    async move { Err(RuntimeError::op_mismatch(name, "sync")) },
+                )
             }
         }
     }

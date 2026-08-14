@@ -30,8 +30,10 @@
 
 //! Session management — create, validate, refresh, and revoke sessions.
 
-use crate::database::{DatabaseAdapter, SessionRecord, UserRecord};
-use crate::entities::DefaultSession;
+use crate::{
+    database::{DatabaseAdapter, SessionRecord, UserRecord},
+    entities::DefaultSession,
+};
 use chrono::Utc;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
@@ -61,8 +63,12 @@ impl SessionManager {
     }
 
     /// Validate a session token. Returns the session if valid and not expired.
-    pub async fn validate(&self, token: &str) -> anyhow::Result<Option<SessionRecord>> {
-        let Some(session) = self.adapter.find_session_by_token(token).await? else {
+    pub async fn validate(
+        &self,
+        token: &str,
+    ) -> anyhow::Result<Option<SessionRecord>> {
+        let Some(session) = self.adapter.find_session_by_token(token).await?
+        else {
             return Ok(None);
         };
         if session.expires_at <= Utc::now() {
@@ -73,7 +79,10 @@ impl SessionManager {
     }
 
     /// Get the user associated with a valid session.
-    pub async fn get_user(&self, token: &str) -> anyhow::Result<Option<UserRecord>> {
+    pub async fn get_user(
+        &self,
+        token: &str,
+    ) -> anyhow::Result<Option<UserRecord>> {
         let Some(session) = self.validate(token).await? else {
             return Ok(None);
         };
@@ -91,7 +100,10 @@ impl SessionManager {
     }
 
     /// List sessions for a user.
-    pub async fn list(&self, user_id: &str) -> anyhow::Result<Vec<SessionRecord>> {
+    pub async fn list(
+        &self,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<SessionRecord>> {
         self.adapter.list_sessions(user_id).await
     }
 

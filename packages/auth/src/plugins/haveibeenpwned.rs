@@ -31,9 +31,7 @@
 //! Have I Been Pwned plugin — check password compromise via HIBP k-anonymity API.
 //! Export `is_pwned(password) -> bool` async; plugin can be used as hook.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
 /// Check whether a password has been exposed in a known breach.
 /// Uses the HIBP range API (k-anonymity): sends only the first 5 hex chars of SHA-1.
 pub async fn is_pwned(password: &str) -> bool {
@@ -160,7 +158,10 @@ impl AuthPlugin for HaveIBeenPwnedPlugin {
         Ok(())
     }
 
-    fn before_request(&self, _req: &axum::extract::Request) -> Result<(), AuthError> {
+    fn before_request(
+        &self,
+        _req: &axum::extract::Request,
+    ) -> Result<(), AuthError> {
         // Hook: the core sign-up handler can call `is_pwned` before creating a user.
         Ok(())
     }

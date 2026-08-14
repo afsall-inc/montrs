@@ -30,9 +30,11 @@
 
 //! HTTP extension — fetch (GET/POST), basic HTTP client.
 
-use crate::error::{RuntimeError, RuntimeErrorKind};
-use crate::ops::{self, OpDecl};
-use crate::RuntimeExtension;
+use crate::{
+    RuntimeExtension,
+    error::{RuntimeError, RuntimeErrorKind},
+    ops::{self, OpDecl},
+};
 
 pub fn init() -> RuntimeExtension {
     RuntimeExtension::builder("http")

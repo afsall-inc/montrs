@@ -52,12 +52,10 @@ pub mod verification;
 
 pub use config::AuthConfig;
 pub use context::AuthState;
-pub use error::AuthError;
-pub use error::AuthErrorCode;
-pub use plugin::AuthPlugin;
-
 /// Re-export of core entity traits.
 pub use entities::{AuthAccount, AuthSession, AuthUser};
+pub use error::{AuthError, AuthErrorCode};
+pub use plugin::AuthPlugin;
 
 /// The main auth system — use [`MontrsAuth::builder`] to configure.
 pub struct MontrsAuth {
@@ -127,7 +125,10 @@ impl AuthBuilder {
     }
 
     /// Set the database adapter.
-    pub fn database(mut self, adapter: Box<dyn database::DatabaseAdapter>) -> Self {
+    pub fn database(
+        mut self,
+        adapter: Box<dyn database::DatabaseAdapter>,
+    ) -> Self {
         self.database = Some(adapter);
         self
     }
@@ -142,7 +143,10 @@ impl AuthBuilder {
     pub async fn build(self) -> anyhow::Result<MontrsAuth> {
         let config = self.config.unwrap_or_default();
         if config.secret.is_empty() {
-            anyhow::bail!("AuthConfig.secret must be set (at least 32 characters recommended)");
+            anyhow::bail!(
+                "AuthConfig.secret must be set (at least 32 characters \
+                 recommended)"
+            );
         }
 
         let db: std::sync::Arc<dyn database::DatabaseAdapter> =
@@ -159,7 +163,8 @@ impl AuthBuilder {
                 std::sync::Arc::new(email::ConsoleEmailProvider::new())
             };
 
-        let session = session::SessionManager::new(config.secret.clone(), db.clone());
+        let session =
+            session::SessionManager::new(config.secret.clone(), db.clone());
         let rate_limit = rate_limit::RateLimiter::new(
             config.rate_limit_max,
             config.rate_limit_window_secs,

@@ -31,14 +31,14 @@
 //! Anonymous plugin — anonymous sessions and account deletion.
 //! POST /sign-in/anonymous, POST /delete-anonymous-user.
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
-use serde_json::{json, Value};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{Json, Router, extract::State, routing::post};
+use serde_json::{Value, json};
 
 /// Anonymous plugin — create anonymous sessions and delete anonymous users.
 pub struct AnonymousPlugin {
@@ -77,7 +77,8 @@ impl AuthPlugin for AnonymousPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -101,14 +102,22 @@ async fn sign_in_anonymous(
 ) -> Result<Json<Value>, AuthError> {
     let user = DefaultUser::anonymous();
     state.db.create_user(&user).await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let session = state
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile = UserProfile {
         id: user.id.clone(),
@@ -133,7 +142,8 @@ async fn delete_anonymous_user(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)
@@ -151,7 +161,10 @@ async fn delete_anonymous_user(
     }
 
     state.db.delete_user(&user.id).await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state.session.revoke_all(&user.id).await.ok();
 

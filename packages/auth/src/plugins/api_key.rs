@@ -32,16 +32,16 @@
 //! /api-key/create, /api-key/list, /api-key/delete, /api-key/update.
 //! Keys are hashed with SHA-256 before storage.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 /// An API key record stored in plugin_store namespace "apikey".
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,7 +114,8 @@ impl Default for ApiKeyPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -169,8 +170,13 @@ async fn create_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     if req.name.is_empty() {
         return Err(AuthError::missing_field("name"));
@@ -185,7 +191,9 @@ async fn create_api_key(
         key_hash: hash,
         prefix: raw[..8].to_string(),
         created_at: Utc::now(),
-        expires_at: req.expires_in_secs.map(|s| Utc::now() + chrono::Duration::seconds(s)),
+        expires_at: req
+            .expires_in_secs
+            .map(|s| Utc::now() + chrono::Duration::seconds(s)),
         rate_limit_max: req.rate_limit_max,
         rate_limit_window_secs: req.rate_limit_window_secs,
         enabled: true,
@@ -196,7 +204,12 @@ async fn create_api_key(
         .db
         .plugin_set("apikey", &id, serde_json::to_value(&record).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "id": id,
@@ -211,11 +224,19 @@ async fn list_api_keys(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let entries = state.db.plugin_list("apikey").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let keys: Vec<Value> = entries
@@ -252,14 +273,31 @@ async fn delete_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeleteApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("apikey", &req.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "API key not found")
+    let entry =
+        state
+            .db
+            .plugin_get("apikey", &req.id)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InvalidToken,
+                    "API key not found",
+                )
+            })?;
+    let record: ApiKeyRecord = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            "Invalid API key record",
+        )
     })?;
-    let record: ApiKeyRecord = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid API key record"))?;
 
     if record.user_id != session.user_id {
         return Err(AuthError::forbidden());
@@ -285,14 +323,32 @@ async fn update_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("apikey", &req.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "API key not found")
-    })?;
-    let mut record: ApiKeyRecord = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid API key record"))?;
+    let entry =
+        state
+            .db
+            .plugin_get("apikey", &req.id)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InvalidToken,
+                    "API key not found",
+                )
+            })?;
+    let mut record: ApiKeyRecord =
+        serde_json::from_value(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "Invalid API key record",
+            )
+        })?;
 
     if record.user_id != session.user_id {
         return Err(AuthError::forbidden());
@@ -318,7 +374,12 @@ async fn update_api_key(
         .db
         .plugin_set("apikey", &req.id, serde_json::to_value(&record).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({ "success": true, "id": req.id })))
 }

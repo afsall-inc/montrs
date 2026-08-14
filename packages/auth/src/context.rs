@@ -30,11 +30,10 @@
 
 //! Shared auth state injected into handlers and plugins.
 
-use crate::config::AuthConfig;
-use crate::database::DatabaseAdapter;
-use crate::email::EmailProvider;
-use crate::rate_limit::RateLimiter;
-use crate::session::SessionManager;
+use crate::{
+    config::AuthConfig, database::DatabaseAdapter, email::EmailProvider,
+    rate_limit::RateLimiter, session::SessionManager,
+};
 use std::sync::Arc;
 
 /// Shared runtime state for core routes and plugins.

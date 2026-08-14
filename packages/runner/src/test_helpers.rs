@@ -30,8 +30,7 @@
 
 //! Test helpers for montrs-runner.
 
-use crate::types::Task;
-use crate::TaskRunner;
+use crate::{TaskRunner, types::Task};
 use std::collections::HashMap;
 
 pub fn init_test_tracing() {

@@ -30,11 +30,8 @@
 
 //! Auth plugin system — compose only the features you need.
 
-use crate::context::AuthState;
-use crate::AuthError;
-use axum::extract::Request;
-use axum::response::Response;
-use axum::Router;
+use crate::{AuthError, context::AuthState};
+use axum::{Router, extract::Request, response::Response};
 
 /// Schema extension declared by a plugin (for OpenAPI / migrations).
 #[derive(Debug, Clone)]

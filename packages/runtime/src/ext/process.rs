@@ -30,10 +30,12 @@
 
 //! Process extension — run command with output.
 
-use crate::error::{RuntimeError, RuntimeErrorKind};
-use crate::ops::{self, OpDecl};
-use crate::permissions::Permissions;
-use crate::RuntimeExtension;
+use crate::{
+    RuntimeExtension,
+    error::{RuntimeError, RuntimeErrorKind},
+    ops::{self, OpDecl},
+    permissions::Permissions,
+};
 use tokio::process::Command;
 
 pub fn init() -> RuntimeExtension {

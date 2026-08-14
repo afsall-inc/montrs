@@ -31,8 +31,7 @@
 //! Service identifier — namespace/name with safe-path encoding.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 /// A unique identifier for a service, with optional namespace.
 ///
@@ -48,7 +47,10 @@ pub struct ServiceId {
 
 impl ServiceId {
     /// Create a new ServiceId from a namespace and name.
-    pub fn new(namespace: Option<impl Into<String>>, name: impl Into<String>) -> Self {
+    pub fn new(
+        namespace: Option<impl Into<String>>,
+        name: impl Into<String>,
+    ) -> Self {
         Self {
             namespace: namespace.map(|n| n.into()),
             name: name.into(),

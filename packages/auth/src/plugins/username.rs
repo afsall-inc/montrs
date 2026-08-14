@@ -31,17 +31,17 @@
 //! Username plugin — sign-in by username, check availability.
 //! POST /sign-in/username, GET /is-username-available?username=
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::entities::UserProfile;
-use crate::password::verify_password;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError, context::AuthState, database::UserUpdate, entities::UserProfile,
+    password::verify_password, plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Username plugin — sign-in by username, check availability.
 pub struct UsernamePlugin {
@@ -141,7 +141,12 @@ async fn sign_in_username(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({
@@ -158,10 +163,7 @@ async fn is_username_available(
     if query.username.is_empty() {
         return Err(AuthError::missing_field("username"));
     }
-    let existing = state
-        .db
-        .find_user_by_username(&query.username)
-        .await?;
+    let existing = state.db.find_user_by_username(&query.username).await?;
     Ok(Json(json!({
         "available": existing.is_none(),
         "username": query.username,

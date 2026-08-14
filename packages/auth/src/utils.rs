@@ -50,7 +50,7 @@ pub fn generate_otp(length: usize) -> String {
 
 /// Time-based one-time password (TOTP) utilities.
 pub mod totp {
-    use totp_rs::{TOTP, Algorithm};
+    use totp_rs::{Algorithm, TOTP};
 
     /// Generate a new TOTP secret (raw bytes).
     pub fn generate_secret() -> Vec<u8> {
@@ -75,10 +75,15 @@ pub mod totp {
     }
 
     /// Generate a provisioning URI for authenticator apps.
-    pub fn provisioning_uri(secret: &[u8], email: &str, issuer: &str) -> String {
+    pub fn provisioning_uri(
+        secret: &[u8],
+        email: &str,
+        issuer: &str,
+    ) -> String {
         let base32_secret = base32_encode(secret);
         format!(
-            "otpauth://totp/{issuer}:{email}?secret={base32_secret}&issuer={issuer}&algorithm=SHA1&digits=6&period=30"
+            "otpauth://totp/{issuer}:{email}?secret={base32_secret}&\
+             issuer={issuer}&algorithm=SHA1&digits=6&period=30"
         )
     }
 
@@ -125,7 +130,9 @@ pub mod totp {
 
 /// JWT token utilities.
 pub mod jwt {
-    use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+    use jsonwebtoken::{
+        Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode,
+    };
     use serde::{Deserialize, Serialize};
 
     /// Standard JWT claims.
@@ -137,7 +144,11 @@ pub mod jwt {
     }
 
     /// Create a signed JWT token.
-    pub fn create_token(sub: &str, secret: &str, expires_in_secs: u64) -> anyhow::Result<String> {
+    pub fn create_token(
+        sub: &str,
+        secret: &str,
+        expires_in_secs: u64,
+    ) -> anyhow::Result<String> {
         let now = chrono::Utc::now().timestamp() as usize;
         let claims = Claims {
             sub: sub.to_string(),
@@ -194,7 +205,11 @@ mod tests {
     fn test_base32_encode() {
         // Test vector: "foobar" -> base32
         let encoded = totp::base32_encode(b"foobar");
-        assert_eq!(encoded.len() % 8, 0, "base32 must be padded to multiple of 8");
+        assert_eq!(
+            encoded.len() % 8,
+            0,
+            "base32 must be padded to multiple of 8"
+        );
         assert!(encoded.ends_with("="), "base32 must be padded");
     }
 }

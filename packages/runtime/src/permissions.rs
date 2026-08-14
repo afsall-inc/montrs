@@ -145,9 +145,14 @@ impl Permissions {
         self.check_fs_inner(path, true)
     }
 
-    fn check_fs_inner(&self, path: &str, write: bool) -> Result<(), RuntimeError> {
+    fn check_fs_inner(
+        &self,
+        path: &str,
+        write: bool,
+    ) -> Result<(), RuntimeError> {
         let p = Path::new(path);
-        let canonical = std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
+        let canonical =
+            std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
         let canonical_str = canonical.to_string_lossy();
 
         // Check deny list first.
@@ -220,7 +225,9 @@ impl Permissions {
             if p_port != 0 && p_port != port {
                 return false;
             }
-            p_host == host || p_host == "*" || host.ends_with(&format!(".{p_host}"))
+            p_host == host
+                || p_host == "*"
+                || host.ends_with(&format!(".{p_host}"))
         } else {
             pattern == host || pattern == "*"
         }

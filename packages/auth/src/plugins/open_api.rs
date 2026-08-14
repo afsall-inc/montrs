@@ -31,12 +31,9 @@
 //! OpenAPI reference plugin — GET /reference returns minimal OpenAPI JSON
 //! listing known core auth paths.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::routing::get;
-use axum::{Json, Router};
-use serde_json::{json, Value};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{Json, Router, routing::get};
+use serde_json::{Value, json};
 
 /// OpenApiPlugin — serves a minimal OpenAPI spec at /reference.
 pub struct OpenApiPlugin {

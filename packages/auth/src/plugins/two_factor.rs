@@ -32,15 +32,11 @@
 //! Full: enable, disable, get-totp-uri, verify-totp, send-otp, verify-otp,
 //! verify-backup-code, generate-backup-codes.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{Json, Router, extract::State, routing::post};
 use base64::Engine;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 /// TOTP configuration stored in plugin_store namespace "2fa".
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TwoFactorConfig {
@@ -67,7 +63,8 @@ impl Default for TwoFactorPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -106,7 +103,10 @@ impl AuthPlugin for TwoFactorPlugin {
             .route("/two-factor/send-otp", post(send_otp))
             .route("/two-factor/verify-otp", post(verify_otp))
             .route("/two-factor/verify-backup-code", post(verify_backup_code))
-            .route("/two-factor/generate-backup-codes", post(generate_backup_codes))
+            .route(
+                "/two-factor/generate-backup-codes",
+                post(generate_backup_codes),
+            )
             .with_state(state)
     }
 }
@@ -122,9 +122,18 @@ async fn enable_2fa(
     headers: axum::http::HeaderMap,
     Json(req): Json<Enable2faRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
-    let user = state.db.find_user_by_id(&session.user_id).await?.ok_or_else(AuthError::user_not_found)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
+    let user = state
+        .db
+        .find_user_by_id(&session.user_id)
+        .await?
+        .ok_or_else(AuthError::user_not_found)?;
 
     // Verify password if provided.
     if let Some(pw) = &req.password {
@@ -136,19 +145,26 @@ async fn enable_2fa(
     }
 
     // Check if already enabled.
-    if let Some(existing) = state.db.plugin_get("2fa", &user.id).await.ok().flatten() {
-        let cfg: TwoFactorConfig = serde_json::from_value(existing).unwrap_or(TwoFactorConfig {
-            secret: vec![],
-            enabled: false,
-            backup_codes: vec![],
-        });
+    if let Some(existing) =
+        state.db.plugin_get("2fa", &user.id).await.ok().flatten()
+    {
+        let cfg: TwoFactorConfig =
+            serde_json::from_value(existing).unwrap_or(TwoFactorConfig {
+                secret: vec![],
+                enabled: false,
+                backup_codes: vec![],
+            });
         if cfg.enabled {
-            return Err(AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "2FA already enabled"));
+            return Err(AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "2FA already enabled",
+            ));
         }
     }
 
     let secret = crate::utils::totp::generate_secret();
-    let backup_codes: Vec<String> = (0..8).map(|_| crate::utils::generate_token()).collect();
+    let backup_codes: Vec<String> =
+        (0..8).map(|_| crate::utils::generate_token()).collect();
     let cfg = TwoFactorConfig {
         secret: secret.clone(),
         enabled: false, // not yet enabled (needs verify-totp first)
@@ -159,9 +175,15 @@ async fn enable_2fa(
         .db
         .plugin_set("2fa", &user.id, serde_json::to_value(&cfg).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
-    let uri = crate::utils::totp::provisioning_uri(&secret, &user.email, "MontRS");
+    let uri =
+        crate::utils::totp::provisioning_uri(&secret, &user.email, "MontRS");
 
     Ok(Json(json!({
         "totpUri": uri,
@@ -174,8 +196,13 @@ async fn disable_2fa(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     state.db.plugin_delete("2fa", &session.user_id).await.ok();
     state
@@ -196,17 +223,39 @@ async fn get_totp_uri(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
-    let user = state.db.find_user_by_id(&session.user_id).await?.ok_or_else(AuthError::user_not_found)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
+    let user = state
+        .db
+        .find_user_by_id(&session.user_id)
+        .await?
+        .ok_or_else(AuthError::user_not_found)?;
 
-    let cfg_val = state.db.plugin_get("2fa", &user.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "2FA not configured")
-    })?;
-    let cfg: TwoFactorConfig = serde_json::from_value(cfg_val)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "Invalid 2FA config"))?;
+    let cfg_val =
+        state.db.plugin_get("2fa", &user.id).await?.ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "2FA not configured",
+            )
+        })?;
+    let cfg: TwoFactorConfig =
+        serde_json::from_value(cfg_val).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "Invalid 2FA config",
+            )
+        })?;
 
-    let uri = crate::utils::totp::provisioning_uri(&cfg.secret, &user.email, "MontRS");
+    let uri = crate::utils::totp::provisioning_uri(
+        &cfg.secret,
+        &user.email,
+        "MontRS",
+    );
     Ok(Json(json!({ "totpUri": uri })))
 }
 
@@ -221,14 +270,31 @@ async fn verify_totp(
     headers: axum::http::HeaderMap,
     Json(req): Json<VerifyTotpRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let cfg_val = state.db.plugin_get("2fa", &session.user_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "2FA not configured")
-    })?;
-    let mut cfg: TwoFactorConfig = serde_json::from_value(cfg_val)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "Invalid 2FA config"))?;
+    let cfg_val = state
+        .db
+        .plugin_get("2fa", &session.user_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "2FA not configured",
+            )
+        })?;
+    let mut cfg: TwoFactorConfig =
+        serde_json::from_value(cfg_val).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "Invalid 2FA config",
+            )
+        })?;
 
     if !crate::utils::totp::verify_code(&cfg.secret, &req.code) {
         return Err(AuthError::invalid_two_factor());
@@ -238,7 +304,11 @@ async fn verify_totp(
     cfg.enabled = true;
     state
         .db
-        .plugin_set("2fa", &session.user_id, serde_json::to_value(&cfg).unwrap())
+        .plugin_set(
+            "2fa",
+            &session.user_id,
+            serde_json::to_value(&cfg).unwrap(),
+        )
         .await
         .ok();
     state
@@ -269,12 +339,21 @@ async fn send_otp(
     let uid = if let Some(uid) = &req.user_id {
         uid.clone()
     } else {
-        let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-        let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+        let token =
+            extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+        let session = state
+            .session
+            .validate(&token)
+            .await?
+            .ok_or_else(AuthError::invalid_session)?;
         session.user_id
     };
 
-    let user = state.db.find_user_by_id(&uid).await?.ok_or_else(AuthError::user_not_found)?;
+    let user = state
+        .db
+        .find_user_by_id(&uid)
+        .await?
+        .ok_or_else(AuthError::user_not_found)?;
 
     let otp = crate::verification::create_otp(
         state.db.as_ref(),
@@ -283,19 +362,29 @@ async fn send_otp(
         300,
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     let _ = state
         .email
         .send(crate::email::EmailMessage {
             to: user.email.clone(),
             subject: "Your two-factor code".into(),
-            body_text: format!("Your 2FA code is: {}\n\nIt expires in 5 minutes.", otp.value),
+            body_text: format!(
+                "Your 2FA code is: {}\n\nIt expires in 5 minutes.",
+                otp.value
+            ),
             body_html: None,
         })
         .await;
 
-    Ok(Json(json!({ "success": true, "message": "OTP sent to email" })))
+    Ok(Json(
+        json!({ "success": true, "message": "OTP sent to email" }),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -313,8 +402,13 @@ async fn verify_otp(
     let uid = if let Some(uid) = &req.user_id {
         uid.clone()
     } else {
-        let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-        let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+        let token =
+            extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+        let session = state
+            .session
+            .validate(&token)
+            .await?
+            .ok_or_else(AuthError::invalid_session)?;
         session.user_id
     };
 
@@ -340,14 +434,31 @@ async fn verify_backup_code(
     headers: axum::http::HeaderMap,
     Json(req): Json<VerifyBackupCodeRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let cfg_val = state.db.plugin_get("2fa", &session.user_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "2FA not configured")
-    })?;
-    let mut cfg: TwoFactorConfig = serde_json::from_value(cfg_val)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "Invalid 2FA config"))?;
+    let cfg_val = state
+        .db
+        .plugin_get("2fa", &session.user_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "2FA not configured",
+            )
+        })?;
+    let mut cfg: TwoFactorConfig =
+        serde_json::from_value(cfg_val).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "Invalid 2FA config",
+            )
+        })?;
 
     let pos = cfg.backup_codes.iter().position(|c| c == &req.code);
     match pos {
@@ -355,10 +466,16 @@ async fn verify_backup_code(
             cfg.backup_codes.remove(idx);
             state
                 .db
-                .plugin_set("2fa", &session.user_id, serde_json::to_value(&cfg).unwrap())
+                .plugin_set(
+                    "2fa",
+                    &session.user_id,
+                    serde_json::to_value(&cfg).unwrap(),
+                )
                 .await
                 .ok();
-            Ok(Json(json!({ "success": true, "remainingCodes": cfg.backup_codes.len() })))
+            Ok(Json(
+                json!({ "success": true, "remainingCodes": cfg.backup_codes.len() }),
+            ))
         }
         None => Err(AuthError::invalid_two_factor()),
     }
@@ -368,19 +485,40 @@ async fn generate_backup_codes(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let cfg_val = state.db.plugin_get("2fa", &session.user_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "2FA not configured")
-    })?;
-    let mut cfg: TwoFactorConfig = serde_json::from_value(cfg_val)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InvalidTwoFactor, "Invalid 2FA config"))?;
+    let cfg_val = state
+        .db
+        .plugin_get("2fa", &session.user_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "2FA not configured",
+            )
+        })?;
+    let mut cfg: TwoFactorConfig =
+        serde_json::from_value(cfg_val).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidTwoFactor,
+                "Invalid 2FA config",
+            )
+        })?;
 
     cfg.backup_codes = (0..8).map(|_| crate::utils::generate_token()).collect();
     state
         .db
-        .plugin_set("2fa", &session.user_id, serde_json::to_value(&cfg).unwrap())
+        .plugin_set(
+            "2fa",
+            &session.user_id,
+            serde_json::to_value(&cfg).unwrap(),
+        )
         .await
         .ok();
 

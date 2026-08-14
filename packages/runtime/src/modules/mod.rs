@@ -30,8 +30,7 @@
 
 //! Module loader — trait for loading and evaluating Rust/WASM modules into the runtime.
 
-use crate::error::RuntimeError;
-use crate::type_map::OpState;
+use crate::{error::RuntimeError, type_map::OpState};
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -61,7 +60,11 @@ pub enum ModuleSource {
 }
 
 /// A Rust module is a function that takes OpState and returns JSON.
-pub type RustModuleFn = Box<dyn Fn(&mut OpState) -> Result<serde_json::Value, RuntimeError> + Send + Sync>;
+pub type RustModuleFn = Box<
+    dyn Fn(&mut OpState) -> Result<serde_json::Value, RuntimeError>
+        + Send
+        + Sync,
+>;
 
 /// A loaded and evaluated Rust module.
 pub struct RustModule {
@@ -83,10 +86,7 @@ pub trait ModuleLoader: Send + Sync {
     async fn load(&self, specifier: &str) -> Result<Module, RuntimeError>;
 
     /// Prepare to load a module (pre-processing).
-    async fn prepare_load(
-        &self,
-        _specifier: &str,
-    ) -> Result<(), RuntimeError> {
+    async fn prepare_load(&self, _specifier: &str) -> Result<(), RuntimeError> {
         Ok(())
     }
 
@@ -140,7 +140,10 @@ impl ModuleLoader for FileModuleLoader {
             ));
         }
         let code = tokio::fs::read(path).await.map_err(|e| {
-            RuntimeError::new(crate::error::RuntimeErrorKind::ModuleLoad, e.to_string())
+            RuntimeError::new(
+                crate::error::RuntimeErrorKind::ModuleLoad,
+                e.to_string(),
+            )
         })?;
         let name = path
             .file_stem()
@@ -173,12 +176,9 @@ impl ModuleLoader for FileModuleLoader {
 mod tests {
     use super::*;
 
-
     #[tokio::test]
     async fn test_file_module_loader_not_found() {
-        let loader = FileModuleLoader {
-            roots: vec![],
-        };
+        let loader = FileModuleLoader { roots: vec![] };
         let result = loader.resolve("nonexistent.rs", Path::new("/tmp"));
         assert!(result.is_err());
     }

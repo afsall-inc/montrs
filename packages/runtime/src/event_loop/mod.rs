@@ -33,12 +33,15 @@
 //! Inspired by Deno's `deno_core::event_loop`. Uses tokio's JoinSet and
 //! a Notify channel for event-driven polling (no busy-wait).
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Instant;
-use tokio::sync::Notify;
-use tokio::task::JoinSet;
+use std::{
+    collections::HashMap,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Instant,
+};
+use tokio::{sync::Notify, task::JoinSet};
 
 /// A task handle for the event loop.
 pub type TaskId = u64;

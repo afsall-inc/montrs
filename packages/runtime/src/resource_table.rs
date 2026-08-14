@@ -92,7 +92,10 @@ impl ResourceTable {
     }
 
     /// Get a resource downcasted to a specific type (mutable).
-    pub fn get_typed_mut<T: Resource>(&mut self, id: ResourceId) -> Option<&mut T> {
+    pub fn get_typed_mut<T: Resource>(
+        &mut self,
+        id: ResourceId,
+    ) -> Option<&mut T> {
         self.resources
             .get_mut(&id)
             .and_then(|r| r.as_mut_any().downcast_mut::<T>())

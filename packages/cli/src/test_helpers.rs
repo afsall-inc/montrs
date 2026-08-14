@@ -56,9 +56,7 @@ pub struct TestContext {
 impl TestContext {
     pub fn new() -> Self {
         init_test_tracing();
-        Self {
-            cli: default_cli(),
-        }
+        Self { cli: default_cli() }
     }
 }
 

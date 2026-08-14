@@ -54,7 +54,12 @@ pub struct OAuthProfile {
 pub trait SocialProvider: Send + Sync {
     fn id(&self) -> &'static str;
     fn name(&self) -> &'static str;
-    fn authorization_url(&self, config: &OAuthProviderConfig, state: &str, redirect_uri: &str) -> String;
+    fn authorization_url(
+        &self,
+        config: &OAuthProviderConfig,
+        state: &str,
+        redirect_uri: &str,
+    ) -> String;
     fn token_url(&self) -> &str;
     fn userinfo_url(&self) -> Option<&str>;
     fn default_scopes(&self) -> &[&str];
@@ -107,14 +112,20 @@ impl SocialProvider for GenericOAuthProvider {
     fn name(&self) -> &'static str {
         self.display_name
     }
-    fn authorization_url(&self, config: &OAuthProviderConfig, state: &str, redirect_uri: &str) -> String {
+    fn authorization_url(
+        &self,
+        config: &OAuthProviderConfig,
+        state: &str,
+        redirect_uri: &str,
+    ) -> String {
         let scopes = if config.scopes.is_empty() {
             self.scopes.join(" ")
         } else {
             config.scopes.join(" ")
         };
         format!(
-            "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}",
+            "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&\
+             state={}",
             self.auth_url,
             urlencoding_encode(&config.client_id),
             urlencoding_encode(redirect_uri),
@@ -167,20 +178,21 @@ impl SocialProvider for GenericOAuthProvider {
             .map(|s| s.to_string());
 
         let mut raw = token_resp;
-        if let (Some(url), Some(at)) = (self.userinfo_url, access_token.as_ref()) {
-            let info: serde_json::Value = client
-                .get(url)
-                .bearer_auth(at)
-                .send()
-                .await?
-                .json()
-                .await?;
+        if let (Some(url), Some(at)) =
+            (self.userinfo_url, access_token.as_ref())
+        {
+            let info: serde_json::Value =
+                client.get(url).bearer_auth(at).send().await?.json().await?;
             raw = info;
         }
 
         let id = raw
             .get(self.profile_map.id_key)
-            .and_then(|v| v.as_str().map(|s| s.to_string()).or_else(|| v.as_i64().map(|n| n.to_string())))
+            .and_then(|v| {
+                v.as_str()
+                    .map(|s| s.to_string())
+                    .or_else(|| v.as_i64().map(|n| n.to_string()))
+            })
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
         let email = raw
@@ -262,41 +274,288 @@ pub fn all_providers() -> Vec<GenericOAuthProvider> {
     };
 
     vec![
-        provider!("apple", "Apple", "https://appleid.apple.com/auth/authorize", "https://appleid.apple.com/auth/token", None, &["name", "email"]),
-        provider!("atlassian", "Atlassian", "https://auth.atlassian.com/authorize", "https://auth.atlassian.com/oauth/token", Some("https://api.atlassian.com/me"), &["read:me"]),
-        provider!("cognito", "Amazon Cognito", "https://cognito-idp.amazonaws.com/oauth2/authorize", "https://cognito-idp.amazonaws.com/oauth2/token", Some("https://cognito-idp.amazonaws.com/oauth2/userInfo"), &["openid", "email", "profile"]),
-        provider!("discord", "Discord", "https://discord.com/api/oauth2/authorize", "https://discord.com/api/oauth2/token", Some("https://discord.com/api/users/@me"), &["identify", "email"], discord_map),
-        provider!("dropbox", "Dropbox", "https://www.dropbox.com/oauth2/authorize", "https://api.dropboxapi.com/oauth2/token", Some("https://api.dropboxapi.com/2/users/get_current_account"), &["account_info.read"]),
-        provider!("facebook", "Facebook", "https://www.facebook.com/v18.0/dialog/oauth", "https://graph.facebook.com/v18.0/oauth/access_token", Some("https://graph.facebook.com/me?fields=id,name,email,picture"), &["email", "public_profile"]),
-        provider!("figma", "Figma", "https://www.figma.com/oauth", "https://www.figma.com/api/oauth/token", Some("https://api.figma.com/v1/me"), &["file_read"]),
-        provider!("github", "GitHub", "https://github.com/login/oauth/authorize", "https://github.com/login/oauth/access_token", Some("https://api.github.com/user"), &["read:user", "user:email"], github_map),
-        provider!("gitlab", "GitLab", "https://gitlab.com/oauth/authorize", "https://gitlab.com/oauth/token", Some("https://gitlab.com/api/v4/user"), &["read_user"]),
-        provider!("google", "Google", "https://accounts.google.com/o/oauth2/v2/auth", "https://oauth2.googleapis.com/token", Some("https://openidconnect.googleapis.com/v1/userinfo"), &["openid", "email", "profile"]),
-        provider!("huggingface", "Hugging Face", "https://huggingface.co/oauth/authorize", "https://huggingface.co/oauth/token", Some("https://huggingface.co/oauth/userinfo"), &["openid", "profile", "email"]),
-        provider!("kakao", "Kakao", "https://kauth.kakao.com/oauth/authorize", "https://kauth.kakao.com/oauth/token", Some("https://kapi.kakao.com/v2/user/me"), &["profile_nickname", "account_email"]),
-        provider!("kick", "Kick", "https://id.kick.com/oauth/authorize", "https://id.kick.com/oauth/token", Some("https://api.kick.com/public/v1/users"), &["user:read"]),
-        provider!("line", "LINE", "https://access.line.me/oauth2/v2.1/authorize", "https://api.line.me/oauth2/v2.1/token", Some("https://api.line.me/v2/profile"), &["profile", "openid", "email"]),
-        provider!("linear", "Linear", "https://linear.app/oauth/authorize", "https://api.linear.app/oauth/token", Some("https://api.linear.app/graphql"), &["read"]),
-        provider!("linkedin", "LinkedIn", "https://www.linkedin.com/oauth/v2/authorization", "https://www.linkedin.com/oauth/v2/accessToken", Some("https://api.linkedin.com/v2/userinfo"), &["openid", "profile", "email"]),
-        provider!("microsoft", "Microsoft", "https://login.microsoftonline.com/common/oauth2/v2.0/authorize", "https://login.microsoftonline.com/common/oauth2/v2.0/token", Some("https://graph.microsoft.com/v1.0/me"), &["openid", "email", "profile", "User.Read"]),
-        provider!("naver", "Naver", "https://nid.naver.com/oauth2.0/authorize", "https://nid.naver.com/oauth2.0/token", Some("https://openapi.naver.com/v1/nid/me"), &["profile"]),
-        provider!("notion", "Notion", "https://api.notion.com/v1/oauth/authorize", "https://api.notion.com/v1/oauth/token", None, &[]),
-        provider!("paybin", "Paybin", "https://paybin.io/oauth/authorize", "https://paybin.io/oauth/token", Some("https://paybin.io/oauth/userinfo"), &["openid", "email"]),
-        provider!("paypal", "PayPal", "https://www.paypal.com/signin/authorize", "https://api.paypal.com/v1/oauth2/token", Some("https://api.paypal.com/v1/identity/oauth2/userinfo"), &["openid", "email"]),
-        provider!("polar", "Polar", "https://polar.sh/oauth2/authorize", "https://api.polar.sh/v1/oauth2/token", Some("https://api.polar.sh/v1/oauth2/userinfo"), &["openid", "email", "profile"]),
-        provider!("railway", "Railway", "https://backboard.railway.app/oauth/authorize", "https://backboard.railway.app/oauth/token", Some("https://backboard.railway.app/graphql"), &["openid"]),
-        provider!("reddit", "Reddit", "https://www.reddit.com/api/v1/authorize", "https://www.reddit.com/api/v1/access_token", Some("https://oauth.reddit.com/api/v1/me"), &["identity"]),
-        provider!("roblox", "Roblox", "https://apis.roblox.com/oauth/v1/authorize", "https://apis.roblox.com/oauth/v1/token", Some("https://apis.roblox.com/oauth/v1/userinfo"), &["openid", "profile"]),
-        provider!("salesforce", "Salesforce", "https://login.salesforce.com/services/oauth2/authorize", "https://login.salesforce.com/services/oauth2/token", Some("https://login.salesforce.com/services/oauth2/userinfo"), &["openid", "email", "profile"]),
-        provider!("slack", "Slack", "https://slack.com/oauth/v2/authorize", "https://slack.com/api/oauth.v2.access", Some("https://slack.com/api/users.identity"), &["identity.basic", "identity.email"]),
-        provider!("spotify", "Spotify", "https://accounts.spotify.com/authorize", "https://accounts.spotify.com/api/token", Some("https://api.spotify.com/v1/me"), &["user-read-email", "user-read-private"]),
-        provider!("tiktok", "TikTok", "https://www.tiktok.com/v2/auth/authorize", "https://open.tiktokapis.com/v2/oauth/token", Some("https://open.tiktokapis.com/v2/user/info"), &["user.info.basic"]),
-        provider!("twitch", "Twitch", "https://id.twitch.tv/oauth2/authorize", "https://id.twitch.tv/oauth2/token", Some("https://api.twitch.tv/helix/users"), &["user:read:email"]),
-        provider!("twitter", "Twitter / X", "https://twitter.com/i/oauth2/authorize", "https://api.twitter.com/2/oauth2/token", Some("https://api.twitter.com/2/users/me"), &["users.read", "tweet.read", "offline.access"]),
-        provider!("vercel", "Vercel", "https://vercel.com/oauth/authorize", "https://api.vercel.com/v2/oauth/access_token", Some("https://api.vercel.com/v2/user"), &[]),
-        provider!("vk", "VK", "https://oauth.vk.com/authorize", "https://oauth.vk.com/access_token", Some("https://api.vk.com/method/users.get"), &["email"]),
-        provider!("wechat", "WeChat", "https://open.weixin.qq.com/connect/qrconnect", "https://api.weixin.qq.com/sns/oauth2/access_token", Some("https://api.weixin.qq.com/sns/userinfo"), &["snsapi_login"]),
-        provider!("zoom", "Zoom", "https://zoom.us/oauth/authorize", "https://zoom.us/oauth/token", Some("https://api.zoom.us/v2/users/me"), &["user:read"]),
+        provider!(
+            "apple",
+            "Apple",
+            "https://appleid.apple.com/auth/authorize",
+            "https://appleid.apple.com/auth/token",
+            None,
+            &["name", "email"]
+        ),
+        provider!(
+            "atlassian",
+            "Atlassian",
+            "https://auth.atlassian.com/authorize",
+            "https://auth.atlassian.com/oauth/token",
+            Some("https://api.atlassian.com/me"),
+            &["read:me"]
+        ),
+        provider!(
+            "cognito",
+            "Amazon Cognito",
+            "https://cognito-idp.amazonaws.com/oauth2/authorize",
+            "https://cognito-idp.amazonaws.com/oauth2/token",
+            Some("https://cognito-idp.amazonaws.com/oauth2/userInfo"),
+            &["openid", "email", "profile"]
+        ),
+        provider!(
+            "discord",
+            "Discord",
+            "https://discord.com/api/oauth2/authorize",
+            "https://discord.com/api/oauth2/token",
+            Some("https://discord.com/api/users/@me"),
+            &["identify", "email"],
+            discord_map
+        ),
+        provider!(
+            "dropbox",
+            "Dropbox",
+            "https://www.dropbox.com/oauth2/authorize",
+            "https://api.dropboxapi.com/oauth2/token",
+            Some("https://api.dropboxapi.com/2/users/get_current_account"),
+            &["account_info.read"]
+        ),
+        provider!(
+            "facebook",
+            "Facebook",
+            "https://www.facebook.com/v18.0/dialog/oauth",
+            "https://graph.facebook.com/v18.0/oauth/access_token",
+            Some("https://graph.facebook.com/me?fields=id,name,email,picture"),
+            &["email", "public_profile"]
+        ),
+        provider!(
+            "figma",
+            "Figma",
+            "https://www.figma.com/oauth",
+            "https://www.figma.com/api/oauth/token",
+            Some("https://api.figma.com/v1/me"),
+            &["file_read"]
+        ),
+        provider!(
+            "github",
+            "GitHub",
+            "https://github.com/login/oauth/authorize",
+            "https://github.com/login/oauth/access_token",
+            Some("https://api.github.com/user"),
+            &["read:user", "user:email"],
+            github_map
+        ),
+        provider!(
+            "gitlab",
+            "GitLab",
+            "https://gitlab.com/oauth/authorize",
+            "https://gitlab.com/oauth/token",
+            Some("https://gitlab.com/api/v4/user"),
+            &["read_user"]
+        ),
+        provider!(
+            "google",
+            "Google",
+            "https://accounts.google.com/o/oauth2/v2/auth",
+            "https://oauth2.googleapis.com/token",
+            Some("https://openidconnect.googleapis.com/v1/userinfo"),
+            &["openid", "email", "profile"]
+        ),
+        provider!(
+            "huggingface",
+            "Hugging Face",
+            "https://huggingface.co/oauth/authorize",
+            "https://huggingface.co/oauth/token",
+            Some("https://huggingface.co/oauth/userinfo"),
+            &["openid", "profile", "email"]
+        ),
+        provider!(
+            "kakao",
+            "Kakao",
+            "https://kauth.kakao.com/oauth/authorize",
+            "https://kauth.kakao.com/oauth/token",
+            Some("https://kapi.kakao.com/v2/user/me"),
+            &["profile_nickname", "account_email"]
+        ),
+        provider!(
+            "kick",
+            "Kick",
+            "https://id.kick.com/oauth/authorize",
+            "https://id.kick.com/oauth/token",
+            Some("https://api.kick.com/public/v1/users"),
+            &["user:read"]
+        ),
+        provider!(
+            "line",
+            "LINE",
+            "https://access.line.me/oauth2/v2.1/authorize",
+            "https://api.line.me/oauth2/v2.1/token",
+            Some("https://api.line.me/v2/profile"),
+            &["profile", "openid", "email"]
+        ),
+        provider!(
+            "linear",
+            "Linear",
+            "https://linear.app/oauth/authorize",
+            "https://api.linear.app/oauth/token",
+            Some("https://api.linear.app/graphql"),
+            &["read"]
+        ),
+        provider!(
+            "linkedin",
+            "LinkedIn",
+            "https://www.linkedin.com/oauth/v2/authorization",
+            "https://www.linkedin.com/oauth/v2/accessToken",
+            Some("https://api.linkedin.com/v2/userinfo"),
+            &["openid", "profile", "email"]
+        ),
+        provider!(
+            "microsoft",
+            "Microsoft",
+            "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+            "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            Some("https://graph.microsoft.com/v1.0/me"),
+            &["openid", "email", "profile", "User.Read"]
+        ),
+        provider!(
+            "naver",
+            "Naver",
+            "https://nid.naver.com/oauth2.0/authorize",
+            "https://nid.naver.com/oauth2.0/token",
+            Some("https://openapi.naver.com/v1/nid/me"),
+            &["profile"]
+        ),
+        provider!(
+            "notion",
+            "Notion",
+            "https://api.notion.com/v1/oauth/authorize",
+            "https://api.notion.com/v1/oauth/token",
+            None,
+            &[]
+        ),
+        provider!(
+            "paybin",
+            "Paybin",
+            "https://paybin.io/oauth/authorize",
+            "https://paybin.io/oauth/token",
+            Some("https://paybin.io/oauth/userinfo"),
+            &["openid", "email"]
+        ),
+        provider!(
+            "paypal",
+            "PayPal",
+            "https://www.paypal.com/signin/authorize",
+            "https://api.paypal.com/v1/oauth2/token",
+            Some("https://api.paypal.com/v1/identity/oauth2/userinfo"),
+            &["openid", "email"]
+        ),
+        provider!(
+            "polar",
+            "Polar",
+            "https://polar.sh/oauth2/authorize",
+            "https://api.polar.sh/v1/oauth2/token",
+            Some("https://api.polar.sh/v1/oauth2/userinfo"),
+            &["openid", "email", "profile"]
+        ),
+        provider!(
+            "railway",
+            "Railway",
+            "https://backboard.railway.app/oauth/authorize",
+            "https://backboard.railway.app/oauth/token",
+            Some("https://backboard.railway.app/graphql"),
+            &["openid"]
+        ),
+        provider!(
+            "reddit",
+            "Reddit",
+            "https://www.reddit.com/api/v1/authorize",
+            "https://www.reddit.com/api/v1/access_token",
+            Some("https://oauth.reddit.com/api/v1/me"),
+            &["identity"]
+        ),
+        provider!(
+            "roblox",
+            "Roblox",
+            "https://apis.roblox.com/oauth/v1/authorize",
+            "https://apis.roblox.com/oauth/v1/token",
+            Some("https://apis.roblox.com/oauth/v1/userinfo"),
+            &["openid", "profile"]
+        ),
+        provider!(
+            "salesforce",
+            "Salesforce",
+            "https://login.salesforce.com/services/oauth2/authorize",
+            "https://login.salesforce.com/services/oauth2/token",
+            Some("https://login.salesforce.com/services/oauth2/userinfo"),
+            &["openid", "email", "profile"]
+        ),
+        provider!(
+            "slack",
+            "Slack",
+            "https://slack.com/oauth/v2/authorize",
+            "https://slack.com/api/oauth.v2.access",
+            Some("https://slack.com/api/users.identity"),
+            &["identity.basic", "identity.email"]
+        ),
+        provider!(
+            "spotify",
+            "Spotify",
+            "https://accounts.spotify.com/authorize",
+            "https://accounts.spotify.com/api/token",
+            Some("https://api.spotify.com/v1/me"),
+            &["user-read-email", "user-read-private"]
+        ),
+        provider!(
+            "tiktok",
+            "TikTok",
+            "https://www.tiktok.com/v2/auth/authorize",
+            "https://open.tiktokapis.com/v2/oauth/token",
+            Some("https://open.tiktokapis.com/v2/user/info"),
+            &["user.info.basic"]
+        ),
+        provider!(
+            "twitch",
+            "Twitch",
+            "https://id.twitch.tv/oauth2/authorize",
+            "https://id.twitch.tv/oauth2/token",
+            Some("https://api.twitch.tv/helix/users"),
+            &["user:read:email"]
+        ),
+        provider!(
+            "twitter",
+            "Twitter / X",
+            "https://twitter.com/i/oauth2/authorize",
+            "https://api.twitter.com/2/oauth2/token",
+            Some("https://api.twitter.com/2/users/me"),
+            &["users.read", "tweet.read", "offline.access"]
+        ),
+        provider!(
+            "vercel",
+            "Vercel",
+            "https://vercel.com/oauth/authorize",
+            "https://api.vercel.com/v2/oauth/access_token",
+            Some("https://api.vercel.com/v2/user"),
+            &[]
+        ),
+        provider!(
+            "vk",
+            "VK",
+            "https://oauth.vk.com/authorize",
+            "https://oauth.vk.com/access_token",
+            Some("https://api.vk.com/method/users.get"),
+            &["email"]
+        ),
+        provider!(
+            "wechat",
+            "WeChat",
+            "https://open.weixin.qq.com/connect/qrconnect",
+            "https://api.weixin.qq.com/sns/oauth2/access_token",
+            Some("https://api.weixin.qq.com/sns/userinfo"),
+            &["snsapi_login"]
+        ),
+        provider!(
+            "zoom",
+            "Zoom",
+            "https://zoom.us/oauth/authorize",
+            "https://zoom.us/oauth/token",
+            Some("https://api.zoom.us/v2/users/me"),
+            &["user:read"]
+        ),
     ]
 }
 

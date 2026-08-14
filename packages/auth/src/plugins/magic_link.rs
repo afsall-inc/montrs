@@ -31,15 +31,19 @@
 //! Magic Link plugin — passwordless sign-in via email magic link.
 //! POST /sign-in/magic-link, GET /magic-link/verify?token=
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Magic Link plugin — passwordless sign-in via email.
 pub struct MagicLinkPlugin {
@@ -99,18 +103,27 @@ async fn send_magic_link(
     }
 
     // Check if user exists; if not, create one.
-    let user = match state.db.find_user_by_email(&req.email).await? {
-        Some(u) => u,
-        None => {
-            let new_user = DefaultUser::new(&req.email, None);
-            state.db.create_user(&new_user).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
-            })?;
-            state.db.find_user_by_email(&req.email).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
-            })?
-        }
-    };
+    let user =
+        match state.db.find_user_by_email(&req.email).await? {
+            Some(u) => u,
+            None => {
+                let new_user = DefaultUser::new(&req.email, None);
+                state.db.create_user(&new_user).await.map_err(|e| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::InternalError,
+                        e.to_string(),
+                    )
+                })?;
+                state.db.find_user_by_email(&req.email).await?.ok_or_else(
+                    || {
+                        AuthError::new(
+                            crate::error::AuthErrorCode::InternalError,
+                            "Failed to create user",
+                        )
+                    },
+                )?
+            }
+        };
 
     let token = crate::utils::generate_token();
     let _rec = crate::verification::create_verification(
@@ -120,9 +133,16 @@ async fn send_magic_link(
         600, // 10 minutes
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
-    let callback = req.callback_url.unwrap_or_else(|| format!("{}/api/auth/magic-link/verify", state.config.base_url));
+    let callback = req.callback_url.unwrap_or_else(|| {
+        format!("{}/api/auth/magic-link/verify", state.config.base_url)
+    });
     let link = format!("{}?token={}&email={}", callback, token, user.email);
 
     let _ = state
@@ -135,7 +155,9 @@ async fn send_magic_link(
         })
         .await;
 
-    Ok(Json(json!({ "success": true, "message": "Magic link sent" })))
+    Ok(Json(
+        json!({ "success": true, "message": "Magic link sent" }),
+    ))
 }
 
 async fn verify_magic_link(
@@ -159,7 +181,10 @@ async fn verify_magic_link(
         email.to_string()
     } else {
         // Extract from identifier.
-        rec.identifier.strip_prefix("magic-link:").unwrap_or("").to_string()
+        rec.identifier
+            .strip_prefix("magic-link:")
+            .unwrap_or("")
+            .to_string()
     };
 
     let user = state
@@ -183,7 +208,12 @@ async fn verify_magic_link(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

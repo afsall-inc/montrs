@@ -30,11 +30,12 @@
 
 //! Ready checks — determine when a service is ready.
 
-use crate::config::ReadyCheck;
-use crate::ServiceId;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
-use tokio::time::{sleep, Duration};
+use crate::{ServiceId, config::ReadyCheck};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+    time::{Duration, sleep},
+};
 
 /// Checks whether a service has become ready according to its config.
 pub async fn wait_ready(
@@ -65,7 +66,8 @@ pub async fn wait_ready(
                     }
                     if start.elapsed() > deadline {
                         anyhow::bail!(
-                            "service {}: timed out waiting for ready output '{}'",
+                            "service {}: timed out waiting for ready output \
+                             '{}'",
                             id,
                             pattern
                         );
@@ -114,11 +116,17 @@ async fn wait_http(
     // Parse the URL to get host and port.
     let (host, port) = if let Some(rest) = url.strip_prefix("http://") {
         let (h, rest) = rest.split_once(':').unwrap_or((rest, "80"));
-        let port: u16 = rest.split('/').next().unwrap_or("80").parse().unwrap_or(80);
+        let port: u16 =
+            rest.split('/').next().unwrap_or("80").parse().unwrap_or(80);
         (h.to_string(), port)
     } else if let Some(rest) = url.strip_prefix("https://") {
         let (h, rest) = rest.split_once(':').unwrap_or((rest, "443"));
-        let port: u16 = rest.split('/').next().unwrap_or("443").parse().unwrap_or(443);
+        let port: u16 = rest
+            .split('/')
+            .next()
+            .unwrap_or("443")
+            .parse()
+            .unwrap_or(443);
         (h.to_string(), port)
     } else {
         anyhow::bail!("unsupported URL scheme: {url}");
@@ -129,7 +137,8 @@ async fn wait_http(
             Ok(mut stream) => {
                 // Send a minimal HTTP GET request.
                 let request = format!(
-                    "GET / HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+                    "GET / HTTP/1.0\r\nHost: {host}\r\nConnection: \
+                     close\r\n\r\n"
                 );
                 if stream.write_all(request.as_bytes()).await.is_ok() {
                     // Read the response status line.
@@ -137,7 +146,9 @@ async fn wait_http(
                     if stream.read(&mut buf).await.is_ok() {
                         let response = String::from_utf8_lossy(&buf);
                         if let Some(status_line) = response.lines().next() {
-                            if let Some(status_str) = status_line.split_whitespace().nth(1) {
+                            if let Some(status_str) =
+                                status_line.split_whitespace().nth(1)
+                            {
                                 if let Ok(status) = status_str.parse::<u16>() {
                                     if let Some(exp) = expected_status {
                                         if status == exp {

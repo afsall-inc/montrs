@@ -30,10 +30,10 @@
 
 //! CLI commands for service management (`montrs services`).
 
-use montrs_services::config::ServiceConfig;
-use montrs_services::service::ServiceStatus;
-use montrs_services::service_id::ServiceId;
-use montrs_services::supervisor::Supervisor;
+use montrs_services::{
+    config::ServiceConfig, service::ServiceStatus, service_id::ServiceId,
+    supervisor::Supervisor,
+};
 use std::collections::HashMap;
 
 /// Load the service configs from the current project's montrs.toml.
@@ -42,7 +42,9 @@ fn load_service_configs() -> anyhow::Result<HashMap<String, ServiceConfig>> {
     let config = MontrsConfig::load()?;
     let raw = config.meta.services.clone();
     if raw.is_empty() {
-        anyhow::bail!("No services defined in [services] section of montrs.toml");
+        anyhow::bail!(
+            "No services defined in [services] section of montrs.toml"
+        );
     }
     ServiceConfig::from_toml_map(&raw)
 }
@@ -58,8 +60,12 @@ fn create_supervisor() -> anyhow::Result<Supervisor> {
 fn format_status(status: &ServiceStatus) -> String {
     match status {
         ServiceStatus::Running => console::style("running").green().to_string(),
-        ServiceStatus::Starting => console::style("starting").yellow().to_string(),
-        ServiceStatus::Stopping => console::style("stopping").yellow().to_string(),
+        ServiceStatus::Starting => {
+            console::style("starting").yellow().to_string()
+        }
+        ServiceStatus::Stopping => {
+            console::style("stopping").yellow().to_string()
+        }
         ServiceStatus::Stopped => console::style("stopped").dim().to_string(),
         ServiceStatus::Failed => console::style("failed").red().to_string(),
         ServiceStatus::Waiting => console::style("waiting").cyan().to_string(),
@@ -76,7 +82,9 @@ pub async fn list() -> anyhow::Result<()> {
     }
     println!("{}", console::style("Services:").bold());
     for (id, status, pid) in &services {
-        let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
+        let pid_str = pid
+            .map(|p| p.to_string())
+            .unwrap_or_else(|| "-".to_string());
         println!(
             "  {:<20} {}  pid={}",
             console::style(id).cyan(),
@@ -174,7 +182,10 @@ pub async fn logs(name: Option<&str>) -> anyhow::Result<()> {
             "info" => console::style(&entry.level).green().to_string(),
             _ => entry.level.clone(),
         };
-        println!("[{}] [{}] {}: {}", entry.ts, level, entry.service, entry.message);
+        println!(
+            "[{}] [{}] {}: {}",
+            entry.ts, level, entry.service, entry.message
+        );
     }
     Ok(())
 }

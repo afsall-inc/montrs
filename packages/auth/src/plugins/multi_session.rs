@@ -31,14 +31,10 @@
 //! Multi-Session plugin — list device sessions, set active, revoke.
 //! POST /multi-session/list-device-sessions, /multi-session/set-active, /multi-session/revoke.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
 /// Multi-Session plugin — device session management.
@@ -80,9 +76,15 @@ impl AuthPlugin for MultiSessionPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("MultiSessionPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("MultiSessionPlugin: state not set");
         Router::new()
-            .route("/multi-session/list-device-sessions", post(list_device_sessions))
+            .route(
+                "/multi-session/list-device-sessions",
+                post(list_device_sessions),
+            )
             .route("/multi-session/set-active", post(set_active))
             .route("/multi-session/revoke", post(revoke_session))
             .with_state(state)
@@ -90,7 +92,8 @@ impl AuthPlugin for MultiSessionPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -113,7 +116,8 @@ async fn list_device_sessions(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)
@@ -131,7 +135,9 @@ async fn list_device_sessions(
             .ok()
             .flatten();
         let device_name = device
-            .and_then(|d| d.get("name").and_then(|v| v.as_str()).map(String::from))
+            .and_then(|d| {
+                d.get("name").and_then(|v| v.as_str()).map(String::from)
+            })
             .unwrap_or_else(|| "unknown device".into());
         device_sessions.push(json!({
             "id": s.id,
@@ -145,7 +151,10 @@ async fn list_device_sessions(
 
     let mut info = HashMap::new();
     info.insert("sessions".to_string(), serde_json::json!(device_sessions));
-    info.insert("currentSessionId".to_string(), serde_json::json!(session.id));
+    info.insert(
+        "currentSessionId".to_string(),
+        serde_json::json!(session.id),
+    );
     Ok(Json(serde_json::to_value(info).unwrap_or_default()))
 }
 
@@ -161,7 +170,8 @@ async fn set_active(
     headers: axum::http::HeaderMap,
     Json(req): Json<SetActiveRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)
@@ -187,9 +197,16 @@ async fn set_active(
         .db
         .plugin_set("device_session", &req.session_id, device_json)
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
-    Ok(Json(json!({ "success": true, "activeSessionId": req.session_id })))
+    Ok(Json(
+        json!({ "success": true, "activeSessionId": req.session_id }),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -203,7 +220,8 @@ async fn revoke_session(
     headers: axum::http::HeaderMap,
     Json(req): Json<RevokeRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)
@@ -220,7 +238,10 @@ async fn revoke_session(
     }
 
     state.session.revoke(&req.session_id).await?;
-    let _ = state.db.plugin_delete("device_session", &req.session_id).await;
+    let _ = state
+        .db
+        .plugin_delete("device_session", &req.session_id)
+        .await;
 
     Ok(Json(json!({ "success": true, "revoked": req.session_id })))
 }

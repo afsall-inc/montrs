@@ -30,10 +30,11 @@
 
 //! Health and error endpoints.
 
-use axum::http::StatusCode;
-use axum::Json;
-use axum::routing::{get, post};
-use axum::Router;
+use axum::{
+    Json, Router,
+    http::StatusCode,
+    routing::{get, post},
+};
 use serde_json::json;
 
 pub fn routes() -> Router {

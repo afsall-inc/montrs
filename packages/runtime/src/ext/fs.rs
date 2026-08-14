@@ -30,11 +30,13 @@
 
 //! FS extension — file read/write/stat/list/open ops.
 
-use crate::error::{RuntimeError, RuntimeErrorKind};
-use crate::ops::{self, OpDecl};
-use crate::permissions::Permissions;
-use crate::resource_table::{Resource, ResourceId, ResourceTable};
-use crate::RuntimeExtension;
+use crate::{
+    RuntimeExtension,
+    error::{RuntimeError, RuntimeErrorKind},
+    ops::{self, OpDecl},
+    permissions::Permissions,
+    resource_table::{Resource, ResourceId, ResourceTable},
+};
 
 /// A file handle resource.
 pub struct FileHandle {
@@ -49,9 +51,15 @@ impl Resource for FileHandle {
 }
 
 fn extract_path(input: &serde_json::Value) -> String {
-    input.as_str()
+    input
+        .as_str()
         .map(|s| s.to_string())
-        .or_else(|| input.get("path").and_then(|v| v.as_str()).map(|s| s.to_string()))
+        .or_else(|| {
+            input
+                .get("path")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+        })
         .unwrap_or_default()
 }
 

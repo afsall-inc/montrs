@@ -54,7 +54,9 @@ impl LogFormat {
         message: &'a str,
     ) -> String {
         match self {
-            LogFormat::Text => format!("[{timestamp}] [{level}] {service}: {message}"),
+            LogFormat::Text => {
+                format!("[{timestamp}] [{level}] {service}: {message}")
+            }
             LogFormat::Json => {
                 let rec = StructuredLog {
                     ts: timestamp.to_string(),
@@ -62,7 +64,8 @@ impl LogFormat {
                     service: service.to_string(),
                     msg: message.to_string(),
                 };
-                serde_json::to_string(&rec).unwrap_or_else(|_| message.to_string())
+                serde_json::to_string(&rec)
+                    .unwrap_or_else(|_| message.to_string())
             }
             LogFormat::Logfmt => {
                 format!(

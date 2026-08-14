@@ -84,10 +84,19 @@ impl Renderer for CompositorRenderer {
     }
 
     fn stroke_path(&mut self, path: &Path, stroke: &Stroke, paint: &Paint) {
-        self.compositor.push_stroke(path.clone(), stroke.clone(), paint.clone());
+        self.compositor.push_stroke(
+            path.clone(),
+            stroke.clone(),
+            paint.clone(),
+        );
     }
 
-    fn draw_glyphs(&mut self, _pos: Point, _glyphs: &[GlyphRun], _paint: &Paint) {
+    fn draw_glyphs(
+        &mut self,
+        _pos: Point,
+        _glyphs: &[GlyphRun],
+        _paint: &Paint,
+    ) {
         // Compositor does not yet support text glyphs — will be added with text pipeline
     }
 

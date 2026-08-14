@@ -35,7 +35,10 @@ use std::{fs, path::Path, process::Command};
 /// Available templates and their descriptions.
 const TEMPLATES: &[(&str, &str)] = &[
     ("default", "Single-app SSR web application"),
-    ("monorepo", "Monorepo with apps/ + packages/ (renamed from workspace)"),
+    (
+        "monorepo",
+        "Monorepo with apps/ + packages/ (renamed from workspace)",
+    ),
     ("todo", "Full-stack todo app with auth + database"),
     ("api", "Backend-only API server with auth"),
     ("tui", "Terminal-only app using montrs-tui"),

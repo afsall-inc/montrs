@@ -32,14 +32,14 @@
 //! /subscription/list, /subscription/upgrade (stub), /stripe/webhook.
 //! User metadata stores stripeCustomerId.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Stripe plugin — subscription management.
 pub struct StripePlugin {
@@ -59,7 +59,8 @@ impl Default for StripePlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -113,9 +114,18 @@ async fn list_subscriptions(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
-    let user = state.db.find_user_by_id(&session.user_id).await?.ok_or_else(AuthError::user_not_found)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
+    let user = state
+        .db
+        .find_user_by_id(&session.user_id)
+        .await?
+        .ok_or_else(AuthError::user_not_found)?;
 
     let stripe_customer_id = user.metadata.get("stripeCustomerId").cloned();
     let sub_json: Option<Value> = state
@@ -150,8 +160,13 @@ async fn upgrade_subscription(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpgradeRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let plan = req.plan.unwrap_or_else(|| "pro".into());
     // Stub: just store the subscription intent.
@@ -193,14 +208,16 @@ async fn stripe_webhook(
     body: String,
 ) -> Result<Json<Value>, AuthError> {
     // Parse the webhook event.
-    let event: StripeWebhookEvent = serde_json::from_str(&body).unwrap_or(StripeWebhookEvent {
-        event_type: None,
-        id: None,
-        data: None,
-        raw: body.clone(),
-    });
+    let event: StripeWebhookEvent =
+        serde_json::from_str(&body).unwrap_or(StripeWebhookEvent {
+            event_type: None,
+            id: None,
+            data: None,
+            raw: body.clone(),
+        });
 
-    let event_type = event.event_type.clone().unwrap_or_else(|| "unknown".into());
+    let event_type =
+        event.event_type.clone().unwrap_or_else(|| "unknown".into());
 
     // Store the webhook event for audit.
     let _ = state
@@ -218,13 +235,22 @@ async fn stripe_webhook(
 
     // Handle specific event types.
     match event_type.as_str() {
-        "customer.subscription.created" | "customer.subscription.updated"
-        | "customer.subscription.deleted" | "invoice.paid" | "invoice.payment_failed" => {
+        "customer.subscription.created"
+        | "customer.subscription.updated"
+        | "customer.subscription.deleted"
+        | "invoice.paid"
+        | "invoice.payment_failed" => {
             if let Some(data) = &event.data {
                 if let Some(object) = data.get("object") {
-                    if let Some(customer) = object.get("customer").and_then(|v| v.as_str()) {
+                    if let Some(customer) =
+                        object.get("customer").and_then(|v| v.as_str())
+                    {
                         // Store subscription info in user metadata.
-                        let entries = state.db.plugin_list("stripe_customer").await.unwrap_or_default();
+                        let entries = state
+                            .db
+                            .plugin_list("stripe_customer")
+                            .await
+                            .unwrap_or_default();
                         for (key, val) in entries {
                             if val.as_str() == Some(customer) {
                                 let _ = state

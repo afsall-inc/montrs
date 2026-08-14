@@ -31,12 +31,13 @@
 //! Sessions core routes: get-session, list, revoke, sign-out.
 
 use crate::context::AuthState;
-use axum::extract::State;
-use axum::Json;
-use axum::routing::{get, post};
-use axum::Router;
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -49,7 +50,8 @@ pub fn routes(state: AuthState) -> Router {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }

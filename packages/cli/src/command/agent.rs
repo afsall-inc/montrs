@@ -457,7 +457,9 @@ fn check_dependency_layers(
 }
 
 /// Delegate prdoc subcommands to the changelogger CLI.
-async fn run_changelogger_prdoc(subcommand: PrdocSubcommand) -> anyhow::Result<String> {
+async fn run_changelogger_prdoc(
+    subcommand: PrdocSubcommand,
+) -> anyhow::Result<String> {
     match subcommand {
         PrdocSubcommand::Show { path } => {
             let output = std::process::Command::new("changelogger")
@@ -512,7 +514,9 @@ async fn run_changelogger_prdoc(subcommand: PrdocSubcommand) -> anyhow::Result<S
 }
 
 /// Delegate changelog subcommands to the changelogger CLI.
-async fn run_changelogger_changelog(subcommand: ChangelogSubcommand) -> anyhow::Result<String> {
+async fn run_changelogger_changelog(
+    subcommand: ChangelogSubcommand,
+) -> anyhow::Result<String> {
     match subcommand {
         ChangelogSubcommand::Generate { from, to, output } => {
             let mut cmd = std::process::Command::new("changelogger");
@@ -534,7 +538,11 @@ async fn run_changelogger_changelog(subcommand: ChangelogSubcommand) -> anyhow::
                 ))
             }
         }
-        ChangelogSubcommand::Bump { current, from, dry_run } => {
+        ChangelogSubcommand::Bump {
+            current,
+            from,
+            dry_run,
+        } => {
             let mut cmd = std::process::Command::new("changelogger");
             cmd.args(["changelog", "bump"]);
             if let Some(c) = current {

@@ -30,15 +30,12 @@
 
 //! Password reset: request and reset.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::password::hash_password;
-use axum::extract::State;
-use axum::Json;
-use axum::routing::post;
-use axum::Router;
+use crate::{
+    context::AuthState, database::UserUpdate, password::hash_password,
+};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -68,7 +65,9 @@ async fn forget_password(
     let user = state.db.find_user_by_email(&req.email).await?;
     if user.is_none() {
         // Don't reveal whether the email exists.
-        return Ok(Json(json!({ "success": true, "message": "If the email exists, a reset link was sent." })));
+        return Ok(Json(
+            json!({ "success": true, "message": "If the email exists, a reset link was sent." }),
+        ));
     }
 
     let ver = crate::verification::create_verification(
@@ -78,7 +77,12 @@ async fn forget_password(
         3600,
     )
     .await
-    .map_err(|e| crate::AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        crate::AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     let link = format!(
         "{}/reset-password?token={}",
@@ -94,7 +98,9 @@ async fn forget_password(
         })
         .await;
 
-    Ok(Json(json!({ "success": true, "message": "If the email exists, a reset link was sent." })))
+    Ok(Json(
+        json!({ "success": true, "message": "If the email exists, a reset link was sent." }),
+    ))
 }
 
 async fn reset_password(
@@ -119,7 +125,10 @@ async fn reset_password(
 
     state.config.password.validate(&req.new_password)?;
     let hash = hash_password(&req.new_password).map_err(|e| {
-        crate::AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        crate::AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let user = state
@@ -142,5 +151,7 @@ async fn reset_password(
     // Revoke all existing sessions.
     let _ = state.session.revoke_all(&user.id).await;
 
-    Ok(Json(json!({ "success": true, "message": "Password reset successfully" })))
+    Ok(Json(
+        json!({ "success": true, "message": "Password reset successfully" }),
+    ))
 }

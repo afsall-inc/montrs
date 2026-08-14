@@ -35,7 +35,10 @@ use std::path::Path;
 
 /// Generate a self-signed certificate for localhost development.
 pub fn generate_self_signed() -> anyhow::Result<(String, String)> {
-    let params = CertificateParams::new(vec!["localhost".to_string(), "127.0.0.1".to_string()])?;
+    let params = CertificateParams::new(vec![
+        "localhost".to_string(),
+        "127.0.0.1".to_string(),
+    ])?;
     let key_pair = KeyPair::generate()?;
     let cert = params.self_signed(&key_pair)?;
 

@@ -91,34 +91,35 @@ impl RuntimeErrorKind {
         match self {
             Self::OpNotFound => &[
                 "Check the op name is registered in an extension.",
-                "Ensure the extension supplying the op is included in RuntimeOptions.",
+                "Ensure the extension supplying the op is included in \
+                 RuntimeOptions.",
             ],
-            Self::OpMismatch => &[
-                "Use op_sync for sync ops and op_async for async ops.",
-            ],
-            Self::ExtensionCycle => &[
-                "Remove the cyclic dependency between extensions.",
-            ],
-            Self::MissingDependency => &[
-                "Add the dependency extension to RuntimeOptions.extensions.",
-            ],
-            Self::PermissionDenied => &[
-                "Configure Permissions to allow the requested operation.",
-            ],
+            Self::OpMismatch => {
+                &["Use op_sync for sync ops and op_async for async ops."]
+            }
+            Self::ExtensionCycle => {
+                &["Remove the cyclic dependency between extensions."]
+            }
+            Self::MissingDependency => {
+                &["Add the dependency extension to RuntimeOptions.extensions."]
+            }
+            Self::PermissionDenied => {
+                &["Configure Permissions to allow the requested operation."]
+            }
             Self::ModuleLoad => &[
                 "Check the module specifier resolves to an existing file.",
                 "Add the module's root directory to the ModuleLoader roots.",
             ],
-            Self::ModuleEvaluation => &[
-                "Inspect the module code for panics or invalid imports.",
-            ],
+            Self::ModuleEvaluation => {
+                &["Inspect the module code for panics or invalid imports."]
+            }
             Self::Resource => &[
                 "Check the resource ID was returned by the resource table.",
                 "Ensure the resource has not already been closed.",
             ],
-            Self::OutOfMemory => &[
-                "Increase the arena size in RuntimeOptions.",
-            ],
+            Self::OutOfMemory => {
+                &["Increase the arena size in RuntimeOptions."]
+            }
             _ => &[],
         }
     }
@@ -185,7 +186,10 @@ impl RuntimeError {
     pub fn extension_cycle(nodes: &[&str]) -> Self {
         Self::new(
             RuntimeErrorKind::ExtensionCycle,
-            format!("extension dependency cycle detected: {}", nodes.join(" -> ")),
+            format!(
+                "extension dependency cycle detected: {}",
+                nodes.join(" -> ")
+            ),
         )
     }
 
@@ -212,7 +216,9 @@ impl RuntimeError {
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.source {
-            Some(src) => write!(f, "[{}] {} (in {src})", self.kind, self.message),
+            Some(src) => {
+                write!(f, "[{}] {} (in {src})", self.kind, self.message)
+            }
             None => write!(f, "[{}] {}", self.kind, self.message),
         }
     }

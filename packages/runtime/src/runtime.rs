@@ -33,14 +33,16 @@
 //! Inspired by Deno's `JsRuntime` architecture. Manages op state,
 //! extensions, resource table, and event loop.
 
-use crate::error::RuntimeError;
-use crate::event_loop::EventLoop;
-use crate::extensions::{ExtensionSet, RuntimeExtension};
-use crate::memory::Arena;
-use crate::modules::ModuleLoader;
-use crate::ops::OpDecl;
-use crate::resource_table::ResourceTable;
-use crate::type_map::OpState;
+use crate::{
+    error::RuntimeError,
+    event_loop::EventLoop,
+    extensions::{ExtensionSet, RuntimeExtension},
+    memory::Arena,
+    modules::ModuleLoader,
+    ops::OpDecl,
+    resource_table::ResourceTable,
+    type_map::OpState,
+};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -142,9 +144,11 @@ impl MontrsRuntime {
         name: &str,
         input: Option<serde_json::Value>,
     ) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| {
-            RuntimeError::op_not_found(name)
-        })?;
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         op.execute(&mut self.state, input)
     }
 
@@ -154,9 +158,11 @@ impl MontrsRuntime {
         name: &str,
         input: Option<serde_json::Value>,
     ) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| {
-            RuntimeError::op_not_found(name)
-        })?;
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         // Wrap state in Arc<Mutex> for async ops.
         let shared = Arc::new(Mutex::new(std::mem::take(&mut self.state)));
         let result = op.execute_async(shared.clone(), input).await;
@@ -171,7 +177,10 @@ impl MontrsRuntime {
     }
 
     /// Register a new extension at runtime.
-    pub fn register_extension(&mut self, ext: RuntimeExtension) -> Result<(), RuntimeError> {
+    pub fn register_extension(
+        &mut self,
+        ext: RuntimeExtension,
+    ) -> Result<(), RuntimeError> {
         self.extensions.add(ext);
         // Re-collect ops in dependency order.
         self.ops_by_id.clear();

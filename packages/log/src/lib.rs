@@ -38,7 +38,9 @@ pub mod format;
 pub mod store;
 
 pub use format::{LogFormat, StructuredLog};
-pub use store::{LogEntry, LogQuery, LogStore, LogStoreConfig, RetentionPolicy};
+pub use store::{
+    LogEntry, LogQuery, LogStore, LogStoreConfig, RetentionPolicy,
+};
 
 /// Library-level error type for the log store.
 #[derive(Debug, thiserror::Error)]

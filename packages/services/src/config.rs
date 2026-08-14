@@ -31,8 +31,7 @@
 //! Service configuration — parsed from the `[services]` section of `montrs.toml`.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 /// A cron schedule definition for a service.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -230,7 +229,10 @@ pub struct ServiceConfig {
 
 impl ServiceConfig {
     /// Parse from a raw TOML value (from the [services] section).
-    pub fn from_toml_value(key: &str, value: &toml::Value) -> anyhow::Result<Self> {
+    pub fn from_toml_value(
+        key: &str,
+        value: &toml::Value,
+    ) -> anyhow::Result<Self> {
         match value {
             toml::Value::String(cmd) => Ok(Self {
                 run: Some(cmd.clone()),

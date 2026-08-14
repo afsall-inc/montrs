@@ -30,16 +30,24 @@
 
 //! Runtime state for a single service.
 
-use crate::config::ServiceConfig;
-use crate::retry::RetryState;
-use crate::service_id::ServiceId;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use tokio::process::Child;
-use tokio::sync::Mutex;
+use crate::{config::ServiceConfig, retry::RetryState, service_id::ServiceId};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use tokio::{process::Child, sync::Mutex};
 
 /// The current status of a service.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum ServiceStatus {
     /// Not started.
@@ -58,7 +66,12 @@ pub enum ServiceStatus {
 
 impl ServiceStatus {
     pub fn is_active(&self) -> bool {
-        matches!(self, ServiceStatus::Starting | ServiceStatus::Running | ServiceStatus::Stopping)
+        matches!(
+            self,
+            ServiceStatus::Starting
+                | ServiceStatus::Running
+                | ServiceStatus::Stopping
+        )
     }
 }
 

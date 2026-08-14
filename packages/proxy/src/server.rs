@@ -31,17 +31,11 @@
 //! Proxy server — routes subdomains to local ports using axum.
 
 use axum::{
-    body::Body,
-    extract::Request,
-    http::StatusCode,
-    response::Response,
+    Router, body::Body, extract::Request, http::StatusCode, response::Response,
     routing::any,
-    Router,
 };
 use http_body_util::BodyExt;
-use std::collections::HashMap;
-use std::net::SocketAddr;
-use std::sync::Arc;
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 use tracing::info;
 
@@ -101,39 +95,38 @@ impl ProxyServer {
         let route_map = self.route_map.clone();
         let fallback = self.fallback;
 
-        Router::new()
-            .fallback(any(move |req: Request<Body>| {
-                let route_map = route_map.clone();
-                let fallback = fallback;
-                async move {
-                    let host = req
-                        .headers()
-                        .get("host")
-                        .and_then(|v| v.to_str().ok())
-                        .unwrap_or("")
-                        .to_string();
+        Router::new().fallback(any(move |req: Request<Body>| {
+            let route_map = route_map.clone();
+            let fallback = fallback;
+            async move {
+                let host = req
+                    .headers()
+                    .get("host")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("")
+                    .to_string();
 
-                    // Extract slug: <slug>.localhost
-                    let slug = host
-                        .split(':')
-                        .next()
-                        .unwrap_or("")
-                        .strip_suffix(".localhost")
-                        .or_else(|| host.strip_suffix(".local"))
-                        .unwrap_or("");
+                // Extract slug: <slug>.localhost
+                let slug = host
+                    .split(':')
+                    .next()
+                    .unwrap_or("")
+                    .strip_suffix(".localhost")
+                    .or_else(|| host.strip_suffix(".local"))
+                    .unwrap_or("");
 
-                    if let Some(&port) = route_map.get(slug) {
-                        proxy_request(req, port).await
-                    } else if let Some(fallback_port) = fallback {
-                        proxy_request(req, fallback_port).await
-                    } else {
-                        Ok(Response::builder()
-                            .status(404)
-                            .body(Body::from("Not Found"))
-                            .unwrap())
-                    }
+                if let Some(&port) = route_map.get(slug) {
+                    proxy_request(req, port).await
+                } else if let Some(fallback_port) = fallback {
+                    proxy_request(req, fallback_port).await
+                } else {
+                    Ok(Response::builder()
+                        .status(404)
+                        .body(Body::from("Not Found"))
+                        .unwrap())
                 }
-            }))
+            }
+        }))
     }
 
     /// Start the proxy server (blocking).
@@ -160,7 +153,10 @@ impl ProxyServer {
 }
 
 /// Forward a request to a target port.
-async fn proxy_request(req: Request<Body>, port: u16) -> Result<Response<Body>, StatusCode> {
+async fn proxy_request(
+    req: Request<Body>,
+    port: u16,
+) -> Result<Response<Body>, StatusCode> {
     let target = format!(
         "http://127.0.0.1:{port}{}",
         req.uri()

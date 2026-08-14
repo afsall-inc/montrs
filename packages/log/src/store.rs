@@ -32,11 +32,12 @@
 
 use crate::format::LogFormat;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::io::AsyncWriteExt;
-use tokio::sync::RwLock;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use tokio::{io::AsyncWriteExt, sync::RwLock};
 
 /// A single log entry captured from a service.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -163,14 +164,11 @@ impl LogStore {
         *seq += 1;
 
         let ts = chrono::Utc::now().to_rfc3339();
-        let file = inner
-            .log_file(service)
-            .unwrap_or_else(|_| inner.config.root.join(format!("{service}.log")));
+        let file = inner.log_file(service).unwrap_or_else(|_| {
+            inner.config.root.join(format!("{service}.log"))
+        });
 
-        let rendered = inner
-            .config
-            .format
-            .render(&ts, level, service, message);
+        let rendered = inner.config.format.render(&ts, level, service, message);
 
         let mut f = tokio::fs::OpenOptions::new()
             .create(true)
@@ -187,7 +185,8 @@ impl LogStore {
             let count = lines.lines().count();
             if count > inner.config.retention.max_lines {
                 let keep = count - inner.config.retention.max_lines;
-                let trimmed: String = lines.lines().skip(keep).collect::<Vec<_>>().join("\n");
+                let trimmed: String =
+                    lines.lines().skip(keep).collect::<Vec<_>>().join("\n");
                 tokio::fs::write(&file, trimmed).await?;
             }
         }
@@ -195,7 +194,10 @@ impl LogStore {
     }
 
     /// Read log entries matching `query` from the store.
-    pub async fn query(&self, query: LogQuery) -> anyhow::Result<Vec<LogEntry>> {
+    pub async fn query(
+        &self,
+        query: LogQuery,
+    ) -> anyhow::Result<Vec<LogEntry>> {
         let inner = self.inner.read().await;
         let mut out = Vec::new();
         let services: Vec<String> = match &query.service {
@@ -229,7 +231,10 @@ impl LogStore {
 
     /// Stream new entries appended to services. Returns a channel receiver.
     /// Each entry is delivered as a structured line.
-    pub async fn tail(&self, _service: Option<&str>) -> anyhow::Result<tokio::sync::mpsc::Receiver<String>> {
+    pub async fn tail(
+        &self,
+        _service: Option<&str>,
+    ) -> anyhow::Result<tokio::sync::mpsc::Receiver<String>> {
         let (tx, rx) = tokio::sync::mpsc::channel(1024);
         // NOTE: In-memory tailing is a thin wrapper; callers may subscribe to
         // the append hook for live streaming. For now we return an empty
@@ -293,7 +298,11 @@ impl LogStoreInner {
 }
 
 /// Parse a raw line into a LogEntry, honoring the configured format.
-fn parse_line(_query: &LogQuery, service: &str, line: &str) -> Option<LogEntry> {
+fn parse_line(
+    _query: &LogQuery,
+    service: &str,
+    line: &str,
+) -> Option<LogEntry> {
     // Try JSON first.
     if let Some(rec) = LogFormat::parse_json(line) {
         return Some(LogEntry {

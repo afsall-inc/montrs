@@ -33,11 +33,8 @@
 //! Inspired by Deno's `deno_core::extensions`. Each extension provides
 //! ops, state initialization, and lifecycle hooks.
 
-use crate::error::RuntimeError;
-use crate::ops::OpDecl;
-use crate::type_map::OpState;
-use std::collections::HashSet;
-use std::sync::Arc;
+use crate::{error::RuntimeError, ops::OpDecl, type_map::OpState};
+use std::{collections::HashSet, sync::Arc};
 
 /// A state initialization/teardown callback.
 pub type StateFn = Arc<dyn Fn(&mut OpState) + Send + Sync>;
@@ -201,7 +198,9 @@ impl ExtensionSet {
                 .extensions
                 .iter()
                 .find(|e| e.name == *dep_name)
-                .ok_or_else(|| RuntimeError::missing_dependency(ext.name, dep_name))?;
+                .ok_or_else(|| {
+                    RuntimeError::missing_dependency(ext.name, dep_name)
+                })?;
             self.resolve_deps(dep, visited, in_stack, resolved)?;
         }
 
@@ -221,7 +220,10 @@ impl ExtensionSet {
     }
 
     /// Initialize all extension states in dependency order (B2 fix).
-    pub fn init_all_states(&self, state: &mut OpState) -> Result<(), RuntimeError> {
+    pub fn init_all_states(
+        &self,
+        state: &mut OpState,
+    ) -> Result<(), RuntimeError> {
         for ext in self.resolve()? {
             if let Some(ref init) = ext.init_state {
                 init(state);

@@ -33,16 +33,17 @@
 //! /oauth2/userinfo, /oauth2/register.
 //! Clients in plugin_store "oauth_client"; codes/tokens in verification.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::utils::generate_token;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError, context::AuthState, plugin::AuthPlugin, utils::generate_token,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A registered OAuth client.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,7 +75,8 @@ impl Default for OAuthProviderPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -104,9 +106,15 @@ impl AuthPlugin for OAuthProviderPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("OAuthProviderPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("OAuthProviderPlugin: state not set");
         Router::new()
-            .route("/.well-known/openid-configuration", get(openid_configuration))
+            .route(
+                "/.well-known/openid-configuration",
+                get(openid_configuration),
+            )
             .route("/oauth2/authorize", get(authorize))
             .route("/oauth2/token", post(token))
             .route("/oauth2/userinfo", get(userinfo))
@@ -150,11 +158,23 @@ async fn authorize(
     Query(q): Query<AuthorizeQuery>,
 ) -> Result<Json<Value>, AuthError> {
     // Validate client.
-    let client_entry = state.db.plugin_get("oauth_client", &q.client_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::OAuthError, "Unknown client_id")
-    })?;
-    let client: OAuthClient = serde_json::from_value(client_entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OAuthError, "Invalid client"))?;
+    let client_entry = state
+        .db
+        .plugin_get("oauth_client", &q.client_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OAuthError,
+                "Unknown client_id",
+            )
+        })?;
+    let client: OAuthClient =
+        serde_json::from_value(client_entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OAuthError,
+                "Invalid client",
+            )
+        })?;
 
     if !client.redirect_uris.contains(&q.redirect_uri) {
         return Err(AuthError::new(
@@ -164,8 +184,13 @@ async fn authorize(
     }
 
     // Require authenticated user.
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     // Issue authorization code.
     let code = generate_token();
@@ -211,15 +236,30 @@ async fn token(
 ) -> Result<Json<Value>, AuthError> {
     match req.grant_type.as_str() {
         "authorization_code" => {
-            let code = req.code.ok_or_else(|| AuthError::missing_field("code"))?;
-            let client_id = req.client_id.ok_or_else(|| AuthError::missing_field("client_id"))?;
+            let code =
+                req.code.ok_or_else(|| AuthError::missing_field("code"))?;
+            let client_id = req
+                .client_id
+                .ok_or_else(|| AuthError::missing_field("client_id"))?;
 
             // Validate client.
-            let client_entry = state.db.plugin_get("oauth_client", &client_id).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::OAuthError, "Unknown client")
-            })?;
+            let client_entry = state
+                .db
+                .plugin_get("oauth_client", &client_id)
+                .await?
+                .ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::OAuthError,
+                        "Unknown client",
+                    )
+                })?;
             let client: OAuthClient = serde_json::from_value(client_entry)
-                .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OAuthError, "Invalid client"))?;
+                .map_err(|_| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::OAuthError,
+                        "Invalid client",
+                    )
+                })?;
 
             if let Some(secret) = &req.client_secret {
                 if secret != &client.client_secret {
@@ -248,13 +288,17 @@ async fn token(
                 Ok(r) => r,
                 Err(_) => {
                     // Try by value lookup.
-                    crate::verification::consume_verification_by_value(state.db.as_ref(), &code)
-                        .await
-                        .map_err(|_| AuthError::invalid_token())?
+                    crate::verification::consume_verification_by_value(
+                        state.db.as_ref(),
+                        &code,
+                    )
+                    .await
+                    .map_err(|_| AuthError::invalid_token())?
                 }
             };
 
-            let code_data: Value = serde_json::from_str(&rec.value).unwrap_or(json!({}));
+            let code_data: Value =
+                serde_json::from_str(&rec.value).unwrap_or(json!({}));
             let user_id = code_data
                 .get("user_id")
                 .and_then(|v| v.as_str())
@@ -287,14 +331,30 @@ async fn token(
             })))
         }
         "client_credentials" => {
-            let client_id = req.client_id.ok_or_else(|| AuthError::missing_field("client_id"))?;
-            let client_secret = req.client_secret.ok_or_else(|| AuthError::missing_field("client_secret"))?;
+            let client_id = req
+                .client_id
+                .ok_or_else(|| AuthError::missing_field("client_id"))?;
+            let client_secret = req
+                .client_secret
+                .ok_or_else(|| AuthError::missing_field("client_secret"))?;
 
-            let client_entry = state.db.plugin_get("oauth_client", &client_id).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::OAuthError, "Unknown client")
-            })?;
+            let client_entry = state
+                .db
+                .plugin_get("oauth_client", &client_id)
+                .await?
+                .ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::OAuthError,
+                        "Unknown client",
+                    )
+                })?;
             let client: OAuthClient = serde_json::from_value(client_entry)
-                .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OAuthError, "Invalid client"))?;
+                .map_err(|_| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::OAuthError,
+                        "Invalid client",
+                    )
+                })?;
 
             if client.client_secret != client_secret {
                 return Err(AuthError::new(
@@ -348,9 +408,12 @@ async fn userinfo(
             r.value
         } else {
             // Try verification by value.
-            let r = crate::verification::consume_verification_by_value(state.db.as_ref(), &token)
-                .await
-                .map_err(|_| AuthError::invalid_token())?;
+            let r = crate::verification::consume_verification_by_value(
+                state.db.as_ref(),
+                &token,
+            )
+            .await
+            .map_err(|_| AuthError::invalid_token())?;
             // Re-create since we just consumed it (userinfo shouldn't consume).
             let _ = crate::verification::create_verification(
                 state.db.as_ref(),
@@ -402,18 +465,29 @@ async fn register_client(
         client_secret: client_secret.clone(),
         redirect_uris: req.redirect_uris,
         name: req.name,
-        grant_types: req
-            .grant_types
-            .unwrap_or_else(|| vec!["authorization_code".into(), "refresh_token".into()]),
-        response_types: req.response_types.unwrap_or_else(|| vec!["code".into()]),
+        grant_types: req.grant_types.unwrap_or_else(|| {
+            vec!["authorization_code".into(), "refresh_token".into()]
+        }),
+        response_types: req
+            .response_types
+            .unwrap_or_else(|| vec!["code".into()]),
         created_at: Utc::now(),
     };
 
     state
         .db
-        .plugin_set("oauth_client", &client_id, serde_json::to_value(&client).unwrap())
+        .plugin_set(
+            "oauth_client",
+            &client_id,
+            serde_json::to_value(&client).unwrap(),
+        )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "client_id": client_id,

@@ -30,9 +30,11 @@
 
 //! Invariant tests for montrs-runtime.
 
-use montrs_runtime::error::{RuntimeError, RuntimeErrorKind};
-use montrs_runtime::prelude::*;
-use montrs_runtime::*;
+use montrs_runtime::{
+    error::{RuntimeError, RuntimeErrorKind},
+    prelude::*,
+    *,
+};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -198,16 +200,22 @@ fn test_op_decl_sync_with_input() {
 #[test]
 fn test_op_id_uniqueness() {
     // B1 fix: all constructors share a single global counter.
-    let op1 = OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
-    let op2 = OpDecl::new_async("b", |_s: montrs_runtime::ops::SharedOpState| {
-        Box::pin(async { Ok(serde_json::json!({})) })
-    });
-    let op3 = OpDecl::new_sync_with_input("c", |_s: &mut OpState, _i: serde_json::Value| {
-        Ok(serde_json::json!({}))
-    });
-    let op4 = OpDecl::new_async_with_input("d", |_s: montrs_runtime::ops::SharedOpState, _i: serde_json::Value| {
-        Box::pin(async { Ok(serde_json::json!({})) })
-    });
+    let op1 =
+        OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
+    let op2 =
+        OpDecl::new_async("b", |_s: montrs_runtime::ops::SharedOpState| {
+            Box::pin(async { Ok(serde_json::json!({})) })
+        });
+    let op3 = OpDecl::new_sync_with_input(
+        "c",
+        |_s: &mut OpState, _i: serde_json::Value| Ok(serde_json::json!({})),
+    );
+    let op4 = OpDecl::new_async_with_input(
+        "d",
+        |_s: montrs_runtime::ops::SharedOpState, _i: serde_json::Value| {
+            Box::pin(async { Ok(serde_json::json!({})) })
+        },
+    );
     let mut ids = std::collections::HashSet::new();
     assert!(ids.insert(op1.id));
     assert!(ids.insert(op2.id));

@@ -33,18 +33,20 @@
 //! Manages the lifecycle of services: start, stop, restart, signal,
 //! ready checks, retry, hooks, and state persistence.
 
-use crate::config::ServiceConfig;
-use crate::hooks::{HookRunner, LifecycleEvent};
-use crate::ready;
-use crate::service::{Service, ServiceStatus};
-use crate::service_id::ServiceId;
-use crate::state::StateFile;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::process::Command;
-use tokio::sync::{RwLock, Semaphore};
-use tokio::time::{sleep, Duration};
+use crate::{
+    config::ServiceConfig,
+    hooks::{HookRunner, LifecycleEvent},
+    ready,
+    service::{Service, ServiceStatus},
+    service_id::ServiceId,
+    state::StateFile,
+};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use tokio::{
+    process::Command,
+    sync::{RwLock, Semaphore},
+    time::{Duration, sleep},
+};
 use tracing::{error, info, warn};
 
 /// The supervisor manages all services.
@@ -65,9 +67,13 @@ struct SupervisorInner {
 
 impl Supervisor {
     /// Create a new supervisor with the given service configs.
-    pub fn new(configs: HashMap<String, ServiceConfig>, data_dir: PathBuf) -> anyhow::Result<Self> {
+    pub fn new(
+        configs: HashMap<String, ServiceConfig>,
+        data_dir: PathBuf,
+    ) -> anyhow::Result<Self> {
         std::fs::create_dir_all(&data_dir)?;
-        let state_file = StateFile::open(data_dir.join("montrs-services.toml"))?;
+        let state_file =
+            StateFile::open(data_dir.join("montrs-services.toml"))?;
 
         let services: HashMap<ServiceId, Service> = configs
             .iter()
@@ -141,16 +147,21 @@ impl Supervisor {
             let inner = self.inner.read().await;
             if let Some(svc) = inner.services.get(id) {
                 if svc.status.is_active() {
-                    return Err(crate::ServicesError::AlreadyRunning(id.clone()).into());
+                    return Err(crate::ServicesError::AlreadyRunning(
+                        id.clone(),
+                    )
+                    .into());
                 }
             }
         }
 
         let config = {
             let inner = self.inner.read().await;
-            inner.configs.get(id).cloned().ok_or_else(|| {
-                crate::ServicesError::NotFound(id.clone())
-            })?
+            inner
+                .configs
+                .get(id)
+                .cloned()
+                .ok_or_else(|| crate::ServicesError::NotFound(id.clone()))?
         };
 
         info!("starting service: {id}");
@@ -196,7 +207,9 @@ impl Supervisor {
             .stderr(std::process::Stdio::piped())
             .spawn()?;
 
-        let pid = child.id().ok_or_else(|| anyhow::anyhow!("failed to get PID"))?;
+        let pid = child
+            .id()
+            .ok_or_else(|| anyhow::anyhow!("failed to get PID"))?;
 
         // Update service state.
         {
@@ -219,7 +232,7 @@ impl Supervisor {
         let svc_id = id.clone();
         let supervisor = self.clone();
         tokio::spawn(async move {
-            let out_matcher = |_: &str| { false };
+            let out_matcher = |_: &str| false;
             if let Err(e) = ready::wait_ready(
                 &svc_id,
                 &ready_checks,
@@ -259,23 +272,27 @@ impl Supervisor {
         info!("stopping service: {id}");
 
         let mut inner = self.inner.write().await;
-        let svc = inner.services.get_mut(id).ok_or_else(|| {
-            crate::ServicesError::NotFound(id.clone())
-        })?;
+        let svc = inner
+            .services
+            .get_mut(id)
+            .ok_or_else(|| crate::ServicesError::NotFound(id.clone()))?;
 
         if !svc.status.is_active() {
             return Err(crate::ServicesError::NotRunning(id.clone()).into());
         }
 
         svc.mark_stopping();
-        svc.keep_alive.store(false, std::sync::atomic::Ordering::SeqCst);
+        svc.keep_alive
+            .store(false, std::sync::atomic::Ordering::SeqCst);
 
         // Try graceful shutdown.
         let pid = svc.pid;
         #[cfg(unix)]
         if let Some(pid) = pid {
-            use nix::sys::signal::{kill, Signal};
-            use nix::unistd::Pid;
+            use nix::{
+                sys::signal::{Signal, kill},
+                unistd::Pid,
+            };
             let _ = kill(Pid::from_raw(pid as i32), Signal::SIGTERM);
         }
 
@@ -286,9 +303,13 @@ impl Supervisor {
                 {
                     if let Some(pid) = pid {
                         // Check if process is still alive by sending signal 0.
-                        use nix::sys::signal::{kill, Signal};
-                        use nix::unistd::Pid;
-                        if kill(Pid::from_raw(pid as i32), Signal::SIGTERM).is_err() {
+                        use nix::{
+                            sys::signal::{Signal, kill},
+                            unistd::Pid,
+                        };
+                        if kill(Pid::from_raw(pid as i32), Signal::SIGTERM)
+                            .is_err()
+                        {
                             // Process no longer exists.
                             break;
                         }
@@ -308,8 +329,10 @@ impl Supervisor {
         if graceful.is_err() {
             #[cfg(unix)]
             {
-                use nix::sys::signal::{kill, Signal};
-                use nix::unistd::Pid;
+                use nix::{
+                    sys::signal::{Signal, kill},
+                    unistd::Pid,
+                };
                 if let Some(pid) = pid {
                     let _ = kill(Pid::from_raw(pid as i32), Signal::SIGKILL);
                 }
@@ -417,8 +440,7 @@ impl Supervisor {
 
                         warn!(
                             "service {id}: restarting (attempt {}/{})",
-                            svc.retry.attempts,
-                            config.retry.count
+                            svc.retry.attempts, config.retry.count
                         );
                     }
                 }
@@ -523,7 +545,10 @@ mod tests {
         supervisor.start(&id).await?;
         sleep(Duration::from_millis(200)).await;
         let status = supervisor.status(&id).await;
-        assert!(status == Some(ServiceStatus::Starting) || status == Some(ServiceStatus::Running));
+        assert!(
+            status == Some(ServiceStatus::Starting)
+                || status == Some(ServiceStatus::Running)
+        );
         supervisor.stop(&id).await?;
         let status = supervisor.status(&id).await;
         assert_eq!(status, Some(ServiceStatus::Stopped));

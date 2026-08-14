@@ -31,13 +31,9 @@
 //! JWT plugin — token issuance and JWKS endpoint.
 //! GET /token, GET /jwks — uses utils::jwt; HS256 JWKS stub.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::get;
-use axum::{Json, Router};
-use serde_json::{json, Value};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{Json, Router, extract::State, routing::get};
+use serde_json::{Value, json};
 
 /// JWT plugin — issue tokens and expose a JWKS document.
 pub struct JwtPlugin {
@@ -76,7 +72,8 @@ impl AuthPlugin for JwtPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -99,7 +96,8 @@ async fn get_token(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)
@@ -112,7 +110,12 @@ async fn get_token(
         state.session.secret(),
         3600,
     )
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     Ok(Json(json!({
         "token": jwt,

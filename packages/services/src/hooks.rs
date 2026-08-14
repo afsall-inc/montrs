@@ -60,7 +60,10 @@ pub struct HookRunner;
 
 impl HookRunner {
     /// Get the command for a given event, if configured.
-    pub fn command_for(hooks: &LifecycleHooks, event: LifecycleEvent) -> Option<String> {
+    pub fn command_for(
+        hooks: &LifecycleHooks,
+        event: LifecycleEvent,
+    ) -> Option<String> {
         match event {
             LifecycleEvent::Ready => hooks.on_ready.clone(),
             LifecycleEvent::Fail => hooks.on_fail.clone(),

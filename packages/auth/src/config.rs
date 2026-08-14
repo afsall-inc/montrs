@@ -59,9 +59,15 @@ pub struct SessionConfig {
     pub update_expiry: bool,
 }
 
-fn default_session_expiry() -> u64 { 7 * 24 * 3600 }
-fn default_refresh_threshold() -> u64 { 24 * 3600 }
-fn default_true() -> bool { true }
+fn default_session_expiry() -> u64 {
+    7 * 24 * 3600
+}
+fn default_refresh_threshold() -> u64 {
+    24 * 3600
+}
+fn default_true() -> bool {
+    true
+}
 
 impl Default for SessionConfig {
     fn default() -> Self {
@@ -93,7 +99,9 @@ pub struct PasswordPolicy {
     pub require_special: bool,
 }
 
-fn default_min_length() -> usize { 8 }
+fn default_min_length() -> usize {
+    8
+}
 
 impl Default for PasswordPolicy {
     fn default() -> Self {
@@ -113,16 +121,21 @@ impl PasswordPolicy {
         if password.len() < self.min_length {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
-                format!("Password must be at least {} characters", self.min_length),
+                format!(
+                    "Password must be at least {} characters",
+                    self.min_length
+                ),
             ));
         }
-        if self.require_uppercase && !password.chars().any(|c| c.is_uppercase()) {
+        if self.require_uppercase && !password.chars().any(|c| c.is_uppercase())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain an uppercase letter",
             ));
         }
-        if self.require_lowercase && !password.chars().any(|c| c.is_lowercase()) {
+        if self.require_lowercase && !password.chars().any(|c| c.is_lowercase())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain a lowercase letter",
@@ -134,7 +147,9 @@ impl PasswordPolicy {
                 "Password must contain a digit",
             ));
         }
-        if self.require_special && !password.chars().any(|c| !c.is_alphanumeric()) {
+        if self.require_special
+            && !password.chars().any(|c| !c.is_alphanumeric())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain a special character",
@@ -174,8 +189,12 @@ pub struct AuthConfig {
     pub rate_limit_window_secs: u64,
 }
 
-fn default_rate_limit() -> u32 { 10 }
-fn default_rate_window() -> u64 { 60 }
+fn default_rate_limit() -> u32 {
+    10
+}
+fn default_rate_window() -> u64 {
+    60
+}
 
 impl Default for AuthConfig {
     fn default() -> Self {

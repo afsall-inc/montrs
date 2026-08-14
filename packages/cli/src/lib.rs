@@ -605,7 +605,12 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             keep_alive,
             browser,
         } => command::e2e::run(headless, keep_alive, browser).await,
-        Commands::New { name, template, ui, list_templates } => {
+        Commands::New {
+            name,
+            template,
+            ui,
+            list_templates,
+        } => {
             if list_templates {
                 command::new::list().await?;
                 return Ok(());

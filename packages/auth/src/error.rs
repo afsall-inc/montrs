@@ -30,8 +30,10 @@
 
 //! Authentication error types.
 
-use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{
+    Json,
+    response::{IntoResponse, Response},
+};
 use serde::Serialize;
 
 /// Authentication error codes (stable, part of the agent contract).
@@ -141,9 +143,9 @@ impl AuthError {
                 "Check the email/password combination.".into(),
                 "Ensure the user's email is verified.".into(),
             ],
-            AuthErrorCode::EmailNotVerified => vec![
-                "Send a verification email to the user.".into(),
-            ],
+            AuthErrorCode::EmailNotVerified => {
+                vec!["Send a verification email to the user.".into()]
+            }
             AuthErrorCode::WeakPassword => vec![
                 "Use at least 8 characters with letters and numbers.".into(),
             ],
@@ -151,7 +153,8 @@ impl AuthError {
                 "Add the OAuth provider credentials to the auth config.".into(),
             ],
             AuthErrorCode::RateLimited => vec![
-                "Wait before retrying, or increase the rate limit window.".into(),
+                "Wait before retrying, or increase the rate limit window."
+                    .into(),
             ],
             _ => vec![],
         }
@@ -190,14 +193,22 @@ impl IntoResponse for AuthError {
             message,
             details: self.details,
         };
-        (axum::http::StatusCode::from_u16(self.status).unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR), Json(body)).into_response()
+        (
+            axum::http::StatusCode::from_u16(self.status)
+                .unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
+            Json(body),
+        )
+            .into_response()
     }
 }
 
 /// Convenience constructors.
 impl AuthError {
     pub fn invalid_credentials() -> Self {
-        Self::new(AuthErrorCode::InvalidCredentials, "Invalid email or password")
+        Self::new(
+            AuthErrorCode::InvalidCredentials,
+            "Invalid email or password",
+        )
     }
     pub fn user_not_found() -> Self {
         Self::new(AuthErrorCode::UserNotFound, "User not found")
@@ -218,10 +229,16 @@ impl AuthError {
         Self::new(AuthErrorCode::RateLimited, "Too many requests")
     }
     pub fn missing_field(field: &str) -> Self {
-        Self::new(AuthErrorCode::MissingField, format!("Missing required field: {field}"))
+        Self::new(
+            AuthErrorCode::MissingField,
+            format!("Missing required field: {field}"),
+        )
     }
     pub fn two_factor_required() -> Self {
-        Self::new(AuthErrorCode::TwoFactorRequired, "Two-factor authentication required")
+        Self::new(
+            AuthErrorCode::TwoFactorRequired,
+            "Two-factor authentication required",
+        )
     }
     pub fn invalid_two_factor() -> Self {
         Self::new(AuthErrorCode::InvalidTwoFactor, "Invalid two-factor code")
@@ -230,6 +247,9 @@ impl AuthError {
         Self::new(AuthErrorCode::Forbidden, "Permission denied")
     }
     pub fn provider_not_configured() -> Self {
-        Self::new(AuthErrorCode::ProviderNotConfigured, "OAuth provider not configured")
+        Self::new(
+            AuthErrorCode::ProviderNotConfigured,
+            "OAuth provider not configured",
+        )
     }
 }

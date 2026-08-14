@@ -31,15 +31,15 @@
 //! Agent Auth plugin — register and manage agent tokens for programmatic access.
 //! /agent/register, /agent/token, /agent/capability — store agents in plugin_store.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
 /// A registered agent.
@@ -74,7 +74,8 @@ impl Default for AgentAuthPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -128,8 +129,13 @@ async fn register_agent(
     headers: axum::http::HeaderMap,
     Json(req): Json<RegisterAgentRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     if req.name.is_empty() {
         return Err(AuthError::missing_field("name"));
@@ -155,7 +161,12 @@ async fn register_agent(
         .db
         .plugin_set("agent", &id, serde_json::to_value(&agent).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "agentId": id,
@@ -175,14 +186,30 @@ async fn get_token(
     headers: axum::http::HeaderMap,
     Json(req): Json<GetTokenRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("agent", &req.agent_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "Agent not found")
+    let entry = state
+        .db
+        .plugin_get("agent", &req.agent_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidToken,
+                "Agent not found",
+            )
+        })?;
+    let agent: Agent = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            "Invalid agent record",
+        )
     })?;
-    let agent: Agent = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid agent record"))?;
 
     if agent.user_id != session.user_id {
         return Err(AuthError::forbidden());
@@ -198,7 +225,11 @@ async fn get_token(
 
     state
         .db
-        .plugin_set("agent", &req.agent_id, serde_json::to_value(&updated).unwrap())
+        .plugin_set(
+            "agent",
+            &req.agent_id,
+            serde_json::to_value(&updated).unwrap(),
+        )
         .await
         .ok();
 
@@ -223,7 +254,10 @@ async fn check_capability(
     let agent = if let Some(at) = &req.agent_token {
         let hash = sha256_hex(at);
         let entries = state.db.plugin_list("agent").await.map_err(|e| {
-            AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
         })?;
         let mut found = None;
         for (_, val) in entries {
@@ -239,14 +273,21 @@ async fn check_capability(
         return Err(AuthError::missing_field("agentToken"));
     };
 
-    let has_capability = agent.capabilities.iter().any(|c| c == "*" || c == &req.capability);
+    let has_capability = agent
+        .capabilities
+        .iter()
+        .any(|c| c == "*" || c == &req.capability);
 
     // Update last_used_at.
     let mut updated = agent;
     updated.last_used_at = Some(Utc::now());
     state
         .db
-        .plugin_set("agent", &updated.id, serde_json::to_value(&updated).unwrap())
+        .plugin_set(
+            "agent",
+            &updated.id,
+            serde_json::to_value(&updated).unwrap(),
+        )
         .await
         .ok();
 
@@ -261,11 +302,19 @@ async fn list_agents(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let entries = state.db.plugin_list("agent").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let agents: Vec<Value> = entries
@@ -302,14 +351,30 @@ async fn revoke_agent(
     headers: axum::http::HeaderMap,
     Json(req): Json<RevokeAgentRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("agent", &req.agent_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "Agent not found")
+    let entry = state
+        .db
+        .plugin_get("agent", &req.agent_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidToken,
+                "Agent not found",
+            )
+        })?;
+    let agent: Agent = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            "Invalid agent record",
+        )
     })?;
-    let agent: Agent = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid agent record"))?;
 
     if agent.user_id != session.user_id {
         return Err(AuthError::forbidden());

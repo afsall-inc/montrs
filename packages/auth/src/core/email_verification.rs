@@ -30,14 +30,14 @@
 
 //! Email verification: send verification and verify.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use axum::extract::{Query, State};
-use axum::Json;
-use axum::routing::{get, post};
-use axum::Router;
+use crate::{context::AuthState, database::UserUpdate};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -81,7 +81,12 @@ async fn send_verification_email(
         3600 * 48,
     )
     .await
-    .map_err(|e| crate::AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        crate::AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     let _ = state
         .email
@@ -135,5 +140,7 @@ async fn verify_email(
         )
         .await?;
 
-    Ok(Json(json!({ "verified": true, "message": "Email verified successfully" })))
+    Ok(Json(
+        json!({ "verified": true, "message": "Email verified successfully" }),
+    ))
 }

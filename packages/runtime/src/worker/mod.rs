@@ -31,17 +31,18 @@
 //! Worker — an isolated runtime instance with its own OpState, extensions,
 //! resource table, and event loop. Inspired by Deno's `MainWorker`.
 
-use crate::error::RuntimeError;
-use crate::event_loop::EventLoop;
-use crate::extensions::{ExtensionSet, RuntimeExtension};
-use crate::memory::Arena;
-use crate::modules::ModuleLoader;
-use crate::ops::OpDecl;
-use crate::permissions::Permissions;
-use crate::resource_table::ResourceTable;
-use crate::type_map::OpState;
-use std::collections::HashMap;
-use std::sync::Arc;
+use crate::{
+    error::RuntimeError,
+    event_loop::EventLoop,
+    extensions::{ExtensionSet, RuntimeExtension},
+    memory::Arena,
+    modules::ModuleLoader,
+    ops::OpDecl,
+    permissions::Permissions,
+    resource_table::ResourceTable,
+    type_map::OpState,
+};
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 /// Options for bootstrapping a worker.
@@ -98,7 +99,10 @@ pub struct Worker {
 
 impl Worker {
     /// Bootstrap a new worker.
-    pub fn bootstrap(id: u64, options: WorkerBootstrapOptions) -> Result<Self, RuntimeError> {
+    pub fn bootstrap(
+        id: u64,
+        options: WorkerBootstrapOptions,
+    ) -> Result<Self, RuntimeError> {
         let mut extensions = ExtensionSet::new();
         extensions.add_all(options.extensions);
         let mut state = OpState::new();
@@ -133,21 +137,47 @@ impl Worker {
         Ok(())
     }
 
-    pub fn is_initialized(&self) -> bool { self.initialized }
-    pub fn op_count(&self) -> usize { self.ops_by_id.len() }
-    pub fn arena(&self) -> &Arena { &self.arena }
-    pub fn arena_mut(&mut self) -> &mut Arena { &mut self.arena }
-    pub fn id(&self) -> u64 { self.id }
+    pub fn is_initialized(&self) -> bool {
+        self.initialized
+    }
+    pub fn op_count(&self) -> usize {
+        self.ops_by_id.len()
+    }
+    pub fn arena(&self) -> &Arena {
+        &self.arena
+    }
+    pub fn arena_mut(&mut self) -> &mut Arena {
+        &mut self.arena
+    }
+    pub fn id(&self) -> u64 {
+        self.id
+    }
 
     /// Execute a synchronous operation.
-    pub fn op_sync(&mut self, name: &str, input: Option<serde_json::Value>) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| RuntimeError::op_not_found(name))?;
+    pub fn op_sync(
+        &mut self,
+        name: &str,
+        input: Option<serde_json::Value>,
+    ) -> Result<serde_json::Value, RuntimeError> {
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         op.execute(&mut self.state, input)
     }
 
     /// Execute an async operation.
-    pub async fn op_async(&mut self, name: &str, input: Option<serde_json::Value>) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| RuntimeError::op_not_found(name))?;
+    pub async fn op_async(
+        &mut self,
+        name: &str,
+        input: Option<serde_json::Value>,
+    ) -> Result<serde_json::Value, RuntimeError> {
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         let shared = Arc::new(Mutex::new(std::mem::take(&mut self.state)));
         let result = op.execute_async(shared.clone(), input).await;
         self.state = Arc::try_unwrap(shared).ok().unwrap().into_inner();
@@ -193,7 +223,11 @@ pub struct WorkerPool {
 
 impl WorkerPool {
     pub fn new(options: WorkerBootstrapOptions) -> Self {
-        Self { workers: HashMap::new(), next_id: 1, bootstrap_options: options }
+        Self {
+            workers: HashMap::new(),
+            next_id: 1,
+            bootstrap_options: options,
+        }
     }
 
     pub fn spawn(&mut self) -> Result<u64, RuntimeError> {
@@ -228,15 +262,18 @@ impl Default for WorkerPool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ops::OpDecl;
-    use crate::type_map::OpState;
+    use crate::{ops::OpDecl, type_map::OpState};
 
     #[test]
     fn test_worker_bootstrap() {
-        let mut worker = Worker::bootstrap(1, WorkerBootstrapOptions {
-            permissions: Permissions::all(),
-            ..Default::default()
-        }).unwrap();
+        let mut worker = Worker::bootstrap(
+            1,
+            WorkerBootstrapOptions {
+                permissions: Permissions::all(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
         worker.init().unwrap();
         assert!(worker.is_initialized());
         assert_eq!(worker.op_count(), 0);
@@ -244,10 +281,14 @@ mod tests {
 
     #[test]
     fn test_worker_op() {
-        let mut worker = Worker::bootstrap(1, WorkerBootstrapOptions {
-            permissions: Permissions::all(),
-            ..Default::default()
-        }).unwrap();
+        let mut worker = Worker::bootstrap(
+            1,
+            WorkerBootstrapOptions {
+                permissions: Permissions::all(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
         worker.register_op(OpDecl::new_sync("ping", |_s: &mut OpState| {
             Ok(serde_json::json!({"pong": true}))
         }));
@@ -257,10 +298,14 @@ mod tests {
 
     #[test]
     fn test_worker_permissions() {
-        let worker = Worker::bootstrap(1, WorkerBootstrapOptions {
-            permissions: Permissions::none(),
-            ..Default::default()
-        }).unwrap();
+        let worker = Worker::bootstrap(
+            1,
+            WorkerBootstrapOptions {
+                permissions: Permissions::none(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
         assert!(worker.permissions.check_fs_read("/etc").is_err());
     }
 

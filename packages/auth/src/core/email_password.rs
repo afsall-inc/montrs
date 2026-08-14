@@ -30,17 +30,16 @@
 
 //! Email/password authentication: sign-up, sign-in, change/set/verify password.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::entities::{DefaultAccount, DefaultUser, UserProfile};
-use crate::password::{hash_password, verify_password};
-use crate::AuthError;
-use axum::extract::State;
-use axum::Json;
-use axum::routing::post;
-use axum::Router;
+use crate::{
+    AuthError,
+    context::AuthState,
+    database::UserUpdate,
+    entities::{DefaultAccount, DefaultUser, UserProfile},
+    password::{hash_password, verify_password},
+};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -110,7 +109,10 @@ async fn sign_up(
     }
 
     let hash = hash_password(&req.password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut user = DefaultUser::new(&req.email, Some(hash.clone()));
@@ -126,7 +128,12 @@ async fn sign_up(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     if state.config.email_verification {
         let ver = crate::verification::create_verification(
@@ -136,7 +143,12 @@ async fn sign_up(
             3600 * 24,
         )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
         let link = format!(
             "{}/api/auth/verify-email?token={}&email={}",
             state.config.base_url, ver.value, user.email
@@ -233,7 +245,12 @@ async fn sign_in(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({
@@ -248,7 +265,8 @@ async fn change_password(
     headers: axum::http::HeaderMap,
     Json(req): Json<ChangePasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -264,7 +282,10 @@ async fn change_password(
     }
     state.config.password.validate(&req.new_password)?;
     let new_hash = hash_password(&req.new_password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state
         .db
@@ -283,7 +304,12 @@ async fn change_password(
             .session
             .create(&user.id, state.session_expires_secs())
             .await
-            .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+            .map_err(|e| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
+            })?;
         return Ok(Json(json!({
             "success": true,
             "token": session.token,
@@ -298,7 +324,8 @@ async fn set_password(
     headers: axum::http::HeaderMap,
     Json(req): Json<SetPasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -306,7 +333,10 @@ async fn set_password(
         .ok_or_else(AuthError::invalid_session)?;
     state.config.password.validate(&req.new_password)?;
     let new_hash = hash_password(&req.new_password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state
         .db
@@ -336,7 +366,8 @@ async fn verify_password_endpoint(
     headers: axum::http::HeaderMap,
     Json(req): Json<VerifyPasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -360,13 +391,16 @@ fn extract_bearer(headers: &axum::http::HeaderMap) -> Option<String> {
         .and_then(|s| s.strip_prefix("Bearer "))
         .map(|s| s.to_string())
         .or_else(|| {
-            headers.get("cookie").and_then(|v| v.to_str().ok()).and_then(|c| {
-                c.split(';').find_map(|p| {
-                    let p = p.trim();
-                    p.strip_prefix("session=")
-                        .or_else(|| p.strip_prefix("__montrs_session="))
-                        .map(|s| s.to_string())
+            headers
+                .get("cookie")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|c| {
+                    c.split(';').find_map(|p| {
+                        let p = p.trim();
+                        p.strip_prefix("session=")
+                            .or_else(|| p.strip_prefix("__montrs_session="))
+                            .map(|s| s.to_string())
+                    })
                 })
-            })
         })
 }

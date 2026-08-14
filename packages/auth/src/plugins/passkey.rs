@@ -32,15 +32,15 @@
 //! Registration/auth options as JSON placeholders; full webauthn-rs is TODO.
 //! Implements storage + list/delete fully.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 /// A stored passkey credential.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,7 +75,8 @@ impl Default for PasskeyPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -121,8 +122,13 @@ async fn register_options(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     // TODO: Use webauthn-rs to generate proper registration options.
     // For now, return a placeholder that describes the expected structure.
@@ -164,8 +170,13 @@ async fn register_credential(
     headers: axum::http::HeaderMap,
     Json(req): Json<RegisterCredentialRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     if req.credential_id.is_empty() || req.public_key.is_empty() {
         return Err(AuthError::missing_field("credentialId or publicKey"));
@@ -186,7 +197,12 @@ async fn register_credential(
         .db
         .plugin_set("passkey", &id, serde_json::to_value(&credential).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({ "success": true, "id": id })))
 }
@@ -223,7 +239,10 @@ async fn authenticate(
 ) -> Result<Json<Value>, AuthError> {
     // Look up the credential.
     let entries = state.db.plugin_list("passkey").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut found = None;
@@ -237,7 +256,10 @@ async fn authenticate(
     }
 
     let credential = found.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "Passkey not found")
+        AuthError::new(
+            crate::error::AuthErrorCode::InvalidToken,
+            "Passkey not found",
+        )
     })?;
 
     // TODO: Verify signature with webauthn-rs.
@@ -251,7 +273,12 @@ async fn authenticate(
         .session
         .create(&credential.user_id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let user = state
         .db
@@ -271,11 +298,19 @@ async fn list_credentials(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let entries = state.db.plugin_list("passkey").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let credentials: Vec<Value> = entries
@@ -309,14 +344,32 @@ async fn delete_credential(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeleteCredentialRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("passkey", &req.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "Passkey not found")
-    })?;
-    let cred: PasskeyCredential = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid passkey record"))?;
+    let entry =
+        state
+            .db
+            .plugin_get("passkey", &req.id)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InvalidToken,
+                    "Passkey not found",
+                )
+            })?;
+    let cred: PasskeyCredential =
+        serde_json::from_value(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "Invalid passkey record",
+            )
+        })?;
 
     if cred.user_id != session.user_id {
         return Err(AuthError::forbidden());

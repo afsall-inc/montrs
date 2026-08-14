@@ -31,13 +31,9 @@
 //! Custom Session plugin — re-export enriched session JSON at /custom-session/get.
 //! Stores a callback as Box<dyn Fn> to enrich session data.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::get;
-use axum::{Json, Router};
-use serde_json::{json, Value};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{Json, Router, extract::State, routing::get};
+use serde_json::{Value, json};
 use std::sync::Arc;
 
 /// Enrichment function: takes (user_id, base_session_json) and returns enriched JSON.
@@ -71,7 +67,8 @@ impl Default for CustomSessionPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -101,7 +98,10 @@ impl AuthPlugin for CustomSessionPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("CustomSessionPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("CustomSessionPlugin: state not set");
         Router::new()
             .route("/custom-session/get", get(get_custom_session))
             .with_state(state)
@@ -112,7 +112,8 @@ async fn get_custom_session(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let session = state
         .session
         .validate(&token)

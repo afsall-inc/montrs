@@ -32,15 +32,19 @@
 //! /siwe/nonce, /siwe/verify — stores nonce in verification; verify is a stub
 //! that accepts signature presence (full eth recovery optional).
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// SIWE plugin — Sign-In with Ethereum.
 pub struct SiwePlugin {
@@ -89,7 +93,12 @@ async fn get_nonce(
         300,
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     Ok(Json(json!({ "nonce": nonce })))
 }
@@ -136,7 +145,12 @@ async fn verify_siwe(
                     None
                 }
             })
-            .unwrap_or_else(|| format!("0x{}", uuid::Uuid::new_v4().to_string().replace('-', "")))
+            .unwrap_or_else(|| {
+                format!(
+                    "0x{}",
+                    uuid::Uuid::new_v4().to_string().replace('-', "")
+                )
+            })
     });
 
     let email = format!("{address}@eth.local");
@@ -146,10 +160,16 @@ async fn verify_siwe(
             let mut nu = DefaultUser::new(&email, None);
             nu.email_verified = true;
             state.db.create_user(&nu).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
             })?;
             state.db.find_user_by_email(&email).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    "Failed to create user",
+                )
             })?
         }
     };
@@ -169,7 +189,12 @@ async fn verify_siwe(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

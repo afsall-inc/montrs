@@ -30,16 +30,19 @@
 
 //! Social OAuth sign-in, callback, account link/unlink.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::entities::{DefaultAccount, DefaultUser, UserProfile};
-use crate::providers::{self, SocialProvider};
-use axum::extract::{Path, Query, State};
-use axum::Json;
-use axum::routing::{get, post};
-use axum::Router;
+use crate::{
+    context::AuthState,
+    database::UserUpdate,
+    entities::{DefaultAccount, DefaultUser, UserProfile},
+    providers::{self, SocialProvider},
+};
+use axum::{
+    Json, Router,
+    extract::{Path, Query, State},
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -138,12 +141,12 @@ async fn oauth_callback(
             err,
         ));
     }
-    let code = query.code.ok_or_else(|| {
-        crate::AuthError::missing_field("code")
-    })?;
-    let oauth_state = query.state.ok_or_else(|| {
-        crate::AuthError::missing_field("state")
-    })?;
+    let code = query
+        .code
+        .ok_or_else(|| crate::AuthError::missing_field("code"))?;
+    let oauth_state = query
+        .state
+        .ok_or_else(|| crate::AuthError::missing_field("state"))?;
 
     // Validate state.
     let _ = crate::verification::consume_verification(
@@ -174,7 +177,10 @@ async fn oauth_callback(
         .exchange_code(&config, &code, &redirect_uri)
         .await
         .map_err(|e| {
-            crate::AuthError::new(crate::error::AuthErrorCode::OAuthError, e.to_string())
+            crate::AuthError::new(
+                crate::error::AuthErrorCode::OAuthError,
+                e.to_string(),
+            )
         })?;
 
     // Find or create user.
@@ -186,41 +192,41 @@ async fn oauth_callback(
     let user_id = if let Some(acc) = existing {
         acc.user_id
     } else {
-        let email = profile
-            .email
-            .clone()
-            .unwrap_or_else(|| format!("{}@oauth.local", profile.provider_account_id));
-        let mut user = if let Some(u) = state.db.find_user_by_email(&email).await? {
-            // Link to existing email user.
-            DefaultUser {
-                id: u.id,
-                email: u.email,
-                name: u.name.or(profile.name.clone()),
-                image: u.image.or(profile.image.clone()),
-                email_verified: u.email_verified || profile.email_verified,
-                password_hash: u.password_hash,
-                username: u.username,
-                phone_number: u.phone_number,
-                phone_verified: u.phone_verified,
-                role: u.role,
-                banned: u.banned,
-                ban_reason: u.ban_reason,
-                two_factor_enabled: u.two_factor_enabled,
-                is_anonymous: u.is_anonymous,
-                last_login_method: Some(provider_id.clone()),
-                metadata: u.metadata,
-                created_at: u.created_at,
-                updated_at: chrono::Utc::now(),
-            }
-        } else {
-            let mut u = DefaultUser::new(&email, None);
-            u.name = profile.name.clone();
-            u.image = profile.image.clone();
-            u.email_verified = profile.email_verified;
-            u.last_login_method = Some(provider_id.clone());
-            state.db.create_user(&u).await?;
-            u
-        };
+        let email = profile.email.clone().unwrap_or_else(|| {
+            format!("{}@oauth.local", profile.provider_account_id)
+        });
+        let mut user =
+            if let Some(u) = state.db.find_user_by_email(&email).await? {
+                // Link to existing email user.
+                DefaultUser {
+                    id: u.id,
+                    email: u.email,
+                    name: u.name.or(profile.name.clone()),
+                    image: u.image.or(profile.image.clone()),
+                    email_verified: u.email_verified || profile.email_verified,
+                    password_hash: u.password_hash,
+                    username: u.username,
+                    phone_number: u.phone_number,
+                    phone_verified: u.phone_verified,
+                    role: u.role,
+                    banned: u.banned,
+                    ban_reason: u.ban_reason,
+                    two_factor_enabled: u.two_factor_enabled,
+                    is_anonymous: u.is_anonymous,
+                    last_login_method: Some(provider_id.clone()),
+                    metadata: u.metadata,
+                    created_at: u.created_at,
+                    updated_at: chrono::Utc::now(),
+                }
+            } else {
+                let mut u = DefaultUser::new(&email, None);
+                u.name = profile.name.clone();
+                u.image = profile.image.clone();
+                u.email_verified = profile.email_verified;
+                u.last_login_method = Some(provider_id.clone());
+                state.db.create_user(&u).await?;
+                u
+            };
 
         // If we matched existing, just update last login.
         if state.db.find_user_by_id(&user.id).await?.is_some() {
@@ -237,7 +243,11 @@ async fn oauth_callback(
                 .await;
         }
 
-        let mut acc = DefaultAccount::new(&user.id, &provider_id, &profile.provider_account_id);
+        let mut acc = DefaultAccount::new(
+            &user.id,
+            &provider_id,
+            &profile.provider_account_id,
+        );
         acc.access_token = profile.access_token.clone();
         acc.refresh_token = profile.refresh_token.clone();
         acc.id_token = profile.id_token.clone();
@@ -250,7 +260,10 @@ async fn oauth_callback(
         .create(&user_id, state.session_expires_secs())
         .await
         .map_err(|e| {
-            crate::AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+            crate::AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
         })?;
 
     let user = state
@@ -272,7 +285,8 @@ async fn link_social(
     headers: axum::http::HeaderMap,
     Json(body): Json<LinkBody>,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let _token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let _token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     // Start OAuth flow similar to sign-in; linking completed in callback with session present.
     let provider = providers::get_provider(&body.provider)
         .ok_or_else(crate::AuthError::provider_not_configured)?;
@@ -305,7 +319,8 @@ async fn unlink_account(
     headers: axum::http::HeaderMap,
     Json(body): Json<UnlinkBody>,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -326,7 +341,8 @@ async fn list_accounts(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -347,7 +363,8 @@ async fn get_access_token(
     headers: axum::http::HeaderMap,
     Json(body): Json<UnlinkBody>,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)

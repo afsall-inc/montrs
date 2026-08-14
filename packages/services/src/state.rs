@@ -31,8 +31,10 @@
 //! Runtime state persistence for services.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 /// Persistent state for a single service.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

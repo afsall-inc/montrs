@@ -30,43 +30,68 @@
 
 //! Web extension — timers (setTimeout, setInterval), btoa/atob.
 
-use crate::error::RuntimeError;
-use crate::ops::{self, OpDecl};
-use crate::RuntimeExtension;
-use tokio::time::{sleep, Duration};
+use crate::{
+    RuntimeExtension,
+    error::RuntimeError,
+    ops::{self, OpDecl},
+};
+use tokio::time::{Duration, sleep};
 
 pub fn init() -> RuntimeExtension {
     RuntimeExtension::builder("web")
         .ops(vec![
-            OpDecl::new_sync_with_input("web.btoa", |_state: &mut crate::type_map::OpState, input: serde_json::Value| {
-                let s = input.as_str().unwrap_or("");
-                let encoded = base64_encode(s.as_bytes());
-                Ok(serde_json::json!(encoded))
-            }),
-            OpDecl::new_sync_with_input("web.atob", |_state: &mut crate::type_map::OpState, input: serde_json::Value| {
-                let s = input.as_str().unwrap_or("");
-                let decoded = String::from_utf8(base64_decode(s).map_err(|e| {
-                    RuntimeError::new(crate::error::RuntimeErrorKind::OpExecution, e.to_string())
-                })?)
-                .map_err(|e| RuntimeError::new(crate::error::RuntimeErrorKind::OpExecution, e.to_string()))?;
-                Ok(serde_json::json!(decoded))
-            }),
-            OpDecl::new_async_with_input("web.set_timeout", |_state: ops::SharedOpState, input: serde_json::Value| {
-                let ms = input.as_u64().unwrap_or(0);
-                Box::pin(async move {
-                    if ms > 0 {
+            OpDecl::new_sync_with_input(
+                "web.btoa",
+                |_state: &mut crate::type_map::OpState,
+                 input: serde_json::Value| {
+                    let s = input.as_str().unwrap_or("");
+                    let encoded = base64_encode(s.as_bytes());
+                    Ok(serde_json::json!(encoded))
+                },
+            ),
+            OpDecl::new_sync_with_input(
+                "web.atob",
+                |_state: &mut crate::type_map::OpState,
+                 input: serde_json::Value| {
+                    let s = input.as_str().unwrap_or("");
+                    let decoded =
+                        String::from_utf8(base64_decode(s).map_err(|e| {
+                            RuntimeError::new(
+                                crate::error::RuntimeErrorKind::OpExecution,
+                                e.to_string(),
+                            )
+                        })?)
+                        .map_err(|e| {
+                            RuntimeError::new(
+                                crate::error::RuntimeErrorKind::OpExecution,
+                                e.to_string(),
+                            )
+                        })?;
+                    Ok(serde_json::json!(decoded))
+                },
+            ),
+            OpDecl::new_async_with_input(
+                "web.set_timeout",
+                |_state: ops::SharedOpState, input: serde_json::Value| {
+                    let ms = input.as_u64().unwrap_or(0);
+                    Box::pin(async move {
+                        if ms > 0 {
+                            sleep(Duration::from_millis(ms)).await;
+                        }
+                        Ok(serde_json::json!({ "fired": true }))
+                    })
+                },
+            ),
+            OpDecl::new_async_with_input(
+                "web.sleep",
+                |_state: ops::SharedOpState, input: serde_json::Value| {
+                    let ms = input.as_u64().unwrap_or(1000);
+                    Box::pin(async move {
                         sleep(Duration::from_millis(ms)).await;
-                    }
-                    Ok(serde_json::json!({ "fired": true }))
-                })
-            }),
-            OpDecl::new_async_with_input("web.sleep", |_state: ops::SharedOpState, input: serde_json::Value| {
-                let ms = input.as_u64().unwrap_or(1000);
-                Box::pin(async move {
-                    sleep(Duration::from_millis(ms)).await;
-                    Ok(serde_json::json!({ "slept": ms }))
-                })
-            }),
+                        Ok(serde_json::json!({ "slept": ms }))
+                    })
+                },
+            ),
         ])
         .build()
 }

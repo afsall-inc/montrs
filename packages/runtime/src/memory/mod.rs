@@ -32,11 +32,10 @@
 
 pub mod rom;
 pub use rom::RomData;
-
-use std::sync::atomic::Ordering;
 use std::{
     alloc::{Layout, alloc, dealloc},
     ptr::NonNull,
+    sync::atomic::Ordering,
 };
 
 /// A bump allocator arena. Pre-allocates a contiguous block of memory

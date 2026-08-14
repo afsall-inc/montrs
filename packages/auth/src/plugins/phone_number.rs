@@ -32,16 +32,16 @@
 //! SmsProvider trait + ConsoleSmsProvider in this file.
 //! POST /phone-number/send-otp, /phone-number/verify, /sign-in/phone-number.
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
 use async_trait::async_trait;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// SMS provider abstraction.
 #[async_trait]
@@ -106,7 +106,10 @@ impl AuthPlugin for PhoneNumberPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("PhoneNumberPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("PhoneNumberPlugin: state not set");
         Router::new()
             .route("/phone-number/send-otp", post(send_otp))
             .route("/phone-number/verify", post(verify_phone))
@@ -150,7 +153,12 @@ async fn send_otp(
         300,
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     let _ = self_send_sms(&req.phone_number, &otp.value).await;
     Ok(Json(json!({ "success": true, "message": "OTP sent" })))
@@ -209,17 +217,30 @@ async fn sign_in_phone(
         Some(u) => u,
         None => {
             let mut new_user = DefaultUser::new(
-                format!("phone-{}@phone.local", req.phone_number.replace('+', "")),
+                format!(
+                    "phone-{}@phone.local",
+                    req.phone_number.replace('+', "")
+                ),
                 None,
             );
             new_user.phone_number = Some(req.phone_number.clone());
             new_user.phone_verified = true;
             state.db.create_user(&new_user).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
             })?;
-            state.db.find_user_by_phone(&req.phone_number).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
-            })?
+            state
+                .db
+                .find_user_by_phone(&req.phone_number)
+                .await?
+                .ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::InternalError,
+                        "Failed to create user",
+                    )
+                })?
         }
     };
 
@@ -239,7 +260,12 @@ async fn sign_in_phone(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

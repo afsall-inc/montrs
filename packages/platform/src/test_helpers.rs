@@ -36,9 +36,7 @@ use montrs_platform::*;
 
 /// Initialize tracing for tests. Safe to call multiple times.
 pub fn init_test_tracing() {
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter("warn")
-        .try_init();
+    let _ = tracing_subscriber::fmt().with_env_filter("warn").try_init();
 }
 
 /// A test context that provides a no-op platform adapter.

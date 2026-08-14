@@ -30,14 +30,10 @@
 
 //! User profile: update, change email, delete user.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use axum::extract::State;
-use axum::Json;
-use axum::routing::post;
-use axum::Router;
+use crate::{context::AuthState, database::UserUpdate};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -67,14 +63,17 @@ fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
         .and_then(|s| s.strip_prefix("Bearer "))
         .map(|s| s.to_string())
         .or_else(|| {
-            headers.get("cookie").and_then(|v| v.to_str().ok()).and_then(|c| {
-                c.split(';').find_map(|p| {
-                    let p = p.trim();
-                    p.strip_prefix("session=")
-                        .or_else(|| p.strip_prefix("__montrs_session="))
-                        .map(|s| s.to_string())
+            headers
+                .get("cookie")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|c| {
+                    c.split(';').find_map(|p| {
+                        let p = p.trim();
+                        p.strip_prefix("session=")
+                            .or_else(|| p.strip_prefix("__montrs_session="))
+                            .map(|s| s.to_string())
+                    })
                 })
-            })
         })
 }
 
@@ -83,7 +82,8 @@ async fn update_user(
     headers: axum::http::HeaderMap,
     Json(body): Json<UpdateUserBody>,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -110,14 +110,20 @@ async fn change_email(
     headers: axum::http::HeaderMap,
     Json(body): Json<ChangeEmailBody>,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
         .await?
         .ok_or_else(crate::AuthError::invalid_session)?;
 
-    if state.db.find_user_by_email(&body.new_email).await?.is_some() {
+    if state
+        .db
+        .find_user_by_email(&body.new_email)
+        .await?
+        .is_some()
+    {
         return Err(crate::AuthError::email_in_use());
     }
 
@@ -140,7 +146,8 @@ async fn delete_user(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, crate::AuthError> {
-    let token = extract_token(&headers).ok_or_else(crate::AuthError::invalid_session)?;
+    let token = extract_token(&headers)
+        .ok_or_else(crate::AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)

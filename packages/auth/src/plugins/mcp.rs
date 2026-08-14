@@ -33,16 +33,17 @@
 
 //TODO: Support the latest update of the MCP standard
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::utils::generate_token;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError, context::AuthState, plugin::AuthPlugin, utils::generate_token,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// An MCP OAuth client.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +73,8 @@ impl Default for McpPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+    {
         if let Some(t) = v.strip_prefix("Bearer ") {
             return Some(t.to_string());
         }
@@ -115,7 +117,9 @@ impl AuthPlugin for McpPlugin {
     }
 }
 
-async fn authorization_server_metadata(State(state): State<AuthState>) -> Json<Value> {
+async fn authorization_server_metadata(
+    State(state): State<AuthState>,
+) -> Json<Value> {
     let base = state.config.base_url.trim_end_matches('/');
     Json(json!({
         "issuer": base,
@@ -149,10 +153,20 @@ async fn mcp_authorize(
         .db
         .plugin_get("mcp_client", &q.client_id)
         .await?
-        .ok_or_else(|| AuthError::new(crate::error::AuthErrorCode::OAuthError, "Unknown client"))?;
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OAuthError,
+                "Unknown client",
+            )
+        })?;
 
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let code = generate_token();
     let code_data = json!({
@@ -292,9 +306,18 @@ async fn mcp_register(
 
     state
         .db
-        .plugin_set("mcp_client", &client_id, serde_json::to_value(&client).unwrap())
+        .plugin_set(
+            "mcp_client",
+            &client_id,
+            serde_json::to_value(&client).unwrap(),
+        )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "client_id": client_id,

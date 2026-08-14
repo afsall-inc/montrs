@@ -139,7 +139,10 @@ pub struct DefaultUser {
 }
 
 impl DefaultUser {
-    pub fn new(email: impl Into<String>, password_hash: Option<String>) -> Self {
+    pub fn new(
+        email: impl Into<String>,
+        password_hash: Option<String>,
+    ) -> Self {
         let now = Utc::now();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
@@ -222,7 +225,8 @@ impl DefaultSession {
             id: uuid::Uuid::new_v4().to_string(),
             user_id: user_id.into(),
             token: crate::utils::generate_token(),
-            expires_at: now + chrono::TimeDelta::seconds(expires_in_secs as i64),
+            expires_at: now
+                + chrono::TimeDelta::seconds(expires_in_secs as i64),
             created_at: now,
             ip_address: None,
             user_agent: None,
@@ -280,7 +284,10 @@ impl DefaultAccount {
         }
     }
 
-    pub fn credential(user_id: impl Into<String>, password_hash: String) -> Self {
+    pub fn credential(
+        user_id: impl Into<String>,
+        password_hash: String,
+    ) -> Self {
         let uid = user_id.into();
         Self {
             id: uuid::Uuid::new_v4().to_string(),

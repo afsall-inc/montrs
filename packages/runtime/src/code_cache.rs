@@ -33,9 +33,11 @@
 //! Inspired by Deno's `runtime/code_cache.rs`. Modules are keyed by their
 //! source hash; a cache hit skips re-compilation of the bytecode.
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 /// A cached module entry.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -115,7 +117,9 @@ impl CodeCache {
         };
         // Re-inserting updates seq, treating it as newest.
         self.next_seq += 1;
-        if self.entries.len() >= self.max_entries && !self.entries.contains_key(&key) {
+        if self.entries.len() >= self.max_entries
+            && !self.entries.contains_key(&key)
+        {
             // Evict the oldest by sequence (FIFO — deterministic).
             if let Some(oldest) = self
                 .entries
@@ -167,7 +171,9 @@ impl CodeCache {
 
     fn load_from_disk(&mut self, path: &Path) {
         if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(entries) = serde_json::from_str::<HashMap<String, CachedModule>>(&content) {
+            if let Ok(entries) =
+                serde_json::from_str::<HashMap<String, CachedModule>>(&content)
+            {
                 self.entries = entries;
             }
         }

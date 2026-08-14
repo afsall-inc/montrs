@@ -30,13 +30,13 @@
 
 //! Auth middleware — request guards and headers.
 
-use axum::http::{HeaderValue, header};
-use axum::response::Response;
+use axum::{
+    http::{HeaderValue, header},
+    response::Response,
+};
 
 /// Extracts the bearer token from an Authorization header.
-pub fn extract_bearer_token(
-    headers: &axum::http::HeaderMap,
-) -> Option<String> {
+pub fn extract_bearer_token(headers: &axum::http::HeaderMap) -> Option<String> {
     headers
         .get(header::AUTHORIZATION)
         .and_then(|v| v.to_str().ok())
@@ -67,7 +67,11 @@ pub fn extract_session_cookie(
 }
 
 /// Build a session cookie header value with Secure/HttpOnly/SameSite.
-pub fn make_session_cookie(name: &str, value: &str, max_age: u64) -> HeaderValue {
+pub fn make_session_cookie(
+    name: &str,
+    value: &str,
+    max_age: u64,
+) -> HeaderValue {
     HeaderValue::from_str(&format!(
         "{name}={value}; HttpOnly; Path=/; Max-Age={max_age}; SameSite=Lax"
     ))
@@ -97,8 +101,10 @@ pub fn is_csrf_safe(
 
 /// Add standard security headers to a response.
 pub fn add_security_headers(resp: &mut Response) {
-    resp.headers_mut()
-        .insert("X-Content-Type-Options", HeaderValue::from_static("nosniff"));
+    resp.headers_mut().insert(
+        "X-Content-Type-Options",
+        HeaderValue::from_static("nosniff"),
+    );
     resp.headers_mut()
         .insert("X-Frame-Options", HeaderValue::from_static("DENY"));
     resp.headers_mut()
@@ -126,6 +132,9 @@ mod tests {
             header::COOKIE,
             HeaderValue::from_static("other=1; session=xyz; foo=2"),
         );
-        assert_eq!(extract_session_cookie(&headers, "session"), Some("xyz".to_string()));
+        assert_eq!(
+            extract_session_cookie(&headers, "session"),
+            Some("xyz".to_string())
+        );
     }
 }

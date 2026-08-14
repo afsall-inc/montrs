@@ -31,14 +31,14 @@
 //! OAuth Proxy plugin — DX helper: callback route for OAuth proxy flows.
 //! GET /oauth/proxy/callback — receives the OAuth code and forwards to the main callback.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::get;
-use axum::{Json, Router};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::get,
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// OAuth Proxy plugin — small DX helper for proxied OAuth flows.
 pub struct OAuthProxyPlugin {
@@ -68,7 +68,8 @@ impl AuthPlugin for OAuthProxyPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("OAuthProxyPlugin: state not set");
+        let state =
+            self.state.clone().expect("OAuthProxyPlugin: state not set");
         Router::new()
             .route("/oauth/proxy/callback", get(proxy_callback))
             .with_state(state)
@@ -88,7 +89,10 @@ async fn proxy_callback(
     Query(q): Query<ProxyCallbackQuery>,
 ) -> Result<Json<Value>, AuthError> {
     if let Some(err) = &q.error {
-        return Err(AuthError::new(crate::error::AuthErrorCode::OAuthError, format!("OAuth proxy error: {err}")));
+        return Err(AuthError::new(
+            crate::error::AuthErrorCode::OAuthError,
+            format!("OAuth proxy error: {err}"),
+        ));
     }
 
     let provider = q.provider.clone().unwrap_or_else(|| "unknown".into());

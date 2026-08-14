@@ -30,8 +30,10 @@
 
 //! Shared verification token store helpers (OTP, magic link, email verify).
 
-use crate::database::{DatabaseAdapter, VerificationRecord};
-use crate::utils::generate_token;
+use crate::{
+    database::{DatabaseAdapter, VerificationRecord},
+    utils::generate_token,
+};
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 

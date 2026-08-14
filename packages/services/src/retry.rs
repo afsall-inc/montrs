@@ -31,7 +31,7 @@
 //! Retry logic — exponential backoff for failing services.
 
 use crate::config::RetryPolicy;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 
 /// Tracks retry state for a service.
 #[derive(Debug, Default)]
@@ -55,7 +55,8 @@ impl RetryState {
         if policy.backoff {
             let exp = self.attempts.saturating_sub(1).min(10);
             let factor = 2u64.saturating_pow(exp);
-            let secs = (policy.delay_secs * factor).min(policy.max_backoff_secs);
+            let secs =
+                (policy.delay_secs * factor).min(policy.max_backoff_secs);
             Duration::from_secs(secs)
         } else {
             Duration::from_secs(policy.delay_secs)

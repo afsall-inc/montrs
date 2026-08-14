@@ -62,11 +62,16 @@ pub enum Authorization {
 /// Check whether a set of statements authorize a given action on a resource.
 /// Uses AND logic within a single statement, OR logic across statements.
 /// Deny statements override allow statements.
-pub fn authorize(statements: &[Statement], action: &str, resource: &str) -> Authorization {
+pub fn authorize(
+    statements: &[Statement],
+    action: &str,
+    resource: &str,
+) -> Authorization {
     let mut allowed = false;
     for stmt in statements {
         let action_match = stmt.actions.iter().any(|a| a == action || a == "*");
-        let resource_match = stmt.resources.iter().any(|r| r == resource || r == "*");
+        let resource_match =
+            stmt.resources.iter().any(|r| r == resource || r == "*");
         if action_match && resource_match {
             match stmt.effect.as_str() {
                 "deny" => return Authorization::Denied,
@@ -157,6 +162,9 @@ mod tests {
                 resources: vec!["doc:1".into()],
             },
         ];
-        assert_eq!(authorize(&statements, "read", "doc:1"), Authorization::Denied);
+        assert_eq!(
+            authorize(&statements, "read", "doc:1"),
+            Authorization::Denied
+        );
     }
 }

@@ -83,8 +83,7 @@ impl PlatformAdapter for WebAdapter {
     fn set_title(&self, title: &str) {
         #[cfg(target_arch = "wasm32")]
         {
-            let document = web_sys::window()
-                .and_then(|w| w.document());
+            let document = web_sys::window().and_then(|w| w.document());
             if let Some(doc) = document {
                 doc.set_title(title);
             }

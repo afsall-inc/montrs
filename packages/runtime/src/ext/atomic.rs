@@ -36,10 +36,7 @@ use std::path::Path;
 /// then rename over the target. Prevents torn writes.
 pub fn write_atomic(path: &Path, contents: &[u8]) -> std::io::Result<()> {
     let dir = path.parent().unwrap_or_else(|| Path::new("."));
-    let file_name = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("tmp");
+    let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("tmp");
     let tmp = dir.join(format!(".{file_name}.tmp{}", std::process::id()));
 
     std::fs::write(&tmp, contents)?;

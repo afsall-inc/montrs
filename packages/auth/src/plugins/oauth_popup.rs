@@ -32,12 +32,8 @@
 //! GET /oauth/popup/callback — returns a small HTML page that posts a message
 //! to the opener window and closes the popup.
 
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::Query;
-use axum::response::Html;
-use axum::routing::get;
-use axum::Router;
+use crate::{AuthError, plugin::AuthPlugin};
+use axum::{Router, extract::Query, response::Html, routing::get};
 use serde::Deserialize;
 
 /// OAuth Popup plugin — small DX helper for popup-based OAuth flows.
