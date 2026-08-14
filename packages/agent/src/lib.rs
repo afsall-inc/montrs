@@ -3,17 +3,10 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, path::PathBuf};
 
-pub mod changelog;
 pub mod error_parser;
 pub mod framework;
 pub mod guides;
-pub mod prdoc;
-pub mod prdoc_analyzer;
-pub mod prdoc_generator;
 pub mod skills;
-
-pub use montrs_prdoc;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
     pub project_name: String,

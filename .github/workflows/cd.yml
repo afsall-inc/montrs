@@ -1,14 +1,41 @@
-name: Release
+name: CD
 on:
   push:
-    tags: ['v*']
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  release:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changed: ${{ steps.version.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install changelogger-cli
+      - name: Detect version bump
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git show HEAD~1:Cargo.toml 2>/dev/null | grep -q "^version = \"$VERSION\""; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,32 +49,16 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo install changelogger-cli
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Generate changelog from prdocs
         run: |
-          changelogger changelog generate --from "v${{ steps.version.outputs.VERSION }}..HEAD" --output CHANGELOG.md
+          changelogger changelog generate --from "v${{ needs.detect.outputs.version }}..HEAD" --output CHANGELOG.md
       - name: Commit changelog
         run: |
           git config user.name "montrs-bot"
           git config user.email "bot@montrs.dev"
           git add CHANGELOG.md
-          git diff --cached --quiet || git commit -m "chore: update CHANGELOG.md for v${{ steps.version.outputs.VERSION }}"
+          git diff --cached --quiet || git commit -m "chore: update CHANGELOG.md for v${{ needs.detect.outputs.version }}"
           git push
-      - name: Build
-        run: cargo build --release --workspace
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh release view "${{ github.ref_name }}" > /dev/null 2>&1; then
-            echo "Release ${{ github.ref_name }} already exists, skipping."
-          else
-            gh release create "${{ github.ref_name }}" \
-              --title "montrs v${{ steps.version.outputs.VERSION }}" \
-              --notes-file CHANGELOG.md
-          fi
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to GitHub Container Registry
@@ -62,7 +73,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ steps.version.outputs.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${{ needs.detect.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}

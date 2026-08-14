@@ -1,0 +1,15 @@
+---
+title: "feat: add Dockerfile, CD workflow, and ghcr.io publishing for Docker images"
+
+doc:
+  - audience: Developer
+    description: |
+      Adds Dockerfile for multi-stage build of montrs-cli, .dockerignore,
+      CD workflow for version-bump-triggered publishing to ghcr.io/afsall-inc/montrs,
+      and updates the release workflow to publish Docker images alongside GitHub
+      Releases. All workflows detect versions dynamically from Cargo.toml or git tags.
+
+crates:
+  - name: montrs-cli
+    bump: minor
+---

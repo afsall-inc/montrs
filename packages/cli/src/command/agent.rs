@@ -272,199 +272,12 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
             Ok(output)
         }
-        AgentSubcommand::Prdoc { subcommand } => match subcommand {
-            PrdocSubcommand::Show { path } => {
-                let prdoc_path = std::path::PathBuf::from(&path);
-                if !prdoc_path.exists() {
-                    return Err(anyhow::anyhow!(
-                        "prdoc.md not found at {}. Create one with `montrs \
-                         agent prdoc generate`.",
-                        path
-                    ));
-                }
-                let prdoc = montrs_agent::prdoc::load_prdoc(&prdoc_path)
-                    .map_err(|e| anyhow::anyhow!("{}", e))?;
-                Ok(serde_json::to_string_pretty(&prdoc)?)
-            }
-            PrdocSubcommand::Validate { path, branch } => {
-                let prdoc_path = std::path::PathBuf::from(&path);
-                if !prdoc_path.exists() {
-                    if std::env::var("CI").is_ok() {
-                        return Err(anyhow::anyhow!(
-                            "prdoc not found at {}. Pull requests require a \
-                             prdoc file.",
-                            path
-                        ));
-                    }
-                    return Ok("No prdoc found. Validation skipped (not \
-                               required outside of pull requests)."
-                        .to_string());
-                }
-                let prdoc =
-                    montrs_agent::montrs_prdoc::types::load_prdoc(&prdoc_path)
-                        .map_err(|e| anyhow::anyhow!("{}", e))?;
-                let issues = if let Some(ref branch_name) = branch {
-                    montrs_agent::montrs_prdoc::types::validate_prdoc_for_branch(
-                        &prdoc,
-                        branch_name,
-                    )
-                } else {
-                    montrs_agent::montrs_prdoc::types::validate_prdoc(&prdoc)
-                };
-                if issues.is_empty() {
-                    Ok("prdoc is valid.".to_string())
-                } else {
-                    let mut out = "prdoc validation issues:\n".to_string();
-                    for issue in issues {
-                        out.push_str(&format!("  - {}\n", issue));
-                    }
-                    Err(anyhow::anyhow!("{}", out))
-                }
-            }
-            PrdocSubcommand::Generate { pr, force, .. } => {
-                let pr_number = pr.ok_or_else(|| {
-                    anyhow::anyhow!("--pr is required for generation")
-                })?;
-
-                let opts =
-                    montrs_agent::montrs_prdoc::generator::GenerateOptions {
-                        pr_number,
-                        bump:
-                            montrs_agent::montrs_prdoc::types::BumpLevel::Minor,
-                        audience:
-                            montrs_agent::montrs_prdoc::types::Audience::AppDev,
-                        force,
-                    };
-
-                let prdoc =
-                    montrs_agent::montrs_prdoc::generator::generate_prdoc(
-                        &opts,
-                    )
-                    .map_err(|e| anyhow::anyhow!("{}", e))?;
-
-                let output_path =
-                    montrs_agent::montrs_prdoc::generator::default_output_path(
-                        pr_number,
-                    );
-                let path = std::path::PathBuf::from(&output_path);
-
-                if let Some(parent) = path.parent()
-                    && !parent.as_os_str().is_empty()
-                {
-                    std::fs::create_dir_all(parent)?;
-                }
-
-                let rendered =
-                    montrs_agent::montrs_prdoc::generator::render_prdoc(&prdoc);
-                std::fs::write(&path, &rendered)?;
-
-                Ok(format!(
-                    "Generated {} ({} crate(s)). Edit the placeholders.",
-                    output_path,
-                    prdoc.crates.len(),
-                ))
-            }
-        },
-        AgentSubcommand::Changelog { subcommand } => match subcommand {
-            ChangelogSubcommand::Generate { from, to, output } => {
-                let range = build_git_range(from, to);
-                let prdocs =
-                    montrs_agent::changelog::collect_prdocs_from_git(&range);
-                if prdocs.is_empty() {
-                    return Ok("No prdocs found in the specified range. \
-                               Ensure merged PRs have prdoc.md files \
-                               committed."
-                        .to_string());
-                }
-                let mut changelog = montrs_agent::changelog::Changelog::new();
-                for prdoc in &prdocs {
-                    changelog.add_prdoc(prdoc);
-                }
-                let rendered = changelog.render();
-                std::fs::write(&output, &rendered)?;
-                Ok(format!(
-                    "Generated {} with {} entr(ies) from range '{}'",
-                    output,
-                    prdocs.len(),
-                    range,
-                ))
-            }
-            ChangelogSubcommand::Bump {
-                current,
-                from,
-                dry_run,
-            } => {
-                let current_version =
-                    current.unwrap_or_else(read_workspace_version);
-                let range = from
-                    .unwrap_or_else(|| format!("v{}..HEAD", current_version));
-                let prdocs =
-                    montrs_agent::changelog::collect_prdocs_from_git(&range);
-                let bumps = montrs_agent::changelog::determine_next_version(
-                    &current_version,
-                    &prdocs,
-                );
-                if bumps.is_empty() {
-                    return Ok("No version bumps needed. No prdocs with bump \
-                               levels found."
-                        .to_string());
-                }
-                let mut out =
-                    format!("Version bumps from {}:\n", current_version);
-                for (crate_name, next_version) in &bumps {
-                    out.push_str(&format!(
-                        "  {} -> {}{}\n",
-                        crate_name,
-                        next_version,
-                        if dry_run { " (dry-run)" } else { "" }
-                    ));
-                }
-                if !dry_run {
-                    for (crate_name, next_version) in &bumps {
-                        update_crate_version(crate_name, next_version)?;
-                    }
-                    out.push_str("Cargo.toml files updated.\n");
-                }
-                Ok(out)
-            }
-            ChangelogSubcommand::Verify { from } => {
-                let current_version = read_workspace_version();
-                let range = from
-                    .unwrap_or_else(|| format!("v{}..HEAD", current_version));
-                let output = std::process::Command::new("git")
-                    .args(["log", "--oneline", &range])
-                    .output();
-                let log_str = match output {
-                    Ok(o) if o.status.success() => {
-                        String::from_utf8_lossy(&o.stdout).to_string()
-                    }
-                    _ => {
-                        return Ok("Could not read git log for the specified \
-                                   range."
-                            .to_string());
-                    }
-                };
-                let total_commits = log_str.lines().count();
-                let prdocs =
-                    montrs_agent::changelog::collect_prdocs_from_git(&range);
-                let missing = total_commits.saturating_sub(prdocs.len());
-                if missing == 0 {
-                    Ok(format!(
-                        "All {} commit(s) in '{}' have prdocs.",
-                        total_commits, range
-                    ))
-                } else {
-                    Ok(format!(
-                        "{} commit(s) in '{}' are missing prdocs ({} found, \
-                         {} total).",
-                        missing,
-                        range,
-                        prdocs.len(),
-                        total_commits,
-                    ))
-                }
-            }
-        },
+        AgentSubcommand::Prdoc { subcommand } => {
+            run_changelogger_prdoc(subcommand).await
+        }
+        AgentSubcommand::Changelog { subcommand } => {
+            run_changelogger_changelog(subcommand).await
+        }
         AgentSubcommand::Ignore { subcommand } => match subcommand {
             IgnoreSubcommand::Setup => {
                 let cwd = std::env::current_dir()?;
@@ -511,46 +324,6 @@ pub async fn run(subcommand: AgentSubcommand) -> anyhow::Result<String> {
             }
         }
     }
-}
-
-fn build_git_range(from: Option<String>, to: Option<String>) -> String {
-    match (from, to) {
-        (Some(f), Some(t)) => format!("{}..{}", f, t),
-        (Some(f), None) => format!("{}..HEAD", f),
-        (None, Some(t)) => format!("HEAD..{}", t),
-        (None, None) => "HEAD~10..HEAD".to_string(),
-    }
-}
-
-fn read_workspace_version() -> String {
-    std::fs::read_to_string("Cargo.toml")
-        .ok()
-        .and_then(|c| toml::from_str::<toml::Value>(&c).ok())
-        .and_then(|v| {
-            v.get("workspace")
-                .and_then(|w| w.get("package"))
-                .and_then(|p| p.get("version"))
-                .and_then(|n| n.as_str())
-                .map(|s| s.to_string())
-        })
-        .unwrap_or_else(|| "0.1.0".to_string())
-}
-
-fn update_crate_version(
-    crate_name: &str,
-    new_version: &str,
-) -> anyhow::Result<()> {
-    let cargo_toml_path = format!("packages/{}/Cargo.toml", crate_name);
-    if !std::path::Path::new(&cargo_toml_path).exists() {
-        return Ok(());
-    }
-    let content = std::fs::read_to_string(&cargo_toml_path)?;
-    let updated = content.replace(
-        "version.workspace = true",
-        &format!("version = \"{}\"", new_version),
-    );
-    std::fs::write(&cargo_toml_path, updated)?;
-    Ok(())
 }
 
 /// Check that all packages comply with their declared dependency layers.
@@ -651,4 +424,123 @@ fn check_dependency_layers(
     }
 
     Ok(violations)
+}
+
+/// Delegate prdoc subcommands to the changelogger CLI.
+async fn run_changelogger_prdoc(subcommand: PrdocSubcommand) -> anyhow::Result<String> {
+    match subcommand {
+        PrdocSubcommand::Show { path } => {
+            let output = std::process::Command::new("changelogger")
+                .args(["prdoc", "show", &path])
+                .output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+        PrdocSubcommand::Validate { path, branch } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["prdoc", "validate"]);
+            if let Some(ref b) = branch {
+                cmd.args(["--branch", b]);
+            }
+            cmd.arg(&path);
+            let output = cmd.output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+        PrdocSubcommand::Generate { pr, force, .. } => {
+            let pr_number = pr.ok_or_else(|| {
+                anyhow::anyhow!("--pr is required for generation")
+            })?;
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["prdoc", "generate", "--pr", &pr_number.to_string()]);
+            if force {
+                cmd.arg("--force");
+            }
+            let output = cmd.output()?;
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&output.stderr)
+                ))
+            }
+        }
+    }
+}
+
+/// Delegate changelog subcommands to the changelogger CLI.
+async fn run_changelogger_changelog(subcommand: ChangelogSubcommand) -> anyhow::Result<String> {
+    match subcommand {
+        ChangelogSubcommand::Generate { from, to, output } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "generate"]);
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            if let Some(t) = to {
+                cmd.args(["--to", &t]);
+            }
+            cmd.args(["--output", &output]);
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
+        ChangelogSubcommand::Bump { current, from, dry_run } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "bump"]);
+            if let Some(c) = current {
+                cmd.args(["--current", &c]);
+            }
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            if dry_run {
+                cmd.arg("--dry-run");
+            }
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
+        ChangelogSubcommand::Verify { from } => {
+            let mut cmd = std::process::Command::new("changelogger");
+            cmd.args(["changelog", "verify"]);
+            if let Some(f) = from {
+                cmd.args(["--from", &f]);
+            }
+            let result = cmd.output()?;
+            if result.status.success() {
+                Ok(String::from_utf8_lossy(&result.stdout).to_string())
+            } else {
+                Err(anyhow::anyhow!(
+                    "changelogger failed: {}",
+                    String::from_utf8_lossy(&result.stderr)
+                ))
+            }
+        }
+    }
 }

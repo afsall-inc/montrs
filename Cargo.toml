@@ -22,7 +22,6 @@ members = [
     "packages/agent",
     "packages/montrs",
     "packages/orm",
-    "packages/prdoc",
     "packages/validator",
     "packages/test",
     "packages/utils",

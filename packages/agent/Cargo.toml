@@ -8,7 +8,7 @@ repository.workspace = true
 
 [package.metadata.montrs]
 layer = "2"
-allowed_deps = ["montrs-core", "montrs-prdoc", "montrs-agentignore"]
+allowed_deps = ["montrs-core", "montrs-agentignore"]
 
 [features]
 default = []
@@ -21,7 +21,6 @@ thiserror.workspace = true
 anyhow.workspace = true
 chrono = { version = "0.4", features = ["serde"] }
 montrs-core = { path = "../core" }
-montrs-prdoc = { path = "../prdoc" }
 montrs-agentignore = { path = "../agentignore" }
 ignore = "0.4"
 regex = "1.10"

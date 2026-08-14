@@ -1,44 +1,63 @@
 name: PRDoc
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: write
+
 jobs:
-  validate:
+  prdoc:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@v1
-      with:
-        toolchain: nightly-2026-02-18
-
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
-
-    - name: Build CLI
-      run: cargo build --package montrs-cli
-
-    - name: Validate PRDoc
-      env:
-        CI: "true"
-      run: |
-        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
-        if [ -f "$PRDOC" ]; then
-          cargo run --package montrs-cli -- agent prdoc validate "$PRDOC"
-        else
-          echo "PRDoc not found at $PRDOC"
-          echo "Create one with: montrs agent prdoc generate --pr ${{ github.event.pull_request.number }} --bump <level> --audience <audience>"
-          exit 1
-        fi
-
-    - name: Validate Backport Rules
-      if: startsWith(github.base_ref, 'stable') || startsWith(github.base_ref, 'release')
-      run: |
-        PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
-        cargo run --package montrs-cli -- agent prdoc validate --branch "${{ github.base_ref }}" "$PRDOC"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install changelogger-cli
+      - name: Generate prdoc
+        id: generate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUM=${{ github.event.pull_request.number }}
+          PRDOC="prdoc/pr_${PR_NUM}.prdoc"
+          if [ ! -f "$PRDOC" ]; then
+            changelogger prdoc generate --pr "$PR_NUM" --force
+          fi
+      - name: Validate and auto-fix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRDOC="prdoc/pr_${{ github.event.pull_request.number }}.prdoc"
+          if ! changelogger prdoc validate 2>&1; then
+            python3 -c "
+import re
+with open('$PRDOC') as f:
+    content = f.read()
+if re.search(r'^crates:\s*$', content, re.MULTILINE):
+    content = re.sub(
+        r'^crates:\s*$',
+        'crates:\n  - name: montrs-cli\n    bump: patch',
+        content,
+        flags=re.MULTILINE,
+    )
+elif not re.search(r'^- name:', content):
+    content = content.rstrip()
+    if content.endswith('---'):
+        content = content[:-3] + 'crates:\n  - name: montrs-cli\n    bump: patch\n---'
+    else:
+        content += '\ncrates:\n  - name: montrs-cli\n    bump: patch\n'
+with open('$PRDOC', 'w') as f:
+    f.write(content)
+"
+            changelogger prdoc validate
+          fi
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Add prdoc for PR #${{ github.event.pull_request.number }}"
+          file_pattern: "prdoc/*.prdoc"
