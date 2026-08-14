@@ -2,7 +2,7 @@
 name = "montrs-plugin"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+license = "Apache-2.0 OR MIT"
 authors.workspace = true
 repository.workspace = true
 description = "MontRS plugin system — asdf-compatible tool plugins"
