@@ -6,7 +6,7 @@ default_year = 2026
 repository = "https://github.com/afsall-inc/montrs"
 description = "MontRS is a Rust meta-framework for building full-stack applications"
 
-# Do not apply headers to MontRS project scaffolding templates.
+# Keep project scaffolding out of Forehead's header scope.
 # Forehead also skips .git/ and target/ by default.
 skip = ["templates"]
 

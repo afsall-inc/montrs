@@ -2,7 +2,7 @@
 name = "montrs-desktop"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Desktop shell for MontRS — webview (wry) or native (winit + wgpu)"

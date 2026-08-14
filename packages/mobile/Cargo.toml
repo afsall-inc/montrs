@@ -2,7 +2,7 @@
 name = "montrs-mobile"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Mobile shell for MontRS — Android and iOS"

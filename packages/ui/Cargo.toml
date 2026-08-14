@@ -2,7 +2,7 @@
 name = "montrs-ui"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "UI component library for MontRS — Tailwind CSS macros, theming, and component system"

@@ -2,7 +2,7 @@
 name = "montrs-build-core"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "MontRS build pipeline trait and configuration — extracted from montrs-build"

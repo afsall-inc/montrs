@@ -2,7 +2,7 @@
 name = "montrs-log"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "MontRS log store — structured log capture, streaming, and retention"

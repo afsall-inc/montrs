@@ -2,7 +2,7 @@
 name = "montrs-icons"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Lucide icons for MontRS applications — 1600+ icons with category-based features"

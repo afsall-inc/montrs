@@ -2,7 +2,7 @@
 name = "montrs-i18n"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "MontRS internationalization — reactive translations for MontRS applications"

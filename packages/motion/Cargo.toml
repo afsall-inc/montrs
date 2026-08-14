@@ -2,7 +2,7 @@
 name = "montrs-motion"
 version.workspace = true
 edition.workspace = true
-license = "Apache-2.0 OR MIT"
+license.workspace = true
 authors.workspace = true
 repository.workspace = true
 description = "Animation library for MontRS — spring physics, tweening, gestures, SVG, and video"
