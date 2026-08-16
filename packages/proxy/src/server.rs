@@ -210,12 +210,14 @@ mod tests {
 
     #[test]
     fn test_resolve() {
-        let mut config = ProxyConfig::default();
-        config.routes = vec![RouteEntry {
-            slug: "api".to_string(),
-            target_port: 3001,
-            use_tls: false,
-        }];
+        let config = ProxyConfig {
+            routes: vec![RouteEntry {
+                slug: "api".to_string(),
+                target_port: 3001,
+                use_tls: false,
+            }],
+            ..Default::default()
+        };
         let proxy = ProxyServer::new(config);
         assert_eq!(proxy.resolve("api.localhost"), Some(3001));
         assert_eq!(proxy.resolve("api.localhost:8080"), Some(3001));

@@ -206,46 +206,6 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
     result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_extract_line_comments() {
-        let source = "let x = 1; // line comment";
-        let (_, comments) = extract_comments(source);
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text.trim(), "// line comment");
-    }
-
-    #[test]
-    fn test_extract_block_comments() {
-        let source = "let x = 1; /* block \n comment */";
-        let (_, comments) = extract_comments(source);
-        assert_eq!(comments.len(), 1);
-        assert!(comments[0].text.contains("block"));
-        assert!(comments[0].text.contains("comment"));
-    }
-
-    #[test]
-    fn test_reinsert_basic() {
-        let formatted = "let x = 1;\n";
-        let comments = vec![Comment {
-            text: "// comment".to_string(),
-            start: LineColumn { line: 1, column: 0 },
-            end: LineColumn {
-                line: 1,
-                column: 10,
-            },
-            is_doc: false,
-            is_agent_tool: false,
-        }];
-        let result = reinsert_comments(formatted, comments);
-        assert!(result.contains("// comment"));
-        assert!(result.contains("let x = 1;"));
-    }
-}
-
 /// Helper to get text between two spans
 pub fn get_text_between_spans(
     source: &Rope,
@@ -286,4 +246,44 @@ pub fn get_text_between_spans(
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_line_comments() {
+        let source = "let x = 1; // line comment";
+        let (_, comments) = extract_comments(source);
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].text.trim(), "// line comment");
+    }
+
+    #[test]
+    fn test_extract_block_comments() {
+        let source = "let x = 1; /* block \n comment */";
+        let (_, comments) = extract_comments(source);
+        assert_eq!(comments.len(), 1);
+        assert!(comments[0].text.contains("block"));
+        assert!(comments[0].text.contains("comment"));
+    }
+
+    #[test]
+    fn test_reinsert_basic() {
+        let formatted = "let x = 1;\n";
+        let comments = vec![Comment {
+            text: "// comment".to_string(),
+            start: LineColumn { line: 1, column: 0 },
+            end: LineColumn {
+                line: 1,
+                column: 10,
+            },
+            is_doc: false,
+            is_agent_tool: false,
+        }];
+        let result = reinsert_comments(formatted, comments);
+        assert!(result.contains("// comment"));
+        assert!(result.contains("let x = 1;"));
+    }
 }

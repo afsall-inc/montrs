@@ -82,9 +82,9 @@ fn test_tagged_value_int() {
 
 #[test]
 fn test_tagged_value_float() {
-    let v = TaggedValue::from_float(3.14);
+    let v = TaggedValue::from_float(std::f64::consts::PI);
     assert!(v.is_float());
-    assert!((v.as_float().unwrap() - 3.14).abs() < 1e-9);
+    assert!((v.as_float().unwrap() - std::f64::consts::PI).abs() < 1e-9);
 }
 
 #[test]
@@ -415,7 +415,7 @@ fn test_runtime_error_suggested_fixes() {
 #[tokio::test]
 async fn test_op_result_async_mismatch() {
     // B13 fix: executing a sync op as async returns RuntimeError.
-    let mut state = OpState::new();
+    let state = OpState::new();
     let op = OpDecl::new_sync("sync_op", |_s: &mut OpState| {
         Ok(serde_json::json!({}))
     });

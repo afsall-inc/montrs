@@ -138,7 +138,7 @@ fn test_deps_error_display() {
 #[test]
 fn test_save_and_check_state() {
     let dir = tempfile::tempdir().unwrap();
-    let mut sources = vec![dir.path().join("test.json")];
+    let sources = vec![dir.path().join("test.json")];
     std::fs::write(&sources[0], b"hello").unwrap();
     let manager = DepsManager::new(dir.path());
     manager.save_state(&sources).unwrap();

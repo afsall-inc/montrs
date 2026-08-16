@@ -73,13 +73,14 @@ macro_rules! declare_locales {
             pub use montrs_i18n::ScopedLocale;
 
             #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
+            #[allow(non_camel_case_types)]
             pub enum Locale {
                 #[default]
                 $($l),*
             }
 
             impl Locale {
-                $(pub const $l: Self = Self::$l;)*
+                $(#[allow(non_upper_case_globals)] pub const $l: Self = Self::$l;)*
 
                 pub const ALL: &'static [Self] = &[$(Self::$l),*];
 
