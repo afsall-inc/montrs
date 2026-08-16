@@ -76,10 +76,9 @@ impl Default for PasskeyPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -247,11 +246,11 @@ async fn authenticate(
 
     let mut found = None;
     for (_, val) in entries {
-        if let Ok(cred) = serde_json::from_value::<PasskeyCredential>(val) {
-            if cred.credential_id == req.credential_id {
-                found = Some(cred);
-                break;
-            }
+        if let Ok(cred) = serde_json::from_value::<PasskeyCredential>(val)
+            && cred.credential_id == req.credential_id
+        {
+            found = Some(cred);
+            break;
         }
     }
 

@@ -74,10 +74,9 @@ impl Default for McpPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -223,11 +222,7 @@ async fn mcp_token(
         &code,
     )
     .await
-    .or_else(|_| {
-        // Fallback: the value is the JSON code_data, not the code itself.
-        // Use by-value if the identifier match fails.
-        Err(AuthError::invalid_token())
-    });
+    .map_err(|_| AuthError::invalid_token());
 
     let rec = match rec {
         Ok(r) => r,

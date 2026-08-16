@@ -209,7 +209,7 @@ where
     where
         T: Fn(&mut fmt::Formatter<'_>) -> fmt::Result,
     {
-        self(f, ChildrenFn, DisplayChildren);
+        self(f, ChildrenFn, DisplayChildren)?;
         drop(children);
         Ok(())
     }
@@ -240,7 +240,7 @@ where
     where
         T: Fn(&mut fmt::Formatter<'_>) -> fmt::Result,
     {
-        self(f, ChildrenFn, DisplayChildren, attrs);
+        self(f, ChildrenFn, DisplayChildren, attrs)?;
         drop(children);
         Ok(())
     }

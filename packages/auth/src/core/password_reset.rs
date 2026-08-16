@@ -46,6 +46,7 @@ pub fn routes(state: AuthState) -> Router {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct ForgetPasswordRequest {
     email: String,
     redirect_to: Option<String>,

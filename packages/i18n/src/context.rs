@@ -198,10 +198,10 @@ where
     let i18n = provide_i18n_context::<L>();
     let lang = set_lang_attr
         .unwrap_or(true)
-        .then(|| move || i18n.get_locale().as_str());
+        .then_some(move || i18n.get_locale().as_str());
     let dir = set_dir_attr
         .unwrap_or(true)
-        .then(|| move || i18n.get_locale().direction().as_str());
+        .then_some(move || i18n.get_locale().direction().as_str());
     view! {
         {children()}
         <Html attr:lang=lang attr:dir=dir />

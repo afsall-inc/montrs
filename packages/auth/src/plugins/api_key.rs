@@ -85,10 +85,10 @@ pub async fn verify_api_key(
     for (_, val) in entries {
         let record: ApiKeyRecord = serde_json::from_value(val)?;
         if record.key_hash == hash && record.enabled {
-            if let Some(exp) = &record.expires_at {
-                if *exp <= Utc::now() {
-                    continue;
-                }
+            if let Some(exp) = &record.expires_at
+                && *exp <= Utc::now()
+            {
+                continue;
             }
             return Ok(Some(record));
         }
@@ -115,10 +115,9 @@ impl Default for ApiKeyPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {

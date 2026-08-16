@@ -133,37 +133,31 @@ async fn wait_http(
     };
 
     loop {
-        match TcpStream::connect((&host[..], port)).await {
-            Ok(mut stream) => {
-                // Send a minimal HTTP GET request.
-                let request = format!(
-                    "GET / HTTP/1.0\r\nHost: {host}\r\nConnection: \
-                     close\r\n\r\n"
-                );
-                if stream.write_all(request.as_bytes()).await.is_ok() {
-                    // Read the response status line.
-                    let mut buf = [0u8; 4096];
-                    if stream.read(&mut buf).await.is_ok() {
-                        let response = String::from_utf8_lossy(&buf);
-                        if let Some(status_line) = response.lines().next() {
-                            if let Some(status_str) =
-                                status_line.split_whitespace().nth(1)
-                            {
-                                if let Ok(status) = status_str.parse::<u16>() {
-                                    if let Some(exp) = expected_status {
-                                        if status == exp {
-                                            return Ok(());
-                                        }
-                                    } else if status < 500 {
-                                        return Ok(());
-                                    }
-                                }
+        if let Ok(mut stream) = TcpStream::connect((&host[..], port)).await {
+            // Send a minimal HTTP GET request.
+            let request = format!(
+                "GET / HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+            );
+            if stream.write_all(request.as_bytes()).await.is_ok() {
+                // Read the response status line.
+                let mut buf = [0u8; 4096];
+                if stream.read(&mut buf).await.is_ok() {
+                    let response = String::from_utf8_lossy(&buf);
+                    if let Some(status_line) = response.lines().next()
+                        && let Some(status_str) =
+                            status_line.split_whitespace().nth(1)
+                        && let Ok(status) = status_str.parse::<u16>()
+                    {
+                        if let Some(exp) = expected_status {
+                            if status == exp {
+                                return Ok(());
                             }
+                        } else if status < 500 {
+                            return Ok(());
                         }
                     }
                 }
             }
-            Err(_) => {}
         }
         if start.elapsed() > deadline {
             anyhow::bail!("timed out waiting for HTTP endpoint {url}");

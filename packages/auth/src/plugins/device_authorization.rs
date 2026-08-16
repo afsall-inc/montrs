@@ -82,10 +82,9 @@ impl Default for DeviceAuthorizationPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -315,20 +314,20 @@ async fn device_approve(
 
     let mut found_key = None;
     for (key, val) in &entries {
-        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone()) {
-            if dr.status == DeviceStatus::Pending {
-                if let Some(code) = &req.code {
-                    if dr.user_code == *code {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
-                if let Some(dc) = &req.device_code {
-                    if dr.device_code == *dc {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
+        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone())
+            && dr.status == DeviceStatus::Pending
+        {
+            if let Some(code) = &req.code
+                && dr.user_code == *code
+            {
+                found_key = Some(key.clone());
+                break;
+            }
+            if let Some(dc) = &req.device_code
+                && dr.device_code == *dc
+            {
+                found_key = Some(key.clone());
+                break;
             }
         }
     }
@@ -390,20 +389,20 @@ async fn device_deny(
 
     let mut found_key = None;
     for (key, val) in &entries {
-        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone()) {
-            if dr.status == DeviceStatus::Pending {
-                if let Some(code) = &req.code {
-                    if dr.user_code == *code {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
-                if let Some(dc) = &req.device_code {
-                    if dr.device_code == *dc {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
+        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone())
+            && dr.status == DeviceStatus::Pending
+        {
+            if let Some(code) = &req.code
+                && dr.user_code == *code
+            {
+                found_key = Some(key.clone());
+                break;
+            }
+            if let Some(dc) = &req.device_code
+                && dr.device_code == *dc
+            {
+                found_key = Some(key.clone());
+                break;
             }
         }
     }

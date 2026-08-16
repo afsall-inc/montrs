@@ -75,10 +75,9 @@ impl Default for AgentAuthPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -261,14 +260,15 @@ async fn check_capability(
         })?;
         let mut found = None;
         for (_, val) in entries {
-            if let Ok(a) = serde_json::from_value::<Agent>(val) {
-                if a.token_hash == hash && a.enabled {
-                    found = Some(a);
-                    break;
-                }
+            if let Ok(a) = serde_json::from_value::<Agent>(val)
+                && a.token_hash == hash
+                && a.enabled
+            {
+                found = Some(a);
+                break;
             }
         }
-        found.ok_or_else(|| AuthError::invalid_token())?
+        found.ok_or_else(AuthError::invalid_token)?
     } else {
         return Err(AuthError::missing_field("agentToken"));
     };

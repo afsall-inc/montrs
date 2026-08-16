@@ -164,7 +164,7 @@ pub async fn stop_all() -> anyhow::Result<()> {
 
 /// `montrs services logs [name]`
 pub async fn logs(name: Option<&str>) -> anyhow::Result<()> {
-    let store = montrs_log::LogStore::default()?;
+    let store = montrs_log::LogStore::open_default()?;
     let query = montrs_log::LogQuery {
         service: name.map(|s| s.to_string()),
         limit: 50,

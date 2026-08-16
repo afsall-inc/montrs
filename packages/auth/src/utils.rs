@@ -121,7 +121,7 @@ pub mod totp {
             result.push(BASE32[idx] as char);
         }
         // Pad to multiple of 8.
-        while result.len() % 8 != 0 {
+        while !result.len().is_multiple_of(8) {
             result.push('=');
         }
         result

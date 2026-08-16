@@ -176,7 +176,7 @@ async fn verify_magic_link(
     .await
     .map_err(|_| AuthError::invalid_token())?;
 
-    let email = query.email.as_ref().map(|s| s.as_str()).unwrap_or("");
+    let email = query.email.as_deref().unwrap_or("");
     let user_email = if !email.is_empty() {
         email.to_string()
     } else {

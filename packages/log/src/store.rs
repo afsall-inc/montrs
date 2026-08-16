@@ -147,7 +147,7 @@ impl LogStore {
     }
 
     /// Open the store at the default location.
-    pub fn default() -> anyhow::Result<Self> {
+    pub fn open_default() -> anyhow::Result<Self> {
         Self::open(LogStoreConfig::default())
     }
 
@@ -217,10 +217,10 @@ impl LogStore {
                 }
                 let entry = parse_line(&query, &service, line);
                 if let Some(e) = entry {
-                    if let Some(lvl) = &query.level {
-                        if e.level.to_lowercase() != lvl.to_lowercase() {
-                            continue;
-                        }
+                    if let Some(lvl) = &query.level
+                        && e.level.to_lowercase() != lvl.to_lowercase()
+                    {
+                        continue;
                     }
                     out.push(e);
                 }
@@ -286,10 +286,10 @@ impl LogStoreInner {
         if let Ok(rd) = std::fs::read_dir(&self.config.root) {
             for entry in rd.flatten() {
                 let p = entry.path();
-                if p.extension().and_then(|e| e.to_str()) == Some("log") {
-                    if let Some(stem) = p.file_stem().and_then(|s| s.to_str()) {
-                        out.push(stem.to_string());
-                    }
+                if p.extension().and_then(|e| e.to_str()) == Some("log")
+                    && let Some(stem) = p.file_stem().and_then(|s| s.to_str())
+                {
+                    out.push(stem.to_string());
                 }
             }
         }
@@ -319,16 +319,16 @@ fn parse_line(
         let mut parts = rest.split("] [");
         let ts = parts.next().unwrap_or("").trim().to_string();
         let level_rest = parts.next().unwrap_or("");
-        if let Some((level, after)) = level_rest.split_once("] ") {
-            if let Some((_sv, msg)) = after.split_once(": ") {
-                return Some(LogEntry {
-                    seq: 0,
-                    service: service.to_string(),
-                    ts,
-                    level: level.to_string(),
-                    message: msg.to_string(),
-                });
-            }
+        if let Some((level, after)) = level_rest.split_once("] ")
+            && let Some((_sv, msg)) = after.split_once(": ")
+        {
+            return Some(LogEntry {
+                seq: 0,
+                service: service.to_string(),
+                ts,
+                level: level.to_string(),
+                message: msg.to_string(),
+            });
         }
     }
 

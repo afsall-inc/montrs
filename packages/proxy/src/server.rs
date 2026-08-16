@@ -187,10 +187,10 @@ async fn proxy_request(
             let body = resp.bytes().await.unwrap_or_default();
             let mut builder = Response::builder().status(status);
             for (k, v) in resp_headers {
-                if let Some(name) = k {
-                    if name.as_str() != "transfer-encoding" {
-                        builder = builder.header(name, v);
-                    }
+                if let Some(name) = k
+                    && name.as_str() != "transfer-encoding"
+                {
+                    builder = builder.header(name, v);
                 }
             }
             Ok(builder

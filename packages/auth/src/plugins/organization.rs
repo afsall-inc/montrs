@@ -101,10 +101,9 @@ impl Default for OrganizationPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -265,19 +264,19 @@ async fn list_orgs(
 
     let mut org_ids = Vec::new();
     for (_, val) in members {
-        if let Ok(m) = serde_json::from_value::<Member>(val) {
-            if m.user_id == session.user_id {
-                org_ids.push(m.organization_id);
-            }
+        if let Ok(m) = serde_json::from_value::<Member>(val)
+            && m.user_id == session.user_id
+        {
+            org_ids.push(m.organization_id);
         }
     }
 
     let mut orgs = Vec::new();
     for oid in org_ids {
-        if let Ok(Some(val)) = state.db.plugin_get("org", &oid).await {
-            if let Ok(org) = serde_json::from_value::<Organization>(val) {
-                orgs.push(org);
-            }
+        if let Ok(Some(val)) = state.db.plugin_get("org", &oid).await
+            && let Ok(org) = serde_json::from_value::<Organization>(val)
+        {
+            orgs.push(org);
         }
     }
 
@@ -385,10 +384,10 @@ async fn delete_org(
     // Clean up members.
     let members = state.db.plugin_list("org_member").await.unwrap_or_default();
     for (key, val) in members {
-        if let Ok(m) = serde_json::from_value::<Member>(val) {
-            if m.organization_id == req.organization_id {
-                let _ = state.db.plugin_delete("org_member", &key).await;
-            }
+        if let Ok(m) = serde_json::from_value::<Member>(val)
+            && m.organization_id == req.organization_id
+        {
+            let _ = state.db.plugin_delete("org_member", &key).await;
         }
     }
 

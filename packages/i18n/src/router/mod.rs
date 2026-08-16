@@ -52,12 +52,11 @@ pub fn use_locale_from_url<L: Locale>(
         let path = loc.pathname.get();
         let segments: Vec<&str> =
             path.split('/').filter(|s| !s.is_empty()).collect();
-        if let Some(first) = segments.first() {
-            if let Some(locale) =
+        if let Some(first) = segments.first()
+            && let Some(locale) =
                 available.iter().find(|l| l.as_str() == *first)
-            {
-                ctx.set_locale(*locale);
-            }
+        {
+            ctx.set_locale(*locale);
         }
     });
 }

@@ -60,10 +60,9 @@ impl Default for StripePlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -240,20 +239,20 @@ async fn stripe_webhook(
         | "customer.subscription.deleted"
         | "invoice.paid"
         | "invoice.payment_failed" => {
-            if let Some(data) = &event.data {
-                if let Some(object) = data.get("object") {
-                    if let Some(customer) =
-                        object.get("customer").and_then(|v| v.as_str())
-                    {
-                        // Store subscription info in user metadata.
-                        let entries = state
-                            .db
-                            .plugin_list("stripe_customer")
-                            .await
-                            .unwrap_or_default();
-                        for (key, val) in entries {
-                            if val.as_str() == Some(customer) {
-                                let _ = state
+            if let Some(data) = &event.data
+                && let Some(object) = data.get("object")
+                && let Some(customer) =
+                    object.get("customer").and_then(|v| v.as_str())
+            {
+                // Store subscription info in user metadata.
+                let entries = state
+                    .db
+                    .plugin_list("stripe_customer")
+                    .await
+                    .unwrap_or_default();
+                for (key, val) in entries {
+                    if val.as_str() == Some(customer) {
+                        let _ = state
                                     .db
                                     .plugin_set("stripe_subscription", &key, json!({
                                         "plan": object.get("plan").and_then(|p| p.get("nickname")).and_then(|v| v.as_str()).unwrap_or("unknown"),
@@ -264,8 +263,6 @@ async fn stripe_webhook(
                                         "cancelAtPeriodEnd": object.get("cancel_at_period_end").and_then(|v| v.as_bool()).unwrap_or(false),
                                     }))
                                     .await;
-                            }
-                        }
                     }
                 }
             }

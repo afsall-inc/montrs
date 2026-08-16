@@ -57,6 +57,7 @@ pub fn routes(state: AuthState) -> Router {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct SocialSignInBody {
     provider: String,
     callback_url: Option<String>,
@@ -73,6 +74,7 @@ struct CallbackQuery {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct LinkBody {
     provider: String,
     callback_url: Option<String>,
@@ -195,38 +197,37 @@ async fn oauth_callback(
         let email = profile.email.clone().unwrap_or_else(|| {
             format!("{}@oauth.local", profile.provider_account_id)
         });
-        let mut user =
-            if let Some(u) = state.db.find_user_by_email(&email).await? {
-                // Link to existing email user.
-                DefaultUser {
-                    id: u.id,
-                    email: u.email,
-                    name: u.name.or(profile.name.clone()),
-                    image: u.image.or(profile.image.clone()),
-                    email_verified: u.email_verified || profile.email_verified,
-                    password_hash: u.password_hash,
-                    username: u.username,
-                    phone_number: u.phone_number,
-                    phone_verified: u.phone_verified,
-                    role: u.role,
-                    banned: u.banned,
-                    ban_reason: u.ban_reason,
-                    two_factor_enabled: u.two_factor_enabled,
-                    is_anonymous: u.is_anonymous,
-                    last_login_method: Some(provider_id.clone()),
-                    metadata: u.metadata,
-                    created_at: u.created_at,
-                    updated_at: chrono::Utc::now(),
-                }
-            } else {
-                let mut u = DefaultUser::new(&email, None);
-                u.name = profile.name.clone();
-                u.image = profile.image.clone();
-                u.email_verified = profile.email_verified;
-                u.last_login_method = Some(provider_id.clone());
-                state.db.create_user(&u).await?;
-                u
-            };
+        let user = if let Some(u) = state.db.find_user_by_email(&email).await? {
+            // Link to existing email user.
+            DefaultUser {
+                id: u.id,
+                email: u.email,
+                name: u.name.or(profile.name.clone()),
+                image: u.image.or(profile.image.clone()),
+                email_verified: u.email_verified || profile.email_verified,
+                password_hash: u.password_hash,
+                username: u.username,
+                phone_number: u.phone_number,
+                phone_verified: u.phone_verified,
+                role: u.role,
+                banned: u.banned,
+                ban_reason: u.ban_reason,
+                two_factor_enabled: u.two_factor_enabled,
+                is_anonymous: u.is_anonymous,
+                last_login_method: Some(provider_id.clone()),
+                metadata: u.metadata,
+                created_at: u.created_at,
+                updated_at: chrono::Utc::now(),
+            }
+        } else {
+            let mut u = DefaultUser::new(&email, None);
+            u.name = profile.name.clone();
+            u.image = profile.image.clone();
+            u.email_verified = profile.email_verified;
+            u.last_login_method = Some(provider_id.clone());
+            state.db.create_user(&u).await?;
+            u
+        };
 
         // If we matched existing, just update last login.
         if state.db.find_user_by_id(&user.id).await?.is_some() {
@@ -328,10 +329,10 @@ async fn unlink_account(
         .ok_or_else(crate::AuthError::invalid_session)?;
     let accounts = state.db.list_accounts(&user.id).await?;
     for acc in accounts {
-        if acc.provider_id == body.provider_id {
-            if body.account_id.as_ref().is_none_or(|id| id == &acc.id) {
-                state.db.delete_account(&acc.id).await?;
-            }
+        if acc.provider_id == body.provider_id
+            && body.account_id.as_ref().is_none_or(|id| id == &acc.id)
+        {
+            state.db.delete_account(&acc.id).await?;
         }
     }
     Ok(Json(json!({ "success": true })))

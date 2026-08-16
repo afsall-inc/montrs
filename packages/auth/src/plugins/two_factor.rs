@@ -64,10 +64,9 @@ impl Default for TwoFactorPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -136,12 +135,11 @@ async fn enable_2fa(
         .ok_or_else(AuthError::user_not_found)?;
 
     // Verify password if provided.
-    if let Some(pw) = &req.password {
-        if let Some(hash) = &user.password_hash {
-            if !crate::password::verify_password(pw, hash) {
-                return Err(AuthError::invalid_credentials());
-            }
-        }
+    if let Some(pw) = &req.password
+        && let Some(hash) = &user.password_hash
+        && !crate::password::verify_password(pw, hash)
+    {
+        return Err(AuthError::invalid_credentials());
     }
 
     // Check if already enabled.

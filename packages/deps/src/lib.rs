@@ -71,10 +71,10 @@ impl DepSpec {
                     spec.auto = auto;
                 }
                 for (k, v) in table {
-                    if k != "auto" {
-                        if let Some(s) = v.as_str() {
-                            spec.options.insert(k.clone(), s.to_string());
-                        }
+                    if k != "auto"
+                        && let Some(s) = v.as_str()
+                    {
+                        spec.options.insert(k.clone(), s.to_string());
                     }
                 }
             }
@@ -184,13 +184,11 @@ impl DepsManager {
                     }
                 } else {
                     for entry in walkdir::WalkDir::new(path) {
-                        if let Ok(entry) = entry {
-                            if entry.file_type().is_file() {
-                                if let Ok(content) = std::fs::read(entry.path())
-                                {
-                                    hasher.update(&content);
-                                }
-                            }
+                        if let Ok(entry) = entry
+                            && entry.file_type().is_file()
+                            && let Ok(content) = std::fs::read(entry.path())
+                        {
+                            hasher.update(&content);
                         }
                     }
                 }
@@ -244,20 +242,20 @@ impl DepsManager {
         // Check source hash against stored hash.
         let state_dir = self.project_root.join(".montrs/deps");
         let state_file = state_dir.join("state.json");
-        if state_file.exists() {
-            if let Ok(content) = std::fs::read_to_string(&state_file) {
-                let parsed: serde_json::Result<HashMap<String, String>> =
-                    serde_json::from_str(&content);
-                if let Ok(state) = parsed {
-                    let current_hash = Self::compute_source_hash(sources);
-                    if let Some(stored_hash) = state.get("source_hash")
-                        && &current_hash != stored_hash
-                    {
-                        return Freshness::Stale(format!(
-                            "sources changed (hash: {current_hash} != \
-                             {stored_hash})"
-                        ));
-                    }
+        if state_file.exists()
+            && let Ok(content) = std::fs::read_to_string(&state_file)
+        {
+            let parsed: serde_json::Result<HashMap<String, String>> =
+                serde_json::from_str(&content);
+            if let Ok(state) = parsed {
+                let current_hash = Self::compute_source_hash(sources);
+                if let Some(stored_hash) = state.get("source_hash")
+                    && &current_hash != stored_hash
+                {
+                    return Freshness::Stale(format!(
+                        "sources changed (hash: {current_hash} != \
+                         {stored_hash})"
+                    ));
                 }
             }
         }

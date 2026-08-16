@@ -44,7 +44,7 @@ impl Shell for Zsh {
     fn activate(&self, opts: &ActivateOptions) -> String {
         let exe = opts.exe.to_string_lossy();
         let mut out = String::new();
-        out.push_str(&format!("export MONTRS_SHELL=\"zsh\"\n"));
+        out.push_str("export MONTRS_SHELL=\"zsh\"\n");
         out.push_str(&format!(
             r#"_montrs_hook() {{
     local ret=$?

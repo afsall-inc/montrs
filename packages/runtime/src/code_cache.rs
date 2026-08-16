@@ -159,23 +159,22 @@ impl CodeCache {
     // ── Persistence ────────────────────────────────────────────────────
 
     pub fn persist(&self) {
-        if let Some(path) = &self.backing {
-            if let Ok(json) = serde_json::to_string(&self.entries) {
-                let tmp = path.with_extension("tmp");
-                if std::fs::write(&tmp, json).is_ok() {
-                    let _ = std::fs::rename(&tmp, path);
-                }
+        if let Some(path) = &self.backing
+            && let Ok(json) = serde_json::to_string(&self.entries)
+        {
+            let tmp = path.with_extension("tmp");
+            if std::fs::write(&tmp, json).is_ok() {
+                let _ = std::fs::rename(&tmp, path);
             }
         }
     }
 
     fn load_from_disk(&mut self, path: &Path) {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(entries) =
+        if let Ok(content) = std::fs::read_to_string(path)
+            && let Ok(entries) =
                 serde_json::from_str::<HashMap<String, CachedModule>>(&content)
-            {
-                self.entries = entries;
-            }
+        {
+            self.entries = entries;
         }
     }
 }

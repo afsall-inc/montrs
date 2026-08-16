@@ -32,7 +32,6 @@
 
 use montrs_platform::PlatformAdapter;
 use montrs_tui::{
-    adapter::TuiAdapter,
     buffer::*,
     event::*,
     renderables::{

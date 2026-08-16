@@ -80,10 +80,10 @@ impl Supervisor {
             .map(|(name, cfg)| {
                 let id = ServiceId::from_name(name.clone());
                 let mut svc = Service::new(id.clone(), cfg.clone());
-                if let Some(st) = state_file.get(&id.to_string()) {
-                    if !st.enabled {
-                        svc.status = ServiceStatus::Stopped;
-                    }
+                if let Some(st) = state_file.get(&id.to_string())
+                    && !st.enabled
+                {
+                    svc.status = ServiceStatus::Stopped;
                 }
                 (id, svc)
             })
@@ -145,13 +145,12 @@ impl Supervisor {
         // Check if already running.
         {
             let inner = self.inner.read().await;
-            if let Some(svc) = inner.services.get(id) {
-                if svc.status.is_active() {
-                    return Err(crate::ServicesError::AlreadyRunning(
-                        id.clone(),
-                    )
-                    .into());
-                }
+            if let Some(svc) = inner.services.get(id)
+                && svc.status.is_active()
+            {
+                return Err(
+                    crate::ServicesError::AlreadyRunning(id.clone()).into()
+                );
             }
         }
 
@@ -170,12 +169,12 @@ impl Supervisor {
         for dep in &config.depends {
             let dep_id = ServiceId::from_name(dep.clone());
             let inner = self.inner.write().await;
-            if let Some(dep_svc) = inner.services.get(&dep_id) {
-                if !dep_svc.status.is_active() {
-                    drop(inner);
-                    Box::pin(self.start(&dep_id)).await?;
-                    continue;
-                }
+            if let Some(dep_svc) = inner.services.get(&dep_id)
+                && !dep_svc.status.is_active()
+            {
+                drop(inner);
+                Box::pin(self.start(&dep_id)).await?;
+                continue;
             }
             drop(inner);
         }
@@ -286,6 +285,7 @@ impl Supervisor {
             .store(false, std::sync::atomic::Ordering::SeqCst);
 
         // Try graceful shutdown.
+        #[allow(unused_variables)]
         let pid = svc.pid;
         #[cfg(unix)]
         if let Some(pid) = pid {
@@ -298,10 +298,11 @@ impl Supervisor {
 
         // Wait for graceful shutdown.
         let graceful = tokio::time::timeout(Duration::from_secs(10), async {
-            loop {
-                #[cfg(unix)]
-                {
-                    if let Some(pid) = pid {
+            #[cfg(unix)]
+            {
+                if let Some(pid) = pid {
+                    // Wait until the process terminates (SIGTERM sent above).
+                    loop {
                         // Check if process is still alive by sending signal 0.
                         use nix::{
                             sys::signal::{Signal, kill},
@@ -313,15 +314,14 @@ impl Supervisor {
                             // Process no longer exists.
                             break;
                         }
+                        sleep(Duration::from_millis(100)).await;
                     }
                 }
-                #[cfg(not(unix))]
-                {
-                    // On non-Unix, just wait.
-                    sleep(Duration::from_secs(1)).await;
-                    break;
-                }
-                sleep(Duration::from_millis(100)).await;
+            }
+            #[cfg(not(unix))]
+            {
+                // On non-Unix, just wait.
+                sleep(Duration::from_secs(1)).await;
             }
         })
         .await;

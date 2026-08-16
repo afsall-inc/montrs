@@ -48,6 +48,7 @@ pub fn routes(state: AuthState) -> Router {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct SendVerificationBody {
     email: String,
     callback_url: Option<String>,

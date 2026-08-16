@@ -87,10 +87,9 @@ impl Default for SsoPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -265,11 +264,12 @@ async fn sign_in_sso(
         })?;
         let mut found = None;
         for (_, v) in entries {
-            if let Ok(p) = serde_json::from_value::<SsoProvider>(v) {
-                if p.domains.iter().any(|d| d == domain) && p.enabled {
-                    found = Some(p);
-                    break;
-                }
+            if let Ok(p) = serde_json::from_value::<SsoProvider>(v)
+                && p.domains.iter().any(|d| d == domain)
+                && p.enabled
+            {
+                found = Some(p);
+                break;
             }
         }
         found.ok_or_else(|| {
@@ -288,11 +288,12 @@ async fn sign_in_sso(
         })?;
         let mut found = None;
         for (_, v) in entries {
-            if let Ok(p) = serde_json::from_value::<SsoProvider>(v) {
-                if p.domains.iter().any(|d| d == domain) && p.enabled {
-                    found = Some(p);
-                    break;
-                }
+            if let Ok(p) = serde_json::from_value::<SsoProvider>(v)
+                && p.domains.iter().any(|d| d == domain)
+                && p.enabled
+            {
+                found = Some(p);
+                break;
             }
         }
         found.ok_or_else(|| {

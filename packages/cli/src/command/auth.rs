@@ -45,12 +45,12 @@ pub async fn validate_token(token: &str) -> anyhow::Result<serde_json::Value> {
         .session
         .validate(token)
         .await?
-        .ok_or_else(|| AuthError::invalid_session())?;
+        .ok_or_else(AuthError::invalid_session)?;
     let user = state
         .db
         .find_user_by_id(&session.user_id)
         .await?
-        .ok_or_else(|| AuthError::user_not_found())?;
+        .ok_or_else(AuthError::user_not_found)?;
     let profile: montrs_auth::entities::UserProfile = (&user).into();
     Ok(serde_json::json!({
         "session": {
@@ -72,11 +72,11 @@ pub async fn sign_in(
         .db
         .find_user_by_email(email)
         .await?
-        .ok_or_else(|| AuthError::invalid_credentials())?;
+        .ok_or_else(AuthError::invalid_credentials)?;
     let hash = user
         .password_hash
         .as_deref()
-        .ok_or_else(|| AuthError::invalid_credentials())?;
+        .ok_or_else(AuthError::invalid_credentials)?;
     if !montrs_auth::password::verify_password(password, hash) {
         return Err(AuthError::invalid_credentials().into());
     }

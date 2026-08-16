@@ -133,7 +133,9 @@ impl MontrsRuntime {
         // B2 fix: start in dependency order.
         self.extensions.start_all(&mut self.state)?;
         // Access EventLoop from OpState.
-        self.state.get_mut::<EventLoop>().map(|el| el.start());
+        if let Some(el) = self.state.get_mut::<EventLoop>() {
+            el.start()
+        }
         self.initialized = true;
         Ok(())
     }

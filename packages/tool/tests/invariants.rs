@@ -57,8 +57,10 @@ fn test_tool_request_parse_latest() {
 #[test]
 fn test_tool_manager_new() {
     let tm = ToolManager::new();
-    assert!(tm.install_dir.to_string_lossy().contains("montrs/installs"));
-    assert!(tm.shims_dir.to_string_lossy().contains("montrs/shims"));
+    let install = tm.install_dir.to_string_lossy().replace('\\', "/");
+    let shims = tm.shims_dir.to_string_lossy().replace('\\', "/");
+    assert!(install.contains("montrs/installs"));
+    assert!(shims.contains("montrs/shims"));
 }
 
 #[test]

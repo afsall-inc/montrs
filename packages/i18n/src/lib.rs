@@ -28,6 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#![allow(dead_code)]
+
 //! MontRS internationalization — reactive translations for MontRS applications.
 //!
 //! Provides locale detection, pluralization, interpolation, scoping,

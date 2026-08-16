@@ -96,6 +96,7 @@ fn sha1_bytes(message: &[u8]) -> [u8; 20] {
         }
 
         let (mut a, mut b, mut c, mut d, mut e) = (h0, h1, h2, h3, h4);
+        #[allow(clippy::needless_range_loop)]
         for i in 0..80 {
             let (f, k) = match i {
                 0..=19 => ((b & c) | ((!b) & d), 0x5A82_7999),

@@ -76,10 +76,9 @@ impl Default for OAuthProviderPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -261,13 +260,13 @@ async fn token(
                     )
                 })?;
 
-            if let Some(secret) = &req.client_secret {
-                if secret != &client.client_secret {
-                    return Err(AuthError::new(
-                        crate::error::AuthErrorCode::OAuthError,
-                        "Invalid client_secret",
-                    ));
-                }
+            if let Some(secret) = &req.client_secret
+                && secret != &client.client_secret
+            {
+                return Err(AuthError::new(
+                    crate::error::AuthErrorCode::OAuthError,
+                    "Invalid client_secret",
+                ));
             }
 
             // Consume the code.
@@ -398,7 +397,7 @@ async fn userinfo(
             .await
             .ok()
             .flatten()
-            .or_else(|| {
+            .or({
                 // Try by value.
                 None
             });

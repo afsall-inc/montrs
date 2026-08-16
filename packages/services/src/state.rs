@@ -88,7 +88,7 @@ impl StateFile {
     }
 
     /// Load the state file from the default location.
-    pub fn default() -> anyhow::Result<Self> {
+    pub fn open_default() -> anyhow::Result<Self> {
         let root = state_root();
         std::fs::create_dir_all(&root)?;
         Self::open(root.join("montrs-services.toml"))

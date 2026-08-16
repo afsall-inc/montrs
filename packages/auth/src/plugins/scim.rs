@@ -63,10 +63,9 @@ impl Default for ScimPlugin {
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
     if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
     {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+        return Some(t.to_string());
     }
     None
 }
@@ -332,16 +331,13 @@ async fn patch_user(
                             if let Some(v) = op.value.as_ref() {
                                 if let Some(email) = v.as_str() {
                                     update.email = Some(email.to_string());
-                                } else if let Some(arr) = v.as_array() {
-                                    if let Some(first) = arr.first() {
-                                        if let Some(email) = first
-                                            .get("value")
-                                            .and_then(|e| e.as_str())
-                                        {
-                                            update.email =
-                                                Some(email.to_string());
-                                        }
-                                    }
+                                } else if let Some(arr) = v.as_array()
+                                    && let Some(first) = arr.first()
+                                    && let Some(email) = first
+                                        .get("value")
+                                        .and_then(|e| e.as_str())
+                                {
+                                    update.email = Some(email.to_string());
                                 }
                             }
                         }

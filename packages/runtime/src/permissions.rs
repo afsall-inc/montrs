@@ -37,20 +37,15 @@ use crate::error::{RuntimeError, RuntimeErrorKind};
 use std::path::Path;
 
 /// Tri-state permission value.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PermissionState {
     /// Granted (possibly with a blanket allow).
     Allow,
     /// Denied (possibly with a blanket deny).
     Deny,
     /// Not yet decided — caller should prompt or fall back to default.
+    #[default]
     Prompt,
-}
-
-impl Default for PermissionState {
-    fn default() -> Self {
-        Self::Prompt
-    }
 }
 
 /// A permission descriptor returned by check methods.

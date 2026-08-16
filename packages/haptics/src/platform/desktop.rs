@@ -48,7 +48,8 @@ impl HapticsProvider for DesktopHapticsProvider {
     fn vibrate(&self, _duration_ms: u32) {
         #[cfg(target_os = "windows")]
         {
-            extern "system" {
+            #[link(name = "user32")]
+            unsafe extern "system" {
                 fn MessageBeep(uType: u32) -> i32;
             }
             unsafe {
