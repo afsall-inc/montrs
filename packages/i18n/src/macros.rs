@@ -79,8 +79,9 @@ macro_rules! declare_locales {
                 $($l),*
             }
 
+            #[allow(non_upper_case_globals)]
             impl Locale {
-                $(#[allow(non_upper_case_globals)] pub const $l: Self = Self::$l;)*
+                $(pub const $l: Self = Self::$l;)*
 
                 pub const ALL: &'static [Self] = &[$(Self::$l),*];
 
