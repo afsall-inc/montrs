@@ -1,18 +1,48 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! SCIM 2.0 plugin — User provisioning endpoints.
 //! /scim/v2/Users GET/POST, /scim/v2/Users/:id GET/PATCH/DELETE — map to UserRecord.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::entities::DefaultUser;
-use crate::password::hash_password;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::{Path, Query, State};
+use crate::{
+    AuthError, context::AuthState, database::UserUpdate, entities::DefaultUser,
+    password::hash_password, plugin::AuthPlugin,
+};
 // Query is used for list filters.
 use axum::routing::get;
-use axum::{Json, Router};
+use axum::{
+    Json, Router,
+    extract::{Path, Query, State},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// SCIM plugin — System for Cross-domain Identity Management.
 pub struct ScimPlugin {
@@ -32,17 +62,21 @@ impl Default for ScimPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     None
 }
 
 /// Require a valid bearer token (API key or session). For SCIM, typically a service token.
-async fn require_auth(state: &AuthState, headers: &axum::http::HeaderMap) -> Result<(), AuthError> {
-    let token = extract_token(headers).ok_or_else(AuthError::invalid_session)?;
+async fn require_auth(
+    state: &AuthState,
+    headers: &axum::http::HeaderMap,
+) -> Result<(), AuthError> {
+    let token =
+        extract_token(headers).ok_or_else(AuthError::invalid_session)?;
     // Accept either a valid session or an API key.
     if state.session.validate(&token).await?.is_some() {
         return Ok(());
@@ -120,7 +154,10 @@ async fn list_users(
     let start = q.start_index.unwrap_or(1).saturating_sub(1);
     let count = q.count.unwrap_or(100);
     let users = state.db.list_users(count, start).await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let resources: Vec<Value> = users.iter().map(user_to_scim).collect();
@@ -181,7 +218,10 @@ async fn create_user(
 
     let hash = if let Some(pw) = &req.password {
         Some(hash_password(pw).map_err(|e| {
-            AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
         })?)
     } else {
         None
@@ -196,14 +236,19 @@ async fn create_user(
     }
 
     state.db.create_user(&user).await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
-    let record = state
-        .db
-        .find_user_by_id(&user.id)
-        .await?
-        .ok_or_else(|| AuthError::new(crate::error::AuthErrorCode::InternalError, "User not found after create"))?;
+    let record =
+        state.db.find_user_by_id(&user.id).await?.ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "User not found after create",
+            )
+        })?;
 
     Ok(Json(user_to_scim(&record)))
 }
@@ -252,10 +297,7 @@ async fn patch_user(
         .await?
         .ok_or_else(AuthError::user_not_found)?;
 
-    let ops = req
-        .operations
-        .or(req.operations_alt)
-        .unwrap_or_default();
+    let ops = req.operations.or(req.operations_alt).unwrap_or_default();
 
     let mut update = UserUpdate::default();
     for op in ops {
@@ -264,16 +306,24 @@ async fn patch_user(
                 if let Some(path) = &op.path {
                     match path.as_str() {
                         "active" => {
-                            let active = op.value.as_ref().and_then(|v| v.as_bool()).unwrap_or(true);
+                            let active = op
+                                .value
+                                .as_ref()
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(true);
                             update.banned = Some(!active);
                         }
                         "userName" => {
-                            if let Some(v) = op.value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(v) =
+                                op.value.as_ref().and_then(|v| v.as_str())
+                            {
                                 update.username = Some(v.to_string());
                             }
                         }
                         "name.formatted" | "displayName" => {
-                            if let Some(v) = op.value.as_ref().and_then(|v| v.as_str()) {
+                            if let Some(v) =
+                                op.value.as_ref().and_then(|v| v.as_str())
+                            {
                                 update.name = Some(v.to_string());
                             }
                         }
@@ -281,12 +331,13 @@ async fn patch_user(
                             if let Some(v) = op.value.as_ref() {
                                 if let Some(email) = v.as_str() {
                                     update.email = Some(email.to_string());
-                                } else if let Some(arr) = v.as_array() {
-                                    if let Some(first) = arr.first() {
-                                        if let Some(email) = first.get("value").and_then(|e| e.as_str()) {
-                                            update.email = Some(email.to_string());
-                                        }
-                                    }
+                                } else if let Some(arr) = v.as_array()
+                                    && let Some(first) = arr.first()
+                                    && let Some(email) = first
+                                        .get("value")
+                                        .and_then(|e| e.as_str())
+                                {
+                                    update.email = Some(email.to_string());
                                 }
                             }
                         }
@@ -294,10 +345,16 @@ async fn patch_user(
                     }
                 } else if let Some(val) = &op.value {
                     // Whole-object replace.
-                    if let Some(active) = val.get("active").and_then(|v| v.as_bool()) {
+                    if let Some(active) =
+                        val.get("active").and_then(|v| v.as_bool())
+                    {
                         update.banned = Some(!active);
                     }
-                    if let Some(name) = val.get("name").and_then(|n| n.get("formatted")).and_then(|v| v.as_str()) {
+                    if let Some(name) = val
+                        .get("name")
+                        .and_then(|n| n.get("formatted"))
+                        .and_then(|v| v.as_str())
+                    {
                         update.name = Some(name.to_string());
                     }
                 }
@@ -334,7 +391,10 @@ async fn delete_user(
         .ok_or_else(AuthError::user_not_found)?;
 
     state.db.delete_user(&id).await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state.session.revoke_all(&id).await.ok();
 

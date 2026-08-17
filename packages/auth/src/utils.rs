@@ -1,3 +1,33 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Utility functions for the auth system.
 
 use base64::{Engine as _, engine::general_purpose};
@@ -20,7 +50,7 @@ pub fn generate_otp(length: usize) -> String {
 
 /// Time-based one-time password (TOTP) utilities.
 pub mod totp {
-    use totp_rs::{TOTP, Algorithm};
+    use totp_rs::{Algorithm, TOTP};
 
     /// Generate a new TOTP secret (raw bytes).
     pub fn generate_secret() -> Vec<u8> {
@@ -45,10 +75,15 @@ pub mod totp {
     }
 
     /// Generate a provisioning URI for authenticator apps.
-    pub fn provisioning_uri(secret: &[u8], email: &str, issuer: &str) -> String {
+    pub fn provisioning_uri(
+        secret: &[u8],
+        email: &str,
+        issuer: &str,
+    ) -> String {
         let base32_secret = base32_encode(secret);
         format!(
-            "otpauth://totp/{issuer}:{email}?secret={base32_secret}&issuer={issuer}&algorithm=SHA1&digits=6&period=30"
+            "otpauth://totp/{issuer}:{email}?secret={base32_secret}&\
+             issuer={issuer}&algorithm=SHA1&digits=6&period=30"
         )
     }
 
@@ -86,7 +121,7 @@ pub mod totp {
             result.push(BASE32[idx] as char);
         }
         // Pad to multiple of 8.
-        while result.len() % 8 != 0 {
+        while !result.len().is_multiple_of(8) {
             result.push('=');
         }
         result
@@ -95,7 +130,9 @@ pub mod totp {
 
 /// JWT token utilities.
 pub mod jwt {
-    use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation, Algorithm};
+    use jsonwebtoken::{
+        Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode,
+    };
     use serde::{Deserialize, Serialize};
 
     /// Standard JWT claims.
@@ -107,7 +144,11 @@ pub mod jwt {
     }
 
     /// Create a signed JWT token.
-    pub fn create_token(sub: &str, secret: &str, expires_in_secs: u64) -> anyhow::Result<String> {
+    pub fn create_token(
+        sub: &str,
+        secret: &str,
+        expires_in_secs: u64,
+    ) -> anyhow::Result<String> {
         let now = chrono::Utc::now().timestamp() as usize;
         let claims = Claims {
             sub: sub.to_string(),
@@ -164,7 +205,11 @@ mod tests {
     fn test_base32_encode() {
         // Test vector: "foobar" -> base32
         let encoded = totp::base32_encode(b"foobar");
-        assert_eq!(encoded.len() % 8, 0, "base32 must be padded to multiple of 8");
+        assert_eq!(
+            encoded.len() % 8,
+            0,
+            "base32 must be padded to multiple of 8"
+        );
         assert!(encoded.ends_with("="), "base32 must be padded");
     }
 }

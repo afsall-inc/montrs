@@ -1,9 +1,39 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! CLI commands for service management (`montrs services`).
 
-use montrs_services::config::ServiceConfig;
-use montrs_services::service::ServiceStatus;
-use montrs_services::service_id::ServiceId;
-use montrs_services::supervisor::Supervisor;
+use montrs_services::{
+    config::ServiceConfig, service::ServiceStatus, service_id::ServiceId,
+    supervisor::Supervisor,
+};
 use std::collections::HashMap;
 
 /// Load the service configs from the current project's montrs.toml.
@@ -12,7 +42,9 @@ fn load_service_configs() -> anyhow::Result<HashMap<String, ServiceConfig>> {
     let config = MontrsConfig::load()?;
     let raw = config.meta.services.clone();
     if raw.is_empty() {
-        anyhow::bail!("No services defined in [services] section of montrs.toml");
+        anyhow::bail!(
+            "No services defined in [services] section of montrs.toml"
+        );
     }
     ServiceConfig::from_toml_map(&raw)
 }
@@ -28,8 +60,12 @@ fn create_supervisor() -> anyhow::Result<Supervisor> {
 fn format_status(status: &ServiceStatus) -> String {
     match status {
         ServiceStatus::Running => console::style("running").green().to_string(),
-        ServiceStatus::Starting => console::style("starting").yellow().to_string(),
-        ServiceStatus::Stopping => console::style("stopping").yellow().to_string(),
+        ServiceStatus::Starting => {
+            console::style("starting").yellow().to_string()
+        }
+        ServiceStatus::Stopping => {
+            console::style("stopping").yellow().to_string()
+        }
         ServiceStatus::Stopped => console::style("stopped").dim().to_string(),
         ServiceStatus::Failed => console::style("failed").red().to_string(),
         ServiceStatus::Waiting => console::style("waiting").cyan().to_string(),
@@ -46,7 +82,9 @@ pub async fn list() -> anyhow::Result<()> {
     }
     println!("{}", console::style("Services:").bold());
     for (id, status, pid) in &services {
-        let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
+        let pid_str = pid
+            .map(|p| p.to_string())
+            .unwrap_or_else(|| "-".to_string());
         println!(
             "  {:<20} {}  pid={}",
             console::style(id).cyan(),
@@ -126,7 +164,7 @@ pub async fn stop_all() -> anyhow::Result<()> {
 
 /// `montrs services logs [name]`
 pub async fn logs(name: Option<&str>) -> anyhow::Result<()> {
-    let store = montrs_log::LogStore::default()?;
+    let store = montrs_log::LogStore::open_default()?;
     let query = montrs_log::LogQuery {
         service: name.map(|s| s.to_string()),
         limit: 50,
@@ -144,7 +182,10 @@ pub async fn logs(name: Option<&str>) -> anyhow::Result<()> {
             "info" => console::style(&entry.level).green().to_string(),
             _ => entry.level.clone(),
         };
-        println!("[{}] [{}] {}: {}", entry.ts, level, entry.service, entry.message);
+        println!(
+            "[{}] [{}] {}: {}",
+            entry.ts, level, entry.service, entry.message
+        );
     }
     Ok(())
 }

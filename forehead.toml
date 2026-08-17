@@ -1,0 +1,22 @@
+[project]
+name = "montrs"
+default_license = "Apache-2.0 OR MIT"
+default_author = "Afsall Inc"
+default_year = 2026
+repository = "https://github.com/afsall-inc/montrs"
+description = "MontRS is a Rust meta-framework for building full-stack applications"
+
+# Keep project scaffolding out of Forehead's header scope.
+# Forehead also skips .git/ and target/ by default.
+skip = ["templates"]
+
+[templates]
+mit-apache = "docs/LICENSES/headers/HEADER-MIT-APACHE"
+
+[[mapping]]
+paths = [".", "apps/", "packages/", "docs/", "skills/", "prdoc/"]
+template = "mit-apache"
+
+[header]
+indicators = []
+greetings = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم"

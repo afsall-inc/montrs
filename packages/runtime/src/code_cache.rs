@@ -1,11 +1,43 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Code cache — caches compiled module representations to avoid re-parsing.
 //!
 //! Inspired by Deno's `runtime/code_cache.rs`. Modules are keyed by their
 //! source hash; a cache hit skips re-compilation of the bytecode.
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 /// A cached module entry.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -85,7 +117,9 @@ impl CodeCache {
         };
         // Re-inserting updates seq, treating it as newest.
         self.next_seq += 1;
-        if self.entries.len() >= self.max_entries && !self.entries.contains_key(&key) {
+        if self.entries.len() >= self.max_entries
+            && !self.entries.contains_key(&key)
+        {
             // Evict the oldest by sequence (FIFO — deterministic).
             if let Some(oldest) = self
                 .entries
@@ -125,21 +159,22 @@ impl CodeCache {
     // ── Persistence ────────────────────────────────────────────────────
 
     pub fn persist(&self) {
-        if let Some(path) = &self.backing {
-            if let Ok(json) = serde_json::to_string(&self.entries) {
-                let tmp = path.with_extension("tmp");
-                if std::fs::write(&tmp, json).is_ok() {
-                    let _ = std::fs::rename(&tmp, path);
-                }
+        if let Some(path) = &self.backing
+            && let Ok(json) = serde_json::to_string(&self.entries)
+        {
+            let tmp = path.with_extension("tmp");
+            if std::fs::write(&tmp, json).is_ok() {
+                let _ = std::fs::rename(&tmp, path);
             }
         }
     }
 
     fn load_from_disk(&mut self, path: &Path) {
-        if let Ok(content) = std::fs::read_to_string(path) {
-            if let Ok(entries) = serde_json::from_str::<HashMap<String, CachedModule>>(&content) {
-                self.entries = entries;
-            }
+        if let Ok(content) = std::fs::read_to_string(path)
+            && let Ok(entries) =
+                serde_json::from_str::<HashMap<String, CachedModule>>(&content)
+        {
+            self.entries = entries;
         }
     }
 }

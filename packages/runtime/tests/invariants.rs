@@ -1,8 +1,40 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Invariant tests for montrs-runtime.
 
-use montrs_runtime::error::{RuntimeError, RuntimeErrorKind};
-use montrs_runtime::prelude::*;
-use montrs_runtime::*;
+use montrs_runtime::{
+    error::{RuntimeError, RuntimeErrorKind},
+    prelude::*,
+    *,
+};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -50,9 +82,9 @@ fn test_tagged_value_int() {
 
 #[test]
 fn test_tagged_value_float() {
-    let v = TaggedValue::from_float(3.14);
+    let v = TaggedValue::from_float(std::f64::consts::PI);
     assert!(v.is_float());
-    assert!((v.as_float().unwrap() - 3.14).abs() < 1e-9);
+    assert!((v.as_float().unwrap() - std::f64::consts::PI).abs() < 1e-9);
 }
 
 #[test]
@@ -168,16 +200,22 @@ fn test_op_decl_sync_with_input() {
 #[test]
 fn test_op_id_uniqueness() {
     // B1 fix: all constructors share a single global counter.
-    let op1 = OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
-    let op2 = OpDecl::new_async("b", |_s: montrs_runtime::ops::SharedOpState| {
-        Box::pin(async { Ok(serde_json::json!({})) })
-    });
-    let op3 = OpDecl::new_sync_with_input("c", |_s: &mut OpState, _i: serde_json::Value| {
-        Ok(serde_json::json!({}))
-    });
-    let op4 = OpDecl::new_async_with_input("d", |_s: montrs_runtime::ops::SharedOpState, _i: serde_json::Value| {
-        Box::pin(async { Ok(serde_json::json!({})) })
-    });
+    let op1 =
+        OpDecl::new_sync("a", |_s: &mut OpState| Ok(serde_json::json!({})));
+    let op2 =
+        OpDecl::new_async("b", |_s: montrs_runtime::ops::SharedOpState| {
+            Box::pin(async { Ok(serde_json::json!({})) })
+        });
+    let op3 = OpDecl::new_sync_with_input(
+        "c",
+        |_s: &mut OpState, _i: serde_json::Value| Ok(serde_json::json!({})),
+    );
+    let op4 = OpDecl::new_async_with_input(
+        "d",
+        |_s: montrs_runtime::ops::SharedOpState, _i: serde_json::Value| {
+            Box::pin(async { Ok(serde_json::json!({})) })
+        },
+    );
     let mut ids = std::collections::HashSet::new();
     assert!(ids.insert(op1.id));
     assert!(ids.insert(op2.id));
@@ -377,7 +415,7 @@ fn test_runtime_error_suggested_fixes() {
 #[tokio::test]
 async fn test_op_result_async_mismatch() {
     // B13 fix: executing a sync op as async returns RuntimeError.
-    let mut state = OpState::new();
+    let state = OpState::new();
     let op = OpDecl::new_sync("sync_op", |_s: &mut OpState| {
         Ok(serde_json::json!({}))
     });

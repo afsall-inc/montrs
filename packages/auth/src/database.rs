@@ -1,3 +1,33 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Database adapter trait for the auth system.
 //!
 //! Backend-agnostic: use the in-memory adapter for development, or
@@ -6,8 +36,10 @@
 use crate::entities::{DefaultAccount, DefaultSession, DefaultUser};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 /// A complete user record.
 #[derive(Debug, Clone)]
@@ -152,34 +184,75 @@ pub struct UserUpdate {
 pub trait DatabaseAdapter: Send + Sync + 'static {
     // ── Users ──────────────────────────────────────────────────────────
     async fn create_user(&self, user: &DefaultUser) -> anyhow::Result<()>;
-    async fn find_user_by_email(&self, email: &str) -> anyhow::Result<Option<UserRecord>>;
-    async fn find_user_by_id(&self, id: &str) -> anyhow::Result<Option<UserRecord>>;
-    async fn find_user_by_username(&self, username: &str) -> anyhow::Result<Option<UserRecord>>;
-    async fn find_user_by_phone(&self, phone: &str) -> anyhow::Result<Option<UserRecord>>;
-    async fn list_users(&self, limit: usize, offset: usize) -> anyhow::Result<Vec<UserRecord>>;
-    async fn update_user(&self, id: &str, updates: UserUpdate) -> anyhow::Result<()>;
+    async fn find_user_by_email(
+        &self,
+        email: &str,
+    ) -> anyhow::Result<Option<UserRecord>>;
+    async fn find_user_by_id(
+        &self,
+        id: &str,
+    ) -> anyhow::Result<Option<UserRecord>>;
+    async fn find_user_by_username(
+        &self,
+        username: &str,
+    ) -> anyhow::Result<Option<UserRecord>>;
+    async fn find_user_by_phone(
+        &self,
+        phone: &str,
+    ) -> anyhow::Result<Option<UserRecord>>;
+    async fn list_users(
+        &self,
+        limit: usize,
+        offset: usize,
+    ) -> anyhow::Result<Vec<UserRecord>>;
+    async fn update_user(
+        &self,
+        id: &str,
+        updates: UserUpdate,
+    ) -> anyhow::Result<()>;
     async fn delete_user(&self, id: &str) -> anyhow::Result<()>;
 
     // ── Sessions ───────────────────────────────────────────────────────
-    async fn create_session(&self, session: &DefaultSession) -> anyhow::Result<()>;
-    async fn find_session(&self, id: &str) -> anyhow::Result<Option<SessionRecord>>;
-    async fn find_session_by_token(&self, token: &str) -> anyhow::Result<Option<SessionRecord>>;
-    async fn list_sessions(&self, user_id: &str) -> anyhow::Result<Vec<SessionRecord>>;
+    async fn create_session(
+        &self,
+        session: &DefaultSession,
+    ) -> anyhow::Result<()>;
+    async fn find_session(
+        &self,
+        id: &str,
+    ) -> anyhow::Result<Option<SessionRecord>>;
+    async fn find_session_by_token(
+        &self,
+        token: &str,
+    ) -> anyhow::Result<Option<SessionRecord>>;
+    async fn list_sessions(
+        &self,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<SessionRecord>>;
     async fn delete_session(&self, id: &str) -> anyhow::Result<()>;
     async fn delete_user_sessions(&self, user_id: &str) -> anyhow::Result<()>;
 
     // ── Accounts ───────────────────────────────────────────────────────
-    async fn create_account(&self, account: &DefaultAccount) -> anyhow::Result<()>;
+    async fn create_account(
+        &self,
+        account: &DefaultAccount,
+    ) -> anyhow::Result<()>;
     async fn find_account(
         &self,
         provider_id: &str,
         provider_account_id: &str,
     ) -> anyhow::Result<Option<AccountRecord>>;
-    async fn list_accounts(&self, user_id: &str) -> anyhow::Result<Vec<AccountRecord>>;
+    async fn list_accounts(
+        &self,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<AccountRecord>>;
     async fn delete_account(&self, id: &str) -> anyhow::Result<()>;
 
     // ── Verification ───────────────────────────────────────────────────
-    async fn create_verification(&self, record: &VerificationRecord) -> anyhow::Result<()>;
+    async fn create_verification(
+        &self,
+        record: &VerificationRecord,
+    ) -> anyhow::Result<()>;
     async fn find_verification(
         &self,
         identifier: &str,
@@ -190,7 +263,10 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
         value: &str,
     ) -> anyhow::Result<Option<VerificationRecord>>;
     async fn delete_verification(&self, id: &str) -> anyhow::Result<()>;
-    async fn delete_verifications_for(&self, identifier: &str) -> anyhow::Result<()>;
+    async fn delete_verifications_for(
+        &self,
+        identifier: &str,
+    ) -> anyhow::Result<()>;
 
     // ── Generic plugin KV (orgs, api keys, etc. can use until dedicated tables) ──
     async fn plugin_set(
@@ -204,7 +280,11 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
         namespace: &str,
         key: &str,
     ) -> anyhow::Result<Option<serde_json::Value>>;
-    async fn plugin_delete(&self, namespace: &str, key: &str) -> anyhow::Result<()>;
+    async fn plugin_delete(
+        &self,
+        namespace: &str,
+        key: &str,
+    ) -> anyhow::Result<()>;
     async fn plugin_list(
         &self,
         namespace: &str,
@@ -238,7 +318,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
         Ok(())
     }
 
-    async fn find_user_by_email(&self, email: &str) -> anyhow::Result<Option<UserRecord>> {
+    async fn find_user_by_email(
+        &self,
+        email: &str,
+    ) -> anyhow::Result<Option<UserRecord>> {
         Ok(self
             .users
             .lock()
@@ -248,7 +331,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(UserRecord::from))
     }
 
-    async fn find_user_by_id(&self, id: &str) -> anyhow::Result<Option<UserRecord>> {
+    async fn find_user_by_id(
+        &self,
+        id: &str,
+    ) -> anyhow::Result<Option<UserRecord>> {
         Ok(self
             .users
             .lock()
@@ -258,7 +344,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(UserRecord::from))
     }
 
-    async fn find_user_by_username(&self, username: &str) -> anyhow::Result<Option<UserRecord>> {
+    async fn find_user_by_username(
+        &self,
+        username: &str,
+    ) -> anyhow::Result<Option<UserRecord>> {
         Ok(self
             .users
             .lock()
@@ -272,7 +361,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(UserRecord::from))
     }
 
-    async fn find_user_by_phone(&self, phone: &str) -> anyhow::Result<Option<UserRecord>> {
+    async fn find_user_by_phone(
+        &self,
+        phone: &str,
+    ) -> anyhow::Result<Option<UserRecord>> {
         Ok(self
             .users
             .lock()
@@ -282,7 +374,11 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(UserRecord::from))
     }
 
-    async fn list_users(&self, limit: usize, offset: usize) -> anyhow::Result<Vec<UserRecord>> {
+    async fn list_users(
+        &self,
+        limit: usize,
+        offset: usize,
+    ) -> anyhow::Result<Vec<UserRecord>> {
         Ok(self
             .users
             .lock()
@@ -294,7 +390,11 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .collect())
     }
 
-    async fn update_user(&self, id: &str, updates: UserUpdate) -> anyhow::Result<()> {
+    async fn update_user(
+        &self,
+        id: &str,
+        updates: UserUpdate,
+    ) -> anyhow::Result<()> {
         let mut users = self.users.lock().unwrap();
         if let Some(u) = users.iter_mut().find(|u| u.id == id) {
             if let Some(v) = updates.email {
@@ -352,12 +452,18 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
         Ok(())
     }
 
-    async fn create_session(&self, session: &DefaultSession) -> anyhow::Result<()> {
+    async fn create_session(
+        &self,
+        session: &DefaultSession,
+    ) -> anyhow::Result<()> {
         self.sessions.lock().unwrap().push(session.clone());
         Ok(())
     }
 
-    async fn find_session(&self, id: &str) -> anyhow::Result<Option<SessionRecord>> {
+    async fn find_session(
+        &self,
+        id: &str,
+    ) -> anyhow::Result<Option<SessionRecord>> {
         Ok(self
             .sessions
             .lock()
@@ -367,7 +473,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(SessionRecord::from))
     }
 
-    async fn find_session_by_token(&self, token: &str) -> anyhow::Result<Option<SessionRecord>> {
+    async fn find_session_by_token(
+        &self,
+        token: &str,
+    ) -> anyhow::Result<Option<SessionRecord>> {
         Ok(self
             .sessions
             .lock()
@@ -377,7 +486,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .map(SessionRecord::from))
     }
 
-    async fn list_sessions(&self, user_id: &str) -> anyhow::Result<Vec<SessionRecord>> {
+    async fn list_sessions(
+        &self,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<SessionRecord>> {
         Ok(self
             .sessions
             .lock()
@@ -404,7 +516,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
         Ok(())
     }
 
-    async fn create_account(&self, account: &DefaultAccount) -> anyhow::Result<()> {
+    async fn create_account(
+        &self,
+        account: &DefaultAccount,
+    ) -> anyhow::Result<()> {
         self.accounts.lock().unwrap().push(account.clone());
         Ok(())
     }
@@ -419,11 +534,17 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .lock()
             .unwrap()
             .iter()
-            .find(|a| a.provider_id == provider_id && a.provider_account_id == provider_account_id)
+            .find(|a| {
+                a.provider_id == provider_id
+                    && a.provider_account_id == provider_account_id
+            })
             .map(AccountRecord::from))
     }
 
-    async fn list_accounts(&self, user_id: &str) -> anyhow::Result<Vec<AccountRecord>> {
+    async fn list_accounts(
+        &self,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<AccountRecord>> {
         Ok(self
             .accounts
             .lock()
@@ -439,7 +560,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
         Ok(())
     }
 
-    async fn create_verification(&self, record: &VerificationRecord) -> anyhow::Result<()> {
+    async fn create_verification(
+        &self,
+        record: &VerificationRecord,
+    ) -> anyhow::Result<()> {
         self.verifications.lock().unwrap().push(record.clone());
         Ok(())
     }
@@ -476,7 +600,10 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
         Ok(())
     }
 
-    async fn delete_verifications_for(&self, identifier: &str) -> anyhow::Result<()> {
+    async fn delete_verifications_for(
+        &self,
+        identifier: &str,
+    ) -> anyhow::Result<()> {
         self.verifications
             .lock()
             .unwrap()
@@ -512,7 +639,11 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             .and_then(|m| m.get(key).cloned()))
     }
 
-    async fn plugin_delete(&self, namespace: &str, key: &str) -> anyhow::Result<()> {
+    async fn plugin_delete(
+        &self,
+        namespace: &str,
+        key: &str,
+    ) -> anyhow::Result<()> {
         if let Some(m) = self.plugin_store.lock().unwrap().get_mut(namespace) {
             m.remove(key);
         }

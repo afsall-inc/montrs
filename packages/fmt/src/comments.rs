@@ -1,20 +1,16 @@
-// This file is part of MontRS.
-
-// Copyright (C) 2025-Present Afsall Labs.
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
+// http://www.apache.org/licenses/LICENSE-2.0
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 // Alternatively, this file is available under the MIT License:
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +18,8 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -212,46 +206,6 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
     result
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_extract_line_comments() {
-        let source = "let x = 1; // line comment";
-        let (_, comments) = extract_comments(source);
-        assert_eq!(comments.len(), 1);
-        assert_eq!(comments[0].text.trim(), "// line comment");
-    }
-
-    #[test]
-    fn test_extract_block_comments() {
-        let source = "let x = 1; /* block \n comment */";
-        let (_, comments) = extract_comments(source);
-        assert_eq!(comments.len(), 1);
-        assert!(comments[0].text.contains("block"));
-        assert!(comments[0].text.contains("comment"));
-    }
-
-    #[test]
-    fn test_reinsert_basic() {
-        let formatted = "let x = 1;\n";
-        let comments = vec![Comment {
-            text: "// comment".to_string(),
-            start: LineColumn { line: 1, column: 0 },
-            end: LineColumn {
-                line: 1,
-                column: 10,
-            },
-            is_doc: false,
-            is_agent_tool: false,
-        }];
-        let result = reinsert_comments(formatted, comments);
-        assert!(result.contains("// comment"));
-        assert!(result.contains("let x = 1;"));
-    }
-}
-
 /// Helper to get text between two spans
 pub fn get_text_between_spans(
     source: &Rope,
@@ -292,4 +246,44 @@ pub fn get_text_between_spans(
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_line_comments() {
+        let source = "let x = 1; // line comment";
+        let (_, comments) = extract_comments(source);
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].text.trim(), "// line comment");
+    }
+
+    #[test]
+    fn test_extract_block_comments() {
+        let source = "let x = 1; /* block \n comment */";
+        let (_, comments) = extract_comments(source);
+        assert_eq!(comments.len(), 1);
+        assert!(comments[0].text.contains("block"));
+        assert!(comments[0].text.contains("comment"));
+    }
+
+    #[test]
+    fn test_reinsert_basic() {
+        let formatted = "let x = 1;\n";
+        let comments = vec![Comment {
+            text: "// comment".to_string(),
+            start: LineColumn { line: 1, column: 0 },
+            end: LineColumn {
+                line: 1,
+                column: 10,
+            },
+            is_doc: false,
+            is_agent_tool: false,
+        }];
+        let result = reinsert_comments(formatted, comments);
+        assert!(result.contains("// comment"));
+        assert!(result.contains("let x = 1;"));
+    }
 }

@@ -1,16 +1,50 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! SSO plugin — OIDC IdP config store + SAML config storage + ACS stub.
 //! /sso/register, /sso/providers, /sign-in/sso.
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// An SSO identity provider configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,10 +86,10 @@ impl Default for SsoPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -115,7 +149,8 @@ async fn register_provider(
     Json(req): Json<RegisterSsoRequest>,
 ) -> Result<Json<Value>, AuthError> {
     // Require admin session.
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -156,7 +191,12 @@ async fn register_provider(
         .db
         .plugin_set("sso", &id, serde_json::to_value(&provider).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({ "provider": provider })))
 }
@@ -165,7 +205,10 @@ async fn list_providers(
     State(state): State<AuthState>,
 ) -> Result<Json<Value>, AuthError> {
     let entries = state.db.plugin_list("sso").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let providers: Vec<Value> = entries
@@ -201,42 +244,63 @@ async fn sign_in_sso(
     // Resolve provider by id or domain.
     let provider = if let Some(id) = &req.provider_id {
         let entry = state.db.plugin_get("sso", id).await?.ok_or_else(|| {
-            AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "SSO provider not found")
+            AuthError::new(
+                crate::error::AuthErrorCode::ProviderNotConfigured,
+                "SSO provider not found",
+            )
         })?;
-        serde_json::from_value::<SsoProvider>(entry)
-            .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid SSO provider"))?
+        serde_json::from_value::<SsoProvider>(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "Invalid SSO provider",
+            )
+        })?
     } else if let Some(domain) = &req.domain {
         let entries = state.db.plugin_list("sso").await.map_err(|e| {
-            AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
         })?;
         let mut found = None;
         for (_, v) in entries {
-            if let Ok(p) = serde_json::from_value::<SsoProvider>(v) {
-                if p.domains.iter().any(|d| d == domain) && p.enabled {
-                    found = Some(p);
-                    break;
-                }
+            if let Ok(p) = serde_json::from_value::<SsoProvider>(v)
+                && p.domains.iter().any(|d| d == domain)
+                && p.enabled
+            {
+                found = Some(p);
+                break;
             }
         }
         found.ok_or_else(|| {
-            AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "No SSO provider for domain")
+            AuthError::new(
+                crate::error::AuthErrorCode::ProviderNotConfigured,
+                "No SSO provider for domain",
+            )
         })?
     } else if let Some(email) = &req.email {
         let domain = email.split('@').nth(1).unwrap_or("");
         let entries = state.db.plugin_list("sso").await.map_err(|e| {
-            AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
         })?;
         let mut found = None;
         for (_, v) in entries {
-            if let Ok(p) = serde_json::from_value::<SsoProvider>(v) {
-                if p.domains.iter().any(|d| d == domain) && p.enabled {
-                    found = Some(p);
-                    break;
-                }
+            if let Ok(p) = serde_json::from_value::<SsoProvider>(v)
+                && p.domains.iter().any(|d| d == domain)
+                && p.enabled
+            {
+                found = Some(p);
+                break;
             }
         }
         found.ok_or_else(|| {
-            AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "No SSO provider for email domain")
+            AuthError::new(
+                crate::error::AuthErrorCode::ProviderNotConfigured,
+                "No SSO provider for email domain",
+            )
         })?
     } else {
         return Err(AuthError::missing_field("providerId, email, or domain"));
@@ -244,11 +308,18 @@ async fn sign_in_sso(
 
     match provider.provider_type.as_str() {
         "oidc" => {
-            let auth_url = provider.authorization_url.as_ref().ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "Missing authorization_url")
-            })?;
+            let auth_url =
+                provider.authorization_url.as_ref().ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::ProviderNotConfigured,
+                        "Missing authorization_url",
+                    )
+                })?;
             let client_id = provider.client_id.as_ref().ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "Missing client_id")
+                AuthError::new(
+                    crate::error::AuthErrorCode::ProviderNotConfigured,
+                    "Missing client_id",
+                )
             })?;
             let state_param = crate::utils::generate_token();
             let redirect = format!(
@@ -257,7 +328,9 @@ async fn sign_in_sso(
                 provider.id
             );
             let url = format!(
-                "{auth_url}?client_id={client_id}&redirect_uri={}&response_type=code&scope=openid+email+profile&state={state_param}",
+                "{auth_url}?client_id={client_id}&redirect_uri={}&\
+                 response_type=code&scope=openid+email+profile&\
+                 state={state_param}",
                 urlencoding_encode(&redirect),
             );
 
@@ -276,9 +349,13 @@ async fn sign_in_sso(
             })))
         }
         "saml" => {
-            let entry_point = provider.saml_entry_point.as_ref().ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::ProviderNotConfigured, "Missing SAML entry point")
-            })?;
+            let entry_point =
+                provider.saml_entry_point.as_ref().ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::ProviderNotConfigured,
+                        "Missing SAML entry point",
+                    )
+                })?;
             Ok(Json(json!({
                 "url": entry_point,
                 "providerId": provider.id,
@@ -320,10 +397,16 @@ async fn saml_acs(
             let mut nu = DefaultUser::new(&email, None);
             nu.email_verified = true;
             state.db.create_user(&nu).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
             })?;
             state.db.find_user_by_email(&email).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    "Failed to create user",
+                )
             })?
         }
     };
@@ -343,7 +426,12 @@ async fn saml_acs(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

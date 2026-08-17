@@ -1,15 +1,45 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Stripe plugin — subscription management and webhook handling.
 //! /subscription/list, /subscription/upgrade (stub), /stripe/webhook.
 //! User metadata stores stripeCustomerId.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Stripe plugin — subscription management.
 pub struct StripePlugin {
@@ -29,10 +59,10 @@ impl Default for StripePlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -83,9 +113,18 @@ async fn list_subscriptions(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
-    let user = state.db.find_user_by_id(&session.user_id).await?.ok_or_else(AuthError::user_not_found)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
+    let user = state
+        .db
+        .find_user_by_id(&session.user_id)
+        .await?
+        .ok_or_else(AuthError::user_not_found)?;
 
     let stripe_customer_id = user.metadata.get("stripeCustomerId").cloned();
     let sub_json: Option<Value> = state
@@ -120,8 +159,13 @@ async fn upgrade_subscription(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpgradeRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let plan = req.plan.unwrap_or_else(|| "pro".into());
     // Stub: just store the subscription intent.
@@ -163,14 +207,16 @@ async fn stripe_webhook(
     body: String,
 ) -> Result<Json<Value>, AuthError> {
     // Parse the webhook event.
-    let event: StripeWebhookEvent = serde_json::from_str(&body).unwrap_or(StripeWebhookEvent {
-        event_type: None,
-        id: None,
-        data: None,
-        raw: body.clone(),
-    });
+    let event: StripeWebhookEvent =
+        serde_json::from_str(&body).unwrap_or(StripeWebhookEvent {
+            event_type: None,
+            id: None,
+            data: None,
+            raw: body.clone(),
+        });
 
-    let event_type = event.event_type.clone().unwrap_or_else(|| "unknown".into());
+    let event_type =
+        event.event_type.clone().unwrap_or_else(|| "unknown".into());
 
     // Store the webhook event for audit.
     let _ = state
@@ -188,16 +234,25 @@ async fn stripe_webhook(
 
     // Handle specific event types.
     match event_type.as_str() {
-        "customer.subscription.created" | "customer.subscription.updated"
-        | "customer.subscription.deleted" | "invoice.paid" | "invoice.payment_failed" => {
-            if let Some(data) = &event.data {
-                if let Some(object) = data.get("object") {
-                    if let Some(customer) = object.get("customer").and_then(|v| v.as_str()) {
-                        // Store subscription info in user metadata.
-                        let entries = state.db.plugin_list("stripe_customer").await.unwrap_or_default();
-                        for (key, val) in entries {
-                            if val.as_str() == Some(customer) {
-                                let _ = state
+        "customer.subscription.created"
+        | "customer.subscription.updated"
+        | "customer.subscription.deleted"
+        | "invoice.paid"
+        | "invoice.payment_failed" => {
+            if let Some(data) = &event.data
+                && let Some(object) = data.get("object")
+                && let Some(customer) =
+                    object.get("customer").and_then(|v| v.as_str())
+            {
+                // Store subscription info in user metadata.
+                let entries = state
+                    .db
+                    .plugin_list("stripe_customer")
+                    .await
+                    .unwrap_or_default();
+                for (key, val) in entries {
+                    if val.as_str() == Some(customer) {
+                        let _ = state
                                     .db
                                     .plugin_set("stripe_subscription", &key, json!({
                                         "plan": object.get("plan").and_then(|p| p.get("nickname")).and_then(|v| v.as_str()).unwrap_or("unknown"),
@@ -208,8 +263,6 @@ async fn stripe_webhook(
                                         "cancelAtPeriodEnd": object.get("cancel_at_period_end").and_then(|v| v.as_bool()).unwrap_or(false),
                                     }))
                                     .await;
-                            }
-                        }
                     }
                 }
             }

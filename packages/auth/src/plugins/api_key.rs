@@ -1,17 +1,47 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! API Key plugin — CRUD for API keys with rate limit metadata.
 //! /api-key/create, /api-key/list, /api-key/delete, /api-key/update.
 //! Keys are hashed with SHA-256 before storage.
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
-use sha2::{Digest, Sha256};
+use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 
 /// An API key record stored in plugin_store namespace "apikey".
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -55,10 +85,10 @@ pub async fn verify_api_key(
     for (_, val) in entries {
         let record: ApiKeyRecord = serde_json::from_value(val)?;
         if record.key_hash == hash && record.enabled {
-            if let Some(exp) = &record.expires_at {
-                if *exp <= Utc::now() {
-                    continue;
-                }
+            if let Some(exp) = &record.expires_at
+                && *exp <= Utc::now()
+            {
+                continue;
             }
             return Ok(Some(record));
         }
@@ -84,10 +114,10 @@ impl Default for ApiKeyPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -139,8 +169,13 @@ async fn create_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     if req.name.is_empty() {
         return Err(AuthError::missing_field("name"));
@@ -155,7 +190,9 @@ async fn create_api_key(
         key_hash: hash,
         prefix: raw[..8].to_string(),
         created_at: Utc::now(),
-        expires_at: req.expires_in_secs.map(|s| Utc::now() + chrono::Duration::seconds(s)),
+        expires_at: req
+            .expires_in_secs
+            .map(|s| Utc::now() + chrono::Duration::seconds(s)),
         rate_limit_max: req.rate_limit_max,
         rate_limit_window_secs: req.rate_limit_window_secs,
         enabled: true,
@@ -166,7 +203,12 @@ async fn create_api_key(
         .db
         .plugin_set("apikey", &id, serde_json::to_value(&record).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "id": id,
@@ -181,11 +223,19 @@ async fn list_api_keys(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let entries = state.db.plugin_list("apikey").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let keys: Vec<Value> = entries
@@ -222,14 +272,31 @@ async fn delete_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeleteApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("apikey", &req.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "API key not found")
+    let entry =
+        state
+            .db
+            .plugin_get("apikey", &req.id)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InvalidToken,
+                    "API key not found",
+                )
+            })?;
+    let record: ApiKeyRecord = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            "Invalid API key record",
+        )
     })?;
-    let record: ApiKeyRecord = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid API key record"))?;
 
     if record.user_id != session.user_id {
         return Err(AuthError::forbidden());
@@ -255,14 +322,32 @@ async fn update_api_key(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateApiKeyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("apikey", &req.id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "API key not found")
-    })?;
-    let mut record: ApiKeyRecord = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid API key record"))?;
+    let entry =
+        state
+            .db
+            .plugin_get("apikey", &req.id)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InvalidToken,
+                    "API key not found",
+                )
+            })?;
+    let mut record: ApiKeyRecord =
+        serde_json::from_value(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "Invalid API key record",
+            )
+        })?;
 
     if record.user_id != session.user_id {
         return Err(AuthError::forbidden());
@@ -288,7 +373,12 @@ async fn update_api_key(
         .db
         .plugin_set("apikey", &req.id, serde_json::to_value(&record).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({ "success": true, "id": req.id })))
 }

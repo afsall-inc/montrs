@@ -1,18 +1,49 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! MCP (Model Context Protocol) OAuth plugin — thin wrappers similar to oauth_provider.
 //! /.well-known/oauth-authorization-server, /mcp/authorize, /mcp/token, /mcp/register.
 
 //TODO: Support the latest update of the MCP standard
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::utils::generate_token;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError, context::AuthState, plugin::AuthPlugin, utils::generate_token,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// An MCP OAuth client.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,10 +73,10 @@ impl Default for McpPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -85,7 +116,9 @@ impl AuthPlugin for McpPlugin {
     }
 }
 
-async fn authorization_server_metadata(State(state): State<AuthState>) -> Json<Value> {
+async fn authorization_server_metadata(
+    State(state): State<AuthState>,
+) -> Json<Value> {
     let base = state.config.base_url.trim_end_matches('/');
     Json(json!({
         "issuer": base,
@@ -119,10 +152,20 @@ async fn mcp_authorize(
         .db
         .plugin_get("mcp_client", &q.client_id)
         .await?
-        .ok_or_else(|| AuthError::new(crate::error::AuthErrorCode::OAuthError, "Unknown client"))?;
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OAuthError,
+                "Unknown client",
+            )
+        })?;
 
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let code = generate_token();
     let code_data = json!({
@@ -179,11 +222,7 @@ async fn mcp_token(
         &code,
     )
     .await
-    .or_else(|_| {
-        // Fallback: the value is the JSON code_data, not the code itself.
-        // Use by-value if the identifier match fails.
-        Err(AuthError::invalid_token())
-    });
+    .map_err(|_| AuthError::invalid_token());
 
     let rec = match rec {
         Ok(r) => r,
@@ -262,9 +301,18 @@ async fn mcp_register(
 
     state
         .db
-        .plugin_set("mcp_client", &client_id, serde_json::to_value(&client).unwrap())
+        .plugin_set(
+            "mcp_client",
+            &client_id,
+            serde_json::to_value(&client).unwrap(),
+        )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "client_id": client_id,

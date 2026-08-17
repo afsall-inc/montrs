@@ -1,7 +1,39 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Authentication error types.
 
-use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{
+    Json,
+    response::{IntoResponse, Response},
+};
 use serde::Serialize;
 
 /// Authentication error codes (stable, part of the agent contract).
@@ -111,9 +143,9 @@ impl AuthError {
                 "Check the email/password combination.".into(),
                 "Ensure the user's email is verified.".into(),
             ],
-            AuthErrorCode::EmailNotVerified => vec![
-                "Send a verification email to the user.".into(),
-            ],
+            AuthErrorCode::EmailNotVerified => {
+                vec!["Send a verification email to the user.".into()]
+            }
             AuthErrorCode::WeakPassword => vec![
                 "Use at least 8 characters with letters and numbers.".into(),
             ],
@@ -121,7 +153,8 @@ impl AuthError {
                 "Add the OAuth provider credentials to the auth config.".into(),
             ],
             AuthErrorCode::RateLimited => vec![
-                "Wait before retrying, or increase the rate limit window.".into(),
+                "Wait before retrying, or increase the rate limit window."
+                    .into(),
             ],
             _ => vec![],
         }
@@ -160,14 +193,22 @@ impl IntoResponse for AuthError {
             message,
             details: self.details,
         };
-        (axum::http::StatusCode::from_u16(self.status).unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR), Json(body)).into_response()
+        (
+            axum::http::StatusCode::from_u16(self.status)
+                .unwrap_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR),
+            Json(body),
+        )
+            .into_response()
     }
 }
 
 /// Convenience constructors.
 impl AuthError {
     pub fn invalid_credentials() -> Self {
-        Self::new(AuthErrorCode::InvalidCredentials, "Invalid email or password")
+        Self::new(
+            AuthErrorCode::InvalidCredentials,
+            "Invalid email or password",
+        )
     }
     pub fn user_not_found() -> Self {
         Self::new(AuthErrorCode::UserNotFound, "User not found")
@@ -188,10 +229,16 @@ impl AuthError {
         Self::new(AuthErrorCode::RateLimited, "Too many requests")
     }
     pub fn missing_field(field: &str) -> Self {
-        Self::new(AuthErrorCode::MissingField, format!("Missing required field: {field}"))
+        Self::new(
+            AuthErrorCode::MissingField,
+            format!("Missing required field: {field}"),
+        )
     }
     pub fn two_factor_required() -> Self {
-        Self::new(AuthErrorCode::TwoFactorRequired, "Two-factor authentication required")
+        Self::new(
+            AuthErrorCode::TwoFactorRequired,
+            "Two-factor authentication required",
+        )
     }
     pub fn invalid_two_factor() -> Self {
         Self::new(AuthErrorCode::InvalidTwoFactor, "Invalid two-factor code")
@@ -200,6 +247,9 @@ impl AuthError {
         Self::new(AuthErrorCode::Forbidden, "Permission denied")
     }
     pub fn provider_not_configured() -> Self {
-        Self::new(AuthErrorCode::ProviderNotConfigured, "OAuth provider not configured")
+        Self::new(
+            AuthErrorCode::ProviderNotConfigured,
+            "OAuth provider not configured",
+        )
     }
 }

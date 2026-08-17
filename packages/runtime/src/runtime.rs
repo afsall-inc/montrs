@@ -1,16 +1,48 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! MontrsRuntime — the main runtime struct.
 //!
 //! Inspired by Deno's `JsRuntime` architecture. Manages op state,
 //! extensions, resource table, and event loop.
 
-use crate::error::RuntimeError;
-use crate::event_loop::EventLoop;
-use crate::extensions::{ExtensionSet, RuntimeExtension};
-use crate::memory::Arena;
-use crate::modules::ModuleLoader;
-use crate::ops::OpDecl;
-use crate::resource_table::ResourceTable;
-use crate::type_map::OpState;
+use crate::{
+    error::RuntimeError,
+    event_loop::EventLoop,
+    extensions::{ExtensionSet, RuntimeExtension},
+    memory::Arena,
+    modules::ModuleLoader,
+    ops::OpDecl,
+    resource_table::ResourceTable,
+    type_map::OpState,
+};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -101,7 +133,9 @@ impl MontrsRuntime {
         // B2 fix: start in dependency order.
         self.extensions.start_all(&mut self.state)?;
         // Access EventLoop from OpState.
-        self.state.get_mut::<EventLoop>().map(|el| el.start());
+        if let Some(el) = self.state.get_mut::<EventLoop>() {
+            el.start()
+        }
         self.initialized = true;
         Ok(())
     }
@@ -112,9 +146,11 @@ impl MontrsRuntime {
         name: &str,
         input: Option<serde_json::Value>,
     ) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| {
-            RuntimeError::op_not_found(name)
-        })?;
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         op.execute(&mut self.state, input)
     }
 
@@ -124,9 +160,11 @@ impl MontrsRuntime {
         name: &str,
         input: Option<serde_json::Value>,
     ) -> Result<serde_json::Value, RuntimeError> {
-        let op = self.ops_by_name.get(name).cloned().ok_or_else(|| {
-            RuntimeError::op_not_found(name)
-        })?;
+        let op = self
+            .ops_by_name
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::op_not_found(name))?;
         // Wrap state in Arc<Mutex> for async ops.
         let shared = Arc::new(Mutex::new(std::mem::take(&mut self.state)));
         let result = op.execute_async(shared.clone(), input).await;
@@ -141,7 +179,10 @@ impl MontrsRuntime {
     }
 
     /// Register a new extension at runtime.
-    pub fn register_extension(&mut self, ext: RuntimeExtension) -> Result<(), RuntimeError> {
+    pub fn register_extension(
+        &mut self,
+        ext: RuntimeExtension,
+    ) -> Result<(), RuntimeError> {
         self.extensions.add(ext);
         // Re-collect ops in dependency order.
         self.ops_by_id.clear();

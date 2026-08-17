@@ -1,8 +1,37 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 pub mod protocol;
 
 use crate::{AgentSubcommand, command::agent};
-use montrs_services::config::ServiceConfig;
-use montrs_services::supervisor::Supervisor;
+use montrs_services::{config::ServiceConfig, supervisor::Supervisor};
 use protocol::*;
 use serde_json::{Value, json};
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -147,7 +176,8 @@ async fn handle_request(
                 // ── Services tools ──────────────────────────────────────────
                 Tool {
                     name: "services_list".to_string(),
-                    description: "List all services and their status.".to_string(),
+                    description: "List all services and their status."
+                        .to_string(),
                     input_validator: json!({ "type": "object", "properties": {} }),
                 },
                 Tool {
@@ -174,7 +204,9 @@ async fn handle_request(
                 },
                 Tool {
                     name: "services_status".to_string(),
-                    description: "Get the status of a service (or all if no name).".to_string(),
+                    description: "Get the status of a service (or all if no \
+                                  name)."
+                        .to_string(),
                     input_validator: json!({
                         "type": "object",
                         "properties": {
@@ -207,7 +239,8 @@ async fn handle_request(
                 },
                 Tool {
                     name: "auth_sign_up".to_string(),
-                    description: "Sign up a new user with email and password.".to_string(),
+                    description: "Sign up a new user with email and password."
+                        .to_string(),
                     input_validator: json!({
                         "type": "object",
                         "properties": {
@@ -220,7 +253,9 @@ async fn handle_request(
                 },
                 Tool {
                     name: "auth_validate_token".to_string(),
-                    description: "Validate a session token and return the user.".to_string(),
+                    description: "Validate a session token and return the \
+                                  user."
+                        .to_string(),
                     input_validator: json!({
                         "type": "object",
                         "properties": {
@@ -231,13 +266,16 @@ async fn handle_request(
                 },
                 Tool {
                     name: "auth_status".to_string(),
-                    description: "Get auth system status and available plugins.".to_string(),
+                    description: "Get auth system status and available \
+                                  plugins."
+                        .to_string(),
                     input_validator: json!({ "type": "object", "properties": {} }),
                 },
                 // ── Config tools ────────────────────────────────────────────
                 Tool {
                     name: "config_read".to_string(),
-                    description: "Read the montrs.toml project configuration.".to_string(),
+                    description: "Read the montrs.toml project configuration."
+                        .to_string(),
                     input_validator: json!({ "type": "object", "properties": {} }),
                 },
             ];
@@ -386,17 +424,24 @@ async fn handle_tool_call(
             let services = supervisor.list().await;
             if services.is_empty() {
                 return Ok(CallToolResult {
-                    content: vec![ToolContent::Text { text: "No services defined".into() }],
+                    content: vec![ToolContent::Text {
+                        text: "No services defined".into(),
+                    }],
                     is_error: false,
                 });
             }
             let mut lines = vec!["Services:".to_string()];
             for (id, status, pid) in &services {
-                let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
-                lines.push(format!("  {:<20} {:?} pid={}", id, status, pid_str));
+                let pid_str = pid
+                    .map(|p| p.to_string())
+                    .unwrap_or_else(|| "-".to_string());
+                lines
+                    .push(format!("  {:<20} {:?} pid={}", id, status, pid_str));
             }
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: lines.join("\n") }],
+                content: vec![ToolContent::Text {
+                    text: lines.join("\n"),
+                }],
                 is_error: false,
             })
         }
@@ -410,7 +455,9 @@ async fn handle_tool_call(
             let id = montrs_services::ServiceId::from_name(name);
             supervisor.start(&id).await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: format!("Service {name} started") }],
+                content: vec![ToolContent::Text {
+                    text: format!("Service {name} started"),
+                }],
                 is_error: false,
             })
         }
@@ -424,7 +471,9 @@ async fn handle_tool_call(
             let id = montrs_services::ServiceId::from_name(name);
             supervisor.stop(&id).await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: format!("Service {name} stopped") }],
+                content: vec![ToolContent::Text {
+                    text: format!("Service {name} stopped"),
+                }],
                 is_error: false,
             })
         }
@@ -448,8 +497,13 @@ async fn handle_tool_call(
                 } else {
                     let mut lines = vec!["Services:".to_string()];
                     for (id, status, pid) in &services {
-                        let pid_str = pid.map(|p| p.to_string()).unwrap_or_else(|| "-".to_string());
-                        lines.push(format!("  {:<20} {:?} pid={}", id, status, pid_str));
+                        let pid_str = pid
+                            .map(|p| p.to_string())
+                            .unwrap_or_else(|| "-".to_string());
+                        lines.push(format!(
+                            "  {:<20} {:?} pid={}",
+                            id, status, pid_str
+                        ));
                     }
                     lines.join("\n")
                 }
@@ -489,7 +543,9 @@ async fn handle_tool_call(
                 .ok_or_else(|| anyhow::anyhow!("Missing password argument"))?;
             let result = crate::command::auth::sign_in(email, password).await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: result.to_string() }],
+                content: vec![ToolContent::Text {
+                    text: result.to_string(),
+                }],
                 is_error: false,
             })
         }
@@ -504,13 +560,13 @@ async fn handle_tool_call(
                 .get("password")
                 .and_then(|v| v.as_str())
                 .ok_or_else(|| anyhow::anyhow!("Missing password argument"))?;
-            let name = params
-                .arguments
-                .get("name")
-                .and_then(|v| v.as_str());
-            let result = crate::command::auth::sign_up(email, password, name).await?;
+            let name = params.arguments.get("name").and_then(|v| v.as_str());
+            let result =
+                crate::command::auth::sign_up(email, password, name).await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: result.to_string() }],
+                content: vec![ToolContent::Text {
+                    text: result.to_string(),
+                }],
                 is_error: false,
             })
         }
@@ -522,14 +578,18 @@ async fn handle_tool_call(
                 .ok_or_else(|| anyhow::anyhow!("Missing token argument"))?;
             let result = crate::command::auth::validate_token(token).await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: result.to_string() }],
+                content: vec![ToolContent::Text {
+                    text: result.to_string(),
+                }],
                 is_error: false,
             })
         }
         "auth_status" => {
             let result = crate::command::auth::status().await?;
             Ok(CallToolResult {
-                content: vec![ToolContent::Text { text: result.to_string() }],
+                content: vec![ToolContent::Text {
+                    text: result.to_string(),
+                }],
                 is_error: false,
             })
         }
@@ -540,7 +600,8 @@ async fn handle_tool_call(
             if !path.exists() {
                 return Ok(CallToolResult {
                     content: vec![ToolContent::Text {
-                        text: "No montrs.toml found in current directory".into(),
+                        text: "No montrs.toml found in current directory"
+                            .into(),
                     }],
                     is_error: true,
                 });
@@ -567,7 +628,9 @@ fn create_supervisor() -> anyhow::Result<Supervisor> {
     let config = MontrsConfig::load()?;
     let raw = config.meta.services.clone();
     if raw.is_empty() {
-        anyhow::bail!("No services defined in [services] section of montrs.toml");
+        anyhow::bail!(
+            "No services defined in [services] section of montrs.toml"
+        );
     }
     let configs = ServiceConfig::from_toml_map(&raw)?;
     let data_dir = montrs_services::supervisor::default_data_dir();

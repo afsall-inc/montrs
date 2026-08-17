@@ -1,7 +1,36 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Module loader — trait for loading and evaluating Rust/WASM modules into the runtime.
 
-use crate::error::RuntimeError;
-use crate::type_map::OpState;
+use crate::{error::RuntimeError, type_map::OpState};
 use async_trait::async_trait;
 use std::path::Path;
 
@@ -31,7 +60,11 @@ pub enum ModuleSource {
 }
 
 /// A Rust module is a function that takes OpState and returns JSON.
-pub type RustModuleFn = Box<dyn Fn(&mut OpState) -> Result<serde_json::Value, RuntimeError> + Send + Sync>;
+pub type RustModuleFn = Box<
+    dyn Fn(&mut OpState) -> Result<serde_json::Value, RuntimeError>
+        + Send
+        + Sync,
+>;
 
 /// A loaded and evaluated Rust module.
 pub struct RustModule {
@@ -53,10 +86,7 @@ pub trait ModuleLoader: Send + Sync {
     async fn load(&self, specifier: &str) -> Result<Module, RuntimeError>;
 
     /// Prepare to load a module (pre-processing).
-    async fn prepare_load(
-        &self,
-        _specifier: &str,
-    ) -> Result<(), RuntimeError> {
+    async fn prepare_load(&self, _specifier: &str) -> Result<(), RuntimeError> {
         Ok(())
     }
 
@@ -110,7 +140,10 @@ impl ModuleLoader for FileModuleLoader {
             ));
         }
         let code = tokio::fs::read(path).await.map_err(|e| {
-            RuntimeError::new(crate::error::RuntimeErrorKind::ModuleLoad, e.to_string())
+            RuntimeError::new(
+                crate::error::RuntimeErrorKind::ModuleLoad,
+                e.to_string(),
+            )
         })?;
         let name = path
             .file_stem()
@@ -143,12 +176,9 @@ impl ModuleLoader for FileModuleLoader {
 mod tests {
     use super::*;
 
-
     #[tokio::test]
     async fn test_file_module_loader_not_found() {
-        let loader = FileModuleLoader {
-            roots: vec![],
-        };
+        let loader = FileModuleLoader { roots: vec![] };
         let result = loader.resolve("nonexistent.rs", Path::new("/tmp"));
         assert!(result.is_err());
     }

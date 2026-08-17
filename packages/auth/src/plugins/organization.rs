@@ -1,16 +1,50 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Organization plugin — multi-tenant orgs, members, invites, roles.
 //! Store orgs/members/invites as JSON in plugin_store namespace "org".
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::plugins::access::{authorize, Statement, Authorization};
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    plugin::AuthPlugin,
+    plugins::access::{Authorization, Statement, authorize},
+};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 
 /// An organization record.
@@ -66,10 +100,10 @@ impl Default for OrganizationPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -113,7 +147,10 @@ impl AuthPlugin for OrganizationPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("OrganizationPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("OrganizationPlugin: state not set");
         Router::new()
             .route("/organization/create", post(create_org))
             .route("/organization/list", get(list_orgs))
@@ -143,8 +180,13 @@ async fn create_org(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateOrgRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     if req.name.is_empty() {
         return Err(AuthError::missing_field("name"));
@@ -173,7 +215,12 @@ async fn create_org(
         .db
         .plugin_set("org", &id, serde_json::to_value(&org).unwrap())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::OrganizationError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OrganizationError,
+                e.to_string(),
+            )
+        })?;
 
     // Add creator as owner member.
     let member = Member {
@@ -200,28 +247,36 @@ async fn list_orgs(
     State(state): State<AuthState>,
     headers: axum::http::HeaderMap,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let members = state.db.plugin_list("org_member").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut org_ids = Vec::new();
     for (_, val) in members {
-        if let Ok(m) = serde_json::from_value::<Member>(val) {
-            if m.user_id == session.user_id {
-                org_ids.push(m.organization_id);
-            }
+        if let Ok(m) = serde_json::from_value::<Member>(val)
+            && m.user_id == session.user_id
+        {
+            org_ids.push(m.organization_id);
         }
     }
 
     let mut orgs = Vec::new();
     for oid in org_ids {
-        if let Ok(Some(val)) = state.db.plugin_get("org", &oid).await {
-            if let Ok(org) = serde_json::from_value::<Organization>(val) {
-                orgs.push(org);
-            }
+        if let Ok(Some(val)) = state.db.plugin_get("org", &oid).await
+            && let Ok(org) = serde_json::from_value::<Organization>(val)
+        {
+            orgs.push(org);
         }
     }
 
@@ -243,16 +298,34 @@ async fn update_org(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateOrgRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    require_org_role(&state, &session.user_id, &req.organization_id, "admin").await?;
+    require_org_role(&state, &session.user_id, &req.organization_id, "admin")
+        .await?;
 
-    let entry = state.db.plugin_get("org", &req.organization_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Organization not found")
-    })?;
-    let mut org: Organization = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Invalid org"))?;
+    let entry = state
+        .db
+        .plugin_get("org", &req.organization_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OrganizationError,
+                "Organization not found",
+            )
+        })?;
+    let mut org: Organization =
+        serde_json::from_value(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OrganizationError,
+                "Invalid org",
+            )
+        })?;
 
     if let Some(name) = req.name {
         org.name = name;
@@ -269,7 +342,11 @@ async fn update_org(
 
     state
         .db
-        .plugin_set("org", &req.organization_id, serde_json::to_value(&org).unwrap())
+        .plugin_set(
+            "org",
+            &req.organization_id,
+            serde_json::to_value(&org).unwrap(),
+        )
         .await
         .ok();
 
@@ -287,24 +364,36 @@ async fn delete_org(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeleteOrgRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    require_org_role(&state, &session.user_id, &req.organization_id, "owner").await?;
+    require_org_role(&state, &session.user_id, &req.organization_id, "owner")
+        .await?;
 
-    state.db.plugin_delete("org", &req.organization_id).await.ok();
+    state
+        .db
+        .plugin_delete("org", &req.organization_id)
+        .await
+        .ok();
 
     // Clean up members.
     let members = state.db.plugin_list("org_member").await.unwrap_or_default();
     for (key, val) in members {
-        if let Ok(m) = serde_json::from_value::<Member>(val) {
-            if m.organization_id == req.organization_id {
-                let _ = state.db.plugin_delete("org_member", &key).await;
-            }
+        if let Ok(m) = serde_json::from_value::<Member>(val)
+            && m.organization_id == req.organization_id
+        {
+            let _ = state.db.plugin_delete("org_member", &key).await;
         }
     }
 
-    Ok(Json(json!({ "success": true, "deleted": req.organization_id })))
+    Ok(Json(
+        json!({ "success": true, "deleted": req.organization_id }),
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -320,10 +409,16 @@ async fn invite_member(
     headers: axum::http::HeaderMap,
     Json(req): Json<InviteMemberRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    require_org_role(&state, &session.user_id, &req.organization_id, "admin").await?;
+    require_org_role(&state, &session.user_id, &req.organization_id, "admin")
+        .await?;
 
     let id = uuid::Uuid::new_v4().to_string();
     let invite = Invite {
@@ -369,14 +464,30 @@ async fn accept_invite(
     headers: axum::http::HeaderMap,
     Json(req): Json<AcceptInviteRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let entry = state.db.plugin_get("org_invite", &req.invite_id).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Invite not found")
+    let entry = state
+        .db
+        .plugin_get("org_invite", &req.invite_id)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::OrganizationError,
+                "Invite not found",
+            )
+        })?;
+    let mut invite: Invite = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::OrganizationError,
+            "Invalid invite",
+        )
     })?;
-    let mut invite: Invite = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Invalid invite"))?;
 
     if invite.status != "pending" || invite.expires_at <= Utc::now() {
         return Err(AuthError::new(
@@ -388,7 +499,11 @@ async fn accept_invite(
     invite.status = "accepted".into();
     state
         .db
-        .plugin_set("org_invite", &req.invite_id, serde_json::to_value(&invite).unwrap())
+        .plugin_set(
+            "org_invite",
+            &req.invite_id,
+            serde_json::to_value(&invite).unwrap(),
+        )
         .await
         .ok();
 
@@ -423,14 +538,27 @@ async fn set_active(
     headers: axum::http::HeaderMap,
     Json(req): Json<SetActiveRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     // Verify membership.
     let key = format!("{}:{}", req.organization_id, session.user_id);
-    let _ = state.db.plugin_get("org_member", &key).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::Forbidden, "Not a member of this organization")
-    })?;
+    let _ =
+        state
+            .db
+            .plugin_get("org_member", &key)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::Forbidden,
+                    "Not a member of this organization",
+                )
+            })?;
 
     // Store active org on session via plugin store.
     state
@@ -443,7 +571,9 @@ async fn set_active(
         .await
         .ok();
 
-    Ok(Json(json!({ "success": true, "activeOrganizationId": req.organization_id })))
+    Ok(Json(
+        json!({ "success": true, "activeOrganizationId": req.organization_id }),
+    ))
 }
 
 async fn list_members(
@@ -451,17 +581,26 @@ async fn list_members(
     headers: axum::http::HeaderMap,
     axum::extract::Query(q): axum::extract::Query<HashMap<String, String>>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    let org_id = q.get("organizationId").or_else(|| q.get("organization_id")).ok_or_else(|| {
-        AuthError::missing_field("organizationId")
-    })?;
+    let org_id = q
+        .get("organizationId")
+        .or_else(|| q.get("organization_id"))
+        .ok_or_else(|| AuthError::missing_field("organizationId"))?;
 
     require_org_role(&state, &session.user_id, org_id, "member").await?;
 
     let members = state.db.plugin_list("org_member").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let list: Vec<Value> = members
@@ -496,10 +635,16 @@ async fn remove_member(
     headers: axum::http::HeaderMap,
     Json(req): Json<RemoveMemberRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    require_org_role(&state, &session.user_id, &req.organization_id, "admin").await?;
+    require_org_role(&state, &session.user_id, &req.organization_id, "admin")
+        .await?;
 
     let key = format!("{}:{}", req.organization_id, req.user_id);
     state.db.plugin_delete("org_member", &key).await.ok();
@@ -520,17 +665,35 @@ async fn update_member_role(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateMemberRoleRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
-    require_org_role(&state, &session.user_id, &req.organization_id, "admin").await?;
+    require_org_role(&state, &session.user_id, &req.organization_id, "admin")
+        .await?;
 
     let key = format!("{}:{}", req.organization_id, req.user_id);
-    let entry = state.db.plugin_get("org_member", &key).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Member not found")
+    let entry =
+        state
+            .db
+            .plugin_get("org_member", &key)
+            .await?
+            .ok_or_else(|| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::OrganizationError,
+                    "Member not found",
+                )
+            })?;
+    let mut member: Member = serde_json::from_value(entry).map_err(|_| {
+        AuthError::new(
+            crate::error::AuthErrorCode::OrganizationError,
+            "Invalid member",
+        )
     })?;
-    let mut member: Member = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::OrganizationError, "Invalid member"))?;
 
     member.role = req.role;
     state
@@ -550,8 +713,13 @@ async fn require_org_role(
     min_role: &str,
 ) -> Result<(), AuthError> {
     let key = format!("{org_id}:{user_id}");
-    let entry = state.db.plugin_get("org_member", &key).await?.ok_or_else(AuthError::forbidden)?;
-    let member: Member = serde_json::from_value(entry).map_err(|_| AuthError::forbidden())?;
+    let entry = state
+        .db
+        .plugin_get("org_member", &key)
+        .await?
+        .ok_or_else(AuthError::forbidden)?;
+    let member: Member =
+        serde_json::from_value(entry).map_err(|_| AuthError::forbidden())?;
 
     let rank = |r: &str| match r {
         "owner" => 3,

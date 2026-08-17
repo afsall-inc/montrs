@@ -1,16 +1,50 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Sign-In with Ethereum (SIWE) plugin.
 //! /siwe/nonce, /siwe/verify — stores nonce in verification; verify is a stub
 //! that accepts signature presence (full eth recovery optional).
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::State,
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// SIWE plugin — Sign-In with Ethereum.
 pub struct SiwePlugin {
@@ -59,7 +93,12 @@ async fn get_nonce(
         300,
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     Ok(Json(json!({ "nonce": nonce })))
 }
@@ -106,7 +145,12 @@ async fn verify_siwe(
                     None
                 }
             })
-            .unwrap_or_else(|| format!("0x{}", uuid::Uuid::new_v4().to_string().replace('-', "")))
+            .unwrap_or_else(|| {
+                format!(
+                    "0x{}",
+                    uuid::Uuid::new_v4().to_string().replace('-', "")
+                )
+            })
     });
 
     let email = format!("{address}@eth.local");
@@ -116,10 +160,16 @@ async fn verify_siwe(
             let mut nu = DefaultUser::new(&email, None);
             nu.email_verified = true;
             state.db.create_user(&nu).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
             })?;
             state.db.find_user_by_email(&email).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    "Failed to create user",
+                )
             })?
         }
     };
@@ -139,7 +189,12 @@ async fn verify_siwe(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

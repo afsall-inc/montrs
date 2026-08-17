@@ -1,15 +1,49 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Magic Link plugin — passwordless sign-in via email magic link.
 //! POST /sign-in/magic-link, GET /magic-link/verify?token=
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::extract::{Query, State};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Magic Link plugin — passwordless sign-in via email.
 pub struct MagicLinkPlugin {
@@ -69,18 +103,27 @@ async fn send_magic_link(
     }
 
     // Check if user exists; if not, create one.
-    let user = match state.db.find_user_by_email(&req.email).await? {
-        Some(u) => u,
-        None => {
-            let new_user = DefaultUser::new(&req.email, None);
-            state.db.create_user(&new_user).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
-            })?;
-            state.db.find_user_by_email(&req.email).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
-            })?
-        }
-    };
+    let user =
+        match state.db.find_user_by_email(&req.email).await? {
+            Some(u) => u,
+            None => {
+                let new_user = DefaultUser::new(&req.email, None);
+                state.db.create_user(&new_user).await.map_err(|e| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::InternalError,
+                        e.to_string(),
+                    )
+                })?;
+                state.db.find_user_by_email(&req.email).await?.ok_or_else(
+                    || {
+                        AuthError::new(
+                            crate::error::AuthErrorCode::InternalError,
+                            "Failed to create user",
+                        )
+                    },
+                )?
+            }
+        };
 
     let token = crate::utils::generate_token();
     let _rec = crate::verification::create_verification(
@@ -90,9 +133,16 @@ async fn send_magic_link(
         600, // 10 minutes
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
-    let callback = req.callback_url.unwrap_or_else(|| format!("{}/api/auth/magic-link/verify", state.config.base_url));
+    let callback = req.callback_url.unwrap_or_else(|| {
+        format!("{}/api/auth/magic-link/verify", state.config.base_url)
+    });
     let link = format!("{}?token={}&email={}", callback, token, user.email);
 
     let _ = state
@@ -105,7 +155,9 @@ async fn send_magic_link(
         })
         .await;
 
-    Ok(Json(json!({ "success": true, "message": "Magic link sent" })))
+    Ok(Json(
+        json!({ "success": true, "message": "Magic link sent" }),
+    ))
 }
 
 async fn verify_magic_link(
@@ -124,12 +176,15 @@ async fn verify_magic_link(
     .await
     .map_err(|_| AuthError::invalid_token())?;
 
-    let email = query.email.as_ref().map(|s| s.as_str()).unwrap_or("");
+    let email = query.email.as_deref().unwrap_or("");
     let user_email = if !email.is_empty() {
         email.to_string()
     } else {
         // Extract from identifier.
-        rec.identifier.strip_prefix("magic-link:").unwrap_or("").to_string()
+        rec.identifier
+            .strip_prefix("magic-link:")
+            .unwrap_or("")
+            .to_string()
     };
 
     let user = state
@@ -153,7 +208,12 @@ async fn verify_magic_link(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

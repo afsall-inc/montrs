@@ -1,19 +1,46 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! I18n plugin — localized auth error messages.
 //!
 //! Registers a global message catalog keyed by `(locale, error_code)` and
 //! exposes `lookup_message()` so `AuthError` responses can be localized by
 //! the request's `Accept-Language` header.
 
-use crate::context::AuthState;
-use crate::error::AuthErrorCode;
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
-use axum::routing::get;
-use axum::{Json, Router};
+use crate::{
+    AuthError, context::AuthState, error::AuthErrorCode, plugin::AuthPlugin,
+};
+use axum::{Json, Router, routing::get};
 use parking_lot::RwLock;
 use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::LazyLock;
+use std::{collections::HashMap, sync::LazyLock};
 
 /// Global error message catalog: `locale -> (code_str -> message)`.
 /// Uses `RwLock` so the catalog can be updated at plugin build time.
@@ -103,25 +130,46 @@ fn default_catalog() -> HashMap<String, HashMap<String, String>> {
 
 fn en_messages() -> HashMap<String, String> {
     let mut m = HashMap::new();
-    m.insert("invalid-credentials".into(), "Invalid email or password".into());
+    m.insert(
+        "invalid-credentials".into(),
+        "Invalid email or password".into(),
+    );
     m.insert("user-not-found".into(), "User not found".into());
     m.insert("email-already-in-use".into(), "Email already in use".into());
     m.insert("email-not-verified".into(), "Email not verified".into());
     m.insert("invalid-token".into(), "Invalid or expired token".into());
-    m.insert("invalid-session".into(), "Invalid or expired session".into());
+    m.insert(
+        "invalid-session".into(),
+        "Invalid or expired session".into(),
+    );
     m.insert("rate-limited".into(), "Too many requests".into());
     m.insert("missing-field".into(), "Missing required field".into());
     m.insert("weak-password".into(), "Password is too weak".into());
-    m.insert("two-factor-required".into(), "Two-factor authentication required".into());
-    m.insert("invalid-two-factor".into(), "Invalid two-factor code".into());
+    m.insert(
+        "two-factor-required".into(),
+        "Two-factor authentication required".into(),
+    );
+    m.insert(
+        "invalid-two-factor".into(),
+        "Invalid two-factor code".into(),
+    );
     m.insert("oauth-error".into(), "OAuth provider error".into());
-    m.insert("provider-not-configured".into(), "OAuth provider not configured".into());
+    m.insert(
+        "provider-not-configured".into(),
+        "OAuth provider not configured".into(),
+    );
     m.insert("organization-error".into(), "Organization error".into());
     m.insert("forbidden".into(), "Permission denied".into());
     m.insert("database-error".into(), "Database error".into());
     m.insert("internal-error".into(), "Internal server error".into());
-    m.insert("captcha-required".into(), "CAPTCHA verification required".into());
-    m.insert("account-already-linked".into(), "Account already linked".into());
+    m.insert(
+        "captcha-required".into(),
+        "CAPTCHA verification required".into(),
+    );
+    m.insert(
+        "account-already-linked".into(),
+        "Account already linked".into(),
+    );
     m.insert("account-not-found".into(), "Account not found".into());
     m.insert("server-error".into(), "Server misconfiguration".into());
     m.insert("unknown".into(), "An unknown error occurred".into());
@@ -137,28 +185,34 @@ pub struct I18nPlugin {
 
 impl I18nPlugin {
     pub fn new() -> Self {
-        Self { locales: Vec::new() }
+        Self {
+            locales: Vec::new(),
+        }
     }
 
     /// Add or override messages for a locale.
-    pub fn with_locale(mut self, locale: &str, msgs: HashMap<String, String>) -> Self {
+    pub fn with_locale(
+        mut self,
+        locale: &str,
+        msgs: HashMap<String, String>,
+    ) -> Self {
         self.locales.push((locale.to_string(), msgs));
         self
     }
 
     /// Reset/register the global catalog. Each plugin registration REPLACES the
-/// catalog so behavior is deterministic (a real app builds one plugin).
-fn register(&self) {
-    let mut catalog = default_catalog();
-    for (locale, msgs) in &self.locales {
-        let entry = catalog.entry(locale.clone()).or_default();
-        for (code, msg) in msgs {
-            entry.insert(code.clone(), msg.clone());
+    /// catalog so behavior is deterministic (a real app builds one plugin).
+    fn register(&self) {
+        let mut catalog = default_catalog();
+        for (locale, msgs) in &self.locales {
+            let entry = catalog.entry(locale.clone()).or_default();
+            for (code, msg) in msgs {
+                entry.insert(code.clone(), msg.clone());
+            }
         }
+        let mut guarded = CATALOG.write();
+        *guarded = catalog;
     }
-    let mut guarded = CATALOG.write();
-    *guarded = catalog;
-}
 }
 
 impl Default for I18nPlugin {
@@ -180,9 +234,8 @@ impl AuthPlugin for I18nPlugin {
     fn router(&self) -> Router {
         // Re-register to make sure catalog exists even if on_build ordering differs.
         self.register();
-        Router::new().route("/i18n/messages", get(move || async {
-            get_messages()
-        }))
+        Router::new()
+            .route("/i18n/messages", get(move || async { get_messages() }))
     }
 }
 
@@ -195,7 +248,9 @@ fn get_messages() -> Json<Value> {
 mod tests {
     use super::*;
 
-    fn catalog_with(locales: Vec<(String, HashMap<String, String>)>) -> HashMap<String, HashMap<String, String>> {
+    fn catalog_with(
+        locales: Vec<(String, HashMap<String, String>)>,
+    ) -> HashMap<String, HashMap<String, String>> {
         let mut catalog = default_catalog();
         for (locale, msgs) in locales {
             let entry = catalog.entry(locale).or_default();
@@ -209,10 +264,12 @@ mod tests {
         let catalog = catalog_with(vec![]);
         assert!(is_registered() || !catalog.is_empty());
         // English lookup works.
-        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "en");
+        let msg =
+            message_from(&catalog, AuthErrorCode::InvalidCredentials, "en");
         assert_eq!(msg, "Invalid email or password");
         // Unknown locale falls back to English.
-        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr-FR");
+        let msg =
+            message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr-FR");
         assert_eq!(msg, "Invalid email or password");
         // Normalized locale.
         let msg = message_from(&catalog, AuthErrorCode::RateLimited, "en-US");
@@ -222,10 +279,14 @@ mod tests {
     #[test]
     fn test_custom_locale_override() {
         let mut fr = HashMap::new();
-        fr.insert("invalid-credentials".into(), "Identifiants invalides".into());
+        fr.insert(
+            "invalid-credentials".into(),
+            "Identifiants invalides".into(),
+        );
         let catalog = catalog_with(vec![("fr".into(), fr)]);
 
-        let msg = message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr");
+        let msg =
+            message_from(&catalog, AuthErrorCode::InvalidCredentials, "fr");
         assert_eq!(msg, "Identifiants invalides");
         // Unoverridden code falls back to English.
         let msg = message_from(&catalog, AuthErrorCode::RateLimited, "fr");

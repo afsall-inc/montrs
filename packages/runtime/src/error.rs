@@ -1,3 +1,33 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Structured runtime errors with stable codes and suggestions.
 //!
 //! Replaces the plain `OpError(String)` with a classified error type so
@@ -61,34 +91,35 @@ impl RuntimeErrorKind {
         match self {
             Self::OpNotFound => &[
                 "Check the op name is registered in an extension.",
-                "Ensure the extension supplying the op is included in RuntimeOptions.",
+                "Ensure the extension supplying the op is included in \
+                 RuntimeOptions.",
             ],
-            Self::OpMismatch => &[
-                "Use op_sync for sync ops and op_async for async ops.",
-            ],
-            Self::ExtensionCycle => &[
-                "Remove the cyclic dependency between extensions.",
-            ],
-            Self::MissingDependency => &[
-                "Add the dependency extension to RuntimeOptions.extensions.",
-            ],
-            Self::PermissionDenied => &[
-                "Configure Permissions to allow the requested operation.",
-            ],
+            Self::OpMismatch => {
+                &["Use op_sync for sync ops and op_async for async ops."]
+            }
+            Self::ExtensionCycle => {
+                &["Remove the cyclic dependency between extensions."]
+            }
+            Self::MissingDependency => {
+                &["Add the dependency extension to RuntimeOptions.extensions."]
+            }
+            Self::PermissionDenied => {
+                &["Configure Permissions to allow the requested operation."]
+            }
             Self::ModuleLoad => &[
                 "Check the module specifier resolves to an existing file.",
                 "Add the module's root directory to the ModuleLoader roots.",
             ],
-            Self::ModuleEvaluation => &[
-                "Inspect the module code for panics or invalid imports.",
-            ],
+            Self::ModuleEvaluation => {
+                &["Inspect the module code for panics or invalid imports."]
+            }
             Self::Resource => &[
                 "Check the resource ID was returned by the resource table.",
                 "Ensure the resource has not already been closed.",
             ],
-            Self::OutOfMemory => &[
-                "Increase the arena size in RuntimeOptions.",
-            ],
+            Self::OutOfMemory => {
+                &["Increase the arena size in RuntimeOptions."]
+            }
             _ => &[],
         }
     }
@@ -155,7 +186,10 @@ impl RuntimeError {
     pub fn extension_cycle(nodes: &[&str]) -> Self {
         Self::new(
             RuntimeErrorKind::ExtensionCycle,
-            format!("extension dependency cycle detected: {}", nodes.join(" -> ")),
+            format!(
+                "extension dependency cycle detected: {}",
+                nodes.join(" -> ")
+            ),
         )
     }
 
@@ -182,7 +216,9 @@ impl RuntimeError {
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.source {
-            Some(src) => write!(f, "[{}] {} (in {src})", self.kind, self.message),
+            Some(src) => {
+                write!(f, "[{}] {} (in {src})", self.kind, self.message)
+            }
             None => write!(f, "[{}] {}", self.kind, self.message),
         }
     }

@@ -1,17 +1,44 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Device Authorization plugin — RFC 8628 Device Flow.
 //! /device/code, /device/token, /device/approve, /device/deny.
 //! Uses plugin_store namespace "device".
 
-use crate::context::AuthState;
-use crate::plugin::AuthPlugin;
-use crate::utils::generate_token;
-use crate::AuthError;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use crate::{
+    AuthError, context::AuthState, plugin::AuthPlugin, utils::generate_token,
+};
+use axum::{Json, Router, extract::State, routing::post};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 
 /// A device authorization request (RFC 8628).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,10 +81,10 @@ impl Default for DeviceAuthorizationPlugin {
 }
 
 fn extract_token(headers: &axum::http::HeaderMap) -> Option<String> {
-    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok()) {
-        if let Some(t) = v.strip_prefix("Bearer ") {
-            return Some(t.to_string());
-        }
+    if let Some(v) = headers.get("authorization").and_then(|v| v.to_str().ok())
+        && let Some(t) = v.strip_prefix("Bearer ")
+    {
+        return Some(t.to_string());
     }
     if let Some(v) = headers.get("cookie").and_then(|v| v.to_str().ok()) {
         for part in v.split(';') {
@@ -84,7 +111,10 @@ impl AuthPlugin for DeviceAuthorizationPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("DeviceAuthorizationPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("DeviceAuthorizationPlugin: state not set");
         Router::new()
             .route("/device/code", post(device_code))
             .route("/device/token", post(device_token))
@@ -113,7 +143,9 @@ async fn device_code(
         device_code: device_code.clone(),
         user_code: user_code.clone(),
         verification_uri: format!("{base_url}/api/auth/device/approve"),
-        verification_uri_complete: format!("{base_url}/api/auth/device/approve?code={user_code}"),
+        verification_uri_complete: format!(
+            "{base_url}/api/auth/device/approve?code={user_code}"
+        ),
         expires_at: Utc::now() + chrono::Duration::seconds(600),
         interval: 5,
         status: DeviceStatus::Pending,
@@ -124,9 +156,18 @@ async fn device_code(
 
     state
         .db
-        .plugin_set("device", &device_code, serde_json::to_value(&device_req).unwrap())
+        .plugin_set(
+            "device",
+            &device_code,
+            serde_json::to_value(&device_req).unwrap(),
+        )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     Ok(Json(json!({
         "device_code": device_code,
@@ -158,14 +199,30 @@ async fn device_token(
     State(state): State<AuthState>,
     Json(req): Json<DeviceTokenRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let entry = state.db.plugin_get("device", &req.device_code).await?.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "Invalid device code")
-    })?;
-    let device_req: DeviceRequest = serde_json::from_value(entry)
-        .map_err(|_| AuthError::new(crate::error::AuthErrorCode::InternalError, "Invalid device record"))?;
+    let entry = state
+        .db
+        .plugin_get("device", &req.device_code)
+        .await?
+        .ok_or_else(|| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InvalidToken,
+                "Invalid device code",
+            )
+        })?;
+    let device_req: DeviceRequest =
+        serde_json::from_value(entry).map_err(|_| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                "Invalid device record",
+            )
+        })?;
 
     if device_req.expires_at <= Utc::now() {
-        state.db.plugin_delete("device", &req.device_code).await.ok();
+        state
+            .db
+            .plugin_delete("device", &req.device_code)
+            .await
+            .ok();
         return Err(AuthError::invalid_token());
     }
 
@@ -177,27 +234,47 @@ async fn device_token(
             ));
         }
         DeviceStatus::Denied => {
-            state.db.plugin_delete("device", &req.device_code).await.ok();
+            state
+                .db
+                .plugin_delete("device", &req.device_code)
+                .await
+                .ok();
             return Err(AuthError::new(
                 crate::error::AuthErrorCode::Forbidden,
                 "access_denied",
             ));
         }
         DeviceStatus::Expired => {
-            state.db.plugin_delete("device", &req.device_code).await.ok();
+            state
+                .db
+                .plugin_delete("device", &req.device_code)
+                .await
+                .ok();
             return Err(AuthError::invalid_token());
         }
         DeviceStatus::Approved => {}
     }
 
-    let user_id = device_req.user_id.clone().ok_or_else(AuthError::user_not_found)?;
+    let user_id = device_req
+        .user_id
+        .clone()
+        .ok_or_else(AuthError::user_not_found)?;
     let session = state
         .session
         .create(&user_id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
-    state.db.plugin_delete("device", &req.device_code).await.ok();
+    state
+        .db
+        .plugin_delete("device", &req.device_code)
+        .await
+        .ok();
 
     Ok(Json(json!({
         "access_token": session.token,
@@ -219,40 +296,55 @@ async fn device_approve(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeviceApproveRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     // Find the device request by user_code or device_code.
     let entries = state.db.plugin_list("device").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut found_key = None;
     for (key, val) in &entries {
-        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone()) {
-            if dr.status == DeviceStatus::Pending {
-                if let Some(code) = &req.code {
-                    if dr.user_code == *code {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
-                if let Some(dc) = &req.device_code {
-                    if dr.device_code == *dc {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
+        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone())
+            && dr.status == DeviceStatus::Pending
+        {
+            if let Some(code) = &req.code
+                && dr.user_code == *code
+            {
+                found_key = Some(key.clone());
+                break;
+            }
+            if let Some(dc) = &req.device_code
+                && dr.device_code == *dc
+            {
+                found_key = Some(key.clone());
+                break;
             }
         }
     }
 
     let key = found_key.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "No pending device request found")
+        AuthError::new(
+            crate::error::AuthErrorCode::InvalidToken,
+            "No pending device request found",
+        )
     })?;
 
     let mut device_req: DeviceRequest = serde_json::from_value(
-        entries.into_iter().find(|(k, _)| *k == key).map(|(_, v)| v).unwrap(),
+        entries
+            .into_iter()
+            .find(|(k, _)| *k == key)
+            .map(|(_, v)| v)
+            .unwrap(),
     )
     .unwrap();
 
@@ -280,39 +372,54 @@ async fn device_deny(
     headers: axum::http::HeaderMap,
     Json(req): Json<DeviceDenyRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
-    let _session = state.session.validate(&token).await?.ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_token(&headers).ok_or_else(AuthError::invalid_session)?;
+    let _session = state
+        .session
+        .validate(&token)
+        .await?
+        .ok_or_else(AuthError::invalid_session)?;
 
     let entries = state.db.plugin_list("device").await.map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut found_key = None;
     for (key, val) in &entries {
-        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone()) {
-            if dr.status == DeviceStatus::Pending {
-                if let Some(code) = &req.code {
-                    if dr.user_code == *code {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
-                if let Some(dc) = &req.device_code {
-                    if dr.device_code == *dc {
-                        found_key = Some(key.clone());
-                        break;
-                    }
-                }
+        if let Ok(dr) = serde_json::from_value::<DeviceRequest>(val.clone())
+            && dr.status == DeviceStatus::Pending
+        {
+            if let Some(code) = &req.code
+                && dr.user_code == *code
+            {
+                found_key = Some(key.clone());
+                break;
+            }
+            if let Some(dc) = &req.device_code
+                && dr.device_code == *dc
+            {
+                found_key = Some(key.clone());
+                break;
             }
         }
     }
 
     let key = found_key.ok_or_else(|| {
-        AuthError::new(crate::error::AuthErrorCode::InvalidToken, "No pending device request found")
+        AuthError::new(
+            crate::error::AuthErrorCode::InvalidToken,
+            "No pending device request found",
+        )
     })?;
 
     let mut device_req: DeviceRequest = serde_json::from_value(
-        entries.into_iter().find(|(k, _)| *k == key).map(|(_, v)| v).unwrap(),
+        entries
+            .into_iter()
+            .find(|(k, _)| *k == key)
+            .map(|(_, v)| v)
+            .unwrap(),
     )
     .unwrap();
 

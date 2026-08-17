@@ -1,17 +1,47 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Phone Number plugin — SMS OTP sign-in and phone verification.
 //! SmsProvider trait + ConsoleSmsProvider in this file.
 //! POST /phone-number/send-otp, /phone-number/verify, /sign-in/phone-number.
 
-use crate::context::AuthState;
-use crate::entities::{DefaultUser, UserProfile};
-use crate::plugin::AuthPlugin;
-use crate::AuthError;
+use crate::{
+    AuthError,
+    context::AuthState,
+    entities::{DefaultUser, UserProfile},
+    plugin::AuthPlugin,
+};
 use async_trait::async_trait;
-use axum::extract::State;
-use axum::routing::post;
-use axum::{Json, Router};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// SMS provider abstraction.
 #[async_trait]
@@ -76,7 +106,10 @@ impl AuthPlugin for PhoneNumberPlugin {
     }
 
     fn router(&self) -> Router {
-        let state = self.state.clone().expect("PhoneNumberPlugin: state not set");
+        let state = self
+            .state
+            .clone()
+            .expect("PhoneNumberPlugin: state not set");
         Router::new()
             .route("/phone-number/send-otp", post(send_otp))
             .route("/phone-number/verify", post(verify_phone))
@@ -120,7 +153,12 @@ async fn send_otp(
         300,
     )
     .await
-    .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+    .map_err(|e| {
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
+    })?;
 
     let _ = self_send_sms(&req.phone_number, &otp.value).await;
     Ok(Json(json!({ "success": true, "message": "OTP sent" })))
@@ -179,17 +217,30 @@ async fn sign_in_phone(
         Some(u) => u,
         None => {
             let mut new_user = DefaultUser::new(
-                format!("phone-{}@phone.local", req.phone_number.replace('+', "")),
+                format!(
+                    "phone-{}@phone.local",
+                    req.phone_number.replace('+', "")
+                ),
                 None,
             );
             new_user.phone_number = Some(req.phone_number.clone());
             new_user.phone_verified = true;
             state.db.create_user(&new_user).await.map_err(|e| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
             })?;
-            state.db.find_user_by_phone(&req.phone_number).await?.ok_or_else(|| {
-                AuthError::new(crate::error::AuthErrorCode::InternalError, "Failed to create user")
-            })?
+            state
+                .db
+                .find_user_by_phone(&req.phone_number)
+                .await?
+                .ok_or_else(|| {
+                    AuthError::new(
+                        crate::error::AuthErrorCode::InternalError,
+                        "Failed to create user",
+                    )
+                })?
         }
     };
 
@@ -209,7 +260,12 @@ async fn sign_in_phone(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({

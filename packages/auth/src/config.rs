@@ -1,3 +1,33 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Auth configuration — the `AuthConfig` builder.
 
 use serde::{Deserialize, Serialize};
@@ -29,9 +59,15 @@ pub struct SessionConfig {
     pub update_expiry: bool,
 }
 
-fn default_session_expiry() -> u64 { 7 * 24 * 3600 }
-fn default_refresh_threshold() -> u64 { 24 * 3600 }
-fn default_true() -> bool { true }
+fn default_session_expiry() -> u64 {
+    7 * 24 * 3600
+}
+fn default_refresh_threshold() -> u64 {
+    24 * 3600
+}
+fn default_true() -> bool {
+    true
+}
 
 impl Default for SessionConfig {
     fn default() -> Self {
@@ -63,7 +99,9 @@ pub struct PasswordPolicy {
     pub require_special: bool,
 }
 
-fn default_min_length() -> usize { 8 }
+fn default_min_length() -> usize {
+    8
+}
 
 impl Default for PasswordPolicy {
     fn default() -> Self {
@@ -83,16 +121,21 @@ impl PasswordPolicy {
         if password.len() < self.min_length {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
-                format!("Password must be at least {} characters", self.min_length),
+                format!(
+                    "Password must be at least {} characters",
+                    self.min_length
+                ),
             ));
         }
-        if self.require_uppercase && !password.chars().any(|c| c.is_uppercase()) {
+        if self.require_uppercase && !password.chars().any(|c| c.is_uppercase())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain an uppercase letter",
             ));
         }
-        if self.require_lowercase && !password.chars().any(|c| c.is_lowercase()) {
+        if self.require_lowercase && !password.chars().any(|c| c.is_lowercase())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain a lowercase letter",
@@ -104,7 +147,9 @@ impl PasswordPolicy {
                 "Password must contain a digit",
             ));
         }
-        if self.require_special && !password.chars().any(|c| !c.is_alphanumeric()) {
+        if self.require_special
+            && !password.chars().any(|c| !c.is_alphanumeric())
+        {
             return Err(crate::AuthError::new(
                 crate::error::AuthErrorCode::WeakPassword,
                 "Password must contain a special character",
@@ -144,8 +189,12 @@ pub struct AuthConfig {
     pub rate_limit_window_secs: u64,
 }
 
-fn default_rate_limit() -> u32 { 10 }
-fn default_rate_window() -> u64 { 60 }
+fn default_rate_limit() -> u32 {
+    10
+}
+fn default_rate_window() -> u64 {
+    60
+}
 
 impl Default for AuthConfig {
     fn default() -> Self {

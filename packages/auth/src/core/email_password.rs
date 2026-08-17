@@ -1,16 +1,45 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! Email/password authentication: sign-up, sign-in, change/set/verify password.
 
-use crate::context::AuthState;
-use crate::database::UserUpdate;
-use crate::entities::{DefaultAccount, DefaultUser, UserProfile};
-use crate::password::{hash_password, verify_password};
-use crate::AuthError;
-use axum::extract::State;
-use axum::Json;
-use axum::routing::post;
-use axum::Router;
+use crate::{
+    AuthError,
+    context::AuthState,
+    database::UserUpdate,
+    entities::{DefaultAccount, DefaultUser, UserProfile},
+    password::{hash_password, verify_password},
+};
+use axum::{Json, Router, extract::State, routing::post};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -80,7 +109,10 @@ async fn sign_up(
     }
 
     let hash = hash_password(&req.password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
 
     let mut user = DefaultUser::new(&req.email, Some(hash.clone()));
@@ -96,7 +128,12 @@ async fn sign_up(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     if state.config.email_verification {
         let ver = crate::verification::create_verification(
@@ -106,7 +143,12 @@ async fn sign_up(
             3600 * 24,
         )
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
         let link = format!(
             "{}/api/auth/verify-email?token={}&email={}",
             state.config.base_url, ver.value, user.email
@@ -203,7 +245,12 @@ async fn sign_in(
         .session
         .create(&user.id, state.session_expires_secs())
         .await
-        .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+        .map_err(|e| {
+            AuthError::new(
+                crate::error::AuthErrorCode::InternalError,
+                e.to_string(),
+            )
+        })?;
 
     let profile: UserProfile = (&user).into();
     Ok(Json(json!({
@@ -218,7 +265,8 @@ async fn change_password(
     headers: axum::http::HeaderMap,
     Json(req): Json<ChangePasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -234,7 +282,10 @@ async fn change_password(
     }
     state.config.password.validate(&req.new_password)?;
     let new_hash = hash_password(&req.new_password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state
         .db
@@ -253,7 +304,12 @@ async fn change_password(
             .session
             .create(&user.id, state.session_expires_secs())
             .await
-            .map_err(|e| AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string()))?;
+            .map_err(|e| {
+                AuthError::new(
+                    crate::error::AuthErrorCode::InternalError,
+                    e.to_string(),
+                )
+            })?;
         return Ok(Json(json!({
             "success": true,
             "token": session.token,
@@ -268,7 +324,8 @@ async fn set_password(
     headers: axum::http::HeaderMap,
     Json(req): Json<SetPasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -276,7 +333,10 @@ async fn set_password(
         .ok_or_else(AuthError::invalid_session)?;
     state.config.password.validate(&req.new_password)?;
     let new_hash = hash_password(&req.new_password).map_err(|e| {
-        AuthError::new(crate::error::AuthErrorCode::InternalError, e.to_string())
+        AuthError::new(
+            crate::error::AuthErrorCode::InternalError,
+            e.to_string(),
+        )
     })?;
     state
         .db
@@ -306,7 +366,8 @@ async fn verify_password_endpoint(
     headers: axum::http::HeaderMap,
     Json(req): Json<VerifyPasswordRequest>,
 ) -> Result<Json<Value>, AuthError> {
-    let token = extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
+    let token =
+        extract_bearer(&headers).ok_or_else(AuthError::invalid_session)?;
     let user = state
         .session
         .get_user(&token)
@@ -330,13 +391,16 @@ fn extract_bearer(headers: &axum::http::HeaderMap) -> Option<String> {
         .and_then(|s| s.strip_prefix("Bearer "))
         .map(|s| s.to_string())
         .or_else(|| {
-            headers.get("cookie").and_then(|v| v.to_str().ok()).and_then(|c| {
-                c.split(';').find_map(|p| {
-                    let p = p.trim();
-                    p.strip_prefix("session=")
-                        .or_else(|| p.strip_prefix("__montrs_session="))
-                        .map(|s| s.to_string())
+            headers
+                .get("cookie")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|c| {
+                    c.split(';').find_map(|p| {
+                        let p = p.trim();
+                        p.strip_prefix("session=")
+                            .or_else(|| p.strip_prefix("__montrs_session="))
+                            .map(|s| s.to_string())
+                    })
                 })
-            })
         })
 }

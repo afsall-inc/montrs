@@ -1,12 +1,43 @@
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// This file is part of montrs.
+// Copyright (C) 2026-Present Afsall Inc.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// Alternatively, this file is available under the MIT License:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 //! File-backed log store with streaming and retention.
 
 use crate::format::LogFormat;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use tokio::io::AsyncWriteExt;
-use tokio::sync::RwLock;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use tokio::{io::AsyncWriteExt, sync::RwLock};
 
 /// A single log entry captured from a service.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,7 +147,7 @@ impl LogStore {
     }
 
     /// Open the store at the default location.
-    pub fn default() -> anyhow::Result<Self> {
+    pub fn open_default() -> anyhow::Result<Self> {
         Self::open(LogStoreConfig::default())
     }
 
@@ -133,14 +164,11 @@ impl LogStore {
         *seq += 1;
 
         let ts = chrono::Utc::now().to_rfc3339();
-        let file = inner
-            .log_file(service)
-            .unwrap_or_else(|_| inner.config.root.join(format!("{service}.log")));
+        let file = inner.log_file(service).unwrap_or_else(|_| {
+            inner.config.root.join(format!("{service}.log"))
+        });
 
-        let rendered = inner
-            .config
-            .format
-            .render(&ts, level, service, message);
+        let rendered = inner.config.format.render(&ts, level, service, message);
 
         let mut f = tokio::fs::OpenOptions::new()
             .create(true)
@@ -157,7 +185,8 @@ impl LogStore {
             let count = lines.lines().count();
             if count > inner.config.retention.max_lines {
                 let keep = count - inner.config.retention.max_lines;
-                let trimmed: String = lines.lines().skip(keep).collect::<Vec<_>>().join("\n");
+                let trimmed: String =
+                    lines.lines().skip(keep).collect::<Vec<_>>().join("\n");
                 tokio::fs::write(&file, trimmed).await?;
             }
         }
@@ -165,7 +194,10 @@ impl LogStore {
     }
 
     /// Read log entries matching `query` from the store.
-    pub async fn query(&self, query: LogQuery) -> anyhow::Result<Vec<LogEntry>> {
+    pub async fn query(
+        &self,
+        query: LogQuery,
+    ) -> anyhow::Result<Vec<LogEntry>> {
         let inner = self.inner.read().await;
         let mut out = Vec::new();
         let services: Vec<String> = match &query.service {
@@ -185,10 +217,10 @@ impl LogStore {
                 }
                 let entry = parse_line(&query, &service, line);
                 if let Some(e) = entry {
-                    if let Some(lvl) = &query.level {
-                        if e.level.to_lowercase() != lvl.to_lowercase() {
-                            continue;
-                        }
+                    if let Some(lvl) = &query.level
+                        && e.level.to_lowercase() != lvl.to_lowercase()
+                    {
+                        continue;
                     }
                     out.push(e);
                 }
@@ -199,7 +231,10 @@ impl LogStore {
 
     /// Stream new entries appended to services. Returns a channel receiver.
     /// Each entry is delivered as a structured line.
-    pub async fn tail(&self, _service: Option<&str>) -> anyhow::Result<tokio::sync::mpsc::Receiver<String>> {
+    pub async fn tail(
+        &self,
+        _service: Option<&str>,
+    ) -> anyhow::Result<tokio::sync::mpsc::Receiver<String>> {
         let (tx, rx) = tokio::sync::mpsc::channel(1024);
         // NOTE: In-memory tailing is a thin wrapper; callers may subscribe to
         // the append hook for live streaming. For now we return an empty
@@ -251,10 +286,10 @@ impl LogStoreInner {
         if let Ok(rd) = std::fs::read_dir(&self.config.root) {
             for entry in rd.flatten() {
                 let p = entry.path();
-                if p.extension().and_then(|e| e.to_str()) == Some("log") {
-                    if let Some(stem) = p.file_stem().and_then(|s| s.to_str()) {
-                        out.push(stem.to_string());
-                    }
+                if p.extension().and_then(|e| e.to_str()) == Some("log")
+                    && let Some(stem) = p.file_stem().and_then(|s| s.to_str())
+                {
+                    out.push(stem.to_string());
                 }
             }
         }
@@ -263,7 +298,11 @@ impl LogStoreInner {
 }
 
 /// Parse a raw line into a LogEntry, honoring the configured format.
-fn parse_line(_query: &LogQuery, service: &str, line: &str) -> Option<LogEntry> {
+fn parse_line(
+    _query: &LogQuery,
+    service: &str,
+    line: &str,
+) -> Option<LogEntry> {
     // Try JSON first.
     if let Some(rec) = LogFormat::parse_json(line) {
         return Some(LogEntry {
@@ -280,16 +319,16 @@ fn parse_line(_query: &LogQuery, service: &str, line: &str) -> Option<LogEntry> 
         let mut parts = rest.split("] [");
         let ts = parts.next().unwrap_or("").trim().to_string();
         let level_rest = parts.next().unwrap_or("");
-        if let Some((level, after)) = level_rest.split_once("] ") {
-            if let Some((_sv, msg)) = after.split_once(": ") {
-                return Some(LogEntry {
-                    seq: 0,
-                    service: service.to_string(),
-                    ts,
-                    level: level.to_string(),
-                    message: msg.to_string(),
-                });
-            }
+        if let Some((level, after)) = level_rest.split_once("] ")
+            && let Some((_sv, msg)) = after.split_once(": ")
+        {
+            return Some(LogEntry {
+                seq: 0,
+                service: service.to_string(),
+                ts,
+                level: level.to_string(),
+                message: msg.to_string(),
+            });
         }
     }
 

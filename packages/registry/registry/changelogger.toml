@@ -1,0 +1,5 @@
+backends = ["cargo:changelogger-cli"]
+bins = ["changelogger"]
+description = "Changelogger generates PR documentation (prdocs) and changelogs for Rust projects"
+detect = ["changelogger.toml"]
+idiomatic_files = ["changelogger.toml"]
