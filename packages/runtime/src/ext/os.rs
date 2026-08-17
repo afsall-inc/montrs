@@ -86,10 +86,9 @@ pub fn init() -> RuntimeExtension {
                 {
                     if let Ok(content) =
                         std::fs::read_to_string("/proc/loadavg")
+                        && let Some(parts) = content.split_whitespace().next()
                     {
-                        if let Some(parts) = content.split_whitespace().next() {
-                            return Ok(serde_json::json!(parts));
-                        }
+                        return Ok(serde_json::json!(parts));
                     }
                 }
                 Ok(serde_json::json!(null))
