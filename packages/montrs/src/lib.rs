@@ -51,6 +51,14 @@ pub use montrs_test as test;
 pub use montrs_ui as ui;
 #[cfg(feature = "validator")]
 pub use montrs_validator as validator;
+#[cfg(feature = "state")]
+pub use montrs_state as state;
+#[cfg(feature = "content")]
+pub use montrs_content as content;
+#[cfg(feature = "table")]
+pub use montrs_table_core as table;
+#[cfg(feature = "hotkeys")]
+pub use montrs_hotkeys_core as hotkeys;
 
 /// A convenience plate for importing the most commonly used types and traits.
 #[allow(ambiguous_glob_reexports)]
@@ -69,4 +77,12 @@ pub mod prelude {
     // montrs_validator is a proc-macro crate, we re-export its main macro
     #[cfg(feature = "validator")]
     pub use montrs_validator::Validator;
+    #[cfg(feature = "state")]
+    pub use montrs_state::*;
+    #[cfg(feature = "content")]
+    pub use montrs_content::*;
+    #[cfg(feature = "table")]
+    pub use montrs_table_core::*;
+    #[cfg(feature = "hotkeys")]
+    pub use montrs_hotkeys_core::*;
 }

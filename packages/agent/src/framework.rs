@@ -65,6 +65,14 @@ pub const HAPTICS_INVARIANTS: &str =
     include_str!("../../../packages/haptics/docs/invariants.md");
 pub const AGENTIGNORE_INVARIANTS: &str =
     include_str!("../../../packages/agentignore/docs/invariants.md");
+pub const STATE_INVARIANTS: &str =
+    include_str!("../../../packages/state/docs/invariants.md");
+pub const CONTENT_INVARIANTS: &str =
+    include_str!("../../../packages/content/docs/invariants.md");
+pub const TABLE_CORE_INVARIANTS: &str =
+    include_str!("../../../packages/table-core/docs/invariants.md");
+pub const HOTKEYS_CORE_INVARIANTS: &str =
+    include_str!("../../../packages/hotkeys-core/docs/invariants.md");
 
 pub const AGENT_INDEX: &str = include_str!("../../../docs/agent/index.md");
 pub const APP_DEVELOPER_PROMPT: &str =
@@ -108,5 +116,9 @@ pub fn get_framework_invariants()
     m.insert("montrs", MONTRS_INVARIANTS);
     m.insert("haptics", HAPTICS_INVARIANTS);
     m.insert("agentignore", AGENTIGNORE_INVARIANTS);
+    m.insert("state", STATE_INVARIANTS);
+    m.insert("content", CONTENT_INVARIANTS);
+    m.insert("table-core", TABLE_CORE_INVARIANTS);
+    m.insert("hotkeys-core", HOTKEYS_CORE_INVARIANTS);
     m
 }

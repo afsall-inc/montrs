@@ -42,6 +42,10 @@ members = [
     "packages/log",
     "packages/proxy",
     "packages/auth",
+    "packages/state",
+    "packages/content",
+    "packages/table-core",
+    "packages/hotkeys-core",
     "apps/website",
 ]
 
