@@ -44,7 +44,7 @@ haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "validator", "test", "cli", "icons", "ui", "motion", "state", "content", "table", "hotkeys"]
+full = ["orm", "validator", "test", "cli", "icons", "ui", "motion", "state", "content", "table", "hotkeys", "command", "image"]
 state = ["dep:montrs-state"]
 content = ["dep:montrs-content"]
 table = ["dep:montrs-table-core"]

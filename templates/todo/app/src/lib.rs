@@ -9,6 +9,8 @@ use montrs_ui::prelude::*;
 use montrs_icons::*;
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
+use montrs_state::Store;
+use montrs_table_core::{Row, Table};
 
 pub fn build_spec() -> AppSpec<MyConfig> {
     let mut spec = AppSpec::new(
@@ -36,6 +38,15 @@ pub fn hydrate() {
 
 #[component]
 pub fn App() -> impl IntoView {
+    let todos = Store::new(Vec::<String>::new(), |state: &Vec<String>, event: &String| {
+        let mut next = state.clone();
+        next.push(event.clone());
+        Ok(next)
+    });
+    let table = Table::new(vec![Row { id: "example".into(), value: "Todo state" }]);
+    provide_context(todos);
+    provide_context(table);
+
     view! {
         <leptos_router::components::Router>
             <ThemeProvider>
