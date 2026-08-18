@@ -1,0 +1,18 @@
+[package]
+name = "montrs-hotkeys-web"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Browser keyboard shortcut adapter for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-hotkeys-core"]
+
+[dependencies]
+montrs-hotkeys-core = { path = "../hotkeys-core" }
+leptos.workspace = true
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = ["Document", "Event", "EventTarget", "KeyboardEvent", "Window"] }

@@ -46,6 +46,7 @@ members = [
     "packages/content",
     "packages/table-core",
     "packages/hotkeys-core",
+    "packages/hotkeys-web",
     "apps/website",
 ]
 

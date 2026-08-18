@@ -123,3 +123,4 @@ pub mod textarea;
 pub mod theme_toggle;
 pub mod toggle_group;
 pub mod tooltip;
+pub mod toaster;

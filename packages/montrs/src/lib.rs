@@ -59,6 +59,8 @@ pub use montrs_content as content;
 pub use montrs_table_core as table;
 #[cfg(feature = "hotkeys")]
 pub use montrs_hotkeys_core as hotkeys;
+#[cfg(feature = "hotkeys-web")]
+pub use montrs_hotkeys_web as hotkeys_web;
 
 /// A convenience plate for importing the most commonly used types and traits.
 #[allow(ambiguous_glob_reexports)]
@@ -85,4 +87,6 @@ pub mod prelude {
     pub use montrs_table_core::*;
     #[cfg(feature = "hotkeys")]
     pub use montrs_hotkeys_core::*;
+    #[cfg(feature = "hotkeys-web")]
+    pub use montrs_hotkeys_web::*;
 }
