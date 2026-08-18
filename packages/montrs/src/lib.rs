@@ -61,6 +61,12 @@ pub use montrs_table_core as table;
 pub use montrs_hotkeys_core as hotkeys;
 #[cfg(feature = "hotkeys-web")]
 pub use montrs_hotkeys_web as hotkeys_web;
+#[cfg(feature = "image")]
+pub use montrs_image_core as image;
+#[cfg(feature = "image-optimizer")]
+pub use montrs_image_optimizer as image_optimizer;
+#[cfg(feature = "command")]
+pub use montrs_command as command;
 
 /// A convenience plate for importing the most commonly used types and traits.
 #[allow(ambiguous_glob_reexports)]

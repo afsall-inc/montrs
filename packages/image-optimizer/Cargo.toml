@@ -1,0 +1,28 @@
+[package]
+name = "montrs-image-optimizer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Bounded server-side image optimization for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-image-core"]
+
+[dependencies]
+montrs-image-core = { path = "../image-core" }
+thiserror.workspace = true
+
+[features]
+default = []
+webp = ["dep:image", "dep:webp"]
+
+[dependencies.image]
+version = "0.24"
+optional = true
+
+[dependencies.webp]
+version = "0.2"
+optional = true

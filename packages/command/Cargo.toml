@@ -1,0 +1,14 @@
+[package]
+name = "montrs-command"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Typed command registry and deterministic search for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
+[dependencies]

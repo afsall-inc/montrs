@@ -75,6 +75,12 @@ pub const HOTKEYS_CORE_INVARIANTS: &str =
     include_str!("../../../packages/hotkeys-core/docs/invariants.md");
 pub const HOTKEYS_WEB_INVARIANTS: &str =
     include_str!("../../../packages/hotkeys-web/docs/invariants.md");
+pub const IMAGE_CORE_INVARIANTS: &str =
+    include_str!("../../../packages/image-core/docs/invariants.md");
+pub const IMAGE_OPTIMIZER_INVARIANTS: &str =
+    include_str!("../../../packages/image-optimizer/docs/invariants.md");
+pub const COMMAND_INVARIANTS: &str =
+    include_str!("../../../packages/command/docs/invariants.md");
 
 pub const AGENT_INDEX: &str = include_str!("../../../docs/agent/index.md");
 pub const APP_DEVELOPER_PROMPT: &str =
@@ -123,5 +129,8 @@ pub fn get_framework_invariants()
     m.insert("table-core", TABLE_CORE_INVARIANTS);
     m.insert("hotkeys-core", HOTKEYS_CORE_INVARIANTS);
     m.insert("hotkeys-web", HOTKEYS_WEB_INVARIANTS);
+    m.insert("image-core", IMAGE_CORE_INVARIANTS);
+    m.insert("image-optimizer", IMAGE_OPTIMIZER_INVARIANTS);
+    m.insert("command", COMMAND_INVARIANTS);
     m
 }

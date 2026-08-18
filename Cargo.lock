@@ -4020,6 +4020,24 @@ dependencies = [
 
 [[package]]
 name = "image"
+version = "0.24.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5690139d2f55868e080017335e4b94cb7414274c74f1669c84fb5feba2c9f69d"
+dependencies = [
+ "bytemuck",
+ "byteorder",
+ "color_quant",
+ "exr",
+ "gif 0.13.3",
+ "jpeg-decoder",
+ "num-traits",
+ "png 0.17.16",
+ "qoi",
+ "tiff 0.9.1",
+]
+
+[[package]]
+name = "image"
 version = "0.25.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104"
@@ -4037,7 +4055,7 @@ dependencies = [
  "ravif",
  "rayon",
  "rgb",
- "tiff",
+ "tiff 0.11.3",
  "zune-core 0.5.3",
  "zune-jpeg 0.5.15",
 ]
@@ -4386,6 +4404,15 @@ checksum = "1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3"
 dependencies = [
  "getrandom 0.4.3",
  "libc",
+]
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00810f1d8b74be64b13dbf3db89ac67740615d6c891f0e7b6179326533011a07"
+dependencies = [
+ "rayon",
 ]
 
 [[package]]
@@ -4848,6 +4875,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libwebp-sys"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54cd30df7c7165ce74a456e4ca9732c603e8dc5e60784558c1c6dc047f876733"
+dependencies = [
+ "cc",
+ "glob",
+]
+
+[[package]]
 name = "libyml"
 version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5251,6 +5288,7 @@ name = "montrs"
 version = "0.1.0"
 dependencies = [
  "montrs-cli",
+ "montrs-command",
  "montrs-content",
  "montrs-core",
  "montrs-desktop",
@@ -5258,6 +5296,8 @@ dependencies = [
  "montrs-hotkeys-core",
  "montrs-hotkeys-web",
  "montrs-icons",
+ "montrs-image-core",
+ "montrs-image-optimizer",
  "montrs-mobile",
  "montrs-motion",
  "montrs-orm",
@@ -5464,6 +5504,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-command"
+version = "0.1.0"
+
+[[package]]
 name = "montrs-content"
 version = "0.1.0"
 dependencies = [
@@ -5618,6 +5662,24 @@ dependencies = [
  "montrs-motion",
  "strum",
  "strum_macros",
+]
+
+[[package]]
+name = "montrs-image-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "montrs-image-optimizer"
+version = "0.1.0"
+dependencies = [
+ "image 0.24.9",
+ "montrs-image-core",
+ "thiserror 1.0.69",
+ "webp",
 ]
 
 [[package]]
@@ -5778,7 +5840,7 @@ dependencies = [
  "bytemuck",
  "cosmic-text 0.12.1",
  "glyphon",
- "image",
+ "image 0.25.10",
  "lyon",
  "resvg",
  "serde",
@@ -7316,7 +7378,7 @@ dependencies = [
  "dirs 6.0.0",
  "futures-util",
  "glob",
- "image",
+ "image 0.25.10",
  "mime_guess",
  "parking_lot",
  "regex",
@@ -10097,6 +10159,17 @@ dependencies = [
 
 [[package]]
 name = "tiff"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba1310fcea54c6a9a4fd1aad794ecc02c31682f6bfbecdf460bf19533eed1e3e"
+dependencies = [
+ "flate2",
+ "jpeg-decoder",
+ "weezl",
+]
+
+[[package]]
+name = "tiff"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b63feaf3343d35b6ca4d50483f94843803b0f51634937cc2ec519fc32232bc52"
@@ -11298,6 +11371,16 @@ dependencies = [
  "pkg-config",
  "soup3-sys",
  "system-deps",
+]
+
+[[package]]
+name = "webp"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bb5d8e7814e92297b0e1c773ce43d290bef6c17452dafd9fc49e5edb5beba71"
+dependencies = [
+ "image 0.24.9",
+ "libwebp-sys",
 ]
 
 [[package]]
