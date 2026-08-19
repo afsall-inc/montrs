@@ -5969,6 +5969,7 @@ name = "montrs-state"
 version = "0.1.0"
 dependencies = [
  "leptos",
+ "log",
  "serde",
  "thiserror 1.0.69",
 ]

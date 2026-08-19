@@ -15,9 +15,10 @@ allowed_deps = []
 thiserror.workspace = true
 serde = { workspace = true, optional = true }
 leptos = { workspace = true, optional = true }
+log = "0.4"
 
 [features]
-default = []
+default = ["serde"]
 serde = ["dep:serde"]
 leptos = ["dep:leptos"]
 ssr = ["leptos", "leptos/ssr"]
