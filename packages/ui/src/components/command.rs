@@ -77,6 +77,10 @@ pub struct Trie {
     indexing: HashMap<String, Arc<KBarAction>>,
 }
 
+impl Default for Trie {
+    fn default() -> Self { Self::new() }
+}
+
 impl Trie {
     pub fn new() -> Self { Self { root: TrieNode::new(), indexing: HashMap::new() } }
 
@@ -111,9 +115,11 @@ impl Trie {
         self.collect_words(current, prefix.to_string(), &mut words);
         let mut seen = std::collections::HashSet::new();
         let mut result = Vec::new();
-        for word in &words {
-            if let Some(action) = self.indexing.get(word) {
-                if seen.insert(action.id) { result.push(action.clone()); }
+for word in &words {
+            if let Some(action) = self.indexing.get(word)
+                && seen.insert(action.id)
+            {
+                result.push(action.clone());
             }
         }
         result.sort_by_key(|a| a.id);
