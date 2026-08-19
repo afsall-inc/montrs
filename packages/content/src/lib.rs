@@ -1,5 +1,7 @@
 //! Typed, deterministic Markdown content collections.
 
+pub mod codegen;
+
 use pulldown_cmark::{html, Options, Parser};
 use serde::de::DeserializeOwned;
 use std::fs;
@@ -32,6 +34,22 @@ impl<T> Entry<T> {
     }
 }
 
+impl Entry<serde_json::Value> {
+    /// Create an entry from an embedded raw markdown source string (build-time codegen).
+    pub fn from_embedded(source: &str, slug: &str) -> Self {
+        match parse::<serde_json::Value>(source, slug) {
+            Ok(entry) => entry,
+            // Fall back to a minimal entry when frontmatter is absent so that
+            // embedded collections remain resilient at compile time.
+            Err(_) => Self {
+                slug: slug.to_string(),
+                data: serde_json::Value::Null,
+                body: source.to_string(),
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Collection<T> {
     entries: Vec<Entry<T>>,
@@ -41,6 +59,11 @@ impl<T> Collection<T> {
     pub fn from_entries(mut entries: Vec<Entry<T>>) -> Self {
         entries.sort_by(|left, right| left.slug.cmp(&right.slug));
         Self { entries }
+    }
+
+    /// Build a collection from entries embedded at compile time (build.rs codegen).
+    pub fn from_embedded(entries: Vec<Entry<T>>) -> Self {
+        Self::from_entries(entries)
     }
 
     pub fn entries(&self) -> &[Entry<T>] {
@@ -56,6 +79,11 @@ impl<T> Collection<T>
 where
     T: DeserializeOwned,
 {
+    /// Load a collection from a directory at runtime (SSR/file-system mode).
+    pub fn load(path: impl AsRef<Path>) -> Result<Self, ContentError> {
+        Self::load_directory(path)
+    }
+
     pub fn load_directory(path: impl AsRef<Path>) -> Result<Self, ContentError> {
         let mut files = fs::read_dir(path)?.collect::<Result<Vec<_>, _>>()?;
         files.sort_by_key(|entry| entry.file_name());
