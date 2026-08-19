@@ -41,7 +41,7 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 
 ## Architecture
 
-42 workspace packages under `packages/`:
+48 workspace packages under `packages/`:
 
 | Package | Role |
 |---------|------|
@@ -54,14 +54,20 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `build-serve` | Dev server (axum static file serving). |
 | `build-watch` | File watcher with debounced rebuild (notify). |
 | `cli` | Binary entrypoint (`montrs` command), delegates to core/agent. |
+| `command` | Typed command registry + deterministic prefix search (command palettes). |
+| `content` | Typed Markdown content collections with deterministic ordering. |
 | `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **Dep on platform only.** |
 | `deps` | Dependency freshness checking. |
 | `desktop` | Native desktop (wry webview, winit+wgpu window). |
 | `env` | Environment variable parsing + `.env` loading + Tera templates. |
 | `fmt` | Custom formatter for Rust + `view!` macros. |
 | `haptics` | Cross-platform haptic feedback. |
+| `hotkeys-core` | Platform-independent shortcut parsing/matching. |
+| `hotkeys-web` | Browser/WASM hotkey adapter. |
 | `i18n` | Internationalization with macros, plurals, formatting, scoping. |
 | `icons` | 1600+ Lucide icons as Leptos components. |
+| `image-core` | Validated, serializable image request specs. |
+| `image-optimizer` | Bounded server-side image optimization policy. |
 | `lockfile` | Deterministic tool version locking. |
 | `log` | Structured log store with retention, streaming, rotate. |
 | `metadata` | `montrs.toml` single source of truth (all sections incl. services/proxy). |
@@ -80,10 +86,12 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `services` | Service supervisor (daemon management, ready checks, retry, hooks, cron). |
 | `shell` | Shell integration (bash/zsh/fish/pwsh) + shims. |
 | `sigstore` | GitHub attestation, cosign, SLSA verification. |
+| `state` | Deterministic stores, selectors, typed state machines, history. |
+| `table-core` | Headless table state + row models (stable column/row IDs). |
 | `test` | Deterministic TestRuntime, fixtures, E2E orchestration (Playwright). |
 | `tool` | Tool version manager (5 backends: core, cargo, github, http, ubi). |
 | `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
-| `ui` | shadcn-inspired component library (91 components) + theme system. |
+| `ui` | shadcn-inspired component library + theme system + toaster. |
 | `utils` | Generic pure functions. |
 | `validator` | Proc-macros (`#[derive(Validator)]`), compile-time validation. |
 | `web` | Web platform adapter (WASM browser bindings). |
