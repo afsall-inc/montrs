@@ -1,10 +1,15 @@
 use leptos::prelude::*;
 use montrs_table_core::{Row, SortDirection, Table};
-use montrs_ui::prelude::*;
-use montrs_ui::components::card::Card;
-use montrs_ui::components::button::Button;
-use montrs_ui::components::toaster::{
-    provide_notification_center, Notification, NotificationLevel, Toaster,
+use montrs_ui::{
+    components::{
+        button::Button,
+        card::Card,
+        toaster::{
+            Notification, NotificationLevel, Toaster,
+            provide_notification_center,
+        },
+    },
+    prelude::*,
 };
 
 #[component]
@@ -12,12 +17,26 @@ pub fn Foundations() -> impl IntoView {
     let center = provide_notification_center();
     let count = RwSignal::new(0_u32);
     let mut table = Table::new(vec![
-        Row { id: "state".into(), value: "montrs-state" },
-        Row { id: "content".into(), value: "montrs-content" },
-        Row { id: "table".into(), value: "montrs-table-core" },
-        Row { id: "hotkeys".into(), value: "montrs-hotkeys-core" },
+        Row {
+            id: "state".into(),
+            value: "montrs-state",
+        },
+        Row {
+            id: "content".into(),
+            value: "montrs-content",
+        },
+        Row {
+            id: "table".into(),
+            value: "montrs-table-core",
+        },
+        Row {
+            id: "hotkeys".into(),
+            value: "montrs-hotkeys-core",
+        },
     ]);
-    table.sort_by("package".into(), SortDirection::Ascending, |left, right| left.cmp(right));
+    table.sort_by("package".into(), SortDirection::Ascending, |left, right| {
+        left.cmp(right)
+    });
     let packages = table.rows().to_vec();
 
     view! {

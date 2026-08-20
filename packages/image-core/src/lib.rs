@@ -70,9 +70,16 @@ impl ImageSpec {
         )
     }
 
-    pub fn resolve_under(&self, root: impl AsRef<Path>) -> Result<std::path::PathBuf, ImageError> {
+    pub fn resolve_under(
+        &self,
+        root: impl AsRef<Path>,
+    ) -> Result<std::path::PathBuf, ImageError> {
         let path = Path::new(&self.source);
-        if path.is_absolute() || path.components().any(|component| component == Component::ParentDir) {
+        if path.is_absolute()
+            || path
+                .components()
+                .any(|component| component == Component::ParentDir)
+        {
             return Err(ImageError::UnsafeSource);
         }
         Ok(root.as_ref().join(path))

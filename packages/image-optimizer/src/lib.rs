@@ -22,21 +22,30 @@ pub struct OptimizerConfig {
 }
 
 impl OptimizerConfig {
-    pub fn validate_spec(&self, spec: &ImageSpec) -> Result<PathBuf, OptimizerError> {
+    pub fn validate_spec(
+        &self,
+        spec: &ImageSpec,
+    ) -> Result<PathBuf, OptimizerError> {
         spec.validate(self.max_dimension)?;
         let path = spec.resolve_under(&self.root)?;
         if !path.is_file() {
             return Err(OptimizerError::MissingSource(path));
         }
-        let metadata = std::fs::metadata(&path).map_err(|_| OptimizerError::MissingSource(path.clone()))?;
+        let metadata = std::fs::metadata(&path)
+            .map_err(|_| OptimizerError::MissingSource(path.clone()))?;
         if metadata.len() > self.max_file_size {
             return Err(OptimizerError::FileTooLarge);
         }
         Ok(path)
     }
 
-    pub fn cache_path(&self, spec: &ImageSpec, cache_root: impl AsRef<Path>) -> PathBuf {
-        let mut path = cache_root.as_ref().join(safe_cache_name(&spec.cache_key()));
+    pub fn cache_path(
+        &self,
+        spec: &ImageSpec,
+        cache_root: impl AsRef<Path>,
+    ) -> PathBuf {
+        let mut path =
+            cache_root.as_ref().join(safe_cache_name(&spec.cache_key()));
         path.set_extension("img");
         path
     }
@@ -46,7 +55,9 @@ fn safe_cache_name(value: &str) -> String {
     value
         .bytes()
         .map(|byte| match byte {
-            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'_' => byte as char,
+            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'_' => {
+                byte as char
+            }
             _ => '_',
         })
         .collect()

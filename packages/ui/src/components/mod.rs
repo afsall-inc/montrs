@@ -121,6 +121,6 @@ pub mod table;
 pub mod tabs;
 pub mod textarea;
 pub mod theme_toggle;
+pub mod toaster;
 pub mod toggle_group;
 pub mod tooltip;
-pub mod toaster;

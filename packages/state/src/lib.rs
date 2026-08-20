@@ -25,17 +25,17 @@ pub mod macros;
 pub mod leptos;
 
 pub use error::{StateError, StateResult};
-pub use store::{
-    FieldSelector, LoggerMiddleware, Middleware, MiddlewareChain, SimpleStore, Store,
-    StoreContext, StoreSlice, ValidationMiddleware,
-};
-pub use time_travel::{Snapshot, TimeTravel};
 pub use machine::{
     Action, AssignAction, DataEvent, FunctionAction, FunctionGuard, Guard,
-    HistoryEntry, HistoryMachine, HistoryTracker, LogAction, Machine, MachineBuilder,
-    MachineError, MachineHistory, MachineState, StateMachine, StateNode, StringEvent,
-    Transition,
+    HistoryEntry, HistoryMachine, HistoryTracker, LogAction, Machine,
+    MachineBuilder, MachineError, MachineHistory, MachineState, StateMachine,
+    StateNode, StringEvent, Transition,
 };
+pub use store::{
+    FieldSelector, LoggerMiddleware, Middleware, MiddlewareChain, SimpleStore,
+    Store, StoreContext, StoreSlice, ValidationMiddleware,
+};
+pub use time_travel::{Snapshot, TimeTravel};
 
 /// Type aliases matching the reference API.
 pub type StoreId = String;

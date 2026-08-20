@@ -1,13 +1,12 @@
-﻿//! Browser hotkey adapter for MontRS — document-level listeners, scopes, macros.
+//! Browser hotkey adapter for MontRS — document-level listeners, scopes, macros.
 
 use leptos::prelude::*;
 use montrs_hotkeys_core::{Hotkey, KeyPresses};
 use std::collections::HashSet;
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::Closure;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::Closure;
 #[cfg(target_arch = "wasm32")]
 use web_sys::KeyboardEvent;
 
@@ -40,48 +39,86 @@ pub fn provide_hotkeys_context(
 
     let enable_scope = {
         let scopes = active_scopes;
-        Callback::new(move |scope: String| { scopes.update(|s| { s.insert(scope); }); })
+        Callback::new(move |scope: String| {
+            scopes.update(|s| {
+                s.insert(scope);
+            });
+        })
     };
     let disable_scope = {
         let scopes = active_scopes;
-        Callback::new(move |scope: String| { scopes.update(|s| { s.remove(&scope); }); })
+        Callback::new(move |scope: String| {
+            scopes.update(|s| {
+                s.remove(&scope);
+            });
+        })
     };
     let toggle_scope = {
         let scopes = active_scopes;
         Callback::new(move |scope: String| {
-            scopes.update(|s| { if s.contains(&scope) { s.remove(&scope); } else { s.insert(scope); } });
+            scopes.update(|s| {
+                if s.contains(&scope) {
+                    s.remove(&scope);
+                } else {
+                    s.insert(scope);
+                }
+            });
         })
     };
 
-    let ctx = HotkeysContext { keys_pressed, active_scopes, enable_scope, disable_scope, toggle_scope };
+    let ctx = HotkeysContext {
+        keys_pressed,
+        active_scopes,
+        enable_scope,
+        disable_scope,
+        toggle_scope,
+    };
     provide_context(ctx);
 
     // Register document-level keydown/keyup listeners (non-WASM: no-op)
     #[cfg(target_arch = "wasm32")]
     {
         let pressed = keys_pressed;
-        let keydown_closure = Closure::<dyn Fn(KeyboardEvent)>::new(move |event: KeyboardEvent| {
-            let key = clean_key(&event);
-            pressed.update(|kp| { kp.push(key); });
-        });
-        let keyup_closure = Closure::<dyn Fn(KeyboardEvent)>::new(move |event: KeyboardEvent| {
-            let key = clean_key(&event);
-            pressed.update(|kp| { kp.release(&key); });
-        });
+        let keydown_closure = Closure::<dyn Fn(KeyboardEvent)>::new(
+            move |event: KeyboardEvent| {
+                let key = clean_key(&event);
+                pressed.update(|kp| {
+                    kp.push(key);
+                });
+            },
+        );
+        let keyup_closure = Closure::<dyn Fn(KeyboardEvent)>::new(
+            move |event: KeyboardEvent| {
+                let key = clean_key(&event);
+                pressed.update(|kp| {
+                    kp.release(&key);
+                });
+            },
+        );
         if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-            let _ = doc.add_event_listener_with_callback("keydown", keydown_closure.as_ref().unchecked_ref());
-            let _ = doc.add_event_listener_with_callback("keyup", keyup_closure.as_ref().unchecked_ref());
+            let _ = doc.add_event_listener_with_callback(
+                "keydown",
+                keydown_closure.as_ref().unchecked_ref(),
+            );
+            let _ = doc.add_event_listener_with_callback(
+                "keyup",
+                keyup_closure.as_ref().unchecked_ref(),
+            );
         }
         keydown_closure.forget();
         keyup_closure.forget();
 
         if allow_blur {
             let pressed2 = keys_pressed;
-            let blur_closure = Closure::<dyn Fn(web_sys::Event)>::new(move |_| {
-                pressed2.update(|kp| kp.clear());
-            });
+            let blur_closure =
+                Closure::<dyn Fn(web_sys::Event)>::new(move |_| {
+                    pressed2.update(|kp| kp.clear());
+                });
             if let Some(window) = web_sys::window() {
-                let _ = window.add_event_listener_with_callback("blur", blur_closure.as_ref().unchecked_ref());
+                let _ = window.add_event_listener_with_callback(
+                    "blur",
+                    blur_closure.as_ref().unchecked_ref(),
+                );
             }
             blur_closure.forget();
         }
@@ -104,18 +141,28 @@ pub fn use_hotkeys_scoped(
     scopes: Vec<String>,
 ) {
     let ctx = use_hotkeys_context();
-    let hotkeys: Vec<Hotkey> = key_combination.split(',')
+    let hotkeys: Vec<Hotkey> = key_combination
+        .split(',')
         .map(|k| Hotkey::new(k.trim()))
         .collect();
 
     Effect::new(move |_| {
         let pressed = ctx.keys_pressed.get();
         let active = ctx.active_scopes.get();
-        let scope_ok = scopes.is_empty() || scopes.iter().all(|s| active.contains(s));
-        if !scope_ok { return; }
-        if !montrs_hotkeys_core::is_last_key_match(&hotkeys, &pressed) { return; }
-        let matched = hotkeys.iter().any(|hk| montrs_hotkeys_core::is_hotkey_match(hk, &pressed));
-        if matched { on_triggered.run(()); }
+        let scope_ok =
+            scopes.is_empty() || scopes.iter().all(|s| active.contains(s));
+        if !scope_ok {
+            return;
+        }
+        if !montrs_hotkeys_core::is_last_key_match(&hotkeys, &pressed) {
+            return;
+        }
+        let matched = hotkeys
+            .iter()
+            .any(|hk| montrs_hotkeys_core::is_hotkey_match(hk, &pressed));
+        if matched {
+            on_triggered.run(());
+        }
     });
 }
 
@@ -126,7 +173,9 @@ pub fn use_hotkeys_ref<T>(
     _key_combination: String,
     _on_triggered: Callback<()>,
     _scopes: Vec<String>,
-) where T: leptos::html::ElementType + 'static {
+) where
+    T: leptos::html::ElementType + 'static,
+{
     // Element-scoped hotkeys require per-element keydown listener setup.
     // For the initial implementation, prefer use_hotkeys_scoped via the macro.
 }
@@ -135,7 +184,11 @@ pub fn use_hotkeys_ref<T>(
 #[cfg(target_arch = "wasm32")]
 fn clean_key(event: &KeyboardEvent) -> String {
     let key = event.key().to_ascii_lowercase();
-    if key == " " { "spacebar".to_string() } else { key }
+    if key == " " {
+        "spacebar".to_string()
+    } else {
+        key
+    }
 }
 
 // ============================================================================

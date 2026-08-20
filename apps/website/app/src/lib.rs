@@ -42,8 +42,7 @@ use leptos::prelude::*;
 use montrs_core::{
     AppConfig, AppSpec, EnvConfig, EnvError, Plate, RouterOutlet, Target,
 };
-use montrs_ui::prelude::*;
-use montrs_ui::components::toaster::provide_notification_center;
+use montrs_ui::{components::toaster::provide_notification_center, prelude::*};
 
 fn provide_website_context() {
     provide_notification_center();

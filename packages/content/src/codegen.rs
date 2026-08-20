@@ -1,4 +1,4 @@
-﻿//! Build-time code generation for content collections.
+//! Build-time code generation for content collections.
 //! Use this in a build.rs to embed content at compile time.
 
 use std::path::Path;
@@ -13,7 +13,10 @@ use std::path::Path;
 ///     codegen::generate("content/posts", "posts").unwrap();
 /// }
 /// ```
-pub fn generate(content_dir: &str, collection_name: &str) -> Result<String, String> {
+pub fn generate(
+    content_dir: &str,
+    collection_name: &str,
+) -> Result<String, String> {
     let path = Path::new(content_dir);
     if !path.is_dir() {
         return Err(format!("content directory not found: {content_dir}"));
@@ -25,7 +28,7 @@ pub fn generate(content_dir: &str, collection_name: &str) -> Result<String, Stri
     code.push_str(&format!(
         "// Auto-generated content collection: {collection_name}\n"
     ));
-code.push_str("#[allow(unused_imports)]\n");
+    code.push_str("#[allow(unused_imports)]\n");
     code.push_str("use serde::Deserialize;\n");
     code.push_str("use montrs_content::Collection;\n");
     code.push_str("use montrs_content::Entry;\n\n");
@@ -42,9 +45,15 @@ code.push_str("#[allow(unused_imports)]\n");
             let mut entry_code = String::new();
             let mut entry_names = Vec::new();
 
-for (i, file) in files.iter().enumerate() {
-                let content = std::fs::read_to_string(file.path()).unwrap_or_default();
-                let slug = file.path().file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
+            for (i, file) in files.iter().enumerate() {
+                let content =
+                    std::fs::read_to_string(file.path()).unwrap_or_default();
+                let slug = file
+                    .path()
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string();
                 let var_name = format!("ENTRY_{i}");
 
                 entry_code.push_str(&format!(
@@ -55,7 +64,8 @@ for (i, file) in files.iter().enumerate() {
 
             if entry_names.is_empty() {
                 code.push_str(&format!(
-                    "pub fn {}() -> Collection<serde_json::Value> {{\n    Collection::from_embedded(vec![])\n}}\n",
+                    "pub fn {}() -> Collection<serde_json::Value> {{\n    \
+                     Collection::from_embedded(vec![])\n}}\n",
                     collection_name
                 ));
                 return Ok(code);
@@ -63,12 +73,14 @@ for (i, file) in files.iter().enumerate() {
 
             code.push_str(&entry_code);
             code.push_str(&format!(
-                "pub fn {collection_name}() -> Collection<serde_json::Value> {{\n"
+                "pub fn {collection_name}() -> Collection<serde_json::Value> \
+                 {{\n"
             ));
             code.push_str("    Collection::from_embedded(vec![\n");
             for (var_name, slug) in &entry_names {
                 code.push_str(&format!(
-                    "        montrs_content::Entry::from_embedded({var_name}, \"{slug}\"),\n"
+                    "        montrs_content::Entry::from_embedded({var_name}, \
+                     \"{slug}\"),\n"
                 ));
             }
             code.push_str("    ])\n");
@@ -83,10 +95,16 @@ for (i, file) in files.iter().enumerate() {
 }
 
 /// Generate and write the content module to OUT_DIR.
-pub fn generate_to_out_dir(content_dir: &str, collection_name: &str) -> Result<(), String> {
+pub fn generate_to_out_dir(
+    content_dir: &str,
+    collection_name: &str,
+) -> Result<(), String> {
     let code = generate(content_dir, collection_name)?;
-    let out_dir = std::env::var("OUT_DIR").map_err(|e| format!("OUT_DIR not set: {e}"))?;
-    let dest = Path::new(&out_dir).join(format!("{collection_name}_collection.rs"));
-    std::fs::write(&dest, &code).map_err(|e| format!("failed to write: {e}"))?;
+    let out_dir = std::env::var("OUT_DIR")
+        .map_err(|e| format!("OUT_DIR not set: {e}"))?;
+    let dest =
+        Path::new(&out_dir).join(format!("{collection_name}_collection.rs"));
+    std::fs::write(&dest, &code)
+        .map_err(|e| format!("failed to write: {e}"))?;
     Ok(())
 }

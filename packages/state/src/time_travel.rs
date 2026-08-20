@@ -1,4 +1,4 @@
-﻿use std::collections::VecDeque;
+use std::collections::VecDeque;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Snapshot<T> {
@@ -7,7 +7,12 @@ pub struct Snapshot<T> {
 }
 
 impl<T> Snapshot<T> {
-    pub fn new(state: T) -> Self { Self { state, timestamp: std::time::Instant::now() } }
+    pub fn new(state: T) -> Self {
+        Self {
+            state,
+            timestamp: std::time::Instant::now(),
+        }
+    }
 }
 
 pub struct TimeTravel<T: Clone + PartialEq + Send + Sync + 'static> {
@@ -19,11 +24,18 @@ pub struct TimeTravel<T: Clone + PartialEq + Send + Sync + 'static> {
 
 impl<T: Clone + PartialEq + Send + Sync + 'static> TimeTravel<T> {
     pub fn new(initial: T, limit: usize) -> Self {
-        Self { history: VecDeque::new(), future: VecDeque::new(), limit, current: initial }
+        Self {
+            history: VecDeque::new(),
+            future: VecDeque::new(),
+            limit,
+            current: initial,
+        }
     }
     pub fn push(&mut self, state: T) {
         self.history.push_back(self.current.clone());
-        if self.history.len() > self.limit { self.history.pop_front(); }
+        if self.history.len() > self.limit {
+            self.history.pop_front();
+        }
         self.future.clear();
         self.current = state;
     }
@@ -39,10 +51,19 @@ impl<T: Clone + PartialEq + Send + Sync + 'static> TimeTravel<T> {
         self.current = next.clone();
         Some(next)
     }
-    pub fn current(&self) -> &T { &self.current }
-    pub fn can_undo(&self) -> bool { !self.history.is_empty() }
-    pub fn can_redo(&self) -> bool { !self.future.is_empty() }
-    pub fn clear(&mut self) { self.history.clear(); self.future.clear(); }
+    pub fn current(&self) -> &T {
+        &self.current
+    }
+    pub fn can_undo(&self) -> bool {
+        !self.history.is_empty()
+    }
+    pub fn can_redo(&self) -> bool {
+        !self.future.is_empty()
+    }
+    pub fn clear(&mut self) {
+        self.history.clear();
+        self.future.clear();
+    }
 }
 
 #[cfg(test)]

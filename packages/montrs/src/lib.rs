@@ -30,13 +30,25 @@
 
 //! The MontRS Framework - A full-stack Rust framework.
 
+#[cfg(feature = "command")]
+pub use montrs_command as command;
+#[cfg(feature = "content")]
+pub use montrs_content as content;
 pub use montrs_core as core;
 #[cfg(feature = "desktop")]
 pub use montrs_desktop as desktop;
 #[cfg(feature = "haptics")]
 pub use montrs_haptics as haptics;
+#[cfg(feature = "hotkeys")]
+pub use montrs_hotkeys_core as hotkeys;
+#[cfg(feature = "hotkeys-web")]
+pub use montrs_hotkeys_web as hotkeys_web;
 #[cfg(feature = "icons")]
 pub use montrs_icons as icons;
+#[cfg(feature = "image")]
+pub use montrs_image_core as image;
+#[cfg(feature = "image-optimizer")]
+pub use montrs_image_optimizer as image_optimizer;
 #[cfg(feature = "mobile")]
 pub use montrs_mobile as mobile;
 #[cfg(feature = "motion")]
@@ -45,54 +57,42 @@ pub use montrs_motion as motion;
 pub use montrs_orm as orm;
 #[cfg(feature = "renderer")]
 pub use montrs_renderer as renderer;
+#[cfg(feature = "state")]
+pub use montrs_state as state;
+#[cfg(feature = "table")]
+pub use montrs_table_core as table;
 #[cfg(feature = "test")]
 pub use montrs_test as test;
 #[cfg(feature = "ui")]
 pub use montrs_ui as ui;
 #[cfg(feature = "validator")]
 pub use montrs_validator as validator;
-#[cfg(feature = "state")]
-pub use montrs_state as state;
-#[cfg(feature = "content")]
-pub use montrs_content as content;
-#[cfg(feature = "table")]
-pub use montrs_table_core as table;
-#[cfg(feature = "hotkeys")]
-pub use montrs_hotkeys_core as hotkeys;
-#[cfg(feature = "hotkeys-web")]
-pub use montrs_hotkeys_web as hotkeys_web;
-#[cfg(feature = "image")]
-pub use montrs_image_core as image;
-#[cfg(feature = "image-optimizer")]
-pub use montrs_image_optimizer as image_optimizer;
-#[cfg(feature = "command")]
-pub use montrs_command as command;
 
 /// A convenience plate for importing the most commonly used types and traits.
 #[allow(ambiguous_glob_reexports)]
 pub mod prelude {
+    #[cfg(feature = "content")]
+    pub use montrs_content::*;
     pub use montrs_core::*;
     #[cfg(feature = "haptics")]
     pub use montrs_haptics::{HapticsConfig, HapticsProvider, ImpactStyle};
+    #[cfg(feature = "hotkeys")]
+    pub use montrs_hotkeys_core::*;
+    #[cfg(feature = "hotkeys-web")]
+    pub use montrs_hotkeys_web::*;
     #[cfg(feature = "icons")]
     pub use montrs_icons::*;
     #[cfg(feature = "motion")]
     pub use montrs_motion::*;
     #[cfg(feature = "orm")]
     pub use montrs_orm::*;
+    #[cfg(feature = "state")]
+    pub use montrs_state::*;
+    #[cfg(feature = "table")]
+    pub use montrs_table_core::*;
     #[cfg(feature = "ui")]
     pub use montrs_ui::prelude::*;
     // montrs_validator is a proc-macro crate, we re-export its main macro
     #[cfg(feature = "validator")]
     pub use montrs_validator::Validator;
-    #[cfg(feature = "state")]
-    pub use montrs_state::*;
-    #[cfg(feature = "content")]
-    pub use montrs_content::*;
-    #[cfg(feature = "table")]
-    pub use montrs_table_core::*;
-    #[cfg(feature = "hotkeys")]
-    pub use montrs_hotkeys_core::*;
-    #[cfg(feature = "hotkeys-web")]
-    pub use montrs_hotkeys_web::*;
 }

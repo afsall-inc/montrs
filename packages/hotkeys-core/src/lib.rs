@@ -1,9 +1,7 @@
-﻿//! Platform-independent keyboard shortcut parsing and matching.
+//! Platform-independent keyboard shortcut parsing and matching.
 //! API modeled on leptos-hotkeys and tanstack-hotkeys: parse, normalize, match.
 
-use std::collections::BTreeMap;
-use std::fmt;
-use std::str::FromStr;
+use std::{collections::BTreeMap, fmt, str::FromStr};
 
 /// All modifier flags as booleans (matches leptos-hotkeys `KeyboardModifiers`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -15,18 +13,32 @@ pub struct KeyboardModifiers {
 }
 
 impl KeyboardModifiers {
-    pub fn none() -> Self { Self::default() }
-    pub fn is_empty(self) -> bool { !self.alt && !self.ctrl && !self.meta && !self.shift }
+    pub fn none() -> Self {
+        Self::default()
+    }
+    pub fn is_empty(self) -> bool {
+        !self.alt && !self.ctrl && !self.meta && !self.shift
+    }
 }
 
 impl fmt::Display for KeyboardModifiers {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut parts = Vec::new();
-        if self.ctrl { parts.push("Ctrl"); }
-        if self.alt { parts.push("Alt"); }
-        if self.shift { parts.push("Shift"); }
-        if self.meta { parts.push("Meta"); }
-        if parts.is_empty() { return Ok(()); }
+        if self.ctrl {
+            parts.push("Ctrl");
+        }
+        if self.alt {
+            parts.push("Alt");
+        }
+        if self.shift {
+            parts.push("Shift");
+        }
+        if self.meta {
+            parts.push("Meta");
+        }
+        if parts.is_empty() {
+            return Ok(());
+        }
         write!(f, "{}", parts.join("+"))
     }
 }
@@ -39,7 +51,9 @@ pub type Keys = Vec<String>;
 pub struct ParseHotkeyError;
 
 impl fmt::Display for ParseHotkeyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "invalid hotkey") }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "invalid hotkey")
+    }
 }
 impl std::error::Error for ParseHotkeyError {}
 
@@ -63,7 +77,9 @@ impl Hotkey {
             match part.to_ascii_lowercase().as_str() {
                 "control" | "ctrl" => modifiers.ctrl = true,
                 "alt" | "option" => modifiers.alt = true,
-                "meta" | "cmd" | "command" | "super" | "win" | "mod" => modifiers.meta = true,
+                "meta" | "cmd" | "command" | "super" | "win" | "mod" => {
+                    modifiers.meta = true
+                }
                 "shift" => modifiers.shift = true,
                 other => keys.push(normalize_key(other)),
             }
@@ -75,15 +91,25 @@ impl Hotkey {
     }
 
     /// All modifiers in a canonical order.
-    pub fn modifiers(&self) -> KeyboardModifiers { self.modifiers }
+    pub fn modifiers(&self) -> KeyboardModifiers {
+        self.modifiers
+    }
 
     /// The non-modifier keys.
-    pub fn keys(&self) -> &[String] { &self.keys }
+    pub fn keys(&self) -> &[String] {
+        &self.keys
+    }
 
     pub fn matches(&self, event: &KeyEvent) -> bool {
-        if self.modifiers != event.modifiers { return false; }
-        if self.keys.is_empty() { return event.key.is_empty(); }
-        self.keys.iter().any(|key| key.eq_ignore_ascii_case(&event.key))
+        if self.modifiers != event.modifiers {
+            return false;
+        }
+        if self.keys.is_empty() {
+            return event.key.is_empty();
+        }
+        self.keys
+            .iter()
+            .any(|key| key.eq_ignore_ascii_case(&event.key))
     }
 }
 
@@ -98,7 +124,9 @@ fn normalize_key(key: &str) -> String {
 impl FromStr for Hotkey {
     type Err = ParseHotkeyError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.trim().is_empty() { return Err(ParseHotkeyError); }
+        if s.trim().is_empty() {
+            return Err(ParseHotkeyError);
+        }
         Ok(Self::parse_string(s))
     }
 }
@@ -126,14 +154,23 @@ pub struct KeyPresses {
 }
 
 impl KeyPresses {
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
     pub fn push(&mut self, key: String) {
         self.key_map.insert(key.clone(), key.clone());
         self.last_key = Some(key);
     }
-    pub fn release(&mut self, key: &str) { self.key_map.remove(key); }
-    pub fn clear(&mut self) { self.key_map.clear(); self.last_key = None; }
-    pub fn is_empty(&self) -> bool { self.key_map.is_empty() }
+    pub fn release(&mut self, key: &str) {
+        self.key_map.remove(key);
+    }
+    pub fn clear(&mut self) {
+        self.key_map.clear();
+        self.last_key = None;
+    }
+    pub fn is_empty(&self) -> bool {
+        self.key_map.is_empty()
+    }
 }
 
 /// A normalized keyboard event for matching.
@@ -145,19 +182,28 @@ pub struct KeyEvent {
 
 impl KeyEvent {
     pub fn new(key: impl Into<String>, modifiers: KeyboardModifiers) -> Self {
-        Self { key: normalize_key(&key.into()), modifiers }
+        Self {
+            key: normalize_key(&key.into()),
+            modifiers,
+        }
     }
 }
 
 /// True when the last pressed key in the press set is the hotkey's final key.
 pub fn is_last_key_match(parsed: &[Hotkey], pressed: &KeyPresses) -> bool {
-    let Some(last) = &pressed.last_key else { return false };
-    parsed.iter().any(|hotkey| hotkey.keys.iter().any(|k| k == last))
+    let Some(last) = &pressed.last_key else {
+        return false;
+    };
+    parsed
+        .iter()
+        .any(|hotkey| hotkey.keys.iter().any(|k| k == last))
 }
 
 /// True when the full modifier set and key combination match the pressed set.
 pub fn is_hotkey_match(hotkey: &Hotkey, pressed: &KeyPresses) -> bool {
-    let Some(last) = &pressed.last_key else { return false };
+    let Some(last) = &pressed.last_key else {
+        return false;
+    };
     hotkey.keys.iter().any(|k| k == last)
         && pressed.key_map.len() == hotkey.keys.len()
 }
@@ -172,7 +218,14 @@ mod tests {
         assert!(hk.modifiers.meta);
         assert!(hk.modifiers.shift);
         assert_eq!(hk.keys(), &["p"]);
-        assert!(hk.matches(&KeyEvent::new("P", KeyboardModifiers { meta: true, shift: true, ..Default::default() })));
+        assert!(hk.matches(&KeyEvent::new(
+            "P",
+            KeyboardModifiers {
+                meta: true,
+                shift: true,
+                ..Default::default()
+            }
+        )));
     }
 
     #[test]
@@ -185,7 +238,20 @@ mod tests {
     #[test]
     fn matches_exact_modifiers() {
         let hk = Hotkey::new("Ctrl+K");
-        assert!(hk.matches(&KeyEvent::new("k", KeyboardModifiers { ctrl: true, ..Default::default() })));
-        assert!(!hk.matches(&KeyEvent::new("k", KeyboardModifiers { ctrl: true, shift: true, ..Default::default() })));
+        assert!(hk.matches(&KeyEvent::new(
+            "k",
+            KeyboardModifiers {
+                ctrl: true,
+                ..Default::default()
+            }
+        )));
+        assert!(!hk.matches(&KeyEvent::new(
+            "k",
+            KeyboardModifiers {
+                ctrl: true,
+                shift: true,
+                ..Default::default()
+            }
+        )));
     }
 }

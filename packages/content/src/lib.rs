@@ -2,10 +2,9 @@
 
 pub mod codegen;
 
-use pulldown_cmark::{html, Options, Parser};
+use pulldown_cmark::{Options, Parser, html};
 use serde::de::DeserializeOwned;
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -84,12 +83,16 @@ where
         Self::load_directory(path)
     }
 
-    pub fn load_directory(path: impl AsRef<Path>) -> Result<Self, ContentError> {
+    pub fn load_directory(
+        path: impl AsRef<Path>,
+    ) -> Result<Self, ContentError> {
         let mut files = fs::read_dir(path)?.collect::<Result<Vec<_>, _>>()?;
         files.sort_by_key(|entry| entry.file_name());
         let mut entries = Vec::new();
         for file in files {
-            if file.file_type()?.is_file() && file.path().extension().is_some_and(|ext| ext == "md") {
+            if file.file_type()?.is_file()
+                && file.path().extension().is_some_and(|ext| ext == "md")
+            {
                 entries.push(parse_file(file.path())?);
             }
         }
@@ -97,7 +100,10 @@ where
     }
 }
 
-pub fn parse<T>(source: &str, slug: impl Into<String>) -> Result<Entry<T>, ContentError>
+pub fn parse<T>(
+    source: &str,
+    slug: impl Into<String>,
+) -> Result<Entry<T>, ContentError>
 where
     T: DeserializeOwned,
 {
@@ -123,8 +129,12 @@ where
 }
 
 fn split_frontmatter(source: &str) -> Result<(&str, &str), ContentError> {
-    let source = source.strip_prefix("---\n").ok_or(ContentError::MissingFrontmatter)?;
-    let end = source.find("\n---").ok_or(ContentError::MissingFrontmatter)?;
+    let source = source
+        .strip_prefix("---\n")
+        .ok_or(ContentError::MissingFrontmatter)?;
+    let end = source
+        .find("\n---")
+        .ok_or(ContentError::MissingFrontmatter)?;
     let (frontmatter, body) = source.split_at(end);
     Ok((frontmatter, body.trim_start_matches("\n---").trim_start()))
 }
@@ -141,13 +151,18 @@ mod tests {
 
     #[test]
     fn parses_and_renders_markdown() {
-        let entry = parse::<Frontmatter>("---\ntitle: Hello\n---\n# Welcome", "hello").unwrap();
+        let entry =
+            parse::<Frontmatter>("---\ntitle: Hello\n---\n# Welcome", "hello")
+                .unwrap();
         assert_eq!(entry.data.title, "Hello");
         assert!(entry.render().contains("<h1>Welcome</h1>"));
     }
 
     #[test]
     fn rejects_missing_frontmatter() {
-        assert!(matches!(parse::<Frontmatter>("# no frontmatter", "no"), Err(ContentError::MissingFrontmatter)));
+        assert!(matches!(
+            parse::<Frontmatter>("# no frontmatter", "no"),
+            Err(ContentError::MissingFrontmatter)
+        ));
     }
 }

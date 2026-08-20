@@ -10,13 +10,21 @@ pub struct Command {
 
 impl Command {
     pub fn new(id: impl Into<String>, name: impl Into<String>) -> Self {
-        Self { id: id.into(), name: name.into(), keywords: Vec::new(), shortcut: None }
+        Self {
+            id: id.into(),
+            name: name.into(),
+            keywords: Vec::new(),
+            shortcut: None,
+        }
     }
 
     fn matches(&self, query: &str) -> bool {
         let query = query.to_ascii_lowercase();
         self.name.to_ascii_lowercase().starts_with(&query)
-            || self.keywords.iter().any(|keyword| keyword.to_ascii_lowercase().starts_with(&query))
+            || self
+                .keywords
+                .iter()
+                .any(|keyword| keyword.to_ascii_lowercase().starts_with(&query))
     }
 }
 
@@ -33,7 +41,10 @@ impl CommandRegistry {
     }
 
     pub fn search(&self, query: &str) -> Vec<&Command> {
-        self.commands.iter().filter(|command| command.matches(query)).collect()
+        self.commands
+            .iter()
+            .filter(|command| command.matches(query))
+            .collect()
     }
 
     pub fn commands(&self) -> &[Command] {

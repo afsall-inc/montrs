@@ -16,7 +16,9 @@ macro_rules! create_store {
         impl $name {
             pub fn new() -> Self {
                 Self {
-                    state: std::sync::Arc::new(std::sync::RwLock::new($initial)),
+                    state: std::sync::Arc::new(std::sync::RwLock::new(
+                        $initial,
+                    )),
                 }
             }
         }
