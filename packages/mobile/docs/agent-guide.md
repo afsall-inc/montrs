@@ -1,15 +1,19 @@
-# Mobile Package — Agent Guide
+# Agent Guide: montrs-mobile
 
-## Overview
-`montrs-mobile` provides the mobile platform shell for MontRS. It implements `PlatformAdapter` from `montrs-platform` for Android and iOS targets.
+## Core Concepts
+Mobile platform adapter for Android and iOS shells.
 
-## Key Concepts
-- **MobileAdapter**: Implements `PlatformAdapter` for mobile targets.
-- **Platform-Specific**: Behavior differs between Android and iOS via `Target::MobileAndroid` / `Target::MobileIos`.
+### Platform Abstraction
+- `MobileAdapter` trait provides platform-specific implementations.
+- Android uses a WebView-based shell.
+- iOS uses a WKWebView-based shell.
 
-## Agent Usage
-- Use `MobileAdapter::new(target)` to create the adapter.
-- `open_url` opens URLs via Android Intents or iOS `UIApplication`.
+### Configuration
+- Mobile-specific settings are defined in `montrs.toml`.
+- App name, icons, splash screen, and permissions are configurable.
+- Build targets are selected via Cargo features.
 
-## Local Invariants
-Read `docs/invariants.md` before modifying.
+## Important Rules
+- Mobile builds target `wasm32-unknown-unknown` for the web layer.
+- Native shell code is separate from the Rust application.
+- Platform-specific features should be gated behind feature flags.

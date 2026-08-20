@@ -1,16 +1,22 @@
-# Utils Package — Agent Guide
+# Agent Guide: montrs-utils
 
-## Overview
-`montrs-utils` provides generic pure functions used across MontRS packages. Includes string manipulation, path utilities, and other helpers.
+## Core Concepts
+Generic pure functions and shared utilities used across the MontRS workspace.
 
-## Key Concepts
-- **to_pascal_case**: Converts `snake_case` to `PascalCase`.
-- **to_kebab_case**: Converts `snake_case` to `kebab-case`.
-- **Pure Functions**: All functions are deterministic and side-effect-free.
+### Available Utilities
+- **String helpers** — case conversion, trimming, slug generation.
+- **Path helpers** — safe path joining, extension checking.
+- **Collection helpers** — map, filter, group operations on Vec/slices.
+- **Type helpers** — `Cow` optimizations, `Option` combinators.
+- **Testing helpers** — deterministic ID generation, test fixtures.
 
-## Agent Usage
-- Use for text/string manipulation across the framework.
-- All functions are pure — no IO or state.
+### Usage
+- Utilities are re-exported through the `montrs` facade.
+- Use `montrs::utils::*` or `use montrs_utils::*` for direct access.
+- Functions are pure, deterministic, and well-tested.
 
-## Local Invariants
-Read `docs/invariants.md` before modifying.
+## Important Rules
+- All functions are pure — no side effects, no I/O.
+- Functions are generic where it improves reusability.
+- No MontRS package dependencies — only stdlib.
+- Tests are required for all public functions.

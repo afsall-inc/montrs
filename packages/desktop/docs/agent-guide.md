@@ -1,16 +1,25 @@
-# Desktop Package — Agent Guide
+# Agent Guide: montrs-desktop
 
-## Overview
-`montrs-desktop` provides the desktop platform shell for MontRS. It implements `PlatformAdapter` from `montrs-platform` and provides `run_webview` / `run_native` entry points.
+## Core Concepts
+Desktop shell for MontRS applications — webview (wry) or native (winit + wgpu).
 
-## Key Concepts
-- **DesktopAdapter**: Implements `PlatformAdapter` for desktop targets.
-- **run_webview**: Opens a webview window (wry-based).
-- **run_native**: Opens a native window (winit + wgpu-based).
+### Webview Mode
+- Uses `wry` (WebView) for rendering HTML/JS applications.
+- Suitable for most MontRS applications using `montrs-ui`.
+- Provides native window decorations, menus, and system tray integration.
 
-## Agent Usage
-- Use `DesktopAdapter::new()` to create the adapter.
-- Use `run_webview(spec)` or `run_native(spec)` to launch the desktop app.
+### Native Mode
+- Uses `winit` + `wgpu` for pure native rendering.
+- No browser/WebView dependency — renders directly to the GPU.
+- Suitable for TUI-adjacent or custom-rendered applications.
 
-## Local Invariants
-Read `docs/invariants.md` before modifying.
+### Configuration
+- Window title, size, position, and decorations are configurable.
+- Mode (webview/native) is selected via Cargo features.
+- Platform-specific behavior is handled by the `PlatformAdapter` trait.
+
+## Important Rules
+- Webview mode requires a system WebView runtime (WebKit on macOS, WebView2 on Windows).
+- Native mode requires GPU support via wgpu.
+- Window configuration is set at startup via `DesktopConfig`.
+- Application lifecycle events (open, close, focus) are handled through the adapter.

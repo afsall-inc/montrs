@@ -1,16 +1,25 @@
-# Build-Serve Package — Agent Guide
+# Agent Guide: montrs-build-serve
 
-## Overview
-`montrs-build-serve` provides the dev server for MontRS. It serves static files from the build output directory using axum.
+## Core Concepts
+HTTP dev server for static file serving with optional live reload.
 
-## Key Concepts
-- **ServeConfig**: Contains `addr` and `site_root`.
-- **serve_static**: Serves static files.
-- **serve_with_callback**: Serves with an `on_ready` callback.
+### Server Configuration
+- `ServeConfig` configures the address, port, and static file root.
+- The server is built on Axum and Tower for HTTP handling.
+- Static files are served with appropriate cache headers.
 
-## Agent Usage
-- Use `serve_static(ServeConfig)` to start the dev server.
-- Use `serve_with_callback` when you need to know when the server is ready.
+### Live Reload
+- When enabled, the server injects a WebSocket-based reload script.
+- File changes detected by `build-watch` trigger a reload signal.
+- The reload script is injected into HTML responses automatically.
 
-## Local Invariants
-Read `docs/invariants.md` before modifying.
+### Integration
+- Used by `montrs serve` for development workflows.
+- Composes with `build-watch` for automatic rebuilds.
+- Can be extended with custom middleware via Tower.
+
+## Important Rules
+- The dev server is for development only — not for production use.
+- Live reload is optional and disabled by default in production builds.
+- Static file serving respects the configured root directory.
+- Custom middleware can be added via Tower layers.
