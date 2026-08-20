@@ -5513,6 +5513,7 @@ version = "0.1.0"
 dependencies = [
  "pulldown-cmark",
  "serde",
+ "serde_json",
  "serde_yml",
  "thiserror 2.0.18",
 ]
