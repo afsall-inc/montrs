@@ -80,3 +80,5 @@ convert_case = "0.11"
 tw_merge = "0.1"
 paste = "1"
 open = "5"
+# Pinned to <2.0.4 because 2.0.4+ requires rustc 1.96.0, but our toolchain is 1.95.0-nightly
+kstring = "=2.0.2"

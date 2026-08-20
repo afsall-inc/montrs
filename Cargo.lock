@@ -5468,6 +5468,7 @@ dependencies = [
  "fs_extra",
  "ignore",
  "indicatif 0.17.11",
+ "kstring",
  "montrs-agent",
  "montrs-agentignore",
  "montrs-auth",
