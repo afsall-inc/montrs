@@ -2758,6 +2758,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "getopts"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfe4fbac503b8d1f88e6676011885f34b7174f46e59956bba534ba83abded4df"
+dependencies = [
+ "unicode-width 0.2.2",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4011,6 +4020,24 @@ dependencies = [
 
 [[package]]
 name = "image"
+version = "0.24.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5690139d2f55868e080017335e4b94cb7414274c74f1669c84fb5feba2c9f69d"
+dependencies = [
+ "bytemuck",
+ "byteorder",
+ "color_quant",
+ "exr",
+ "gif 0.13.3",
+ "jpeg-decoder",
+ "num-traits",
+ "png 0.17.16",
+ "qoi",
+ "tiff 0.9.1",
+]
+
+[[package]]
+name = "image"
 version = "0.25.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104"
@@ -4028,7 +4055,7 @@ dependencies = [
  "ravif",
  "rayon",
  "rgb",
- "tiff",
+ "tiff 0.11.3",
  "zune-core 0.5.3",
  "zune-jpeg 0.5.15",
 ]
@@ -4377,6 +4404,15 @@ checksum = "1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3"
 dependencies = [
  "getrandom 0.4.3",
  "libc",
+]
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00810f1d8b74be64b13dbf3db89ac67740615d6c891f0e7b6179326533011a07"
+dependencies = [
+ "rayon",
 ]
 
 [[package]]
@@ -4839,6 +4875,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "libwebp-sys"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54cd30df7c7165ce74a456e4ca9732c603e8dc5e60784558c1c6dc047f876733"
+dependencies = [
+ "cc",
+ "glob",
+]
+
+[[package]]
+name = "libyml"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3302702afa434ffa30847a83305f0a69d6abd74293b6554c18ec85c7ef30c980"
+dependencies = [
+ "anyhow",
+ "version_check",
+]
+
+[[package]]
 name = "libz-sys"
 version = "1.1.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5232,15 +5288,23 @@ name = "montrs"
 version = "0.1.0"
 dependencies = [
  "montrs-cli",
+ "montrs-command",
+ "montrs-content",
  "montrs-core",
  "montrs-desktop",
  "montrs-haptics",
+ "montrs-hotkeys-core",
+ "montrs-hotkeys-web",
  "montrs-icons",
+ "montrs-image-core",
+ "montrs-image-optimizer",
  "montrs-mobile",
  "montrs-motion",
  "montrs-orm",
  "montrs-platform",
  "montrs-renderer",
+ "montrs-state",
+ "montrs-table-core",
  "montrs-test",
  "montrs-ui",
  "montrs-validator",
@@ -5404,6 +5468,7 @@ dependencies = [
  "fs_extra",
  "ignore",
  "indicatif 0.17.11",
+ "kstring",
  "montrs-agent",
  "montrs-agentignore",
  "montrs-auth",
@@ -5437,6 +5502,21 @@ dependencies = [
  "tracing-subscriber",
  "walkdir",
  "which",
+]
+
+[[package]]
+name = "montrs-command"
+version = "0.1.0"
+
+[[package]]
+name = "montrs-content"
+version = "0.1.0"
+dependencies = [
+ "pulldown-cmark",
+ "serde",
+ "serde_json",
+ "serde_yml",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5545,6 +5625,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-hotkeys-core"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "montrs-hotkeys-web"
+version = "0.1.0"
+dependencies = [
+ "leptos",
+ "montrs-hotkeys-core",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "montrs-i18n"
 version = "0.1.0"
 dependencies = [
@@ -5567,6 +5664,24 @@ dependencies = [
  "montrs-motion",
  "strum",
  "strum_macros",
+]
+
+[[package]]
+name = "montrs-image-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "montrs-image-optimizer"
+version = "0.1.0"
+dependencies = [
+ "image 0.24.9",
+ "montrs-image-core",
+ "thiserror 1.0.69",
+ "webp",
 ]
 
 [[package]]
@@ -5727,7 +5842,7 @@ dependencies = [
  "bytemuck",
  "cosmic-text 0.12.1",
  "glyphon",
- "image",
+ "image 0.25.10",
  "lyon",
  "resvg",
  "serde",
@@ -5849,6 +5964,23 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "x509-cert",
+]
+
+[[package]]
+name = "montrs-state"
+version = "0.1.0"
+dependencies = [
+ "leptos",
+ "log",
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "montrs-table-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -7249,7 +7381,7 @@ dependencies = [
  "dirs 6.0.0",
  "futures-util",
  "glob",
- "image",
+ "image 0.25.10",
  "mime_guess",
  "parking_lot",
  "regex",
@@ -7550,6 +7682,25 @@ dependencies = [
  "quote",
  "syn 2.0.118",
 ]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
+dependencies = [
+ "bitflags 2.13.0",
+ "getopts",
+ "memchr",
+ "pulldown-cmark-escape",
+ "unicase",
+]
+
+[[package]]
+name = "pulldown-cmark-escape"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
 
 [[package]]
 name = "pulp"
@@ -9061,6 +9212,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yml"
+version = "0.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59e2dd588bf1597a252c3b920e0143eb99b0f76e4e082f4c92ce34fbc9e71ddd"
+dependencies = [
+ "indexmap 2.14.0",
+ "itoa 1.0.18",
+ "libyml",
+ "memchr",
+ "ryu",
+ "serde",
+ "version_check",
+]
+
+[[package]]
 name = "server_fn"
 version = "0.8.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9992,6 +10158,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc0ed6038fcbc0795aca7c92963ddda636573b956679204e044492d2b13c8f64"
 dependencies = [
  "pin-project-lite",
+]
+
+[[package]]
+name = "tiff"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba1310fcea54c6a9a4fd1aad794ecc02c31682f6bfbecdf460bf19533eed1e3e"
+dependencies = [
+ "flate2",
+ "jpeg-decoder",
+ "weezl",
 ]
 
 [[package]]
@@ -11200,6 +11377,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "webp"
+version = "0.2.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bb5d8e7814e92297b0e1c773ce43d290bef6c17452dafd9fc49e5edb5beba71"
+dependencies = [
+ "image 0.24.9",
+ "libwebp-sys",
+]
+
+[[package]]
 name = "webpki-root-certs"
 version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11233,9 +11420,14 @@ dependencies = [
  "leptos",
  "leptos_meta",
  "leptos_router",
+ "montrs-content",
  "montrs-core",
+ "montrs-hotkeys-core",
+ "montrs-hotkeys-web",
  "montrs-icons",
  "montrs-motion",
+ "montrs-state",
+ "montrs-table-core",
  "montrs-ui",
  "serde",
  "serde_json",

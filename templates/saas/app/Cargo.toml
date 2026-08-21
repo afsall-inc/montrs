@@ -6,6 +6,10 @@ edition.workspace = true
 [dependencies]
 {{crate_name}} = { path = ".." }
 montrs-ui = { path = "{{project-name}}/packages/ui" }
+montrs-state = { path = "{{project-name}}/packages/state" }
+montrs-table-core = { path = "{{project-name}}/packages/table-core" }
+montrs-hotkeys-core = { path = "{{project-name}}/packages/hotkeys-core" }
+montrs-command = { path = "{{project-name}}/packages/command" }
 leptos = { version = "0.8", features = ["ssr"] }
 
 [lib]

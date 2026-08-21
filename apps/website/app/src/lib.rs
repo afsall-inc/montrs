@@ -42,7 +42,11 @@ use leptos::prelude::*;
 use montrs_core::{
     AppConfig, AppSpec, EnvConfig, EnvError, Plate, RouterOutlet, Target,
 };
-use montrs_ui::prelude::*;
+use montrs_ui::{components::toaster::provide_notification_center, prelude::*};
+
+fn provide_website_context() {
+    provide_notification_center();
+}
 
 pub fn build_spec() -> AppSpec<MyConfig> {
     let mut spec = AppSpec::new(MyConfig, MyEnv)
@@ -66,6 +70,7 @@ pub fn hydrate() {
 #[component]
 pub fn App() -> impl IntoView {
     leptos_meta::provide_meta_context();
+    provide_website_context();
 
     view! {
         <leptos_router::components::Router>

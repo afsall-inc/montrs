@@ -1,0 +1,17 @@
+[package]
+name = "montrs-hotkeys-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Platform-independent keyboard shortcut parsing and matching for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
+[dependencies]
+thiserror.workspace = true
+
+[dev-dependencies]

@@ -1,16 +1,25 @@
-# Build-Watch Package — Agent Guide
+# Agent Guide: montrs-build-watch
 
-## Overview
-`montrs-build-watch` provides file system watching for MontRS projects. It watches a directory for changes and triggers a rebuild via the `BuildPipeline` trait.
+## Core Concepts
+File system watcher with debounced rebuild triggers.
 
-## Key Concepts
-- **watch_directory**: Watches a path and triggers a callback on change events (debounced 300ms).
-- **watch_and_rebuild**: Convenience wrapper that calls `pipeline.build_all()` on changes.
+### Watching
+- Uses the `notify` crate for cross-platform file system events.
+- Watches the project source directory for changes.
+- Filters out irrelevant events (e.g., `target/`, `.git/`).
 
-## Agent Usage
-- Use `watch_directory(path, on_change)` for custom rebuild logic.
-- Use `watch_and_rebuild(path, pipeline)` for the full pipeline rebuild.
-- Events are debounced to avoid redundant rebuilds.
+### Debouncing
+- Multiple rapid changes are coalesced into a single rebuild event.
+- The debounce interval is configurable (default: 100ms).
+- Ensures that save-all operations don't trigger redundant builds.
 
-## Local Invariants
-Read `docs/invariants.md` before modifying.
+### Integration
+- Composes with `build-serve` for live reload development.
+- Fires a callback when a rebuild is needed.
+- The callback is provided by the `BuildPipeline` trait.
+
+## Important Rules
+- File watching is cross-platform via the `notify` crate.
+- Debouncing prevents unnecessary rebuilds during rapid changes.
+- The watcher respects `.gitignore` patterns by default.
+- Only file changes in the project directory are monitored.

@@ -72,6 +72,78 @@ impl Route<AppConfig> for HelloRoute {
 
 ---
 
+## 📦 Installing from Source (Local Development)
+
+Since MontRS is not yet published on [crates.io](https://crates.io), you'll need to build and install from source for local development.
+
+### Prerequisites
+
+- **Rust toolchain**: Install via [rustup](https://rustup.rs/). MontRS pins a specific nightly version in `rust-toolchain.toml` — it will be installed automatically on first build.
+- **WASM target**: Required for web builds.
+  ```bash
+  rustup target add wasm32-unknown-unknown
+  ```
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/afsall-inc/montrs.git
+cd montrs
+```
+
+### 2. Build the CLI
+
+```bash
+cargo build --package montrs-cli
+```
+
+The binary will be at `target/debug/montrs` (or `target/debug/montrs.exe` on Windows).
+
+### 3. Install the CLI (Optional)
+
+To make `montrs` available globally:
+
+```bash
+cargo install --path packages/cli
+```
+
+Alternatively, use `cargo run` from the project root:
+
+```bash
+cargo run --package montrs-cli -- <subcommand>
+```
+
+### 4. Verify
+
+```bash
+cargo run --package montrs-cli -- --help
+```
+
+### Development Workflow
+
+Use the `montrs` CLI for common development tasks:
+
+```bash
+montrs fmt          # format all Rust and view! code
+montrs test         # run all tests
+montrs bench        # run performance benchmarks
+montrs serve        # start the dev server with hot-reload
+montrs build        # build for production
+montrs watch        # watch for changes and rebuild automatically
+montrs agent check  # run agent-level diagnostics
+montrs agent doctor # full health check
+```
+
+For linting, use `cargo clippy` directly:
+
+```bash
+cargo clippy --workspace -- -D warnings
+```
+
+> **Note for Framework Contributors**: If you're working on MontRS itself, run `montrs agent doctor` after building to verify the environment is healthy.
+
+---
+
 ## 👥 Documentation for Every Audience
 
 ### 1. Application Developers

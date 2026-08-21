@@ -72,6 +72,13 @@ impl RouteView for MotionView {
     }
 }
 
+pub struct FoundationsView;
+impl RouteView for FoundationsView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Foundations /> }
+    }
+}
+
 pub struct AnimatedIconsView;
 impl RouteView for AnimatedIconsView {
     fn render(&self) -> impl IntoView {
@@ -89,6 +96,7 @@ view_route! { ComponentsRoute, "/components", ComponentsView }
 view_route! { BlocksRoute, "/blocks", BlocksView }
 view_route! { MotionRoute, "/motion", MotionView }
 view_route! { AnimatedIconsRoute, "/animated-icons", AnimatedIconsView }
+view_route! { FoundationsRoute, "/foundations", FoundationsView }
 
 // ---------------------------------------------------------------------------
 // Website Plate
@@ -124,5 +132,6 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(BlocksRoute);
         router.register(MotionRoute);
         router.register(AnimatedIconsRoute);
+        router.register(FoundationsRoute);
     }
 }

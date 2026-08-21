@@ -30,7 +30,7 @@ thiserror = "1"
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate"]
+hydrate = ["leptos/hydrate"]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",

@@ -1,0 +1,28 @@
+[package]
+name = "montrs-state"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Deterministic stores and typed state machines for MontRS applications"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
+[dependencies]
+thiserror.workspace = true
+serde = { workspace = true, optional = true }
+leptos = { workspace = true, optional = true }
+log = "0.4"
+
+[features]
+default = ["serde"]
+serde = ["dep:serde"]
+leptos = ["dep:leptos"]
+ssr = ["leptos", "leptos/ssr"]
+hydrate = ["leptos", "leptos/hydrate"]
+
+[dev-dependencies]
+serde = { workspace = true, features = ["derive"] }

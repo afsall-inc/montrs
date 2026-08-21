@@ -9,7 +9,7 @@ description = "The main entry point for the MontRS framework."
 
 [package.metadata.montrs]
 layer = "3"
-allowed_deps = ["montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile"]
+allowed_deps = ["montrs-core", "montrs-haptics", "montrs-orm", "montrs-validator", "montrs-test", "montrs-cli", "montrs-icons", "montrs-ui", "montrs-motion", "montrs-renderer", "montrs-desktop", "montrs-mobile", "montrs-state", "montrs-content", "montrs-table-core", "montrs-hotkeys-core", "montrs-hotkeys-web", "montrs-image-core", "montrs-image-optimizer", "montrs-command"]
 
 [dependencies]
 montrs-platform = { path = "../platform", version = "0.1.0" }
@@ -25,6 +25,14 @@ montrs-motion = { path = "../motion", version = "0.1.0", optional = true }
 montrs-renderer = { path = "../renderer", version = "0.1.0", optional = true }
 montrs-desktop = { path = "../desktop", version = "0.1.0", optional = true }
 montrs-mobile = { path = "../mobile", version = "0.1.0", optional = true }
+montrs-state = { path = "../state", version = "0.1.0", optional = true }
+montrs-content = { path = "../content", version = "0.1.0", optional = true }
+montrs-table-core = { path = "../table-core", version = "0.1.0", optional = true }
+montrs-hotkeys-core = { path = "../hotkeys-core", version = "0.1.0", optional = true }
+montrs-hotkeys-web = { path = "../hotkeys-web", version = "0.1.0", optional = true }
+montrs-image-core = { path = "../image-core", version = "0.1.0", optional = true }
+montrs-image-optimizer = { path = "../image-optimizer", version = "0.1.0", optional = true }
+montrs-command = { path = "../command", version = "0.1.0", optional = true }
 
 [[bin]]
 name = "montrs"
@@ -36,7 +44,15 @@ haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "validator", "test", "cli", "icons", "ui", "motion"]
+full = ["orm", "validator", "test", "cli", "icons", "ui", "motion", "state", "content", "table", "hotkeys", "command", "image"]
+state = ["dep:montrs-state"]
+content = ["dep:montrs-content"]
+table = ["dep:montrs-table-core"]
+hotkeys = ["dep:montrs-hotkeys-core"]
+hotkeys-web = ["hotkeys", "dep:montrs-hotkeys-web"]
+image = ["dep:montrs-image-core"]
+image-optimizer = ["image", "dep:montrs-image-optimizer"]
+command = ["dep:montrs-command"]
 
 # Basic package activation
 orm = ["dep:montrs-orm"]

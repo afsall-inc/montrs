@@ -53,9 +53,9 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **When to modify**: When adding new icons from upstream Lucide, improving search, or adding rendering features.
 
 ## 📦 `montrs-ui`
-- **Responsibility**: UI component library with Tailwind CSS macros, shadcn-inspired theming system, and type-safe variant components.
-- **Key Components**: `clx!`/`void!` macros, `variants!` macro, `cn!()` utility, `ThemeProvider`, `components.json` config, theme generator.
-- **Boundary**: Pure Rust macros and components. No JavaScript, no Objective-C, no external runtime dependencies. Relies on `montrs-icons` for icon rendering.
+- **Responsibility**: UI component library with Tailwind CSS macros, shadcn-inspired theming system, type-safe variant components, and Toaster notifications.
+- **Key Components**: `clx!`/`void!` macros, `variants!` macro, `cn!()` utility, `ThemeProvider`, `components.json` config, theme generator, `Toaster`, `NotificationCenter`.
+- **Boundary**: Pure Rust macros and components. No JavaScript, no Objective-C, no external runtime dependencies. Relies on `montrs-icons` for icon rendering and `montrs-hotkeys-core` for keyboard shortcut integration.
 - **When to modify**: When adding new UI macros, updating the theming system, or adding new component patterns.
 
 ## 📦 `montrs-platform`
@@ -63,6 +63,54 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Key Components**: `Target`, `PlatformAdapter`, `NoopPlatformAdapter`, `NativeMenuItem`.
 - **Boundary**: Layer-0 package with zero MontRS dependencies. Used by `core` for target identification and by `desktop`/`mobile` for platform-specific behavior.
 - **When to modify**: When adding a new target variant or platform capability.
+
+## 📦 `montrs-state`
+- **Responsibility**: Deterministic stores, typed state machines, selectors, and undo history.
+- **Key Components**: `Store`, `Reducer`, `StateMachine`, `Transition`, `StateError`.
+- **Boundary**: Layer 2. Core is platform-independent; Leptos hooks are optional via the `leptos` feature.
+- **When to modify**: When adding new store capabilities, middleware, or machine patterns.
+
+## 📦 `montrs-content`
+- **Responsibility**: Typed Markdown content collections with deterministic ordering.
+- **Key Components**: `Collection`, `Entry`, `ContentError`, `parse`.
+- **Boundary**: Layer 1. No Leptos, browser, or framework dependency. Build-time embedding and SSR file-system loading.
+- **When to modify**: When adding new content sources, frontmatter schemas, or output formats.
+
+## 📦 `montrs-table-core`
+- **Responsibility**: Headless, serializable table state and row models.
+- **Key Components**: `Table`, `Row`, `TableState`, `ColumnId`, `SortEntry`, `Pagination`.
+- **Boundary**: Layer 2. No Leptos, DOM, or renderer dependency. Stable column/row IDs. Renderers belong in UI, TUI, or native packages.
+- **When to modify**: When adding new row-model features, aggregations, or state serialization.
+
+## 📦 `montrs-hotkeys-core`
+- **Responsibility**: Platform-independent keyboard shortcut parsing and matching.
+- **Key Components**: `Hotkey`, `KeyEvent`, `Modifier`, `HotkeyError`.
+- **Boundary**: Layer 2. No Leptos, DOM, or event-system dependency.
+- **When to modify**: When adding new modifier aliases, sequence support, or platform normalization.
+
+## 📦 `montrs-hotkeys-web`
+- **Responsibility**: Browser/WASM hotkey adapter.
+- **Key Components**: `BrowserHotkey`.
+- **Boundary**: Layer 2. Depends on `montrs-hotkeys-core`. Uses `web-sys` for keyboard events. Non-WASM builds are compile-safe no-ops.
+- **When to modify**: When changing browser event handling or adding layout-specific key mapping.
+
+## 📦 `montrs-image-core`
+- **Responsibility**: Validated, serializable image request specifications.
+- **Key Components**: `ImageSpec`, `ImageFormat`, `ImageError`.
+- **Boundary**: Layer 1. No filesystem, HTTP, or rendering logic. Dimensions and source paths are validated before processing.
+- **When to modify**: When adding new formats, validation rules, or cache-key strategies.
+
+## 📦 `montrs-image-optimizer`
+- **Responsibility**: Bounded server-side image optimization policy.
+- **Key Components**: `OptimizerConfig`, `OptimizerError`.
+- **Boundary**: Layer 2. Validates specs through `montrs-image-core`. Enforces file-size, dimension, and source-root limits. Actual encoding is feature-gated.
+- **When to modify**: When changing optimization limits, cache behavior, or adding encoding backends.
+
+## 📦 `montrs-command`
+- **Responsibility**: Typed command registry and deterministic prefix search.
+- **Key Components**: `Command`, `CommandRegistry`.
+- **Boundary**: Layer 2. No Leptos, browser, or UI dependency. Commands have stable IDs and case-insensitive search.
+- **When to modify**: When adding search algorithms, sorting strategies, or metadata fields.
 
 ## 📦 `montrs-build-core`
 - **Responsibility**: `BuildPipeline` trait and `BuildConfig` types — the interface for the build system.
@@ -133,8 +181,8 @@ Packages are organized into layers. A package at layer N may depend on packages 
 | Layer | Packages | Rules |
 |---|---|---|
 | **0 (Core)** | `core`, `validator`, `platform`, `runtime` | No montrs-* deps (except platform → core re-export) |
-| **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner`, `env`, `sigstore`, `registry`, `plugin` | Only core/validator/platform |
-| **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve` | Only layers 0-1 |
+| **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner`, `env`, `sigstore`, `registry`, `plugin`, `image-core`, `content` | Only core/validator/platform |
+| **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve`, `state`, `table-core`, `hotkeys-core`, `hotkeys-web`, `image-optimizer`, `command` | Only layers 0-1 |
 | **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs`, `tui` | Any layer |
 
 ### Dependency Flow

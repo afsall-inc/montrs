@@ -1,0 +1,16 @@
+[package]
+name = "montrs-image-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Validated, deterministic image specifications for MontRS"
+
+[package.metadata.montrs]
+layer = "1"
+allowed_deps = []
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+thiserror.workspace = true

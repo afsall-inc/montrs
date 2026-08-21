@@ -21,6 +21,11 @@ montrs-core = { path = "../../packages/core" }
 montrs-icons = { path = "../../packages/icons", features = ["animated"] }
 montrs-ui = { path = "../../packages/ui" }
 montrs-motion = { path = "../../packages/motion" }
+montrs-state = { path = "../../packages/state" }
+montrs-table-core = { path = "../../packages/table-core" }
+montrs-content = { path = "../../packages/content" }
+montrs-hotkeys-core = { path = "../../packages/hotkeys-core" }
+montrs-hotkeys-web = { path = "../../packages/hotkeys-web" }
 leptos.workspace = true
 leptos_meta.workspace = true
 leptos_router.workspace = true

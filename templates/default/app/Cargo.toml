@@ -16,6 +16,9 @@ required-features = ["ssr"]
 montrs-core = { path = "../../../packages/core" }
 montrs-ui = { path = "../../../packages/ui" }
 montrs-icons = { path = "../../../packages/icons" }
+montrs-state = { path = "../../../packages/state" }
+montrs-hotkeys-core = { path = "../../../packages/hotkeys-core" }
+montrs-table-core = { path = "../../../packages/table-core" }
 leptos = { version = "0.8", features = ["hydrate", "ssr"] }
 leptos_meta = { version = "0.8" }
 leptos_router = { version = "0.8" }
@@ -30,7 +33,7 @@ thiserror = "1"
 
 [features]
 default = []
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate"]
+hydrate = ["leptos/hydrate"]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
