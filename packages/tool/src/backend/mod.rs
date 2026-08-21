@@ -32,9 +32,11 @@ pub mod cargo;
 pub mod core;
 pub mod github;
 pub mod http;
+pub mod standalone;
 pub mod ubi;
 
 use async_trait::async_trait;
+use montrs_registry::RegistryTool;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -190,6 +192,7 @@ pub fn create_backend(
     name: &str,
     backend_type: &str,
     install_dir: Option<PathBuf>,
+    tool: Option<&RegistryTool>,
 ) -> Result<Box<dyn ToolBackend>, ToolError> {
     let dir = install_dir.unwrap_or_else(|| default_install_dir().join(name));
     let parts: Vec<&str> = backend_type.split(':').collect();
@@ -197,10 +200,27 @@ pub fn create_backend(
 
     match backend {
         "core" => Ok(Box::new(core::CoreBackend::new(name, dir))),
-        "cargo" => Ok(Box::new(cargo::CargoBackend::new(name, dir))),
+        "cargo" => {
+            // Use parts[1] as crate name (e.g. "cargo:wasm-bindgen-cli"),
+            // fall back to tool name.
+            let crate_name = parts.get(1).copied().unwrap_or(name);
+            Ok(Box::new(cargo::CargoBackend::new(crate_name, dir)))
+        }
         "github" => {
             let repo = parts.get(1).copied().unwrap_or(name);
-            Ok(Box::new(github::GitHubBackend::new(name, repo, dir)))
+            let is_standalone = parts.get(2) == Some(&"standalone")
+                || tool.map(|t| t.option_bool("standalone")).unwrap_or(false);
+            if is_standalone {
+                let asset =
+                    tool.and_then(|t| t.option_str("asset")).unwrap_or_else(
+                        || format!("{name}-{{os}}-{{arch}}{{exe}}"),
+                    );
+                Ok(Box::new(standalone::StandaloneBackend::new(
+                    name, repo, dir, asset,
+                )))
+            } else {
+                Ok(Box::new(github::GitHubBackend::new(name, repo, dir)))
+            }
         }
         "http" => Ok(Box::new(http::HttpBackend::new(name, dir, ""))),
         "ubi" => Ok(Box::new(ubi::UbiBackend::new(name, dir))),

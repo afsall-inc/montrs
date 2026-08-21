@@ -5483,6 +5483,7 @@ dependencies = [
  "montrs-runner",
  "montrs-services",
  "montrs-shell",
+ "montrs-tool",
  "montrs-utils",
  "openssl",
  "proc-macro2",

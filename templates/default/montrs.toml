@@ -21,3 +21,6 @@ fmt = { command = "cargo fmt --all", category = "Quality" }
 test-unit = { command = "cargo test --lib", category = "Testing", description = "Run unit tests" }
 test-all = { command = "cargo test --workspace", category = "Testing", description = "Run all tests", dependencies = ["lint", "fmt"] }
 pre-release = { command = "echo 'Preparing release...'", category = "Release", dependencies = ["test-all"] }
+[tools]
+tailwindcss = "4"
+wasm-bindgen = "0.2"

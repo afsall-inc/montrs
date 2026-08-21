@@ -89,7 +89,7 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `state` | Deterministic stores, selectors, typed state machines, history. |
 | `table-core` | Headless table state + row models (stable column/row IDs). |
 | `test` | Deterministic TestRuntime, fixtures, E2E orchestration (Playwright). |
-| `tool` | Tool version manager (5 backends: core, cargo, github, http, ubi). |
+| `tool` | Tool version manager (6 backends: core, cargo, github, http, ubi, standalone). |
 | `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
 | `ui` | shadcn-inspired component library + theme system + toaster. |
 | `utils` | Generic pure functions. |
@@ -107,13 +107,14 @@ Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `pa
 ## Developer Commands
 
 ```bash
-mise run ci           # fmt → clippy → test (CI order, do NOT reorder)
-mise run fmt          # cargo fmt --all
-mise run clippy       # cargo clippy --workspace -- -D warnings
-mise run test         # cargo test --workspace
-mise run build        # cargo build --workspace
-mise run dev          # cargo run --package montrs-cli -- serve
-mise run bench        # cargo run --package montrs-cli -- bench
+montrs install       # install all tools the project needs (Tailwind, wasm-bindgen, wasm target)
+montrs fmt           # format all Rust + view! code
+montrs test          # run all tests
+montrs bench         # run benchmarks
+montrs serve         # dev server with hot-reload
+montrs build         # build for production
+montrs agent check   # agent-level diagnostics
+montrs agent doctor  # full health check
 
 # Single-package
 cargo test -p montrs-agent
@@ -121,6 +122,32 @@ cargo clippy -p montrs-core -- -D warnings
 ```
 
 **Required order** (CI enforces): `fmt (--check)` → `clippy -D warnings` → `test` → `build --release`
+
+## Tool Management
+
+`montrs install` is the single entrypoint for toolchain prerequisites:
+
+- **No npm / Node / package.json** — Tailwind CSS is fetched as a standalone executable
+  (`github:tailwindlabs/tailwindcss:standalone`), wasm-bindgen via `cargo install`
+  (`cargo:wasm-bindgen-cli`).
+- Installs the `wasm32-unknown-unknown` Rust target via rustup when missing.
+- Installs tools to `default_install_dir()` (`~/Library/.../montrs/installs` on macOS,
+  `%APPDATA%...` on Windows) and writes resolved versions to `montrs.lock`.
+- `montrs serve`/`build`/`watch` resolve managed binaries via
+  `montrs_tool::managed_bin_path()` (lockfile first, then install dir lookup), falling
+  back to `PATH`.
+
+```bash
+montrs install                     # installs tools declared in montrs.toml [tools]
+montrs install --tool tailwindcss  # install one tool by registry name or name@version
+montrs install --force             # reinstall even if already present
+montrs install --dry-run           # show what would be installed without changes
+```
+
+New tools are defined in `packages/registry/registry/<name>.toml` (baked registry).
+Backend specs: `cargo:<crate>`, `github:<owner>/<repo>` (tarball releases), or
+`github:<owner>/<repo>:standalone` (raw binary release assets, asset template from
+`[options] asset = "{os}/{arch}/{exe}"` placeholders).
 
 ## Casing (enforced by montrs-fmt for `view!`)
 
