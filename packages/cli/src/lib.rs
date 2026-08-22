@@ -760,7 +760,7 @@ pub fn main_entry() {
         let agent_manager = montrs_agent::AgentManager::new(&cwd);
         let app_name = std::fs::read_to_string("montrs.toml")
             .ok()
-            .and_then(|c| toml::from_str::<toml::Value>(&c).ok())
+            .and_then(|c| toml::from_str::<toml::Table>(&c).ok())
             .and_then(|v| {
                 v.get("project")
                     .and_then(|p| p.get("name"))

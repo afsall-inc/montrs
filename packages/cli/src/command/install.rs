@@ -146,10 +146,9 @@ fn project_tool_requests(root: &Path) -> Result<Vec<ToolRequest>> {
     let montrs_toml = root.join("montrs.toml");
     if montrs_toml.exists() {
         let content = std::fs::read_to_string(&montrs_toml)?;
-        let doc: toml::Value = content
-            .parse()
+        let doc: BTreeMap<String, toml::Value> = toml::from_str(&content)
             .context("Failed to parse montrs.toml [tools]")?;
-        if let Some(tools) = doc.get("tools").and_then(|t| t.as_table()) {
+        if let Some(toml::Value::Table(tools)) = doc.get("tools") {
             let mut requests = Vec::new();
             for (name, value) in tools {
                 let version = match value {
