@@ -269,7 +269,10 @@ fn write_install_lockfile(
     };
 
     for (name, version) in installed {
-        lock.add_tool(
+        // set_tool replaces any previous entry so stale versions from
+        // earlier installs don't shadow the freshly resolved version
+        // (resolved_version returns the first entry).
+        lock.set_tool(
             name,
             LockfileTool {
                 version: version.clone(),
