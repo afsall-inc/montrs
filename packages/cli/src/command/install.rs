@@ -87,12 +87,14 @@ pub async fn run(
         }
 
         match install_tool(&manager, req, force).await {
-            Ok(version) => {
-                println!(
-                    "  {} installed {}",
-                    style("✓").green().bold(),
-                    style(format!("{}@{}", req.name, version)).bold()
-                );
+            Ok((version, fresh)) => {
+                if fresh {
+                    println!(
+                        "  {} installed {}",
+                        style("✓").green().bold(),
+                        style(format!("{}@{}", req.name, version)).bold()
+                    );
+                }
                 installed.push((req.name.clone(), version));
             }
             Err(e) => {
@@ -180,15 +182,16 @@ fn project_tool_requests(root: &Path) -> Result<Vec<ToolRequest>> {
 }
 
 /// Install a single tool (skipping already-installed unless `--force`).
+/// Returns `(version, fresh)` where `fresh` is `true` when the tool was
+/// actually installed this call, and `false` when it was already present.
 async fn install_tool(
     manager: &ToolManager,
     req: &ToolRequest,
     force: bool,
-) -> Result<String> {
+) -> Result<(String, bool)> {
     if !force {
         match manager.list_installed(&req.name) {
             Ok(versions) if !versions.is_empty() => {
-                // Prefer the newest installed version.
                 let current = versions.first().cloned().unwrap();
                 println!(
                     "  {} {} already installed ({}). Use --force to reinstall.",
@@ -196,7 +199,7 @@ async fn install_tool(
                     req.name,
                     current
                 );
-                return Ok(current);
+                return Ok((current, false));
             }
             _ => {}
         }
@@ -212,7 +215,7 @@ async fn install_tool(
             let _ = manager.create_shim(&req.name, &bin, &version.version);
         }
     }
-    Ok(version.version)
+    Ok((version.version, true))
 }
 
 /// Ensure the `wasm32-unknown-unknown` Rust target is installed via rustup.

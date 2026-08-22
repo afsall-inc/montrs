@@ -32,8 +32,8 @@
 /// Used for tools distributed as single binaries (e.g. Tailwind CSS CLI),
 /// avoiding any dependency on npm/Node.
 use crate::backend::{
-    BackendType, ToolBackend, ToolError, ToolVersion, download_file,
-    sha256_digest,
+    BackendType, ToolBackend, ToolError, ToolVersion, candidate_tags,
+    download_file, sha256_digest,
 };
 use async_trait::async_trait;
 use std::path::PathBuf;
@@ -155,7 +155,6 @@ impl ToolBackend for StandaloneBackend {
         }
 
         let asset = self.resolve_asset_name(version);
-        let url = self.asset_url(version, &asset);
         let bin_dir = version_path.join("bin");
         let download_path = bin_dir.join(if cfg!(windows) {
             format!("{}.exe", self.name)
@@ -163,7 +162,28 @@ impl ToolBackend for StandaloneBackend {
             self.name.clone()
         });
 
-        download_file(&url, &download_path).await?;
+        // Try each tag form (e.g. "4.3.1", then "v4.3.1") until one
+        // downloads successfully. See `candidate_tags` for details.
+        let mut last_error: Option<String> = None;
+        let mut downloaded_url = String::new();
+        for tag in candidate_tags(version) {
+            let url = self.asset_url(&tag, &asset);
+            match download_file(&url, &download_path).await {
+                Ok(()) => {
+                    downloaded_url = url;
+                    break;
+                }
+                Err(e) => last_error = Some(e.to_string()),
+            }
+        }
+        if downloaded_url.is_empty() {
+            return Err(ToolError::Backend(format!(
+                "failed to download {}@{}{}",
+                self.name,
+                version,
+                last_error.map(|e| format!(": {e}")).unwrap_or_default(),
+            )));
+        }
 
         // Mark executable on Unix so it can be invoked directly.
         #[cfg(unix)]
@@ -179,7 +199,7 @@ impl ToolBackend for StandaloneBackend {
             name: self.name.clone(),
             version: version.to_string(),
             backend: BackendType::GitHub,
-            url: Some(url),
+            url: Some(downloaded_url),
             checksum: Some(checksum),
             install_path: version_path,
             bins: vec![self.name.clone()],

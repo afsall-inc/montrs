@@ -613,14 +613,36 @@ impl AgentManager {
 
     fn find_error(&self, id: &str) -> Result<ErrorRecord> {
         let error_dir = self.errorfiles_dir();
-        for entry in fs::read_dir(error_dir)?.flatten() {
-            if entry.path().is_dir() {
-                let file_path = entry.path().join(format!("{}.json", id));
-                if file_path.exists() {
-                    let content = fs::read_to_string(file_path)?;
-                    return Ok(serde_json::from_str(&content)?);
+        // Nested: <errorfiles>/<id>/v<N>.json
+        let nested = error_dir.join(id);
+        if nested.is_dir() {
+            let mut latest: Option<ErrorRecord> = None;
+            let mut highest_version: u32 = 0;
+            for entry in fs::read_dir(&nested)?.flatten() {
+                if entry.path().extension().and_then(|s| s.to_str())
+                    == Some("json")
+                {
+                    if let Ok(content) = fs::read_to_string(entry.path()) {
+                        if let Ok(record) =
+                            serde_json::from_str::<ErrorRecord>(&content)
+                        {
+                            if record.version >= highest_version {
+                                highest_version = record.version;
+                                latest = Some(record);
+                            }
+                        }
+                    }
                 }
             }
+            if let Some(record) = latest {
+                return Ok(record);
+            }
+        }
+        // Flat fallback: <errorfiles>/<id>.json
+        let flat = error_dir.join(format!("{id}.json"));
+        if flat.exists() {
+            let content = fs::read_to_string(flat)?;
+            return Ok(serde_json::from_str(&content)?);
         }
         anyhow::bail!("Error record not found: {}", id)
     }

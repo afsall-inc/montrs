@@ -30,8 +30,8 @@
 
 /// GitHub releases backend — downloads from GitHub releases.
 use crate::backend::{
-    BackendType, ToolBackend, ToolError, ToolVersion, download_file,
-    extract_tarball, sha256_digest,
+    BackendType, ToolBackend, ToolError, ToolVersion, candidate_tags,
+    download_file, extract_tarball, sha256_digest,
 };
 use async_trait::async_trait;
 use std::path::PathBuf;
@@ -142,10 +142,30 @@ impl ToolBackend for GitHubBackend {
         }
 
         let asset = self.resolve_asset_name(version);
-        let url = self.asset_url(version, &asset);
         let archive_path = self.install_dir.join(format!("{}.tar.gz", version));
 
-        download_file(&url, &archive_path).await?;
+        // Try each tag form (e.g. "1.2.3", then "v1.2.3") until one downloads.
+        let mut last_error: Option<String> = None;
+        let mut downloaded_url = String::new();
+        for tag in candidate_tags(version) {
+            let url = self.asset_url(&tag, &asset);
+            match download_file(&url, &archive_path).await {
+                Ok(()) => {
+                    downloaded_url = url;
+                    break;
+                }
+                Err(e) => last_error = Some(e.to_string()),
+            }
+        }
+        if downloaded_url.is_empty() {
+            return Err(ToolError::Backend(format!(
+                "failed to download {}@{}{}",
+                self.name,
+                version,
+                last_error.map(|e| format!(": {e}")).unwrap_or_default(),
+            )));
+        }
+
         tokio::fs::create_dir_all(&version_path).await?;
         extract_tarball(&archive_path, &version_path).await?;
 
@@ -156,7 +176,7 @@ impl ToolBackend for GitHubBackend {
             name: self.name.clone(),
             version: version.to_string(),
             backend: BackendType::GitHub,
-            url: Some(url),
+            url: Some(downloaded_url),
             checksum: Some(checksum),
             install_path: version_path,
             bins: vec![self.name.clone()],

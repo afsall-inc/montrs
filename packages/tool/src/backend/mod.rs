@@ -139,7 +139,7 @@ pub fn default_shims_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(".montrs/shims"))
 }
 
-/// Compute SHA256 checksum of a file.
+/// Compute the content hash of a file.
 pub async fn sha256_digest(
     path: &std::path::Path,
 ) -> Result<String, ToolError> {
@@ -158,12 +158,32 @@ pub async fn sha256_digest(
     Ok(hex::encode(hasher.finalize()))
 }
 
+/// Candidate release tag names for a resolved version.
+///
+/// `list_versions` strips a leading `v` from GitHub tags, so a resolved
+/// version like `4.3.1` may map to a tag `4.3.1` or `v4.3.1` depending on
+/// the repository's tagging convention. Backends should try each candidate
+/// so both conventions work.
+pub(crate) fn candidate_tags(version: &str) -> Vec<String> {
+    if version.starts_with('v') {
+        vec![version.to_string()]
+    } else {
+        vec![version.to_string(), format!("v{version}")]
+    }
+}
+
 /// Download a file from a URL to a path.
 pub async fn download_file(
     url: &str,
     dest: &std::path::Path,
 ) -> Result<(), ToolError> {
     let response = reqwest::get(url).await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(ToolError::Backend(format!(
+            "download failed ({status}): {url}"
+        )));
+    }
     let bytes = response.bytes().await?;
     if let Some(parent) = dest.parent() {
         tokio::fs::create_dir_all(parent).await?;
