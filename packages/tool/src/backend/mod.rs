@@ -192,6 +192,52 @@ pub async fn download_file(
     Ok(())
 }
 
+/// Perform an HTTP GET with retry and exponential backoff.
+/// Returns the response body bytes on success.
+pub(crate) async fn http_get_with_retry(
+    url: &str,
+    max_retries: u32,
+) -> Result<reqwest::Response, ToolError> {
+    let client = reqwest::Client::builder()
+        .user_agent("montrs/0.1.0")
+        .build()?;
+    let mut last_error = None;
+    for attempt in 0..=max_retries {
+        if attempt > 0 {
+            tokio::time::sleep(std::time::Duration::from_millis(
+                500 * (1 << attempt),
+            ))
+            .await;
+        }
+        match client.get(url).send().await {
+            Ok(resp) => {
+                let status = resp.status();
+                if status == reqwest::StatusCode::TOO_MANY_REQUESTS
+                    || status == reqwest::StatusCode::FORBIDDEN
+                {
+                    last_error = Some(ToolError::Backend(format!(
+                        "GitHub API rate limited ({status}) — try again later"
+                    )));
+                    continue;
+                }
+                if !status.is_success() {
+                    last_error = Some(ToolError::Backend(format!(
+                        "HTTP {status} for {url}"
+                    )));
+                    continue;
+                }
+                return Ok(resp);
+            }
+            Err(e) => {
+                last_error = Some(ToolError::Http(e));
+            }
+        }
+    }
+    Err(last_error.unwrap_or_else(|| {
+        ToolError::Backend(format!("failed to fetch {url} after retries"))
+    }))
+}
+
 /// Extract a tarball to a directory.
 pub async fn extract_tarball(
     archive: &std::path::Path,

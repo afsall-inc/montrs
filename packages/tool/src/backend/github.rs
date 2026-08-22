@@ -31,7 +31,7 @@
 /// GitHub releases backend — downloads from GitHub releases.
 use crate::backend::{
     BackendType, ToolBackend, ToolError, ToolVersion, candidate_tags,
-    download_file, extract_tarball, sha256_digest,
+    download_file, extract_tarball, http_get_with_retry, sha256_digest,
 };
 use async_trait::async_trait;
 use std::path::PathBuf;
@@ -91,10 +91,7 @@ impl ToolBackend for GitHubBackend {
     }
 
     async fn list_versions(&self) -> Result<Vec<String>, ToolError> {
-        let client = reqwest::Client::builder()
-            .user_agent("montrs/0.1.0")
-            .build()?;
-        let response = client.get(self.api_url()).send().await?;
+        let response = http_get_with_retry(&self.api_url(), 3).await?;
         let releases: Vec<serde_json::Value> = response.json().await?;
         let mut versions: Vec<String> = releases
             .iter()

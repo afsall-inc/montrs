@@ -109,7 +109,13 @@ impl ToolBackend for CargoBackend {
         } else {
             format!("--version={version}")
         };
-        let mut args = vec!["install".to_string(), self.name.clone()];
+        let mut args = vec![
+            "install".to_string(),
+            self.name.clone(),
+            "-q".to_string(),
+            "--config".to_string(),
+            "future_incompat_report=false".to_string(),
+        ];
         if !ver_arg.is_empty() {
             args.push(ver_arg);
         }
