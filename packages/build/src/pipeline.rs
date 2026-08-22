@@ -45,6 +45,10 @@ pub struct Pipeline {
     pub pkg_dir: PathBuf,
     pub server_bin_name: String,
     pub workspace_target_dir: PathBuf,
+    /// Path to the Tailwind CSS binary (managed install override).
+    pub tailwind_bin: Option<PathBuf>,
+    /// Path to the wasm-bindgen binary (managed install override).
+    pub wasm_bindgen_bin: Option<PathBuf>,
 }
 
 impl Pipeline {
@@ -69,6 +73,8 @@ impl Pipeline {
             pkg_dir,
             server_bin_name,
             workspace_target_dir: workspace_target,
+            tailwind_bin: None,
+            wasm_bindgen_bin: None,
         })
     }
 
@@ -120,7 +126,11 @@ impl Pipeline {
             ));
         }
 
-        let status = Command::new("wasm-bindgen")
+        let mut cmd = match &self.wasm_bindgen_bin {
+            Some(path) => Command::new(path),
+            None => Command::new("wasm-bindgen"),
+        };
+        let status = cmd
             .arg("--target")
             .arg("web")
             .arg("--no-typescript")
@@ -208,7 +218,7 @@ impl BuildPipeline for Pipeline {
             if input.exists() {
                 println!(" Processing Tailwind CSS...");
                 std::fs::create_dir_all(&self.site_root)?;
-                run_tailwind(&input, &output)?;
+                run_tailwind(self.tailwind_bin.as_deref(), &input, &output)?;
                 println!(" Tailwind CSS processed");
             }
         }

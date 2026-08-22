@@ -33,7 +33,8 @@ use std::path::Path;
 use tokio::process::Command as TokioCommand;
 
 pub async fn run() -> anyhow::Result<()> {
-    let pipeline = Pipeline::from_root(Path::new("."))?;
+    let mut pipeline = Pipeline::from_root(Path::new("."))?;
+    crate::command::resolve_pipeline_bins(&mut pipeline);
 
     pipeline.build_all()?;
 

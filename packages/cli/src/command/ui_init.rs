@@ -137,10 +137,7 @@ fn generate_theme_css(
     let base_hue = color_hue(base_color);
     let accent_hue = color_hue(accent_color);
 
-    let mut css = String::from(
-        "@tailwind base;\n@tailwind components;\n@tailwind \
-         utilities;\n\n@layer base {\n",
-    );
+    let mut css = String::from("@import \"tailwindcss\";\n\n@layer base {\n");
 
     // :root (light mode)
     css.push_str("    :root {\n");

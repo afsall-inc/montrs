@@ -8,7 +8,7 @@ repository.workspace = true
 
 [package.metadata.montrs]
 layer = "3"
-allowed_deps = ["montrs-core", "montrs-agent", "montrs-agentignore", "montrs-bench", "montrs-fmt", "montrs-utils", "montrs-runner", "montrs-metadata", "montrs-build", "montrs-env", "montrs-lockfile", "montrs-shell", "montrs-services", "montrs-log", "montrs-auth"]
+allowed_deps = ["montrs-core", "montrs-agent", "montrs-agentignore", "montrs-bench", "montrs-fmt", "montrs-utils", "montrs-runner", "montrs-metadata", "montrs-build", "montrs-env", "montrs-lockfile", "montrs-shell", "montrs-services", "montrs-log", "montrs-auth", "montrs-tool"]
 
 [[bin]]
 name = "montrs"
@@ -64,3 +64,4 @@ syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 kstring = { workspace = true }
+montrs-tool = { path = "../tool" }

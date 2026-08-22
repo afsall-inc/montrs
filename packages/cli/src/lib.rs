@@ -237,6 +237,18 @@ pub enum Commands {
     },
     /// Generate a lockfile for tool versions.
     Lock,
+    /// Install all prerequisites and dependencies for MontRS serve/build.
+    Install {
+        /// Install a specific tool by registry name (e.g. "tailwindcss" or "tailwindcss@4").
+        #[arg(long)]
+        tool: Option<String>,
+        /// Reinstall even if already installed.
+        #[arg(long)]
+        force: bool,
+        /// Show what would be installed without making changes.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Generate shell activation script (eval this in your shell rc).
     Activate {
         /// Shell type (bash, zsh, fish, pwsh). Defaults to auto-detect.
@@ -691,6 +703,11 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             EnvSubcommand::Exec { args } => command::env::exec(&args).await,
         },
         Commands::Lock => command::lock::run().await,
+        Commands::Install {
+            tool,
+            force,
+            dry_run,
+        } => command::install::run(tool, force, dry_run).await,
         Commands::Activate { shell } => command::shell::activate(&shell).await,
         Commands::Deactivate { shell } => {
             command::shell::deactivate(&shell).await
@@ -743,7 +760,7 @@ pub fn main_entry() {
         let agent_manager = montrs_agent::AgentManager::new(&cwd);
         let app_name = std::fs::read_to_string("montrs.toml")
             .ok()
-            .and_then(|c| toml::from_str::<toml::Value>(&c).ok())
+            .and_then(|c| toml::from_str::<toml::Table>(&c).ok())
             .and_then(|v| {
                 v.get("project")
                     .and_then(|p| p.get("name"))

@@ -33,8 +33,12 @@ use crate::backend::create_backend;
 use crate::backend::{
     ToolBackend, ToolError, ToolVersion, default_install_dir, default_shims_dir,
 };
+use montrs_lockfile::{lockfile_path_for_root, read_lockfile};
 use montrs_registry::{BAKED_REGISTRY, RegistryTool};
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 /// A tool request: name + optional version.
 #[derive(Debug, Clone)]
@@ -101,18 +105,49 @@ impl ToolManager {
             .first()
             .map(|s| s.as_str())
             .unwrap_or("github");
-        create_backend(name, backend_str, Some(self.install_dir.join(name)))
+        create_backend(
+            name,
+            backend_str,
+            Some(self.install_dir.join(name)),
+            Some(tool),
+        )
     }
 
     /// Install a tool at a specific (or latest) version.
+    /// If version is "latest", resolves the latest stable version from the backend.
+    /// If version is a semver range (e.g. "4", "0.2", "^0.2"), resolves it to the
+    /// latest concrete version from the backend that matches.
     pub async fn install(
         &self,
         request: &ToolRequest,
     ) -> Result<ToolVersion, ToolError> {
         let backend = self.backend_for(&request.name)?;
         let version = match &request.version {
-            Some(v) => v.clone(),
-            None => "latest".to_string(),
+            Some(v) if v != "latest" => {
+                let parts: Vec<&str> =
+                    v.trim_start_matches(&['^', '~']).split('.').collect();
+                // Resolve ranges like "4" or "0.2" to the latest matching
+                // concrete version ("4.3.1", "0.2.101"); exact versions pass
+                // through unchanged.
+                if parts.len() < 3 {
+                    let prefix = format!("{}.", parts.join("."));
+                    let all_versions = backend.list_versions().await?;
+                    all_versions
+                        .iter()
+                        .find(|ver| ver.starts_with(&prefix))
+                        .cloned()
+                        .unwrap_or_else(|| v.clone())
+                } else {
+                    v.clone()
+                }
+            }
+            _ => {
+                let versions = backend.list_versions().await?;
+                versions
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "latest".to_string())
+            }
         };
         backend.install(&version).await
     }
@@ -209,6 +244,45 @@ impl ToolManager {
         let versions = self.list_installed(name)?;
         Ok(versions.first().cloned())
     }
+}
+
+/// Resolve the absolute path to an installed, managed binary.
+///
+/// Looks up the version from `montrs.lock` first (so `montrs install`
+/// and the build pipeline agree on versions), then falls back to any
+/// installed version in the shared install directory.
+pub fn managed_bin_path(
+    name: &str,
+    bin_name: &str,
+    project_root: &Path,
+) -> Option<PathBuf> {
+    let install_root = default_install_dir().join(name);
+    let lock_path = lockfile_path_for_root(project_root);
+    let locked_version = read_lockfile(&lock_path).ok().and_then(|lock| {
+        lock.resolved_version(name).map(|tool| tool.version.clone())
+    });
+
+    let version = locked_version.or_else(|| {
+        std::fs::read_dir(&install_root)
+            .ok()?
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_dir())
+            .filter_map(|e| e.file_name().to_str().map(String::from))
+            .find(|v| !v.is_empty())
+    })?;
+
+    let bin_dir = install_root.join(version).join("bin");
+    if cfg!(windows) {
+        let exe = bin_dir.join(format!("{bin_name}.exe"));
+        if exe.exists() {
+            return Some(exe);
+        }
+    }
+    let bin = bin_dir.join(bin_name);
+    if bin.exists() {
+        return Some(bin);
+    }
+    None
 }
 
 impl Default for ToolManager {
