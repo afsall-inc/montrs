@@ -115,13 +115,32 @@ impl ToolManager {
 
     /// Install a tool at a specific (or latest) version.
     /// If version is "latest", resolves the latest stable version from the backend.
+    /// If version is a semver range (e.g. "4", "0.2", "^0.2"), resolves it to the
+    /// latest concrete version from the backend that matches.
     pub async fn install(
         &self,
         request: &ToolRequest,
     ) -> Result<ToolVersion, ToolError> {
         let backend = self.backend_for(&request.name)?;
         let version = match &request.version {
-            Some(v) if v != "latest" => v.clone(),
+            Some(v) if v != "latest" => {
+                let parts: Vec<&str> =
+                    v.trim_start_matches(&['^', '~']).split('.').collect();
+                // Resolve ranges like "4" or "0.2" to the latest matching
+                // concrete version ("4.3.1", "0.2.101"); exact versions pass
+                // through unchanged.
+                if parts.len() < 3 {
+                    let prefix = format!("{}.", parts.join("."));
+                    let all_versions = backend.list_versions().await?;
+                    all_versions
+                        .iter()
+                        .find(|ver| ver.starts_with(&prefix))
+                        .cloned()
+                        .unwrap_or_else(|| v.clone())
+                } else {
+                    v.clone()
+                }
+            }
             _ => {
                 let versions = backend.list_versions().await?;
                 versions
