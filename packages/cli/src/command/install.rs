@@ -203,6 +203,12 @@ async fn install_tool(
             }
             _ => {}
         }
+    } else {
+        // --force: remove any existing installs so the backend
+        // doesn't reject with AlreadyInstalled.
+        let _ = std::fs::remove_dir_all(
+            montrs_tool::default_install_dir().join(&req.name),
+        );
     }
     let version = manager.install(req).await.map_err(|e| {
         anyhow::anyhow!("failed to install {}: {}", req.name, e)
