@@ -455,9 +455,11 @@ pub fn RouterOutlet<C: AppConfig + 'static>() -> impl IntoView {
     let router = use_montrs_router::<C>();
     let location = leptos_router::hooks::use_location();
 
-    move || {
-        let path = location.pathname.get();
-        router.render_view(&path)
+    view! {
+        {move || {
+            let path = location.pathname.get();
+            router.render_view(&path)
+        }}
     }
 }
 
