@@ -210,9 +210,27 @@ async fn install_tool(
             montrs_tool::default_install_dir().join(&req.name),
         );
     }
-    let version = manager.install(req).await.map_err(|e| {
-        anyhow::anyhow!("failed to install {}: {}", req.name, e)
-    })?;
+    let version = match manager.install(req).await {
+        Ok(v) => v,
+        Err(montrs_tool::ToolError::AlreadyInstalled(_)) => {
+            // The backend rejected a reinstall (e.g. the version dir
+            // could not be fully cleaned). This isn't an error — the
+            // tool is present and usable.
+            let current = manager
+                .list_installed(&req.name)
+                .ok()
+                .and_then(|v| v.first().cloned())
+                .unwrap_or("latest".to_string());
+            return Ok((current, false));
+        }
+        Err(e) => {
+            return Err(anyhow::anyhow!(
+                "failed to install {}: {}",
+                req.name,
+                e
+            ));
+        }
+    };
 
     // Create shims for every binary the tool provides.
     if let Some(tool) = manager.lookup(&req.name) {
