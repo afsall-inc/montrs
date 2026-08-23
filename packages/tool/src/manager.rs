@@ -251,6 +251,12 @@ impl ToolManager {
 /// Looks up the version from `montrs.lock` first (so `montrs install`
 /// and the build pipeline agree on versions), then falls back to any
 /// installed version in the shared install directory.
+///
+/// Skips lockfile entries whose binary is too small (< 100 bytes) to
+/// weed out garbage from failed downloads (e.g. a 404 HTML page saved
+/// as the binary).
+const MIN_BINARY_SIZE: u64 = 100;
+
 pub fn managed_bin_path(
     name: &str,
     bin_name: &str,
@@ -258,19 +264,53 @@ pub fn managed_bin_path(
 ) -> Option<PathBuf> {
     let install_root = default_install_dir().join(name);
     let lock_path = lockfile_path_for_root(project_root);
-    let locked_version = read_lockfile(&lock_path).ok().and_then(|lock| {
-        lock.resolved_version(name).map(|tool| tool.version.clone())
-    });
 
-    let version = locked_version.or_else(|| {
-        std::fs::read_dir(&install_root)
-            .ok()?
-            .filter_map(|e| e.ok())
-            .filter(|e| e.path().is_dir())
-            .filter_map(|e| e.file_name().to_str().map(String::from))
-            .find(|v| !v.is_empty())
-    })?;
+    // 1. Scan all lockfile entries for the tool, pick the first whose
+    //    binary actually exists and is a reasonable size.
+    if let Ok(lock) = read_lockfile(&lock_path) {
+        if let Some(entries) = lock.tools.get(name) {
+            for tool in entries {
+                let bin = bin_path(&install_root, &tool.version, bin_name);
+                if let Some(path) = bin {
+                    if path.metadata().map(|m| m.len()).unwrap_or(0)
+                        >= MIN_BINARY_SIZE
+                    {
+                        return Some(path);
+                    }
+                }
+            }
+        }
+    }
 
+    // 2. Fallback: scan the install directory for any version directory
+    //    that has a usable binary.
+    if let Ok(entries) = std::fs::read_dir(&install_root) {
+        for entry in entries.flatten() {
+            if !entry.path().is_dir() {
+                continue;
+            }
+            if let Some(ver) = entry.file_name().to_str() {
+                let bin = bin_path(&install_root, ver, bin_name);
+                if let Some(path) = bin {
+                    if path.metadata().map(|m| m.len()).unwrap_or(0)
+                        >= MIN_BINARY_SIZE
+                    {
+                        return Some(path);
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Build the expected binary path for a tool version.
+fn bin_path(
+    install_root: &Path,
+    version: &str,
+    bin_name: &str,
+) -> Option<PathBuf> {
     let bin_dir = install_root.join(version).join("bin");
     if cfg!(windows) {
         let exe = bin_dir.join(format!("{bin_name}.exe"));
