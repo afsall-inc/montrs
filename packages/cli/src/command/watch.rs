@@ -42,10 +42,7 @@ pub async fn run() -> anyhow::Result<()> {
     let site_root = pipeline.site_root.to_string_lossy().to_string();
     let pkg_dir = pipeline.pkg_dir.to_string_lossy().to_string();
 
-    let bin = pipeline
-        .workspace_target_dir
-        .join("debug")
-        .join(&pipeline.server_bin_name);
+    let bin = pipeline.server_bin_path();
 
     if !bin.exists() {
         anyhow::bail!(

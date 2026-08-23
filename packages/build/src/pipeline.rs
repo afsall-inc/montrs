@@ -78,6 +78,15 @@ impl Pipeline {
         })
     }
 
+    /// Path to the compiled SSR server binary, with `.exe` on Windows.
+    pub fn server_bin_path(&self) -> PathBuf {
+        let mut name = self.server_bin_name.clone();
+        if cfg!(windows) && !name.ends_with(".exe") {
+            name.push_str(".exe");
+        }
+        self.workspace_target_dir.join("debug").join(name)
+    }
+
     fn build_frontend_args(&self) -> Vec<String> {
         let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
         let mut args = vec![

@@ -7,4 +7,4 @@ config_sources = ["montrs install"]
 version = "4.3.3"
 
 [[tools.wasm-bindgen]]
-version = "0.2.127"
+version = "0.2"

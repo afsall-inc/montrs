@@ -36,7 +36,7 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
 };
 
@@ -143,21 +143,50 @@ impl MontrsLock {
         let canonical = serde_json::to_string(self).unwrap_or_default();
         hex::encode(Sha256::digest(canonical.as_bytes()))
     }
+
+    /// Deduplicate and normalize the lockfile in place.
+    ///
+    /// Removes repeated entries for the same tool+version (keeping the
+    /// last), and collapses repeated `config_sources` entries. This is a
+    /// safety net so appends can never corrupt the lockfile with
+    /// duplicates regardless of how it was built.
+    pub fn normalize(&mut self) {
+        let tools = std::mem::take(&mut self.tools);
+        for (name, mut versions) in tools {
+            // Keep the LAST entry per exact version, preserving order.
+            let mut seen_versions = BTreeSet::new();
+            versions.reverse();
+            versions.retain(|tool| seen_versions.insert(tool.version.clone()));
+            versions.reverse();
+            self.tools.insert(name, versions);
+        }
+
+        let mut seen_sources = BTreeSet::new();
+        self.config_sources
+            .retain(|source| seen_sources.insert(source.clone()));
+    }
 }
 
 /// Write a lockfile to disk with the generated header.
+///
+/// The lockfile is normalized before writing so duplicate tool versions
+/// or repeated config sources can never be persisted.
 pub fn write_lockfile(
     path: &Path,
     lock: &MontrsLock,
 ) -> Result<(), LockfileError> {
+    let mut normalized = lock.clone();
+    normalized.normalize();
+
     let mut content = String::new();
     content.push_str(LOCKFILE_HEADER_PREFIX);
     content.push('\n');
-    content.push_str(&format!("format_version = {}\n", lock.format_version));
+    content
+        .push_str(&format!("format_version = {}\n", normalized.format_version));
     content.push('\n');
 
     // Serialize tools section as TOML.
-    let toml_str = toml::to_string(&lock)
+    let toml_str = toml::to_string(&normalized)
         .map_err(|e| LockfileError::Serialize(e.to_string()))?;
     // Strip the header fields we already wrote to avoid duplication.
     let toml_str = toml_str
