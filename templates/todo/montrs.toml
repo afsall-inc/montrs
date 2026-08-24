@@ -33,6 +33,7 @@ depends = []
 fmt = { command = "cargo fmt --all", category = "Quality" }
 lint = { command = "cargo clippy -- -D warnings", category = "Quality" }
 test = { command = "cargo test", category = "Testing" }
+
 [tools]
 tailwindcss = "4"
 wasm-bindgen = "0.2"
