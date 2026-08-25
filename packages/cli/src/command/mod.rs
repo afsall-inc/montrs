@@ -29,6 +29,7 @@
 // SOFTWARE.
 
 pub mod agent;
+#[cfg(feature = "auth")]
 pub mod auth;
 pub mod bench;
 pub mod build;

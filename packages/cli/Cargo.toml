@@ -16,6 +16,7 @@ path = "src/bin/montrs.rs"
 
 [features]
 default = []
+auth = ["dep:montrs-auth"]
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
@@ -24,7 +25,7 @@ thiserror.workspace = true
 anyhow.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-serde_yaml = "0.9"
+serde_yml = "0.0.12"
 tracing.workspace = true
 tracing-subscriber = "0.3"
 console = "0.15"
@@ -57,7 +58,7 @@ montrs-lockfile = { path = "../lockfile" }
 montrs-shell = { path = "../shell" }
 montrs-services = { path = "../services" }
 montrs-log = { path = "../log" }
-montrs-auth = { path = "../auth" }
+montrs-auth = { path = "../auth", optional = true }
 colored = "2.1"
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"

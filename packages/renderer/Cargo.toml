@@ -26,10 +26,10 @@ serde.workspace = true
 thiserror.workspace = true
 
 [features]
-default = ["wgpu-backend"]
+default = ["tiny-skia-backend"]
 wgpu-backend = ["dep:wgpu", "dep:winit", "dep:lyon", "dep:glyphon"]
 tiny-skia-backend = ["dep:tiny-skia", "dep:lyon"]
-text = ["dep:cosmic-text", "dep:glyphon"]
+text = ["dep:cosmic-text", "dep:glyphon", "wgpu-backend"]
 svg = ["dep:resvg", "dep:usvg", "dep:tiny-skia"]
 images = ["dep:image"]
 full = ["wgpu-backend", "tiny-skia-backend", "text", "svg", "images"]

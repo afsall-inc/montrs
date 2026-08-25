@@ -14,7 +14,6 @@ allowed_deps = ["montrs-orm", "montrs-sigstore", "montrs-i18n", "montrs-runtime"
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
-serde_urlencoded = "0.7"
 anyhow.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["full"] }

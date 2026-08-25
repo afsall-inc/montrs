@@ -78,7 +78,7 @@ pub async fn run_to_string(
     }
 
     let output = match format.as_str() {
-        "yaml" => serde_yaml::to_string(&snapshot)?,
+        "yaml" => serde_yml::to_string(&snapshot)?,
         "txt" => format!("{:#?}", snapshot),
         _ => serde_json::to_string_pretty(&snapshot)?,
     };

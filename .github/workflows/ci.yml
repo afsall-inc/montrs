@@ -41,8 +41,14 @@ jobs:
     - name: Clippy
       run: cargo clippy --workspace -- -D warnings
 
+    - name: Clippy (auth feature)
+      run: cargo clippy --package montrs-cli --features auth -- -D warnings
+
     - name: Run tests
       run: cargo test --workspace
+
+    - name: Build (auth feature)
+      run: cargo build --release --package montrs-cli --features auth
 
     - name: Validate PRDoc
       if: github.event_name == 'pull_request'

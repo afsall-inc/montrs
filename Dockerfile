@@ -35,7 +35,7 @@ RUN rustup toolchain install nightly-2026-02-18 && \
     rustup default nightly-2026-02-18
 COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
 COPY packages/ packages/
-RUN cargo build --release --package montrs-cli && \
+RUN cargo build --release --package montrs-cli --features auth && \
     cp target/release/montrs /usr/local/bin/montrs
 
 FROM gcr.io/distroless/cc-debian12:latest

@@ -126,11 +126,7 @@ impl TextPipeline {
 
 #[cfg(not(feature = "text"))]
 impl TextPipeline {
-    pub fn new(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _format: wgpu::TextureFormat,
-    ) -> Self {
+    pub fn new(_device: &(), _queue: &(), _format: ()) -> Self {
         Self
     }
 
@@ -146,21 +142,8 @@ impl TextPipeline {
 
     pub fn set_viewport(&mut self, _width: u32, _height: u32) {}
 
-    pub fn flush(
-        &mut self,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
-        _view: &wgpu::TextureView,
-    ) {
+    pub fn flush(&mut self, _device: &(), _queue: &(), _encoder: &mut (), _view: &()) {
     }
 
-    pub fn resize(
-        &mut self,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _width: u32,
-        _height: u32,
-    ) {
-    }
+    pub fn resize(&mut self, _device: &(), _queue: &(), _width: u32, _height: u32) {}
 }

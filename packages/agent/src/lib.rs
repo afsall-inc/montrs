@@ -308,7 +308,7 @@ impl AgentManager {
     ) -> Result<()> {
         self.ensure_dir()?;
         let content = match format {
-            "yaml" => serde_yaml::to_string(snapshot)?,
+            "yaml" => serde_yml::to_string(snapshot)?,
             "txt" => format!("{:#?}", snapshot),
             _ => serde_json::to_string_pretty(snapshot)?,
         };
