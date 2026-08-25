@@ -13,7 +13,7 @@ allowed_deps = ["montrs-core"]
 
 [dependencies]
 montrs-core = { path = "../core" }
-thiserror = "1.0"
+thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

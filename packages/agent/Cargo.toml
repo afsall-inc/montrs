@@ -25,7 +25,7 @@ montrs-agentignore = { path = "../agentignore" }
 ignore = "0.4"
 regex = "1.10"
 walkdir = "2.5"
-toml = "0.8"
+toml = "0.9"
 uuid = { version = "1.8", features = ["v4", "serde"] }
 
 [dev-dependencies]

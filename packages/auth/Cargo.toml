@@ -36,8 +36,7 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["cors"] }
 axum = "0.8"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-oauth2 = "5.0"
-openidconnect = "3.5"
+
 parking_lot = "0.12"
 montrs-orm = { path = "../orm", optional = true }
 montrs-sigstore = { path = "../sigstore", optional = true }
