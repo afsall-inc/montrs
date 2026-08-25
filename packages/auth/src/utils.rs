@@ -178,6 +178,7 @@ pub mod jwt {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use time::OffsetDateTime;
 
     #[test]
     fn test_generate_token() {
