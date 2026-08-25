@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Stripe plugin — subscription management and webhook handling.
+//! Stripe plugin â€” subscription management and webhook handling.
 //! /subscription/list, /subscription/upgrade (stub), /stripe/webhook.
 //! User metadata stores stripeCustomerId.
 
@@ -40,8 +40,9 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
+use time::OffsetDateTime;
 
-/// Stripe plugin — subscription management.
+/// Stripe plugin â€” subscription management.
 pub struct StripePlugin {
     state: Option<AuthState>,
 }
@@ -177,7 +178,7 @@ async fn upgrade_subscription(
             json!({
                 "plan": plan,
                 "status": "pending",
-                "updatedAt": chrono::Utc::now().to_rfc3339(),
+                "updatedAt": OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
             }),
         )
         .await
@@ -185,7 +186,7 @@ async fn upgrade_subscription(
 
     Ok(Json(json!({
         "success": true,
-        "message": "Subscription upgrade initiated. This is a stub — integrate Stripe Checkout for production.",
+        "message": "Subscription upgrade initiated. This is a stub â€” integrate Stripe Checkout for production.",
         "plan": plan,
         "url": format!("{}/upgrade?plan={plan}", state.config.base_url.trim_end_matches('/')),
     })))
@@ -226,7 +227,7 @@ async fn stripe_webhook(
             &uuid::Uuid::new_v4().to_string(),
             json!({
                 "type": event_type,
-                "receivedAt": chrono::Utc::now().to_rfc3339(),
+                "receivedAt": OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap(),
                 "raw": body,
             }),
         )

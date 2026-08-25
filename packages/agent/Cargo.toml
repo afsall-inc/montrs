@@ -19,7 +19,7 @@ serde_json.workspace = true
 serde_yml = "0.0.12"
 thiserror.workspace = true
 anyhow.workspace = true
-time = { version = "0.3", features = ["serde"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
 montrs-core = { path = "../core" }
 montrs-agentignore = { path = "../agentignore" }
 ignore = "0.4"

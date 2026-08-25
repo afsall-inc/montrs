@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,8 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Agent Auth plugin — register and manage agent tokens for programmatic access.
-//! /agent/register, /agent/token, /agent/capability — store agents in plugin_store.
+//! Agent Auth plugin â€” register and manage agent tokens for programmatic access.
+//! /agent/register, /agent/token, /agent/capability â€” store agents in plugin_store.
 
 use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
 use axum::{
@@ -37,7 +37,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -51,12 +51,12 @@ pub struct Agent {
     pub token_hash: String,
     pub capabilities: Vec<String>,
     pub enabled: bool,
-    pub created_at: DateTime<Utc>,
-    pub last_used_at: Option<DateTime<Utc>>,
+    pub created_at: OffsetDateTime,
+    pub last_used_at: Option<OffsetDateTime>,
     pub metadata: HashMap<String, String>,
 }
 
-/// Agent Auth plugin — manage agents for programmatic access.
+/// Agent Auth plugin â€” manage agents for programmatic access.
 pub struct AgentAuthPlugin {
     state: Option<AuthState>,
 }
@@ -151,7 +151,7 @@ async fn register_agent(
         token_hash,
         capabilities: req.capabilities.unwrap_or_else(|| vec!["*".into()]),
         enabled: true,
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
         last_used_at: None,
         metadata: req.metadata.unwrap_or_default(),
     };
@@ -280,7 +280,7 @@ async fn check_capability(
 
     // Update last_used_at.
     let mut updated = agent;
-    updated.last_used_at = Some(Utc::now());
+    updated.last_used_at = Some(OffsetDateTime::now_utc());
     state
         .db
         .plugin_set(
@@ -327,8 +327,8 @@ async fn list_agents(
                     "name": a.name,
                     "capabilities": a.capabilities,
                     "enabled": a.enabled,
-                    "createdAt": a.created_at.to_rfc3339(),
-                    "lastUsedAt": a.last_used_at.map(|d| d.to_rfc3339()),
+                    "createdAt": a.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+                    "lastUsedAt": a.last_used_at.map(|d| d.format(&time::format_description::well_known::Rfc3339).unwrap()),
                     "metadata": a.metadata,
                 }))
             } else {

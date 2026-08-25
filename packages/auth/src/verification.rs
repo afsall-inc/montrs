@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -34,7 +34,7 @@ use crate::{
     database::{DatabaseAdapter, VerificationRecord},
     utils::generate_token,
 };
-use chrono::{Duration, Utc};
+use time::{Duration, OffsetDateTime};
 use uuid::Uuid;
 
 /// Create a verification record and return its raw token value.
@@ -49,8 +49,8 @@ pub async fn create_verification(
         id: Uuid::new_v4().to_string(),
         identifier: identifier.into(),
         value: token,
-        expires_at: Utc::now() + Duration::seconds(expires_in_secs),
-        created_at: Utc::now(),
+        expires_at: OffsetDateTime::now_utc() + Duration::seconds(expires_in_secs),
+        created_at: OffsetDateTime::now_utc(),
     };
     db.create_verification(&record).await?;
     Ok(record)
@@ -65,7 +65,7 @@ pub async fn consume_verification(
     let Some(rec) = db.find_verification(identifier, value).await? else {
         return Err(crate::AuthError::invalid_token().into());
     };
-    if rec.expires_at <= Utc::now() {
+    if rec.expires_at <= OffsetDateTime::now_utc() {
         let _ = db.delete_verification(&rec.id).await;
         return Err(crate::AuthError::invalid_token().into());
     }
@@ -81,7 +81,7 @@ pub async fn consume_verification_by_value(
     let Some(rec) = db.find_verification_by_value(value).await? else {
         return Err(crate::AuthError::invalid_token().into());
     };
-    if rec.expires_at <= Utc::now() {
+    if rec.expires_at <= OffsetDateTime::now_utc() {
         let _ = db.delete_verification(&rec.id).await;
         return Err(crate::AuthError::invalid_token().into());
     }

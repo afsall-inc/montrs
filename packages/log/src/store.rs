@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -37,6 +37,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use time::OffsetDateTime;
 use tokio::{io::AsyncWriteExt, sync::RwLock};
 
 /// A single log entry captured from a service.
@@ -163,7 +164,7 @@ impl LogStore {
         let seq = inner.seqs.entry(service.to_string()).or_insert(0);
         *seq += 1;
 
-        let ts = chrono::Utc::now().to_rfc3339();
+        let ts = OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap();
         let file = inner.log_file(service).unwrap_or_else(|_| {
             inner.config.root.join(format!("{service}.log"))
         });
@@ -252,7 +253,14 @@ impl LogStore {
         }
         let rotated = file.with_extension(format!(
             "log.1.{}",
-            chrono::Utc::now().format("%Y%m%d%H%M%S")
+            OffsetDateTime::now_utc()
+                .format(
+                    &time::format_description::parse_borrowed::<2>(
+                        "[year][month][day][hour][minute][second]"
+                    )
+                    .expect("valid time format")
+                )
+                .expect("valid timestamp formatting")
         ));
         tokio::fs::rename(&file, &rotated).await?;
 

@@ -23,6 +23,6 @@ sysinfo = "0.30"
 colored = "2.1"
 hdrhistogram = "7.5"
 statrs = "0.16"
-time = { version = "0.3", features = ["serde"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
 rustc_version_runtime = "0.3.0"
 clap = { version = "4.5.54", features = ["derive", "env"] }

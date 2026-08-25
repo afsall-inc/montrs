@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Passkey plugin — WebAuthn credential storage scaffold.
+//! Passkey plugin â€” WebAuthn credential storage scaffold.
 //! Registration/auth options as JSON placeholders; full webauthn-rs is TODO.
 //! Implements storage + list/delete fully.
 
@@ -38,7 +38,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -53,11 +53,11 @@ pub struct PasskeyCredential {
     pub public_key: String,
     /// Sign count for replay detection.
     pub sign_count: u32,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
     pub device_name: Option<String>,
 }
 
-/// Passkey plugin — WebAuthn credential management.
+/// Passkey plugin â€” WebAuthn credential management.
 pub struct PasskeyPlugin {
     state: Option<AuthState>,
 }
@@ -188,7 +188,7 @@ async fn register_credential(
         credential_id: req.credential_id,
         public_key: req.public_key,
         sign_count: req.sign_count.unwrap_or(0),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
         device_name: req.device_name,
     };
 
@@ -321,7 +321,7 @@ async fn list_credentials(
                     "id": cred.id,
                     "credentialId": cred.credential_id,
                     "deviceName": cred.device_name,
-                    "createdAt": cred.created_at.to_rfc3339(),
+                    "createdAt": cred.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
                 }))
             } else {
                 None

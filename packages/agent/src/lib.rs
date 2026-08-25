@@ -400,8 +400,14 @@ impl AgentManager {
                             timestamp: issue
                                 .get("timestamp")
                                 .and_then(|v| v.as_str())
-                                .and_then(|s| s.parse().ok())
-                                .unwrap_or_else(Utc::now),
+                                .and_then(|s| {
+                                    OffsetDateTime::parse(
+                                        s,
+                                        &time::format_description::well_known::Rfc3339,
+                                    )
+                                    .ok()
+                                })
+                                .unwrap_or_else(OffsetDateTime::now_utc),
                         });
                     }
                 }

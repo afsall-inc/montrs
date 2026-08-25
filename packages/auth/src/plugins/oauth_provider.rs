@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! OAuth Provider plugin — OIDC-lite Authorization Server.
+//! OAuth Provider plugin â€” OIDC-lite Authorization Server.
 //! /.well-known/openid-configuration, /oauth2/authorize, /oauth2/token,
 //! /oauth2/userinfo, /oauth2/register.
 //! Clients in plugin_store "oauth_client"; codes/tokens in verification.
@@ -41,7 +41,7 @@ use axum::{
     extract::{Query, State},
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -54,7 +54,7 @@ pub struct OAuthClient {
     pub name: Option<String>,
     pub grant_types: Vec<String>,
     pub response_types: Vec<String>,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
 }
 
 /// OAuth Provider plugin (OIDC-lite AS).
@@ -470,7 +470,7 @@ async fn register_client(
         response_types: req
             .response_types
             .unwrap_or_else(|| vec!["code".into()]),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
     };
 
     state
@@ -494,6 +494,6 @@ async fn register_client(
         "redirect_uris": client.redirect_uris,
         "grant_types": client.grant_types,
         "response_types": client.response_types,
-        "client_id_issued_at": client.created_at.timestamp(),
+        "client_id_issued_at": client.created_at.unix_timestamp(),
     })))
 }

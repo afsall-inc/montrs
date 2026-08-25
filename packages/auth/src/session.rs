@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,13 +28,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Session management — create, validate, refresh, and revoke sessions.
+//! Session management â€” create, validate, refresh, and revoke sessions.
 
 use crate::{
     database::{DatabaseAdapter, SessionRecord, UserRecord},
     entities::DefaultSession,
 };
-use chrono::Utc;
+use time::OffsetDateTime;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
@@ -71,7 +71,7 @@ impl SessionManager {
         else {
             return Ok(None);
         };
-        if session.expires_at <= Utc::now() {
+        if session.expires_at <= OffsetDateTime::now_utc() {
             let _ = self.adapter.delete_session(&session.id).await;
             return Ok(None);
         }
@@ -129,7 +129,7 @@ pub fn session_json(session: &DefaultSession) -> serde_json::Value {
         "id": session.id,
         "userId": session.user_id,
         "token": session.token,
-        "expiresAt": session.expires_at.to_rfc3339(),
-        "createdAt": session.created_at.to_rfc3339(),
+        "expiresAt": session.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+        "createdAt": session.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
     })
 }

@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -50,6 +50,7 @@ pub fn generate_otp(length: usize) -> String {
 
 /// Time-based one-time password (TOTP) utilities.
 pub mod totp {
+    use time::OffsetDateTime;
     use totp_rs::{Algorithm, TOTP};
 
     /// Generate a new TOTP secret (raw bytes).
@@ -90,7 +91,7 @@ pub mod totp {
     /// Verify a TOTP code.
     pub fn verify_code(secret: &[u8], code: &str) -> bool {
         let totp = from_secret(secret);
-        let now = chrono::Utc::now().timestamp() as u64;
+        let now = OffsetDateTime::now_utc().unix_timestamp() as u64;
         for offset in 0..=1 {
             let time = now + offset * 30;
             if totp.generate(time) == code {
@@ -134,6 +135,7 @@ pub mod jwt {
         Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, encode,
     };
     use serde::{Deserialize, Serialize};
+    use time::OffsetDateTime;
 
     /// Standard JWT claims.
     #[derive(Debug, Serialize, Deserialize)]
@@ -149,7 +151,7 @@ pub mod jwt {
         secret: &str,
         expires_in_secs: u64,
     ) -> anyhow::Result<String> {
-        let now = chrono::Utc::now().timestamp() as usize;
+        let now = OffsetDateTime::now_utc().unix_timestamp() as usize;
         let claims = Claims {
             sub: sub.to_string(),
             exp: now + expires_in_secs as usize,
@@ -197,7 +199,7 @@ mod tests {
     fn test_totp_verify() {
         let secret = totp::generate_secret();
         let totp = totp::from_secret(&secret);
-        let code = totp.generate(chrono::Utc::now().timestamp() as u64);
+        let code = totp.generate(OffsetDateTime::now_utc().unix_timestamp() as u64);
         assert!(totp::verify_code(&secret, &code));
     }
 

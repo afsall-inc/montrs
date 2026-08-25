@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Device Authorization plugin — RFC 8628 Device Flow.
+//! Device Authorization plugin â€” RFC 8628 Device Flow.
 //! /device/code, /device/token, /device/approve, /device/deny.
 //! Uses plugin_store namespace "device".
 
@@ -36,7 +36,7 @@ use crate::{
     AuthError, context::AuthState, plugin::AuthPlugin, utils::generate_token,
 };
 use axum::{Json, Router, extract::State, routing::post};
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -47,7 +47,7 @@ pub struct DeviceRequest {
     pub user_code: String,
     pub verification_uri: String,
     pub verification_uri_complete: String,
-    pub expires_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
     pub interval: u64,
     pub status: DeviceStatus,
     pub user_id: Option<String>,
@@ -146,7 +146,7 @@ async fn device_code(
         verification_uri_complete: format!(
             "{base_url}/api/auth/device/approve?code={user_code}"
         ),
-        expires_at: Utc::now() + chrono::Duration::seconds(600),
+        expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(600),
         interval: 5,
         status: DeviceStatus::Pending,
         user_id: None,
@@ -217,7 +217,7 @@ async fn device_token(
             )
         })?;
 
-    if device_req.expires_at <= Utc::now() {
+    if device_req.expires_at <= OffsetDateTime::now_utc() {
         state
             .db
             .plugin_delete("device", &req.device_code)

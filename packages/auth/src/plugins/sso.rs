@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! SSO plugin — OIDC IdP config store + SAML config storage + ACS stub.
+//! SSO plugin â€” OIDC IdP config store + SAML config storage + ACS stub.
 //! /sso/register, /sso/providers, /sign-in/sso.
 
 use crate::{
@@ -42,7 +42,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -65,7 +65,7 @@ pub struct SsoProvider {
     pub saml_acs_url: Option<String>,
     pub domains: Vec<String>,
     pub enabled: bool,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
 }
 
 /// SSO plugin.
@@ -184,7 +184,7 @@ async fn register_provider(
         )),
         domains: req.domains.unwrap_or_default(),
         enabled: true,
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
     };
 
     state

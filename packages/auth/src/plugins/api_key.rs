@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! API Key plugin — CRUD for API keys with rate limit metadata.
+//! API Key plugin â€” CRUD for API keys with rate limit metadata.
 //! /api-key/create, /api-key/list, /api-key/delete, /api-key/update.
 //! Keys are hashed with SHA-256 before storage.
 
@@ -38,7 +38,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -53,8 +53,8 @@ pub struct ApiKeyRecord {
     pub key_hash: String,
     /// The raw key prefix (first 8 chars) for display.
     pub prefix: String,
-    pub created_at: DateTime<Utc>,
-    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: OffsetDateTime,
+    pub expires_at: Option<OffsetDateTime>,
     pub rate_limit_max: Option<u32>,
     pub rate_limit_window_secs: Option<u64>,
     pub enabled: bool,
@@ -86,7 +86,7 @@ pub async fn verify_api_key(
         let record: ApiKeyRecord = serde_json::from_value(val)?;
         if record.key_hash == hash && record.enabled {
             if let Some(exp) = &record.expires_at
-                && *exp <= Utc::now()
+                && *exp <= OffsetDateTime::now_utc()
             {
                 continue;
             }
@@ -189,10 +189,10 @@ async fn create_api_key(
         name: req.name,
         key_hash: hash,
         prefix: raw[..8].to_string(),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
         expires_at: req
             .expires_in_secs
-            .map(|s| Utc::now() + chrono::Duration::seconds(s)),
+            .map(|s| OffsetDateTime::now_utc() + time::Duration::seconds(s)),
         rate_limit_max: req.rate_limit_max,
         rate_limit_window_secs: req.rate_limit_window_secs,
         enabled: true,
@@ -214,7 +214,7 @@ async fn create_api_key(
         "id": id,
         "key": raw,
         "prefix": record.prefix,
-        "createdAt": record.created_at.to_rfc3339(),
+        "createdAt": record.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
         "message": "Store this key securely. It will not be shown again.",
     })))
 }
@@ -247,8 +247,8 @@ async fn list_api_keys(
                     "id": record.id,
                     "name": record.name,
                     "prefix": record.prefix,
-                    "createdAt": record.created_at.to_rfc3339(),
-                    "expiresAt": record.expires_at.map(|d| d.to_rfc3339()),
+                    "createdAt": record.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+                    "expiresAt": record.expires_at.map(|d| d.format(&time::format_description::well_known::Rfc3339).unwrap()),
                     "enabled": record.enabled,
                     "metadata": record.metadata,
                 }))
