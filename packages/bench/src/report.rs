@@ -42,7 +42,7 @@ pub struct Report {
     /// A map of benchmark names to their results.
     pub results: HashMap<String, BenchResult>,
     /// The timestamp when the report was created.
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp: time::OffsetDateTime,
 }
 
 /// The result of a single benchmark execution.
@@ -68,7 +68,7 @@ impl Report {
         Self {
             system: SystemInfo::collect(),
             results: HashMap::new(),
-            timestamp: chrono::Utc::now(),
+            timestamp: time::OffsetDateTime::now_utc(),
         }
     }
 

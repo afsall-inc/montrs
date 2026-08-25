@@ -20,7 +20,7 @@ tokio = { workspace = true, features = ["full"] }
 tracing.workspace = true
 async-trait.workspace = true
 regex.workspace = true
-chrono = { version = "0.4", features = ["serde"] }
+time = { version = "0.3", features = ["serde"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 sha2 = "0.10"
 hmac = "0.12"

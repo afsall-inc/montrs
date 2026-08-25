@@ -29,7 +29,7 @@
 // SOFTWARE.
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, path::PathBuf};
 
@@ -40,7 +40,7 @@ pub mod skills;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
     pub project_name: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub framework_version: String,
     pub structure: Vec<FileEntry>,
     pub plates: Vec<PlateSummary>,
@@ -89,7 +89,7 @@ pub struct RouteSummary {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ErrorRecord {
     pub id: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub version: u32,
     pub status: ErrorStatus,
     pub detail: ProjectError,
@@ -105,7 +105,7 @@ pub enum ErrorStatus {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ErrorVersion {
     pub version: u32,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub message: String,
     pub diff: Option<String>,
 }
@@ -137,7 +137,7 @@ pub struct ConsolidatedError {
     pub level: String,
     pub message: String,
     pub status: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -481,7 +481,7 @@ impl AgentManager {
         let id = uuid::Uuid::new_v4().to_string();
         let record = ErrorRecord {
             id: id.clone(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             version: 1,
             status: ErrorStatus::Active,
             detail: error,
@@ -602,7 +602,7 @@ impl AgentManager {
             record.version += 1;
             record.history.push(ErrorVersion {
                 version: history_version,
-                timestamp: Utc::now(),
+                timestamp: OffsetDateTime::now_utc(),
                 message: fix_message,
                 diff,
             });
@@ -1101,7 +1101,7 @@ impl AgentManager {
 
         AgentSnapshot {
             project_name: "MontRS Framework".to_string(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             framework_version: "0.1.0".to_string(),
             structure: Vec::new(),
             plates: Vec::new(),
@@ -1341,7 +1341,7 @@ impl AgentManager {
 
         Ok(AgentSnapshot {
             project_name: project_name.to_string(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             framework_version: "0.1.0".to_string(),
             structure,
             plates,
