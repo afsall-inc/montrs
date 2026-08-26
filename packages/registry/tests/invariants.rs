@@ -113,6 +113,7 @@ fn test_registry_tool_serde() {
         idiomatic_files: vec![],
         aliases: HashMap::new(),
         platform: HashMap::new(),
+        options: HashMap::new(),
     };
     let json = serde_json::to_string(&tool).unwrap();
     let parsed: RegistryTool = serde_json::from_str(&json).unwrap();

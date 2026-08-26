@@ -45,9 +45,7 @@ jobs:
       run: cargo clippy --package montrs-cli --features auth -- -D warnings
 
     - name: Run tests
-      run: |
-        cargo build -p zerofrom-derive -p wasm-bindgen-test-macro -p windows-interface -p windows-implement
-        cargo test --workspace
+      run: cargo test --workspace
 
     - name: Build (auth feature)
       run: cargo build --release --package montrs-cli --features auth

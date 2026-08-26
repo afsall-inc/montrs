@@ -20,12 +20,13 @@ check-cli = "cargo check -p montrs-core -p montrs-build -p montrs-cli -p montrs-
 build-release = "cargo build --release --workspace"
 clippy-core = "cargo clippy -p montrs-core -p montrs-build -p montrs-cli -p montrs-metadata -- -D warnings"
 
-# Pre-build the proc-macro crates that race on Windows/nightly parallel builds.
-# Building them first avoids intermittent `can't find crate for X_derive` errors
-# when running `cargo test --workspace`.
+# Best-effort warm-up of the proc-macro crates that intermittently race on
+# cold Windows/nightly parallel builds. Cargo's `-p` resolver panics on some
+# of them (e.g. wasm-bindgen-test-macro), so each is built in a separate
+# invocation and failures are tolerated.
 [tasks.test-preflight]
-description = "Pre-build racy proc-macro crates (Windows test race mitigation)"
-command = "cargo build -p zerofrom-derive -p wasm-bindgen-test-macro -p windows-interface -p windows-implement"
+description = "Warm racy proc-macro caches (Windows test race mitigation)"
+command = "cargo build -p zerofrom-derive 1>NUL 2>NUL || true; cargo build -p windows-interface@0.57.0 -p windows-implement@0.57.0 1>NUL 2>NUL || true; cargo build -p windows-interface@0.59.3 -p windows-implement@0.60.2 1>NUL 2>NUL || true"
 
 [tasks.test]
 description = "Run all workspace tests"
