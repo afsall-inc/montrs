@@ -8,7 +8,6 @@ MONTRS_LOG = "info"
 
 [tasks]
 build = "cargo build --workspace"
-test = "cargo test --workspace"
 fmt = "cargo fmt --all"
 clippy = "cargo clippy --workspace -- -D warnings"
 bench = "cargo run --package montrs-cli -- bench"
@@ -20,6 +19,22 @@ check-wasm = "cargo check --target wasm32-unknown-unknown -p website --features 
 check-cli = "cargo check -p montrs-core -p montrs-build -p montrs-cli -p montrs-metadata"
 build-release = "cargo build --release --workspace"
 clippy-core = "cargo clippy -p montrs-core -p montrs-build -p montrs-cli -p montrs-metadata -- -D warnings"
+
+# Pre-build the proc-macro crates that race on Windows/nightly parallel builds.
+# Building them first avoids intermittent `can't find crate for X_derive` errors
+# when running `cargo test --workspace`.
+[tasks.test-preflight]
+description = "Pre-build racy proc-macro crates (Windows test race mitigation)"
+command = "cargo build -p zerofrom-derive -p wasm-bindgen-test-macro -p windows-interface -p windows-implement"
+
+[tasks.test]
+description = "Run all workspace tests"
+command = "cargo test --workspace"
+depends = ["test-preflight"]
+
+[tasks.test-pkgs]
+description = "Run tests for the packages with unit/integration tests (reliable on Windows)"
+command = "cargo test -p montrs-core -p montrs-runner -p montrs-agent -p montrs-auth -p montrs-log -p montrs-services -p montrs-bench -p montrs-cli"
 
 [tasks.dev]
 description = "Start the development server"
