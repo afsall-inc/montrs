@@ -34,8 +34,8 @@ command = "cargo test --workspace"
 depends = ["test-preflight"]
 
 [tasks.test-pkgs]
-description = "Run tests for the packages with unit/integration tests (reliable on Windows)"
-command = "cargo test -p montrs-core -p montrs-runner -p montrs-agent -p montrs-auth -p montrs-log -p montrs-services -p montrs-bench -p montrs-cli"
+description = "Run tests for the packages with unit/integration tests (reliable on Windows; montrs-cli excluded so it can be run via the montrs binary)"
+command = "cargo test -p montrs-core -p montrs-runner -p montrs-agent -p montrs-auth -p montrs-log -p montrs-services -p montrs-bench -p montrs-tool"
 
 [tasks.dev]
 description = "Start the development server"
