@@ -20,7 +20,7 @@ tokio.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 sysinfo = "0.30"
-colored = "2.1"
+console = "0.15"
 hdrhistogram = "7.5"
 statrs = "0.16"
 time = { version = "0.3", features = ["serde", "formatting", "parsing"] }

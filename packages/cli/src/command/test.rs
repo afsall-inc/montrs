@@ -35,10 +35,6 @@
 //! automated environment setup.
 
 use crate::config::MontrsConfig;
-use quick_xml::{
-    Writer,
-    events::{BytesDecl, BytesStart, Event},
-};
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
 
@@ -224,67 +220,65 @@ enum TestStatus {
     Ignored,
 }
 
+/// Escape a value for safe inclusion in XML text content.
+fn xml_escape(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    for c in input.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 /// Generates a JUnit XML report from the test results.
 fn generate_junit_report(
     suites: &[TestSuite],
     path: &str,
 ) -> anyhow::Result<()> {
-    let mut writer =
-        Writer::new_with_indent(std::fs::File::create(path)?, b' ', 4);
-
-    writer.write_event(Event::Decl(BytesDecl::new(
-        "1.0",
-        Some("UTF-8"),
-        None,
-    )))?;
-
-    let root = BytesStart::new("testsuites");
-    writer.write_event(Event::Start(root.clone()))?;
+    let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    xml.push_str("<testsuites>\n");
 
     for (i, suite) in suites.iter().enumerate() {
-        let mut elem = BytesStart::new("testsuite");
-        elem.push_attribute(("name", format!("suite-{}", i).as_str()));
-        elem.push_attribute(("tests", suite.tests.len().to_string().as_str()));
-        elem.push_attribute((
-            "failures",
-            suite
-                .tests
-                .iter()
-                .filter(|t| matches!(t.status, TestStatus::Fail))
-                .count()
-                .to_string()
-                .as_str(),
+        let failures = suite
+            .tests
+            .iter()
+            .filter(|t| matches!(t.status, TestStatus::Fail))
+            .count();
+        xml.push_str(&format!(
+            "    <testsuite name=\"suite-{}\" tests=\"{}\" failures=\"{}\">\n",
+            i,
+            suite.tests.len(),
+            failures
         ));
 
-        writer.write_event(Event::Start(elem.clone()))?;
-
         for test in &suite.tests {
-            let mut t = BytesStart::new("testcase");
-            t.push_attribute(("name", test.name.as_str()));
-            t.push_attribute(("time", test.duration.to_string().as_str()));
+            xml.push_str(&format!(
+                "        <testcase name=\"{}\" time=\"{}\"",
+                xml_escape(&test.name),
+                test.duration
+            ));
 
             if let TestStatus::Fail = test.status {
-                writer.write_event(Event::Start(t.clone()))?;
-
-                let mut failure = BytesStart::new("failure");
-                failure.push_attribute(("message", "Test failed"));
-                writer.write_event(Event::Start(failure.clone()))?;
+                xml.push_str(">\n            <failure message=\"Test failed\">");
                 if let Some(msg) = &test.message {
-                    writer.write_event(Event::Text(
-                        quick_xml::events::BytesText::new(msg),
-                    ))?;
+                    xml.push_str(&xml_escape(msg));
                 }
-                writer.write_event(Event::End(failure.to_end()))?;
-
-                writer.write_event(Event::End(t.to_end()))?;
+                xml.push_str("</failure>\n        </testcase>\n");
             } else {
-                writer.write_event(Event::Empty(t))?;
+                xml.push_str(" />\n");
             }
         }
 
-        writer.write_event(Event::End(elem.to_end()))?;
+        xml.push_str("    </testsuite>\n");
     }
 
-    writer.write_event(Event::End(root.to_end()))?;
+    xml.push_str("</testsuites>\n");
+    std::fs::write(path, xml)?;
     Ok(())
 }

@@ -163,7 +163,7 @@ pub enum Commands {
     New {
         /// Name of the project.
         name: String,
-        /// Template to use (default, monorepo, todo, api, tui, desktop, saas).
+        /// Template to use (default, monorepo, todo, api, desktop, saas).
         #[arg(short, long, default_value = "default")]
         template: String,
         /// Initialize with MontRS UI theming system.

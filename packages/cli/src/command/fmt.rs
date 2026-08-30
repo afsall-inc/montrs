@@ -29,7 +29,7 @@
 // SOFTWARE.
 
 use anyhow::Result;
-use colored::Colorize;
+use console::style;
 use montrs_fmt::{FormatterSettings, format_source};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -68,11 +68,11 @@ pub async fn run(
 
     if check {
         if exit_code == 0 {
-            println!("{}", "All files are correctly formatted.".green());
+            println!("{}", style("All files are correctly formatted.").green());
         } else {
             println!(
                 "{}",
-                format!("{} files need formatting.", files_formatted).red()
+                style(format!("{} files need formatting.", files_formatted)).red()
             );
             anyhow::bail!("Formatting check failed");
         }
@@ -98,19 +98,19 @@ fn format_one_file(
     let formatted = match format_source(&original, settings) {
         Ok(f) => f,
         Err(e) => {
-            eprintln!("{} {}: {}", "Error".red().bold(), path.display(), e);
+            eprintln!("{} {}: {}", style("Error").red().bold(), path.display(), e);
             return Ok(false);
         }
     };
 
     if original != formatted {
         if check {
-            println!("{} {} is not formatted", "✘".red(), path.display());
+            println!("{} {} is not formatted", style("✘").red(), path.display());
             return Ok(true);
         } else {
             std::fs::write(path, formatted)?;
             if verbose {
-                println!("{} Formatted {}", "✓".green(), path.display());
+                println!("{} Formatted {}", style("✓").green(), path.display());
             }
         }
     }

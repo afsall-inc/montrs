@@ -86,6 +86,19 @@ pub struct E2eConfig {
     pub base_url: Option<String>,
 }
 
+/// Read the root package name from `Cargo.toml` in the current directory.
+/// Avoids invoking `cargo metadata` (a subprocess) just to auto-detect the
+/// project name.
+fn detect_package_name() -> Option<String> {
+    let content = std::fs::read_to_string("Cargo.toml").ok()?;
+    let value: toml::Value = toml::from_str(&content).ok()?;
+    value
+        .get("package")?
+        .get("name")?
+        .as_str()
+        .map(|s| s.to_string())
+}
+
 impl MontrsConfig {
     /// Loads configuration from a specific file.
     pub fn from_file(path: impl AsRef<std::path::Path>) -> Result<Self> {
@@ -102,10 +115,9 @@ impl MontrsConfig {
 
         // Auto-detect project name from Cargo.toml if not set
         if config.meta.project.name.is_none()
-            && let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec()
-            && let Some(root) = cargo.root_package()
+            && let Some(name) = detect_package_name()
         {
-            config.meta.project.name = Some(root.name.clone());
+            config.meta.project.name = Some(name);
         }
 
         Ok(config)
@@ -132,10 +144,9 @@ impl MontrsConfig {
 
         // Try to resolve project name if still default
         if config.meta.project.name.is_none()
-            && let Ok(cargo) = cargo_metadata::MetadataCommand::new().exec()
-            && let Some(root) = cargo.root_package()
+            && let Some(name) = detect_package_name()
         {
-            config.meta.project.name = Some(root.name.clone());
+            config.meta.project.name = Some(name);
         }
 
         Ok(config)

@@ -33,7 +33,7 @@ use crate::{
 };
 use std::collections::HashMap;
 use tiny_skia::{
-    Color, ColorU8, FillRule, LineCap, LineJoin, Paint as SkPaint,
+    Color, FillRule, LineCap, LineJoin, Paint as SkPaint,
     Path as SkPath, PathBuilder, Pixmap, Rect as SkRect, Stroke as SkStroke,
     Transform,
 };

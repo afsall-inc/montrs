@@ -90,7 +90,6 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `table-core` | Headless table state + row models (stable column/row IDs). |
 | `test` | Deterministic TestRuntime, fixtures, E2E orchestration (Playwright). |
 | `tool` | Tool version manager (6 backends: core, cargo, github, http, ubi, standalone). |
-| `tui` | Full terminal UI library (21 renderables, keymap, plugins, audio, ssh, qr, 3d). |
 | `ui` | shadcn-inspired component library + theme system + toaster. |
 | `utils` | Generic pure functions. |
 | `validator` | Proc-macros (`#[derive(Validator)]`), compile-time validation. |
@@ -106,10 +105,16 @@ Entrypoints: `packages/cli/src/bin/montrs.rs`, `packages/montrs/src/lib.rs`, `pa
 
 ## Developer Commands
 
+The workspace uses `default-members` so plain `cargo check`/`cargo build` only
+compiles the lean core + CLI set (fast). Use `--workspace` for the full build
+(also compiles the heavy rendering stack: `renderer`, `desktop`, `mobile`,
+`motion`, `haptics`, `icons`, `ui`, `image-optimizer`).
+
 ```bash
 montrs install       # install all tools the project needs (Tailwind, wasm-bindgen, wasm target)
 montrs fmt           # format all Rust + view! code
-montrs test          # run all tests
+montrs test          # run all workspace tests (pre-warms racy proc-macro crates first)
+montrs test-pkgs     # run tests package-by-package (reliable on Windows)
 montrs bench         # run benchmarks
 montrs serve         # dev server with hot-reload
 montrs build         # build for production
@@ -119,9 +124,21 @@ montrs agent doctor  # full health check
 # Single-package
 cargo test -p montrs-agent
 cargo clippy -p montrs-core -- -D warnings
+
+# Feature-gated / optional stack
+cargo check -p montrs-cli --features auth   # auth is NOT a default feature
+cargo check -p website --features ssr       # website SSR
+cargo check --workspace                     # full workspace (slow; includes rendering stack)
 ```
 
 **Required order** (CI enforces): `fmt (--check)` → `clippy -D warnings` → `test` → `build --release`
+
+> **Windows note:** `montrs run` defaults to `cmd` on Windows (auto-detected).
+> Tasks that rebuild the CLI itself (e.g. `montrs test`/`build`) fail with a
+> file lock because Windows can't overwrite a running `montrs.exe` — run the
+> underlying `cargo` command directly for those. `cargo test --workspace` also
+> intermittently races on proc-macro crates; `montrs test` and `montrs test-pkgs`
+> mitigate this.
 
 ## Tool Management
 
