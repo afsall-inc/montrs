@@ -41,7 +41,6 @@ use tiny_skia::{
 struct LayerState {
     alpha: f32,
     pixmap: Pixmap,
-    transform: [f32; 6],
 }
 
 pub struct SkiaRenderer {
@@ -289,13 +288,12 @@ impl Renderer for SkiaRenderer {
         self.clip_rect = None;
     }
 
-    fn push_layer(&mut self, alpha: f32, transform: &[f32; 6]) {
+    fn push_layer(&mut self, alpha: f32, _transform: &[f32; 6]) {
         let layer_pixmap = Pixmap::new(self.width, self.height)
             .expect("Failed to create layer pixmap");
         self.layer_stack.push(LayerState {
             alpha,
             pixmap: layer_pixmap,
-            transform: *transform,
         });
     }
 
