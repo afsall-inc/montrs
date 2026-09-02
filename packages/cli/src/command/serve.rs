@@ -41,6 +41,7 @@ pub async fn run() -> anyhow::Result<()> {
             );
         }
     };
+    pipeline.release |= crate::config::current_release();
 
     crate::command::resolve_pipeline_bins(&mut pipeline);
     pipeline.build_all()?;

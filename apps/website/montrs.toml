@@ -13,6 +13,7 @@ tailwind-input-file = "style/main.css"
 site-root = "target/site"
 site-pkg-dir = "pkg"
 package = "website"
+release = true
 
 [tasks]
 dev = "montrs serve"

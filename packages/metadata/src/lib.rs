@@ -140,6 +140,13 @@ pub struct ServeMeta {
     /// Whether to use default features for the server binary.
     #[serde(default = "default_true")]
     pub bin_default_features: bool,
+    /// Build the site with `--release` (optimized). Recommended for anything
+    /// other than quick local iteration: release builds of the SSR server and
+    /// the WASM client are far smaller and faster, and skip the runtime
+    /// "outside a reactive tracking context" diagnostics that only fire in
+    /// debug builds.
+    #[serde(default)]
+    pub release: bool,
     /// Whether to hash frontend files.
     #[serde(default)]
     pub hash_files: bool,
@@ -166,6 +173,7 @@ impl Default for ServeMeta {
             lib_default_features: true,
             bin_features: Vec::new(),
             bin_default_features: true,
+            release: false,
             hash_files: false,
             watch_additional_files: Vec::new(),
             style_file: None,

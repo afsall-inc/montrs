@@ -45,6 +45,8 @@ pub struct Pipeline {
     pub pkg_dir: PathBuf,
     pub server_bin_name: String,
     pub workspace_target_dir: PathBuf,
+    /// Whether to build optimized (--release) artifacts.
+    pub release: bool,
     /// Path to the Tailwind CSS binary (managed install override).
     pub tailwind_bin: Option<PathBuf>,
     /// Path to the wasm-bindgen binary (managed install override).
@@ -58,6 +60,7 @@ impl Pipeline {
         let site_root = root.join(&meta.serve.site_root);
         let pkg_dir = site_root.join(&meta.serve.site_pkg_dir);
         let workspace_target = find_workspace_target_dir(&root)?;
+        let release = meta.serve.release;
         let server_bin_name = meta
             .serve
             .package
@@ -73,9 +76,19 @@ impl Pipeline {
             pkg_dir,
             server_bin_name,
             workspace_target_dir: workspace_target,
+            release,
             tailwind_bin: None,
             wasm_bindgen_bin: None,
         })
+    }
+
+    /// Directory that cargo builds artifacts into for the current profile.
+    fn profile_dir(&self) -> &'static str {
+        if self.release {
+            "release"
+        } else {
+            "debug"
+        }
     }
 
     /// Path to the compiled SSR server binary, with `.exe` on Windows.
@@ -84,7 +97,9 @@ impl Pipeline {
         if cfg!(windows) && !name.ends_with(".exe") {
             name.push_str(".exe");
         }
-        self.workspace_target_dir.join("debug").join(name)
+        self.workspace_target_dir
+            .join(self.profile_dir())
+            .join(name)
     }
 
     fn build_frontend_args(&self) -> Vec<String> {
@@ -97,6 +112,10 @@ impl Pipeline {
             pkg.to_string(),
             "--features".to_string(),
         ];
+        // A debug (unoptimized) WASM client is unusably large and slow in the
+        // browser, so the frontend is always built with optimization. The SSR
+        // server profile is controlled separately by `--release`.
+        args.push("--release".to_string());
         let features = if self.meta.serve.lib_features.is_empty() {
             "hydrate".to_string()
         } else {
@@ -123,7 +142,9 @@ impl Pipeline {
         let wasm_target_dir = self
             .workspace_target_dir
             .join("wasm32-unknown-unknown")
-            .join("debug");
+            // The frontend build always passes `--release` (see
+            // build_frontend_args), so the WASM output is always in `release/`.
+            .join("release");
 
         let wasm_file = wasm_target_dir.join(format!("{}.wasm", lib_name));
 
@@ -150,6 +171,14 @@ impl Pipeline {
             .arg(&wasm_file)
             .status();
 
+        // `--out-name front` produces `front.js` + `front_bg.wasm`. Remove any
+        // stale `front.wasm` (a leftover from the raw fallback copy) so the
+        // browser never downloads the giant unprocessed build.
+        let stale = self.pkg_dir.join("front.wasm");
+        if stale.exists() {
+            let _ = std::fs::remove_file(&stale);
+        }
+
         match status {
             Ok(s) if s.success() => {
                 println!(" wasm-bindgen completed successfully");
@@ -174,11 +203,14 @@ impl Pipeline {
         wasm_file: &Path,
         lib_name: &str,
     ) -> Result<()> {
-        std::fs::copy(wasm_file, self.pkg_dir.join("front.wasm"))?;
+        // Match the name wasm-bindgen would produce (`front_bg.wasm`) so the
+        // generated index.html points at the same file either way.
+        std::fs::copy(wasm_file, self.pkg_dir.join("front_bg.wasm"))?;
         let wasm_target_dir = self
             .workspace_target_dir
             .join("wasm32-unknown-unknown")
-            .join("debug");
+            // Frontend always builds with --release.
+            .join("release");
         let js_bindings = wasm_target_dir.join(format!("{}.js", lib_name));
         if js_bindings.exists() {
             std::fs::copy(&js_bindings, self.pkg_dir.join("front.js"))?;
@@ -197,6 +229,9 @@ impl BuildPipeline for Pipeline {
             pkg.to_string(),
             "--features".to_string(),
         ];
+        if self.release {
+            args.push("--release".to_string());
+        }
         let features = if self.meta.serve.bin_features.is_empty() {
             "ssr".to_string()
         } else {
@@ -262,7 +297,7 @@ impl BuildPipeline for Pipeline {
     <link rel="modulepreload" href="/pkg/front.js" />
     <script type="module">
         import init, {{ hydrate }} from '/pkg/front.js';
-        init('/pkg/front.wasm').then(() => hydrate());
+        init('/pkg/front_bg.wasm').then(() => hydrate());
     </script>
 </head>
 <body>

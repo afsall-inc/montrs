@@ -99,6 +99,17 @@ fn detect_package_name() -> Option<String> {
         .map(|s| s.to_string())
 }
 
+/// Whether the current invocation requested a release (optimized) build.
+///
+/// The CLI `--release` flag is propagated here via an env var because each
+/// subcommand loads its own fresh `MontrsConfig` and the flag lives only on the
+/// parsed CLI args.
+pub fn current_release() -> bool {
+    std::env::var("MONTRS_RELEASE")
+        .map(|v| v == "1")
+        .unwrap_or(false)
+}
+
 impl MontrsConfig {
     /// Loads configuration from a specific file.
     pub fn from_file(path: impl AsRef<std::path::Path>) -> Result<Self> {

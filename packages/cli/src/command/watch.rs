@@ -34,6 +34,7 @@ use tokio::process::Command as TokioCommand;
 
 pub async fn run() -> anyhow::Result<()> {
     let mut pipeline = Pipeline::from_root(Path::new("."))?;
+    pipeline.release |= crate::config::current_release();
     crate::command::resolve_pipeline_bins(&mut pipeline);
 
     pipeline.build_all()?;

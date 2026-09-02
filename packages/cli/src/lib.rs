@@ -572,6 +572,13 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
     config.verbose = cli.verbose;
     config.log = cli.log.clone();
     config.release = cli.release;
+    // Propagate the --release flag to subcommands (they load their own config).
+    unsafe {
+        std::env::set_var(
+            "MONTRS_RELEASE",
+            if cli.release { "1" } else { "0" },
+        );
+    }
     config.hot_reload = cli.hot_reload;
     config.features = cli.features.clone();
 
