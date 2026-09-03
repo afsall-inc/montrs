@@ -112,19 +112,19 @@ impl Pipeline {
             pkg.to_string(),
             "--features".to_string(),
         ];
-        // A debug (unoptimized) WASM client is unusably large and slow in the
-        // browser, so the frontend is always built with optimization. The SSR
-        // server profile is controlled separately by `--release`.
-        args.push("--release".to_string());
         let features = if self.meta.serve.lib_features.is_empty() {
             "hydrate".to_string()
         } else {
             self.meta.serve.lib_features.join(",")
         };
+        // `--features` value must immediately follow the `--features` flag.
         args.push(features);
         if !self.meta.serve.lib_default_features {
             args.push("--no-default-features".to_string());
         }
+        // A debug (unoptimized) WASM client is unusably large and slow in the
+        // browser, so the frontend is always built with optimization.
+        args.push("--release".to_string());
         args
     }
 
@@ -229,17 +229,18 @@ impl BuildPipeline for Pipeline {
             pkg.to_string(),
             "--features".to_string(),
         ];
-        if self.release {
-            args.push("--release".to_string());
-        }
         let features = if self.meta.serve.bin_features.is_empty() {
             "ssr".to_string()
         } else {
             self.meta.serve.bin_features.join(",")
         };
+        // `--features` value must immediately follow the `--features` flag.
         args.push(features);
         if !self.meta.serve.bin_default_features {
             args.push("--no-default-features".to_string());
+        }
+        if self.release {
+            args.push("--release".to_string());
         }
         run_cargo(&args)?;
         println!(" SSR server built successfully");
