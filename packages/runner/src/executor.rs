@@ -89,12 +89,9 @@ pub async fn execute_task(
     for entry in &task.command {
         match entry {
             RunEntry::Script(script) => {
-                let shell = task
-                    .shell
-                    .as_deref()
-                    .or(config.shell.as_deref())
-                    .unwrap_or("sh");
-                let shell_flag = if cfg!(windows) { "/c" } else { "-c" };
+                let (shell, shell_flag) = resolve_shell(
+                    task.shell.as_deref().or(config.shell.as_deref()),
+                );
 
                 let mut cmd = tokio::process::Command::new(shell);
                 cmd.arg(shell_flag);
@@ -160,9 +157,42 @@ pub async fn execute_task(
     Ok(true)
 }
 
+/// Resolve the shell executable and its flag for running a task script.
+///
+/// The flag must match the shell that will actually be used:
+/// - `cmd.exe` (Windows default): `/C`
+/// - PowerShell: `-Command`
+/// - POSIX shells (sh, bash, zsh, fish, ...): `-c`
+///
+/// When no shell is configured, defaults to the platform's native shell
+/// (`cmd` on Windows, `sh` elsewhere) so tasks work without a POSIX shell
+/// installed on Windows.
+fn resolve_shell<'a>(configured: Option<&'a str>) -> (&'a str, &'static str) {
+    if let Some(shell) = configured {
+        let name = shell.to_ascii_lowercase();
+        let flag = if name.contains("cmd") {
+            "/C"
+        } else if name.contains("pwsh") || name.contains("powershell") {
+            "-Command"
+        } else {
+            "-c"
+        };
+        // Return the user's shell string but with a matching flag.
+        return (shell, flag);
+    }
+
+    #[cfg(windows)]
+    {
+        ("cmd", "/C")
+    }
+    #[cfg(not(windows))]
+    {
+        ("sh", "-c")
+    }
+}
+
 /// Display task results in the terminal.
-pub fn display_task_start(task: &Task, output: TaskOutput) {
-    match output {
+pub fn display_task_start(task: &Task, output: TaskOutput) {    match output {
         TaskOutput::Quiet | TaskOutput::Silent => {}
         _ => {
             let prefix = format!("[{}]", task.name);

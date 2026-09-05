@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Service supervisor — the background process manager.
+//! Service supervisor â€” the background process manager.
 //!
 //! Manages the lifecycle of services: start, stop, restart, signal,
 //! ready checks, retry, hooks, and state persistence.
@@ -42,6 +42,7 @@ use crate::{
     state::StateFile,
 };
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use time::OffsetDateTime;
 use tokio::{
     process::Command,
     sync::{RwLock, Semaphore},
@@ -219,7 +220,7 @@ impl Supervisor {
             }
             let st = inner.state_file.get_mut(&id.to_string());
             st.pid = Some(pid);
-            st.last_start = Some(chrono::Utc::now().to_rfc3339());
+            st.last_start = Some(OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap());
             st.start_count += 1;
             st.was_running = true;
             let _ = inner.state_file.save();
@@ -350,7 +351,7 @@ impl Supervisor {
 
         let st = inner.state_file.get_mut(&id.to_string());
         st.pid = None;
-        st.last_stop = Some(chrono::Utc::now().to_rfc3339());
+        st.last_stop = Some(OffsetDateTime::now_utc().format(&time::format_description::well_known::Rfc3339).unwrap());
         st.was_running = false;
         let _ = inner.state_file.save();
 

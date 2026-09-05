@@ -48,6 +48,7 @@ pub fn App() -> impl IntoView {
     provide_context(table);
 
     view! {
+        <link rel="stylesheet" href="/main.css" />
         <leptos_router::components::Router>
             <ThemeProvider>
             <div class="min-h-screen bg-background text-foreground">

@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Organization plugin — multi-tenant orgs, members, invites, roles.
+//! Organization plugin â€” multi-tenant orgs, members, invites, roles.
 //! Store orgs/members/invites as JSON in plugin_store namespace "org".
 
 use crate::{
@@ -42,7 +42,7 @@ use axum::{
     extract::State,
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -55,7 +55,7 @@ pub struct Organization {
     pub slug: String,
     pub logo: Option<String>,
     pub metadata: HashMap<String, String>,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
     pub created_by: String,
 }
 
@@ -66,7 +66,7 @@ pub struct Member {
     pub organization_id: String,
     pub user_id: String,
     pub role: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
 }
 
 /// An invite record.
@@ -78,8 +78,8 @@ pub struct Invite {
     pub role: String,
     pub inviter_id: String,
     pub status: String,
-    pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
 }
 
 /// Organization plugin.
@@ -207,7 +207,7 @@ async fn create_org(
         slug,
         logo: req.logo,
         metadata: req.metadata.unwrap_or_default(),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
         created_by: session.user_id.clone(),
     };
 
@@ -228,7 +228,7 @@ async fn create_org(
         organization_id: id.clone(),
         user_id: session.user_id.clone(),
         role: "owner".into(),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
     };
     state
         .db
@@ -428,8 +428,8 @@ async fn invite_member(
         role: req.role.unwrap_or_else(|| "member".into()),
         inviter_id: session.user_id.clone(),
         status: "pending".into(),
-        expires_at: Utc::now() + chrono::Duration::days(7),
-        created_at: Utc::now(),
+        expires_at: OffsetDateTime::now_utc() + time::Duration::days(7),
+        created_at: OffsetDateTime::now_utc(),
     };
 
     state
@@ -489,7 +489,7 @@ async fn accept_invite(
         )
     })?;
 
-    if invite.status != "pending" || invite.expires_at <= Utc::now() {
+    if invite.status != "pending" || invite.expires_at <= OffsetDateTime::now_utc() {
         return Err(AuthError::new(
             crate::error::AuthErrorCode::OrganizationError,
             "Invite expired or already used",
@@ -512,7 +512,7 @@ async fn accept_invite(
         organization_id: invite.organization_id.clone(),
         user_id: session.user_id.clone(),
         role: invite.role.clone(),
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
     };
     state
         .db
@@ -612,7 +612,7 @@ async fn list_members(
                     "id": m.id,
                     "userId": m.user_id,
                     "role": m.role,
-                    "createdAt": m.created_at.to_rfc3339(),
+                    "createdAt": m.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
                 }))
             } else {
                 None

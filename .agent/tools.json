@@ -505,14 +505,6 @@
       }
     },
     {
-      "description": "Capability provided by package tui. MUST follow invariants defined in agent.json under packages['tui'].invariants",
-      "name": "montrs_pkg_tui",
-      "parameters": {
-        "properties": {},
-        "type": "object"
-      }
-    },
-    {
       "description": "Capability provided by package ui. MUST follow invariants defined in agent.json under packages['ui'].invariants",
       "name": "montrs_pkg_ui",
       "parameters": {

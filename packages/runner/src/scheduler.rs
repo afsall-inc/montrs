@@ -29,7 +29,6 @@
 // SOFTWARE.
 
 use crate::types::{Task, TaskOutput};
-use petgraph::graph::DiGraph;
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
@@ -37,60 +36,61 @@ use std::{
 use tokio::sync::Semaphore;
 
 /// Dependency graph for task scheduling.
+///
+/// Edges go from a task to the tasks it depends on: `task -> dependency`.
+/// Stored as an adjacency map: `task name -> set of dependency names`.
 pub struct Deps {
-    graph: DiGraph<String, ()>,
-    indices: HashMap<String, petgraph::graph::NodeIndex>,
+    graph: HashMap<String, HashSet<String>>,
     executed: HashSet<String>,
     did_work: HashSet<String>,
 }
 
 impl Deps {
     pub fn new(tasks: &[Task]) -> Self {
-        let mut graph = DiGraph::new();
-        let mut indices = HashMap::new();
+        let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
         for task in tasks {
-            let idx = graph.add_node(task.name.clone());
-            indices.insert(task.name.clone(), idx);
+            graph.entry(task.name.clone()).or_default();
         }
         for task in tasks {
             for dep in &task.depends {
                 let dep_name = dep.task_name();
-                if let (Some(&from), Some(&to)) =
-                    (indices.get(&task.name), indices.get(dep_name))
+                // Only add an edge if the dependency is a known task node.
+                if graph.contains_key(dep_name)
+                    && let Some(edges) = graph.get_mut(&task.name)
                 {
-                    graph.add_edge(from, to, ());
+                    edges.insert(dep_name.to_string());
                 }
             }
         }
         Self {
             graph,
-            indices,
             executed: HashSet::new(),
             did_work: HashSet::new(),
         }
     }
 
     pub fn leaf_tasks(&self) -> Vec<String> {
+        // Leaf = node with no incoming edges. Incoming edges to `x` come from
+        // tasks that depend on `x`, so `x` is not a leaf iff it appears in any
+        // dependency set.
+        let all_deps: HashSet<&String> =
+            self.graph.values().flatten().collect();
         self.graph
-            .node_indices()
-            .filter(|&n| {
-                self.graph
-                    .neighbors_directed(n, petgraph::Direction::Incoming)
-                    .count()
-                    == 0
-            })
-            .map(|n| self.graph[n].clone())
+            .keys()
+            .filter(|name| !all_deps.contains(name))
+            .cloned()
             .collect()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.graph.node_count() == 0
+        self.graph.is_empty()
     }
 
     pub fn remove(&mut self, task: &str) {
-        if let Some(&idx) = self.indices.get(task) {
-            self.graph.remove_node(idx);
-            self.indices.remove(task);
+        self.graph.remove(task);
+        // Drop edges pointing to this task from remaining tasks.
+        for edges in self.graph.values_mut() {
+            edges.remove(task);
         }
         self.executed.insert(task.to_string());
     }
@@ -100,7 +100,7 @@ impl Deps {
     }
 
     pub fn all_done(&self) -> bool {
-        self.graph.node_count() == 0
+        self.graph.is_empty()
     }
 
     /// Detect cycles using simple DFS.
@@ -108,12 +108,13 @@ impl Deps {
         let mut cycles = Vec::new();
         let mut visited = HashSet::new();
 
-        for node in self.graph.node_indices() {
-            let name = &self.graph[node];
-            if !visited.contains(name.as_str()) {
+        // Snapshot the node names so we don't mutate while iterating.
+        let nodes: Vec<String> = self.graph.keys().cloned().collect();
+        for name in nodes {
+            if !visited.contains(&name) {
                 let mut path = Vec::new();
-                if self.dfs_cycle(name, &mut visited, &mut path)
-                    && let Some(pos) = path.iter().position(|n| n == name)
+                if self.dfs_cycle(&name, &mut visited, &mut path)
+                    && let Some(pos) = path.iter().position(|n| n == &name)
                 {
                     cycles.push(path[pos..].to_vec());
                 }
@@ -137,13 +138,10 @@ impl Deps {
         visited.insert(name.to_string());
         path.push(name.to_string());
 
-        if let Some(&idx) = self.indices.get(name) {
-            for neighbor in self
-                .graph
-                .neighbors_directed(idx, petgraph::Direction::Outgoing)
-            {
-                let neighbor_name = &self.graph[neighbor];
-                if self.dfs_cycle(neighbor_name, visited, path) {
+        // Follow outgoing edges: task -> its dependencies.
+        if let Some(deps) = self.graph.get(name) {
+            for dep_name in deps {
+                if self.dfs_cycle(dep_name, visited, path) {
                     return true;
                 }
             }
@@ -173,13 +171,12 @@ impl Scheduler {
     }
 
     pub fn topological_sort(&self) -> Vec<Vec<String>> {
-        // Build a new Deps with all nodes but no edges, then add edges back
         let all_names: Vec<Task> = self
             .deps
             .graph
-            .node_indices()
-            .map(|idx| Task {
-                name: self.deps.graph[idx].clone(),
+            .keys()
+            .map(|name| Task {
+                name: name.clone(),
                 depends: vec![],
                 ..Default::default()
             })

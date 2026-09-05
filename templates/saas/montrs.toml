@@ -41,3 +41,6 @@ lint = { command = "cargo clippy -- -D warnings", category = "Quality" }
 test = { command = "cargo test", category = "Testing" }
 serve = { command = "cargo run --bin api", category = "Run" }
 seed = { command = "cargo run --bin api -- seed", category = "Data" }
+[tools]
+tailwindcss = "4"
+wasm-bindgen = "0.2"

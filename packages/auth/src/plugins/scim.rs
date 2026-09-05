@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,8 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! SCIM 2.0 plugin — User provisioning endpoints.
-//! /scim/v2/Users GET/POST, /scim/v2/Users/:id GET/PATCH/DELETE — map to UserRecord.
+//! SCIM 2.0 plugin â€” User provisioning endpoints.
+//! /scim/v2/Users GET/POST, /scim/v2/Users/:id GET/PATCH/DELETE â€” map to UserRecord.
 
 use crate::{
     AuthError, context::AuthState, database::UserUpdate, entities::DefaultUser,
@@ -44,7 +44,7 @@ use axum::{
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-/// SCIM plugin — System for Cross-domain Identity Management.
+/// SCIM plugin â€” System for Cross-domain Identity Management.
 pub struct ScimPlugin {
     state: Option<AuthState>,
 }
@@ -131,8 +131,8 @@ fn user_to_scim(user: &crate::database::UserRecord) -> Value {
         "active": !user.banned,
         "meta": {
             "resourceType": "User",
-            "created": user.created_at.to_rfc3339(),
-            "lastModified": user.updated_at.to_rfc3339(),
+            "created": user.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "lastModified": user.updated_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
         }
     })
 }

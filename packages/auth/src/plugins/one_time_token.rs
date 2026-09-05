@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! One-Time Token plugin — generate and verify single-use tokens.
+//! One-Time Token plugin â€” generate and verify single-use tokens.
 //! POST /one-time-token/generate (needs session), POST /one-time-token/verify.
 //! Uses verification store with identifier `ott:{userId}`.
 
@@ -143,7 +143,7 @@ async fn generate_ott(
 
     Ok(Json(json!({
         "token": rec.value,
-        "expiresAt": rec.expires_at.to_rfc3339(),
+        "expiresAt": rec.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
     })))
 }
 

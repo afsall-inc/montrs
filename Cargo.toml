@@ -1,6 +1,48 @@
 [workspace]
 resolver = "2"
 
+default-members = [
+    "packages/agentignore",
+    "packages/env",
+    "packages/sigstore",
+    "packages/registry",
+    "packages/plugin",
+    "packages/lockfile",
+    "packages/tool",
+    "packages/shell",
+    "packages/deps",
+    "packages/i18n",
+    "packages/runtime",
+    "packages/bench",
+    "packages/cli",
+    "packages/core",
+    "packages/fmt",
+    "packages/agent",
+    "packages/montrs",
+    "packages/orm",
+    "packages/validator",
+    "packages/test",
+    "packages/utils",
+    "packages/runner",
+    "packages/metadata",
+    "packages/platform",
+    "packages/build",
+    "packages/build-core",
+    "packages/build-watch",
+    "packages/build-serve",
+    "packages/services",
+    "packages/log",
+    "packages/proxy",
+    "packages/state",
+    "packages/content",
+    "packages/table-core",
+    "packages/hotkeys-core",
+    "packages/hotkeys-web",
+    "packages/image-core",
+    "packages/command",
+    "apps/website",
+]
+
 members = [
     "packages/agentignore",
     "packages/env",
@@ -13,7 +55,6 @@ members = [
     "packages/deps",
     "packages/i18n",
     "packages/runtime",
-    "packages/tui",
     "packages/haptics",
     "packages/bench",
     "packages/cli",
@@ -63,7 +104,7 @@ repository = "https://github.com/afsall-labs/montrs"
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 anyhow = "1.0"
@@ -82,3 +123,13 @@ paste = "1"
 open = "5"
 # Pinned to <2.0.4 because 2.0.4+ requires rustc 1.96.0, but our toolchain is 1.95.0-nightly
 kstring = "=2.0.2"
+
+# The website crate (a Leptos SSR app that monomorphizes 1600+ icons and the
+# full ui/motion stack) produces a >7 GB rlib at opt-level 0 in dev builds.
+# MSVC link.exe cannot consume archives above ~4 GB and reports
+# "invalid library format; library ignored", breaking `montrs serve`.
+# Optimizing this crate and trimming its debuginfo keeps the dev rlib under
+# that limit and linkable.
+[profile.dev.package.website]
+opt-level = 2
+debug = "line-tables-only"

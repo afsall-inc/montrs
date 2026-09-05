@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -30,11 +30,11 @@
 
 //! Entity traits and default records for the auth system.
 
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// A user profile (returned to clients — no sensitive data).
+/// A user profile (returned to clients â€” no sensitive data).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserProfile {
@@ -45,8 +45,8 @@ pub struct UserProfile {
     pub email_verified: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub username: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
 }
 
 impl From<&crate::database::UserRecord> for UserProfile {
@@ -71,8 +71,8 @@ pub struct SessionProfile {
     pub id: String,
     pub user_id: String,
     pub token: String,
-    pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
 }
 
 impl From<&crate::database::SessionRecord> for SessionProfile {
@@ -95,16 +95,16 @@ pub trait AuthUser: Send + Sync + 'static {
     fn name(&self) -> Option<&str>;
     fn image(&self) -> Option<&str>;
     fn password_hash(&self) -> Option<&str>;
-    fn created_at(&self) -> &DateTime<Utc>;
-    fn updated_at(&self) -> &DateTime<Utc>;
+    fn created_at(&self) -> &OffsetDateTime;
+    fn updated_at(&self) -> &OffsetDateTime;
 }
 
 /// Core entity trait for sessions.
 pub trait AuthSession: Send + Sync + 'static {
     fn id(&self) -> &str;
     fn user_id(&self) -> &str;
-    fn expires_at(&self) -> &DateTime<Utc>;
-    fn created_at(&self) -> &DateTime<Utc>;
+    fn expires_at(&self) -> &OffsetDateTime;
+    fn created_at(&self) -> &OffsetDateTime;
 }
 
 /// Core entity trait for accounts (OAuth links).
@@ -134,8 +134,8 @@ pub struct DefaultUser {
     pub is_anonymous: bool,
     pub last_login_method: Option<String>,
     pub metadata: HashMap<String, String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
 }
 
 impl DefaultUser {
@@ -143,7 +143,7 @@ impl DefaultUser {
         email: impl Into<String>,
         password_hash: Option<String>,
     ) -> Self {
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             email: email.into(),
@@ -196,10 +196,10 @@ impl AuthUser for DefaultUser {
     fn password_hash(&self) -> Option<&str> {
         self.password_hash.as_deref()
     }
-    fn created_at(&self) -> &DateTime<Utc> {
+    fn created_at(&self) -> &OffsetDateTime {
         &self.created_at
     }
-    fn updated_at(&self) -> &DateTime<Utc> {
+    fn updated_at(&self) -> &OffsetDateTime {
         &self.updated_at
     }
 }
@@ -210,8 +210,8 @@ pub struct DefaultSession {
     pub id: String,
     pub user_id: String,
     pub token: String,
-    pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
     pub impersonated_by: Option<String>,
@@ -220,13 +220,13 @@ pub struct DefaultSession {
 
 impl DefaultSession {
     pub fn new(user_id: impl Into<String>, expires_in_secs: u64) -> Self {
-        let now = Utc::now();
+        let now = OffsetDateTime::now_utc();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             user_id: user_id.into(),
             token: crate::utils::generate_token(),
             expires_at: now
-                + chrono::TimeDelta::seconds(expires_in_secs as i64),
+                + time::Duration::seconds(expires_in_secs as i64),
             created_at: now,
             ip_address: None,
             user_agent: None,
@@ -243,10 +243,10 @@ impl AuthSession for DefaultSession {
     fn user_id(&self) -> &str {
         &self.user_id
     }
-    fn expires_at(&self) -> &DateTime<Utc> {
+    fn expires_at(&self) -> &OffsetDateTime {
         &self.expires_at
     }
-    fn created_at(&self) -> &DateTime<Utc> {
+    fn created_at(&self) -> &OffsetDateTime {
         &self.created_at
     }
 }
@@ -261,7 +261,7 @@ pub struct DefaultAccount {
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub id_token: Option<String>,
-    pub access_token_expires_at: Option<DateTime<Utc>>,
+    pub access_token_expires_at: Option<OffsetDateTime>,
     pub password: Option<String>,
 }
 

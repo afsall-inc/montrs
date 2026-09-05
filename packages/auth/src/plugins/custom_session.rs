@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Custom Session plugin — re-export enriched session JSON at /custom-session/get.
+//! Custom Session plugin â€” re-export enriched session JSON at /custom-session/get.
 //! Stores a callback as Box<dyn Fn> to enrich session data.
 
 use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
@@ -39,7 +39,7 @@ use std::sync::Arc;
 /// Enrichment function: takes (user_id, base_session_json) and returns enriched JSON.
 pub type SessionEnricher = Arc<dyn Fn(&str, Value) -> Value + Send + Sync>;
 
-/// CustomSessionPlugin — optional custom get-session via enrichment callback.
+/// CustomSessionPlugin â€” optional custom get-session via enrichment callback.
 pub struct CustomSessionPlugin {
     state: Option<AuthState>,
     enricher: Option<SessionEnricher>,
@@ -129,8 +129,8 @@ async fn get_custom_session(
         "session": {
             "id": session.id,
             "userId": session.user_id,
-            "expiresAt": session.expires_at.to_rfc3339(),
-            "createdAt": session.created_at.to_rfc3339(),
+            "expiresAt": session.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "createdAt": session.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
             "ipAddress": session.ip_address,
             "userAgent": session.user_agent,
             "impersonatedBy": session.impersonated_by,

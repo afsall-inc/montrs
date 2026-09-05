@@ -45,6 +45,12 @@ pub struct Pipeline {
     pub pkg_dir: PathBuf,
     pub server_bin_name: String,
     pub workspace_target_dir: PathBuf,
+    /// Whether to build optimized (--release) artifacts.
+    pub release: bool,
+    /// Path to the Tailwind CSS binary (managed install override).
+    pub tailwind_bin: Option<PathBuf>,
+    /// Path to the wasm-bindgen binary (managed install override).
+    pub wasm_bindgen_bin: Option<PathBuf>,
 }
 
 impl Pipeline {
@@ -54,6 +60,7 @@ impl Pipeline {
         let site_root = root.join(&meta.serve.site_root);
         let pkg_dir = site_root.join(&meta.serve.site_pkg_dir);
         let workspace_target = find_workspace_target_dir(&root)?;
+        let release = meta.serve.release;
         let server_bin_name = meta
             .serve
             .package
@@ -69,29 +76,52 @@ impl Pipeline {
             pkg_dir,
             server_bin_name,
             workspace_target_dir: workspace_target,
+            release,
+            tailwind_bin: None,
+            wasm_bindgen_bin: None,
         })
+    }
+
+    /// Directory that cargo builds artifacts into for the current profile.
+    fn profile_dir(&self) -> &'static str {
+        if self.release {
+            "release"
+        } else {
+            "debug"
+        }
+    }
+
+    /// Path to the compiled SSR server binary, with `.exe` on Windows.
+    pub fn server_bin_path(&self) -> PathBuf {
+        let mut name = self.server_bin_name.clone();
+        if cfg!(windows) && !name.ends_with(".exe") {
+            name.push_str(".exe");
+        }
+        self.workspace_target_dir
+            .join(self.profile_dir())
+            .join(name)
+    }
+
+    /// Args for `cargo build` of the SSR server binary.
+    ///
+    /// Order matters: the `--features` value must immediately follow the
+    /// `--features` flag, other flags come after.
+    pub fn server_args(&self) -> Vec<String> {
+        server_build_args(
+            self.meta.serve.package.as_deref().unwrap_or("app"),
+            &self.meta.serve.bin_features,
+            self.meta.serve.bin_default_features,
+            self.release,
+        )
     }
 
     fn build_frontend_args(&self) -> Vec<String> {
         let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
-        let mut args = vec![
-            "build".to_string(),
-            "--target".to_string(),
-            "wasm32-unknown-unknown".to_string(),
-            "--package".to_string(),
-            pkg.to_string(),
-            "--features".to_string(),
-        ];
-        let features = if self.meta.serve.lib_features.is_empty() {
-            "hydrate".to_string()
-        } else {
-            self.meta.serve.lib_features.join(",")
-        };
-        args.push(features);
-        if !self.meta.serve.lib_default_features {
-            args.push("--no-default-features".to_string());
-        }
-        args
+        frontend_build_args(
+            pkg,
+            &self.meta.serve.lib_features,
+            self.meta.serve.lib_default_features,
+        )
     }
 
     fn bundle_wasm(&self) -> Result<()> {
@@ -108,7 +138,9 @@ impl Pipeline {
         let wasm_target_dir = self
             .workspace_target_dir
             .join("wasm32-unknown-unknown")
-            .join("debug");
+            // The frontend build always passes `--release` (see
+            // build_frontend_args), so the WASM output is always in `release/`.
+            .join("release");
 
         let wasm_file = wasm_target_dir.join(format!("{}.wasm", lib_name));
 
@@ -120,7 +152,11 @@ impl Pipeline {
             ));
         }
 
-        let status = Command::new("wasm-bindgen")
+        let mut cmd = match &self.wasm_bindgen_bin {
+            Some(path) => Command::new(path),
+            None => Command::new("wasm-bindgen"),
+        };
+        let status = cmd
             .arg("--target")
             .arg("web")
             .arg("--no-typescript")
@@ -130,6 +166,14 @@ impl Pipeline {
             .arg("front")
             .arg(&wasm_file)
             .status();
+
+        // `--out-name front` produces `front.js` + `front_bg.wasm`. Remove any
+        // stale `front.wasm` (a leftover from the raw fallback copy) so the
+        // browser never downloads the giant unprocessed build.
+        let stale = self.pkg_dir.join("front.wasm");
+        if stale.exists() {
+            let _ = std::fs::remove_file(&stale);
+        }
 
         match status {
             Ok(s) if s.success() => {
@@ -155,11 +199,14 @@ impl Pipeline {
         wasm_file: &Path,
         lib_name: &str,
     ) -> Result<()> {
-        std::fs::copy(wasm_file, self.pkg_dir.join("front.wasm"))?;
+        // Match the name wasm-bindgen would produce (`front_bg.wasm`) so the
+        // generated index.html points at the same file either way.
+        std::fs::copy(wasm_file, self.pkg_dir.join("front_bg.wasm"))?;
         let wasm_target_dir = self
             .workspace_target_dir
             .join("wasm32-unknown-unknown")
-            .join("debug");
+            // Frontend always builds with --release.
+            .join("release");
         let js_bindings = wasm_target_dir.join(format!("{}.js", lib_name));
         if js_bindings.exists() {
             std::fs::copy(&js_bindings, self.pkg_dir.join("front.js"))?;
@@ -171,23 +218,7 @@ impl Pipeline {
 impl BuildPipeline for Pipeline {
     fn build_server(&self) -> Result<()> {
         println!(" Building SSR server...");
-        let pkg = self.meta.serve.package.as_deref().unwrap_or("app");
-        let mut args = vec![
-            "build".to_string(),
-            "--package".to_string(),
-            pkg.to_string(),
-            "--features".to_string(),
-        ];
-        let features = if self.meta.serve.bin_features.is_empty() {
-            "ssr".to_string()
-        } else {
-            self.meta.serve.bin_features.join(",")
-        };
-        args.push(features);
-        if !self.meta.serve.bin_default_features {
-            args.push("--no-default-features".to_string());
-        }
-        run_cargo(&args)?;
+        run_cargo(&self.server_args())?;
         println!(" SSR server built successfully");
         Ok(())
     }
@@ -208,7 +239,7 @@ impl BuildPipeline for Pipeline {
             if input.exists() {
                 println!(" Processing Tailwind CSS...");
                 std::fs::create_dir_all(&self.site_root)?;
-                run_tailwind(&input, &output)?;
+                run_tailwind(self.tailwind_bin.as_deref(), &input, &output)?;
                 println!(" Tailwind CSS processed");
             }
         }
@@ -243,7 +274,7 @@ impl BuildPipeline for Pipeline {
     <link rel="modulepreload" href="/pkg/front.js" />
     <script type="module">
         import init, {{ hydrate }} from '/pkg/front.js';
-        init('/pkg/front.wasm').then(() => hydrate());
+        init('/pkg/front_bg.wasm').then(() => hydrate());
     </script>
 </head>
 <body>
@@ -284,5 +315,138 @@ impl BuildPipeline for Pipeline {
 
     fn pkg_dir(&self) -> &Path {
         &self.pkg_dir
+    }
+}
+
+/// Args for `cargo build` of the WASM frontend (hydrate client).
+///
+/// Order matters: the `--features` value must immediately follow the
+/// `--features` flag; other flags come after.
+fn frontend_build_args(
+    pkg: &str,
+    lib_features: &[String],
+    lib_default_features: bool,
+) -> Vec<String> {
+    let mut args = vec![
+        "build".to_string(),
+        "--target".to_string(),
+        "wasm32-unknown-unknown".to_string(),
+        "--package".to_string(),
+        pkg.to_string(),
+        "--features".to_string(),
+    ];
+    let features = if lib_features.is_empty() {
+        "hydrate".to_string()
+    } else {
+        lib_features.join(",")
+    };
+    // `--features` value must immediately follow the `--features` flag.
+    args.push(features);
+    if !lib_default_features {
+        args.push("--no-default-features".to_string());
+    }
+    // A debug (unoptimized) WASM client is unusably large and slow in the
+    // browser, so the frontend is always built with optimization.
+    args.push("--release".to_string());
+    args
+}
+
+/// Args for `cargo build` of the SSR server binary.
+///
+/// Order matters: the `--features` value must immediately follow the
+/// `--features` flag; other flags come after.
+fn server_build_args(
+    pkg: &str,
+    bin_features: &[String],
+    bin_default_features: bool,
+    release: bool,
+) -> Vec<String> {
+    let mut args = vec![
+        "build".to_string(),
+        "--package".to_string(),
+        pkg.to_string(),
+        "--features".to_string(),
+    ];
+    let features = if bin_features.is_empty() {
+        "ssr".to_string()
+    } else {
+        bin_features.join(",")
+    };
+    // `--features` value must immediately follow the `--features` flag.
+    args.push(features);
+    if !bin_default_features {
+        args.push("--no-default-features".to_string());
+    }
+    if release {
+        args.push("--release".to_string());
+    }
+    args
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn frontend_args_keep_features_flag_with_value() {
+        let args =
+            frontend_build_args("website", &[], true);
+        let joined = args.join(" ");
+        assert!(
+            joined.contains("--features hydrate --release"),
+            "unexpected frontend args: {joined}"
+        );
+        // The `--features` flag must be immediately followed by its value.
+        let idx = args
+            .iter()
+            .position(|a| a == "--features")
+            .expect("--features flag present");
+        assert_eq!(args[idx + 1], "hydrate", "args: {joined}");
+    }
+
+    #[test]
+    fn frontend_args_respect_configured_features() {
+        let args = frontend_build_args(
+            "website",
+            &["hydrate".to_string(), "foo".to_string()],
+            false,
+        );
+        let joined = args.join(" ");
+        assert!(
+            joined.contains("--features hydrate,foo --no-default-features --release"),
+            "unexpected frontend args: {joined}"
+        );
+    }
+
+    #[test]
+    fn server_args_keep_features_flag_with_value() {
+        let args = server_build_args("website", &[], true, false);
+        let joined = args.join(" ");
+        assert_eq!(
+            joined,
+            "build --package website --features ssr",
+            "unexpected server args"
+        );
+        let idx = args
+            .iter()
+            .position(|a| a == "--features")
+            .expect("--features flag present");
+        assert_eq!(args[idx + 1], "ssr", "args: {joined}");
+    }
+
+    #[test]
+    fn server_args_append_release_after_features() {
+        let args = server_build_args("website", &[], true, true);
+        let joined = args.join(" ");
+        assert_eq!(
+            joined,
+            "build --package website --features ssr --release",
+            "unexpected server args"
+        );
+        let idx = args
+            .iter()
+            .position(|a| a == "--features")
+            .expect("--features flag present");
+        assert_eq!(args[idx + 1], "ssr", "args: {joined}");
     }
 }

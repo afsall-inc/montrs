@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -35,6 +35,7 @@ use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
+use time::OffsetDateTime;
 use tokio::{process::Child, sync::Mutex};
 
 /// The current status of a service.
@@ -95,7 +96,7 @@ pub struct Service {
     /// PID of the running process.
     pub pid: Option<u32>,
     /// Start timestamp.
-    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub started_at: Option<time::OffsetDateTime>,
     /// Ports that this service is known to listen on.
     pub ports: Vec<u16>,
 }
@@ -122,7 +123,7 @@ impl Service {
         self.child = Some(child);
         self.status = ServiceStatus::Starting;
         self.pid = None; // will be set when child is polled
-        self.started_at = Some(chrono::Utc::now());
+        self.started_at = Some(OffsetDateTime::now_utc());
         self.retry.reset();
     }
 

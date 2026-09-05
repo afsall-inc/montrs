@@ -59,6 +59,27 @@ pub struct RegistryTool {
     /// Platform-specific overrides.
     #[serde(default)]
     pub platform: HashMap<String, PlatformOverride>,
+    /// Backend options (e.g. GitHub asset template for raw binaries).
+    #[serde(default)]
+    pub options: HashMap<String, toml::Value>,
+}
+
+impl RegistryTool {
+    /// Read a string option by key.
+    pub fn option_str(&self, key: &str) -> Option<String> {
+        self.options
+            .get(key)
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+    }
+
+    /// Read a boolean option by key.
+    pub fn option_bool(&self, key: &str) -> bool {
+        self.options
+            .get(key)
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
 }
 
 /// Platform-specific overrides for a tool.
@@ -131,11 +152,15 @@ pub static BAKED_REGISTRY: Lazy<Registry> = Lazy::new(|| {
     let rust_toml = include_str!("../registry/rust.toml");
     let forehead_toml = include_str!("../registry/forehead.toml");
     let changelogger_toml = include_str!("../registry/changelogger.toml");
+    let tailwindcss_toml = include_str!("../registry/tailwindcss.toml");
+    let wasm_bindgen_toml = include_str!("../registry/wasm-bindgen.toml");
     for (name, content) in [
         ("cargo", cargo_toml),
         ("rust", rust_toml),
         ("forehead", forehead_toml),
         ("changelogger", changelogger_toml),
+        ("tailwindcss", tailwindcss_toml),
+        ("wasm-bindgen", wasm_bindgen_toml),
     ] {
         if let Ok(mut tool) = toml::from_str::<RegistryTool>(content) {
             tool.name = name.to_string();

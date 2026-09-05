@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -35,7 +35,7 @@
 
 use crate::entities::{DefaultAccount, DefaultSession, DefaultUser};
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
@@ -60,8 +60,8 @@ pub struct UserRecord {
     pub is_anonymous: bool,
     pub last_login_method: Option<String>,
     pub metadata: HashMap<String, String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
+    pub updated_at: OffsetDateTime,
 }
 
 impl From<&DefaultUser> for UserRecord {
@@ -95,8 +95,8 @@ pub struct SessionRecord {
     pub id: String,
     pub user_id: String,
     pub token: String,
-    pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
     pub impersonated_by: Option<String>,
@@ -129,7 +129,7 @@ pub struct AccountRecord {
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub id_token: Option<String>,
-    pub access_token_expires_at: Option<DateTime<Utc>>,
+    pub access_token_expires_at: Option<OffsetDateTime>,
     pub password: Option<String>,
 }
 
@@ -155,8 +155,8 @@ pub struct VerificationRecord {
     pub id: String,
     pub identifier: String,
     pub value: String,
-    pub expires_at: DateTime<Utc>,
-    pub created_at: DateTime<Utc>,
+    pub expires_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
 }
 
 /// Field updates for a user.
@@ -182,7 +182,7 @@ pub struct UserUpdate {
 /// The database adapter trait. All methods are async.
 #[async_trait]
 pub trait DatabaseAdapter: Send + Sync + 'static {
-    // ── Users ──────────────────────────────────────────────────────────
+    // â”€â”€ Users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async fn create_user(&self, user: &DefaultUser) -> anyhow::Result<()>;
     async fn find_user_by_email(
         &self,
@@ -212,7 +212,7 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
     ) -> anyhow::Result<()>;
     async fn delete_user(&self, id: &str) -> anyhow::Result<()>;
 
-    // ── Sessions ───────────────────────────────────────────────────────
+    // â”€â”€ Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async fn create_session(
         &self,
         session: &DefaultSession,
@@ -232,7 +232,7 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
     async fn delete_session(&self, id: &str) -> anyhow::Result<()>;
     async fn delete_user_sessions(&self, user_id: &str) -> anyhow::Result<()>;
 
-    // ── Accounts ───────────────────────────────────────────────────────
+    // â”€â”€ Accounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async fn create_account(
         &self,
         account: &DefaultAccount,
@@ -248,7 +248,7 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
     ) -> anyhow::Result<Vec<AccountRecord>>;
     async fn delete_account(&self, id: &str) -> anyhow::Result<()>;
 
-    // ── Verification ───────────────────────────────────────────────────
+    // â”€â”€ Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     async fn create_verification(
         &self,
         record: &VerificationRecord,
@@ -268,7 +268,7 @@ pub trait DatabaseAdapter: Send + Sync + 'static {
         identifier: &str,
     ) -> anyhow::Result<()>;
 
-    // ── Generic plugin KV (orgs, api keys, etc. can use until dedicated tables) ──
+    // â”€â”€ Generic plugin KV (orgs, api keys, etc. can use until dedicated tables) â”€â”€
     async fn plugin_set(
         &self,
         namespace: &str,
@@ -442,7 +442,7 @@ impl DatabaseAdapter for MemoryDatabaseAdapter {
             if let Some(v) = updates.metadata {
                 u.metadata = v;
             }
-            u.updated_at = Utc::now();
+            u.updated_at = OffsetDateTime::now_utc();
         }
         Ok(())
     }

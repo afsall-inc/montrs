@@ -154,12 +154,6 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Layer 2. Plugin lifecycle only — no tool version management or binary execution.
 - **When to modify**: When adding new plugin types or install methods.
 
-## 📦 `montrs-tui`
-- **Responsibility**: Terminal UI library — buffer, rendering, events, widgets.
-- **Key Components**: `Buffer`, `CliRenderer`, `EventBus`, `Renderable` trait, `TuiAdapter`, 21 renderable components.
-- **Boundary**: Layer 3. Pure Rust ANSI terminal output — no external dependencies like ncurses.
-- **When to modify**: When adding new widgets, rendering features, or event types.
-
 ## 📦 `montrs-runtime`
 - **Responsibility**: General-purpose Rust runtime — ops, extensions, resource table, event loop, memory primitives.
 - **Key Components**: `MontrsRuntime`, `RuntimeExtension`, `OpDecl`, `OpState`, `ResourceTable`, `EventLoop`, `ModuleLoader`, `Arena`, `TaggedValue`.
@@ -183,7 +177,7 @@ Packages are organized into layers. A package at layer N may depend on packages 
 | **0 (Core)** | `core`, `validator`, `platform`, `runtime` | No montrs-* deps (except platform → core re-export) |
 | **1 (Foundation)** | `utils`, `metadata`, `agentignore`, `runner`, `env`, `sigstore`, `registry`, `plugin`, `image-core`, `content` | Only core/validator/platform |
 | **2 (Feature)** | `agent`, `orm`, `fmt`, `bench`, `prdoc`, `haptics`, `motion`, `icons`, `ui`, `test`, `build-core`, `build-watch`, `build-serve`, `state`, `table-core`, `hotkeys-core`, `hotkeys-web`, `image-optimizer`, `command` | Only layers 0-1 |
-| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs`, `tui` | Any layer |
+| **3 (Shell)** | `cli`, `desktop`, `mobile`, `renderer`, `build`, `montrs` | Any layer |
 
 ### Dependency Flow
 

@@ -98,7 +98,7 @@ fn test_tool_version_construct() {
 
 #[test]
 fn test_create_backend() {
-    let backend = create_backend("test", "core", None).unwrap();
+    let backend = create_backend("test", "core", None, None).unwrap();
     assert_eq!(backend.name(), "test");
     assert_eq!(backend.backend_type(), BackendType::Core);
 }
@@ -106,13 +106,13 @@ fn test_create_backend() {
 #[test]
 fn test_create_backend_github() {
     let backend =
-        create_backend("ripgrep", "github:BurntSushi/ripgrep", None).unwrap();
+        create_backend("ripgrep", "github:BurntSushi/ripgrep", None, None).unwrap();
     assert_eq!(backend.backend_type(), BackendType::GitHub);
 }
 
 #[test]
 fn test_create_backend_default_github() {
-    let backend = create_backend("unknown-tool", "unknown", None).unwrap();
+    let backend = create_backend("unknown-tool", "unknown", None, None).unwrap();
     assert_eq!(backend.backend_type(), BackendType::GitHub);
 }
 

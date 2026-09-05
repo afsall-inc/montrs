@@ -30,7 +30,9 @@
 
 //! Pipeline modules for rendering specific primitives.
 
+#[cfg(feature = "wgpu-backend")]
 pub mod image;
+#[cfg(feature = "wgpu-backend")]
 pub mod quad;
 pub mod svg;
 pub mod text;

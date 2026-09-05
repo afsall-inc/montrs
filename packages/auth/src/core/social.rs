@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -43,6 +43,7 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
+use time::OffsetDateTime;
 
 pub fn routes(state: AuthState) -> Router {
     Router::new()
@@ -217,7 +218,7 @@ async fn oauth_callback(
                 last_login_method: Some(provider_id.clone()),
                 metadata: u.metadata,
                 created_at: u.created_at,
-                updated_at: chrono::Utc::now(),
+                updated_at: OffsetDateTime::now_utc(),
             }
         } else {
             let mut u = DefaultUser::new(&email, None);

@@ -31,7 +31,7 @@
 use crate::{
     BenchCase, config::BenchConfig, report::Report, stats::BenchStats,
 };
-use colored::*;
+use console::style;
 use std::time::Instant;
 
 /// The main entry point for running benchmarks.
@@ -98,7 +98,7 @@ impl BenchRunner {
     }
 
     fn log_config(config: &BenchConfig) {
-        println!("{}", "Configuration:".bold().blue());
+        println!("{}", style("Configuration:").bold().blue());
         println!("  Warmup:     {} iterations", config.warmup_iterations);
         println!("  Iterations: {}", config.iterations);
         if let Some(d) = config.duration {
@@ -132,7 +132,7 @@ impl BenchRunner {
     pub async fn run(&self) -> anyhow::Result<()> {
         let mut report = Report::new();
 
-        println!("{}", "Running MontRS Benchmarks".bold().green());
+        println!("{}", style("Running MontRS Benchmarks").bold().green());
         println!(
             "System: {} ({})",
             report.system.os_name, report.system.cpu_brand
@@ -155,12 +155,12 @@ impl BenchRunner {
 
         if let Some(path) = &self.config.json_output {
             report.save_json(path)?;
-            println!("Report saved to {}", path.blue());
+            println!("Report saved to {}", style(path).blue());
         }
 
         if let Some(path) = &self.config.generate_weights {
             report.save_weights(path)?;
-            println!("Weights generated at {}", path.blue());
+            println!("Weights generated at {}", style(path).blue());
         }
 
         Ok(())
@@ -172,7 +172,7 @@ impl BenchRunner {
         bench: &dyn BenchCase,
         report: &mut Report,
     ) -> anyhow::Result<()> {
-        print!("Running {}... ", bench.name().cyan());
+        print!("Running {}... ", style(bench.name()).cyan());
 
         bench.setup().await?;
 
@@ -244,7 +244,7 @@ impl BenchRunner {
             total_duration.as_secs_f64(),
         );
 
-        println!("{}", "Done".green());
+        println!("{}", style("Done").green());
         println!("  Mean:    {:.4} µs", stats.mean * 1_000_000.0);
         println!("  Median:  {:.4} µs", stats.median * 1_000_000.0);
         println!("  P99:     {:.4} µs", stats.p99 * 1_000_000.0);

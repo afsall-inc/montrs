@@ -29,7 +29,7 @@
 // SOFTWARE.
 
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, path::PathBuf};
 
@@ -40,7 +40,7 @@ pub mod skills;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AgentSnapshot {
     pub project_name: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub framework_version: String,
     pub structure: Vec<FileEntry>,
     pub plates: Vec<PlateSummary>,
@@ -89,7 +89,7 @@ pub struct RouteSummary {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ErrorRecord {
     pub id: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub version: u32,
     pub status: ErrorStatus,
     pub detail: ProjectError,
@@ -105,7 +105,7 @@ pub enum ErrorStatus {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ErrorVersion {
     pub version: u32,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub message: String,
     pub diff: Option<String>,
 }
@@ -137,7 +137,7 @@ pub struct ConsolidatedError {
     pub level: String,
     pub message: String,
     pub status: String,
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -308,7 +308,7 @@ impl AgentManager {
     ) -> Result<()> {
         self.ensure_dir()?;
         let content = match format {
-            "yaml" => serde_yaml::to_string(snapshot)?,
+            "yaml" => serde_yml::to_string(snapshot)?,
             "txt" => format!("{:#?}", snapshot),
             _ => serde_json::to_string_pretty(snapshot)?,
         };
@@ -400,8 +400,14 @@ impl AgentManager {
                             timestamp: issue
                                 .get("timestamp")
                                 .and_then(|v| v.as_str())
-                                .and_then(|s| s.parse().ok())
-                                .unwrap_or_else(Utc::now),
+                                .and_then(|s| {
+                                    OffsetDateTime::parse(
+                                        s,
+                                        &time::format_description::well_known::Rfc3339,
+                                    )
+                                    .ok()
+                                })
+                                .unwrap_or_else(OffsetDateTime::now_utc),
                         });
                     }
                 }
@@ -481,7 +487,7 @@ impl AgentManager {
         let id = uuid::Uuid::new_v4().to_string();
         let record = ErrorRecord {
             id: id.clone(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             version: 1,
             status: ErrorStatus::Active,
             detail: error,
@@ -602,7 +608,7 @@ impl AgentManager {
             record.version += 1;
             record.history.push(ErrorVersion {
                 version: history_version,
-                timestamp: Utc::now(),
+                timestamp: OffsetDateTime::now_utc(),
                 message: fix_message,
                 diff,
             });
@@ -613,14 +619,36 @@ impl AgentManager {
 
     fn find_error(&self, id: &str) -> Result<ErrorRecord> {
         let error_dir = self.errorfiles_dir();
-        for entry in fs::read_dir(error_dir)?.flatten() {
-            if entry.path().is_dir() {
-                let file_path = entry.path().join(format!("{}.json", id));
-                if file_path.exists() {
-                    let content = fs::read_to_string(file_path)?;
-                    return Ok(serde_json::from_str(&content)?);
+        // Nested: <errorfiles>/<id>/v<N>.json
+        let nested = error_dir.join(id);
+        if nested.is_dir() {
+            let mut latest: Option<ErrorRecord> = None;
+            let mut highest_version: u32 = 0;
+            for entry in fs::read_dir(&nested)?.flatten() {
+                if entry.path().extension().and_then(|s| s.to_str())
+                    == Some("json")
+                {
+                    if let Ok(content) = fs::read_to_string(entry.path()) {
+                        if let Ok(record) =
+                            serde_json::from_str::<ErrorRecord>(&content)
+                        {
+                            if record.version >= highest_version {
+                                highest_version = record.version;
+                                latest = Some(record);
+                            }
+                        }
+                    }
                 }
             }
+            if let Some(record) = latest {
+                return Ok(record);
+            }
+        }
+        // Flat fallback: <errorfiles>/<id>.json
+        let flat = error_dir.join(format!("{id}.json"));
+        if flat.exists() {
+            let content = fs::read_to_string(flat)?;
+            return Ok(serde_json::from_str(&content)?);
         }
         anyhow::bail!("Error record not found: {}", id)
     }
@@ -1079,7 +1107,7 @@ impl AgentManager {
 
         AgentSnapshot {
             project_name: "MontRS Framework".to_string(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             framework_version: "0.1.0".to_string(),
             structure: Vec::new(),
             plates: Vec::new(),
@@ -1319,7 +1347,7 @@ impl AgentManager {
 
         Ok(AgentSnapshot {
             project_name: project_name.to_string(),
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             framework_version: "0.1.0".to_string(),
             structure,
             plates,

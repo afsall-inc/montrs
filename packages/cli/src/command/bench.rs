@@ -37,7 +37,7 @@
 //!    to the underlying benchmarking harness.
 
 use anyhow::{Context, Result};
-use colored::Colorize;
+use console::style;
 use std::{fs, path::Path, process::Command, time::Instant};
 
 #[allow(clippy::too_many_arguments)]
@@ -163,7 +163,7 @@ async fn bench_appspec_load(
     let total_duration = start_total.elapsed();
     let stats = BenchStats::new(&durations);
 
-    println!("{}", "Results (AppSpec Load):".bold().green());
+    println!("{}", style("Results (AppSpec Load):").bold().green());
     println!("  Mean:    {:.4} ms", stats.mean * 1000.0);
     println!("  Median:  {:.4} ms", stats.median * 1000.0);
     println!("  Ops/sec: {:.2}", stats.ops_per_sec);
@@ -177,7 +177,7 @@ async fn bench_appspec_load(
             total_duration.as_secs_f64(),
         );
         report.save_weights(&weight_path)?;
-        println!("Weights generated at {}", weight_path.blue());
+        println!("Weights generated at {}", style(weight_path).blue());
     }
 
     Ok(())
@@ -255,7 +255,7 @@ async fn bench_executable(
     let total_duration = start_total.elapsed();
     let stats = BenchStats::new(&durations);
 
-    println!("{}", "Results:".bold().green());
+    println!("{}", style("Results:").bold().green());
     println!("  Mean:    {:.4} ms", stats.mean * 1000.0);
     println!("  Median:  {:.4} ms", stats.median * 1000.0);
     println!("  P99:     {:.4} ms", stats.p99 * 1000.0);
@@ -273,7 +273,7 @@ async fn bench_executable(
             total_duration.as_secs_f64(),
         );
         report.save_weights(&weight_path)?;
-        println!("Weights generated at {}", weight_path.blue());
+        println!("Weights generated at {}", style(weight_path).blue());
     }
 
     Ok(())

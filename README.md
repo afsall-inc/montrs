@@ -211,7 +211,6 @@ cargo clippy --workspace -- -D warnings
 | [sigstore](packages/sigstore/README.md) | GitHub attestation, cosign, SLSA verification. |
 | [test](packages/test/README.md) | Deterministic test runtime and E2E tools. |
 | [tool](packages/tool/README.md) | Tool version manager (5 backends: core, cargo, github, http, ubi). |
-| [tui](packages/tui/README.md) | Full terminal UI library (21 renderables, keymap, ssh, qr). |
 | [ui](packages/ui/README.md) | shadcn-inspired component library (91 components) + theme system. |
 | [utils](packages/utils/README.md) | Generic pure functions. |
 | [validator](packages/validator/README.md) | Compile-time validation and data modeling. |

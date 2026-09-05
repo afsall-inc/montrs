@@ -56,7 +56,7 @@ pub async fn validate_token(token: &str) -> anyhow::Result<serde_json::Value> {
         "session": {
             "id": session.id,
             "userId": session.user_id,
-            "expiresAt": session.expires_at.to_rfc3339(),
+            "expiresAt": session.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
         },
         "user": profile,
     }))

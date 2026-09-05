@@ -455,15 +455,19 @@ pub fn RouterOutlet<C: AppConfig + 'static>() -> impl IntoView {
     let router = use_montrs_router::<C>();
     let location = leptos_router::hooks::use_location();
 
-    move || {
-        let path = location.pathname.get();
-        router.render_view(&path)
+    view! {
+        {move || {
+            let path = location.pathname.get();
+            router.render_view(&path)
+        }}
     }
 }
 
 /// A client-side navigation link.
 ///
-/// Wraps Leptos Router's `<A>` component internally. Users never import
+/// Wraps Leptos Router's [`leptos_router::components::A`] component internally
+/// so navigation happens without a full page reload (pushState), and the link
+/// is automatically marked active for the current route. Users never import
 /// Leptos Router directly.
 #[allow(non_snake_case)]
 pub fn RouteLink<C: AppConfig + 'static>(
@@ -473,15 +477,17 @@ pub fn RouteLink<C: AppConfig + 'static>(
 ) -> impl IntoView {
     let class_val = class.unwrap_or_else(|| Signal::from(String::new()));
     let _router = use_montrs_router::<C>();
+    let to_owned = to.to_string();
 
+    // Active detection mirrors `<A>`'s default: exact match or nested under
+    // `to/`. Evaluated reactively so the class updates as the route changes.
     let is_active = {
         let to = to.to_string();
         let location = leptos_router::hooks::use_location();
         move || {
             let current = location.pathname.get();
-            let is_exact = current == to;
-            let is_prefix = current.starts_with(&format!("{}/", to));
-            is_exact || is_prefix
+            current == to
+                || current.starts_with(&format!("{}/", to))
         }
     };
 
@@ -495,9 +501,13 @@ pub fn RouteLink<C: AppConfig + 'static>(
     };
 
     view! {
-        <a href=to class=a_class data-montrs-route=to>
+        <leptos_router::components::A
+            href=to_owned
+            attr:class=a_class
+            attr:data-montrs-route=to
+        >
             {children()}
-        </a>
+        </leptos_router::components::A>
     }
 }
 

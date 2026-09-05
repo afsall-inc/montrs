@@ -32,9 +32,11 @@ pub mod cargo;
 pub mod core;
 pub mod github;
 pub mod http;
+pub mod standalone;
 pub mod ubi;
 
 use async_trait::async_trait;
+use montrs_registry::RegistryTool;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -137,7 +139,7 @@ pub fn default_shims_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(".montrs/shims"))
 }
 
-/// Compute SHA256 checksum of a file.
+/// Compute the content hash of a file.
 pub async fn sha256_digest(
     path: &std::path::Path,
 ) -> Result<String, ToolError> {
@@ -156,18 +158,84 @@ pub async fn sha256_digest(
     Ok(hex::encode(hasher.finalize()))
 }
 
+/// Candidate release tag names for a resolved version.
+///
+/// `list_versions` strips a leading `v` from GitHub tags, so a resolved
+/// version like `4.3.1` may map to a tag `4.3.1` or `v4.3.1` depending on
+/// the repository's tagging convention. Backends should try each candidate
+/// so both conventions work.
+pub(crate) fn candidate_tags(version: &str) -> Vec<String> {
+    if version.starts_with('v') {
+        vec![version.to_string()]
+    } else {
+        vec![version.to_string(), format!("v{version}")]
+    }
+}
+
 /// Download a file from a URL to a path.
 pub async fn download_file(
     url: &str,
     dest: &std::path::Path,
 ) -> Result<(), ToolError> {
     let response = reqwest::get(url).await?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(ToolError::Backend(format!(
+            "download failed ({status}): {url}"
+        )));
+    }
     let bytes = response.bytes().await?;
     if let Some(parent) = dest.parent() {
         tokio::fs::create_dir_all(parent).await?;
     }
     tokio::fs::write(dest, &bytes).await?;
     Ok(())
+}
+
+/// Perform an HTTP GET with retry and exponential backoff.
+/// Returns the response body bytes on success.
+pub(crate) async fn http_get_with_retry(
+    url: &str,
+    max_retries: u32,
+) -> Result<reqwest::Response, ToolError> {
+    let client = reqwest::Client::builder()
+        .user_agent("montrs/0.1.0")
+        .build()?;
+    let mut last_error = None;
+    for attempt in 0..=max_retries {
+        if attempt > 0 {
+            tokio::time::sleep(std::time::Duration::from_millis(
+                500 * (1 << attempt),
+            ))
+            .await;
+        }
+        match client.get(url).send().await {
+            Ok(resp) => {
+                let status = resp.status();
+                if status == reqwest::StatusCode::TOO_MANY_REQUESTS
+                    || status == reqwest::StatusCode::FORBIDDEN
+                {
+                    last_error = Some(ToolError::Backend(format!(
+                        "GitHub API rate limited ({status}) — try again later"
+                    )));
+                    continue;
+                }
+                if !status.is_success() {
+                    last_error = Some(ToolError::Backend(format!(
+                        "HTTP {status} for {url}"
+                    )));
+                    continue;
+                }
+                return Ok(resp);
+            }
+            Err(e) => {
+                last_error = Some(ToolError::Http(e));
+            }
+        }
+    }
+    Err(last_error.unwrap_or_else(|| {
+        ToolError::Backend(format!("failed to fetch {url} after retries"))
+    }))
 }
 
 /// Extract a tarball to a directory.
@@ -190,6 +258,7 @@ pub fn create_backend(
     name: &str,
     backend_type: &str,
     install_dir: Option<PathBuf>,
+    tool: Option<&RegistryTool>,
 ) -> Result<Box<dyn ToolBackend>, ToolError> {
     let dir = install_dir.unwrap_or_else(|| default_install_dir().join(name));
     let parts: Vec<&str> = backend_type.split(':').collect();
@@ -197,10 +266,27 @@ pub fn create_backend(
 
     match backend {
         "core" => Ok(Box::new(core::CoreBackend::new(name, dir))),
-        "cargo" => Ok(Box::new(cargo::CargoBackend::new(name, dir))),
+        "cargo" => {
+            // Use parts[1] as crate name (e.g. "cargo:wasm-bindgen-cli"),
+            // fall back to tool name.
+            let crate_name = parts.get(1).copied().unwrap_or(name);
+            Ok(Box::new(cargo::CargoBackend::new(crate_name, dir)))
+        }
         "github" => {
             let repo = parts.get(1).copied().unwrap_or(name);
-            Ok(Box::new(github::GitHubBackend::new(name, repo, dir)))
+            let is_standalone = parts.get(2) == Some(&"standalone")
+                || tool.map(|t| t.option_bool("standalone")).unwrap_or(false);
+            if is_standalone {
+                let asset =
+                    tool.and_then(|t| t.option_str("asset")).unwrap_or_else(
+                        || format!("{name}-{{os}}-{{arch}}{{exe}}"),
+                    );
+                Ok(Box::new(standalone::StandaloneBackend::new(
+                    name, repo, dir, asset,
+                )))
+            } else {
+                Ok(Box::new(github::GitHubBackend::new(name, repo, dir)))
+            }
         }
         "http" => Ok(Box::new(http::HttpBackend::new(name, dir, ""))),
         "ubi" => Ok(Box::new(ubi::UbiBackend::new(name, dir))),

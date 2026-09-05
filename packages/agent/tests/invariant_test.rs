@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use chrono::Utc;
+use time::OffsetDateTime;
 use montrs_agent::{AgentManager, AgentSnapshot, PlateSummary};
 use std::collections::HashMap;
 use tempfile::tempdir;
@@ -41,7 +41,7 @@ fn test_invariant_dependencies() {
 
     let mut snapshot = AgentSnapshot {
         project_name: "test".to_string(),
-        timestamp: Utc::now(),
+        timestamp: OffsetDateTime::now_utc(),
         framework_version: "0.1.0".to_string(),
         structure: Vec::new(),
         plates: vec![PlateSummary {
@@ -85,7 +85,7 @@ fn test_invariant_cycles() {
 
     let snapshot = AgentSnapshot {
         project_name: "test".to_string(),
-        timestamp: Utc::now(),
+        timestamp: OffsetDateTime::now_utc(),
         framework_version: "0.1.0".to_string(),
         structure: Vec::new(),
         plates: vec![

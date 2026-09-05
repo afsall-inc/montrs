@@ -225,6 +225,7 @@ async fn handle_request(
                     }),
                 },
                 // ── Auth tools ──────────────────────────────────────────────
+                #[cfg(feature = "auth")]
                 Tool {
                     name: "auth_sign_in".to_string(),
                     description: "Sign in with email and password.".to_string(),
@@ -237,6 +238,7 @@ async fn handle_request(
                         "required": ["email", "password"]
                     }),
                 },
+                #[cfg(feature = "auth")]
                 Tool {
                     name: "auth_sign_up".to_string(),
                     description: "Sign up a new user with email and password."
@@ -251,6 +253,7 @@ async fn handle_request(
                         "required": ["email", "password"]
                     }),
                 },
+                #[cfg(feature = "auth")]
                 Tool {
                     name: "auth_validate_token".to_string(),
                     description: "Validate a session token and return the \
@@ -264,6 +267,7 @@ async fn handle_request(
                         "required": ["token"]
                     }),
                 },
+                #[cfg(feature = "auth")]
                 Tool {
                     name: "auth_status".to_string(),
                     description: "Get auth system status and available \
@@ -530,6 +534,7 @@ async fn handle_tool_call(
             })
         }
         // ── Auth ───────────────────────────────────────────────────────────
+        #[cfg(feature = "auth")]
         "auth_sign_in" => {
             let email = params
                 .arguments
@@ -549,6 +554,7 @@ async fn handle_tool_call(
                 is_error: false,
             })
         }
+        #[cfg(feature = "auth")]
         "auth_sign_up" => {
             let email = params
                 .arguments
@@ -570,6 +576,7 @@ async fn handle_tool_call(
                 is_error: false,
             })
         }
+        #[cfg(feature = "auth")]
         "auth_validate_token" => {
             let token = params
                 .arguments
@@ -584,6 +591,7 @@ async fn handle_tool_call(
                 is_error: false,
             })
         }
+        #[cfg(feature = "auth")]
         "auth_status" => {
             let result = crate::command::auth::status().await?;
             Ok(CallToolResult {

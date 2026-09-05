@@ -1,0 +1,8 @@
+backends = ["github:tailwindlabs/tailwindcss:standalone"]
+bins = ["tailwindcss"]
+description = "Tailwind CSS standalone CLI binary"
+detect = ["tailwind.config.js", "tailwind.toml", "tailwindcss"]
+
+[options]
+asset = "tailwindcss-{os}-{arch}{exe}"
+archive = false

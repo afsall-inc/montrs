@@ -46,7 +46,9 @@ pub async fn run() -> anyhow::Result<()> {
     let montrs_toml = root.join("montrs.toml");
     if montrs_toml.exists() {
         let content = std::fs::read_to_string(&montrs_toml)?;
-        let doc: toml::Value = content.parse()?;
+        let doc: toml::Table = content.parse()?;
+        // Replace so stale entries don't accumulate across runs.
+        lock.config_sources.clear();
         if let Some(tools) = doc.get("tools").and_then(|t| t.as_table()) {
             for (name, value) in tools {
                 let version = match value {
@@ -58,7 +60,7 @@ pub async fn run() -> anyhow::Result<()> {
                         .to_string(),
                     _ => continue,
                 };
-                lock.add_tool(
+                lock.set_tool(
                     name,
                     LockfileTool {
                         version,

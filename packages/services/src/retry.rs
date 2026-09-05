@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,16 +28,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Retry logic — exponential backoff for failing services.
+//! Retry logic â€” exponential backoff for failing services.
 
 use crate::config::RetryPolicy;
+use time::OffsetDateTime;
 use tokio::time::{Duration, sleep};
 
 /// Tracks retry state for a service.
 #[derive(Debug, Default)]
 pub struct RetryState {
     pub attempts: u32,
-    pub last_attempt: Option<chrono::DateTime<chrono::Utc>>,
+    pub last_attempt: Option<time::OffsetDateTime>,
 }
 
 impl RetryState {
@@ -66,7 +67,7 @@ impl RetryState {
     /// Record a failed attempt and (optionally) wait the policy delay.
     pub async fn record_failure(&mut self, policy: &RetryPolicy) {
         self.attempts += 1;
-        self.last_attempt = Some(chrono::Utc::now());
+        self.last_attempt = Some(OffsetDateTime::now_utc());
         if self.should_retry(policy) {
             let delay = self.delay_for(policy);
             sleep(delay).await;

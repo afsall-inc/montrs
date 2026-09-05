@@ -29,6 +29,7 @@
 // SOFTWARE.
 
 pub mod agent;
+#[cfg(feature = "auth")]
 pub mod auth;
 pub mod bench;
 pub mod build;
@@ -37,6 +38,7 @@ pub mod env;
 pub mod expand;
 pub mod fmt;
 pub mod generate;
+pub mod install;
 pub mod lock;
 pub mod mcp;
 pub mod new;
@@ -50,3 +52,25 @@ pub mod test;
 pub mod ui_init;
 pub mod upgrade;
 pub mod watch;
+
+use montrs_build::Pipeline;
+use std::path::Path;
+
+/// Resolve managed tool binary paths from the install directory and
+/// set them on the pipeline so the build doesn't depend on PATH.
+pub fn resolve_pipeline_bins(pipeline: &mut Pipeline) {
+    if let Some(path) = montrs_tool::managed_bin_path(
+        "tailwindcss",
+        "tailwindcss",
+        Path::new("."),
+    ) {
+        pipeline.tailwind_bin = Some(path);
+    }
+    if let Some(path) = montrs_tool::managed_bin_path(
+        "wasm-bindgen",
+        "wasm-bindgen",
+        Path::new("."),
+    ) {
+        pipeline.wasm_bindgen_bin = Some(path);
+    }
+}

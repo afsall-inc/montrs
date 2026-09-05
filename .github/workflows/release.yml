@@ -37,6 +37,8 @@ jobs:
           git push
       - name: Build
         run: cargo build --release --workspace
+      - name: Build CLI with auth
+        run: cargo build --release --package montrs-cli --features auth
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

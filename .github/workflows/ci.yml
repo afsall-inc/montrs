@@ -41,8 +41,20 @@ jobs:
     - name: Clippy
       run: cargo clippy --workspace -- -D warnings
 
+    - name: Clippy (auth feature)
+      run: cargo clippy --package montrs-cli --features auth -- -D warnings
+
     - name: Run tests
       run: cargo test --workspace
+
+    - name: Build (auth feature)
+      run: cargo build --release --package montrs-cli --features auth
+
+    - name: Check website (SSR)
+      run: cargo check -p website --features ssr
+
+    - name: Check website (WASM hydrate)
+      run: cargo check --target wasm32-unknown-unknown -p website --features hydrate --no-default-features
 
     - name: Validate PRDoc
       if: github.event_name == 'pull_request'

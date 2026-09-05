@@ -108,7 +108,7 @@ pub fn provide_hotkeys_context(
         keydown_closure.forget();
         keyup_closure.forget();
 
-        if allow_blur {
+        if _allow_blur {
             let pressed2 = keys_pressed;
             let blur_closure =
                 Closure::<dyn Fn(web_sys::Event)>::new(move |_| {

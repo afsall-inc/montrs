@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Multi-Session plugin — list device sessions, set active, revoke.
+//! Multi-Session plugin â€” list device sessions, set active, revoke.
 //! POST /multi-session/list-device-sessions, /multi-session/set-active, /multi-session/revoke.
 
 use crate::{AuthError, context::AuthState, plugin::AuthPlugin};
@@ -37,7 +37,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 
-/// Multi-Session plugin — device session management.
+/// Multi-Session plugin â€” device session management.
 pub struct MultiSessionPlugin {
     state: Option<AuthState>,
     /// Optional device info headers: "user-agent" and "x-forwarded-for".
@@ -141,8 +141,8 @@ async fn list_device_sessions(
         device_sessions.push(json!({
             "id": s.id,
             "userId": s.user_id,
-            "expiresAt": s.expires_at.to_rfc3339(),
-            "createdAt": s.created_at.to_rfc3339(),
+            "expiresAt": s.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "createdAt": s.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
             "deviceName": device_name,
             "current": s.id == session.id,
         }));

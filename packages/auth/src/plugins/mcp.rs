@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! MCP (Model Context Protocol) OAuth plugin — thin wrappers similar to oauth_provider.
+//! MCP (Model Context Protocol) OAuth plugin â€” thin wrappers similar to oauth_provider.
 //! /.well-known/oauth-authorization-server, /mcp/authorize, /mcp/token, /mcp/register.
 
 //TODO: Support the latest update of the MCP standard
@@ -41,7 +41,7 @@ use axum::{
     extract::{Query, State},
     routing::{get, post},
 };
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -52,10 +52,10 @@ pub struct McpClient {
     pub client_secret: String,
     pub redirect_uris: Vec<String>,
     pub name: Option<String>,
-    pub created_at: DateTime<Utc>,
+    pub created_at: OffsetDateTime,
 }
 
-/// MCP OAuth plugin — authorization server for MCP clients.
+/// MCP OAuth plugin â€” authorization server for MCP clients.
 pub struct McpPlugin {
     state: Option<AuthState>,
 }
@@ -296,7 +296,7 @@ async fn mcp_register(
         client_secret: client_secret.clone(),
         redirect_uris: req.redirect_uris.clone(),
         name: req.client_name,
-        created_at: Utc::now(),
+        created_at: OffsetDateTime::now_utc(),
     };
 
     state
@@ -318,6 +318,6 @@ async fn mcp_register(
         "client_id": client_id,
         "client_secret": client_secret,
         "redirect_uris": req.redirect_uris,
-        "client_id_issued_at": client.created_at.timestamp(),
+        "client_id_issued_at": client.created_at.unix_timestamp(),
     })))
 }

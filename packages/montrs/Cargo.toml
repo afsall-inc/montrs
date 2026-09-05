@@ -44,7 +44,7 @@ haptics = ["dep:montrs-haptics"]
 default = ["full"]
 
 # Enable the entire framework including the CLI
-full = ["orm", "validator", "test", "cli", "icons", "ui", "motion", "state", "content", "table", "hotkeys", "command", "image"]
+full = ["orm", "validator", "test", "cli", "state", "content", "table", "hotkeys", "command", "image"]
 state = ["dep:montrs-state"]
 content = ["dep:montrs-content"]
 table = ["dep:montrs-table-core"]
@@ -53,6 +53,9 @@ hotkeys-web = ["hotkeys", "dep:montrs-hotkeys-web"]
 image = ["dep:montrs-image-core"]
 image-optimizer = ["image", "dep:montrs-image-optimizer"]
 command = ["dep:montrs-command"]
+
+# --- Auth ---
+auth = ["cli", "montrs-cli/auth"]
 
 # Basic package activation
 orm = ["dep:montrs-orm"]

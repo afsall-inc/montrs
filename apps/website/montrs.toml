@@ -13,6 +13,7 @@ tailwind-input-file = "style/main.css"
 site-root = "target/site"
 site-pkg-dir = "pkg"
 package = "website"
+release = true
 
 [tasks]
 dev = "montrs serve"
@@ -29,3 +30,7 @@ lint = "cargo clippy -- -D warnings"
 description = "Run all checks"
 command = "echo 'CI checks complete'"
 depends = ["fmt", "lint", "check", "check-ssr"]
+
+[tools]
+tailwindcss = "4"
+wasm-bindgen = "0.2"

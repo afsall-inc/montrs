@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -90,8 +90,8 @@ async fn get_session(
         "session": {
             "id": session.id,
             "userId": session.user_id,
-            "expiresAt": session.expires_at.to_rfc3339(),
-            "createdAt": session.created_at.to_rfc3339(),
+            "expiresAt": session.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "createdAt": session.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
         },
         "user": profile,
     })))
@@ -113,8 +113,8 @@ async fn list_sessions(
         "sessions": sessions.iter().map(|s| json!({
             "id": s.id,
             "userId": s.user_id,
-            "expiresAt": s.expires_at.to_rfc3339(),
-            "createdAt": s.created_at.to_rfc3339(),
+            "expiresAt": s.expires_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
+            "createdAt": s.created_at.format(&time::format_description::well_known::Rfc3339).unwrap(),
         })).collect::<Vec<_>>(),
     })))
 }

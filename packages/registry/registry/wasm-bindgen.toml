@@ -1,0 +1,7 @@
+backends = ["cargo:wasm-bindgen-cli"]
+bins = ["wasm-bindgen", "wasm-bindgen-test", "wasm2es6js"]
+description = "wasm-bindgen CLI for bundling Rust WASM binaries"
+detect = ["wasm-bindgen"]
+
+[options]
+crate-name = "wasm-bindgen-cli"

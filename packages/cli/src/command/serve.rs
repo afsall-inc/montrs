@@ -32,7 +32,7 @@ use montrs_build::{BuildPipeline, Pipeline};
 use std::{path::Path, process::Command};
 
 pub async fn run() -> anyhow::Result<()> {
-    let pipeline = match Pipeline::from_root(Path::new(".")) {
+    let mut pipeline = match Pipeline::from_root(Path::new(".")) {
         Ok(p) => p,
         Err(e) => {
             anyhow::bail!(
@@ -41,17 +41,16 @@ pub async fn run() -> anyhow::Result<()> {
             );
         }
     };
+    pipeline.release |= crate::config::current_release();
 
+    crate::command::resolve_pipeline_bins(&mut pipeline);
     pipeline.build_all()?;
 
     let addr = pipeline.meta.serve.site_addr.clone();
     let site_root = pipeline.site_root.to_string_lossy().to_string();
     let pkg_dir = pipeline.pkg_dir.to_string_lossy().to_string();
 
-    let bin = pipeline
-        .workspace_target_dir
-        .join("debug")
-        .join(&pipeline.server_bin_name);
+    let bin = pipeline.server_bin_path();
 
     if !bin.exists() {
         anyhow::bail!(

@@ -59,11 +59,17 @@ pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
 }
 
 /// Run tailwindcss CLI on the input file to produce the output file.
+/// `bin` is an optional path to the tailwindcss binary (e.g. a managed install).
 pub fn run_tailwind(
+    bin: Option<&std::path::Path>,
     input: &std::path::Path,
     output: &std::path::Path,
 ) -> anyhow::Result<()> {
-    let status = std::process::Command::new("tailwindcss")
+    let mut cmd = match bin {
+        Some(path) => std::process::Command::new(path),
+        None => std::process::Command::new("tailwindcss"),
+    };
+    let status = cmd
         .arg("-i")
         .arg(input)
         .arg("-o")
@@ -72,7 +78,10 @@ pub fn run_tailwind(
         .stderr(std::process::Stdio::inherit())
         .status()?;
     if !status.success() {
-        anyhow::bail!("tailwindcss failed");
+        anyhow::bail!(
+            "tailwindcss failed. Run `montrs install` to ensure it is \
+             installed."
+        );
     }
     Ok(())
 }

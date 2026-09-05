@@ -32,6 +32,9 @@ use montrs_build::{BuildPipeline, Pipeline};
 use std::path::Path;
 
 pub async fn run() -> anyhow::Result<()> {
-    let pipeline = Pipeline::from_root(Path::new("."))?;
+    let mut pipeline = Pipeline::from_root(Path::new("."))?;
+    // `--release` on the CLI forces release; otherwise use [serve] release config.
+    pipeline.release |= crate::config::current_release();
+    crate::command::resolve_pipeline_bins(&mut pipeline);
     pipeline.build_all()
 }

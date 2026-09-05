@@ -41,7 +41,6 @@ const TEMPLATES: &[(&str, &str)] = &[
     ),
     ("todo", "Full-stack todo app with auth + database"),
     ("api", "Backend-only API server with auth"),
-    ("tui", "Terminal-only app using montrs-tui"),
     ("desktop", "Native desktop app"),
     ("saas", "Full SaaS: auth, org, admin, API keys, services"),
 ];

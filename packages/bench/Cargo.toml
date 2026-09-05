@@ -13,16 +13,16 @@ allowed_deps = ["montrs-core"]
 
 [dependencies]
 montrs-core = { path = "../core" }
-thiserror = "1.0"
+thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 sysinfo = "0.30"
-colored = "2.1"
+console = "0.15"
 hdrhistogram = "7.5"
 statrs = "0.16"
-chrono = { version = "0.4", features = ["serde"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing"] }
 rustc_version_runtime = "0.3.0"
 clap = { version = "4.5.54", features = ["derive", "env"] }

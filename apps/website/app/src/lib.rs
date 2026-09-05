@@ -73,6 +73,7 @@ pub fn App() -> impl IntoView {
     provide_website_context();
 
     view! {
+        <link rel="stylesheet" href="/main.css" />
         <leptos_router::components::Router>
             <ThemeProvider>
                 <Header />

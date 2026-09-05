@@ -28,28 +28,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-/// GitHub releases backend — downloads from GitHub releases.
+/// Standalone backend — downloads a raw executable from GitHub releases.
+/// Used for tools distributed as single binaries (e.g. Tailwind CSS CLI),
+/// avoiding any dependency on npm/Node.
 use crate::backend::{
     BackendType, ToolBackend, ToolError, ToolVersion, candidate_tags,
-    download_file, extract_tarball, http_get_with_retry, sha256_digest,
+    download_file, http_get_with_retry, sha256_digest,
 };
 use async_trait::async_trait;
 use std::path::PathBuf;
 
-pub struct GitHubBackend {
+pub struct StandaloneBackend {
     pub name: String,
     pub repo: String,
     pub install_dir: PathBuf,
-    pub asset_pattern: String,
+    /// Asset name template, e.g. "tailwindcss-{os}-{arch}{exe}".
+    pub asset_template: String,
 }
 
-impl GitHubBackend {
-    pub fn new(name: &str, repo: &str, install_dir: PathBuf) -> Self {
+impl StandaloneBackend {
+    pub fn new(
+        name: &str,
+        repo: &str,
+        install_dir: PathBuf,
+        asset_template: String,
+    ) -> Self {
         Self {
             name: name.to_string(),
             repo: repo.to_string(),
             install_dir,
-            asset_pattern: format!("{name}-{{version}}-{{os}}-{{arch}}.tar.gz"),
+            asset_template,
         }
     }
 
@@ -64,28 +72,33 @@ impl GitHubBackend {
         )
     }
 
+    /// Resolve the asset file name for the current platform.
     fn resolve_asset_name(&self, version: &str) -> String {
         let os = std::env::consts::OS;
         let arch = match std::env::consts::ARCH {
-            "x86_64" => "x86_64",
-            "aarch64" => "aarch64",
-            _ => "x86_64",
+            "x86_64" => "x64",
+            "aarch64" => "arm64",
+            other => other,
         };
-        self.asset_pattern
+        let exe = if cfg!(windows) { ".exe" } else { "" };
+        self.asset_template
             .replace("{version}", version)
             .replace("{os}", os)
             .replace("{arch}", arch)
+            .replace("{exe}", exe)
     }
 }
 
 #[async_trait]
-impl ToolBackend for GitHubBackend {
+impl ToolBackend for StandaloneBackend {
     fn name(&self) -> &str {
         &self.name
     }
+
     fn backend_type(&self) -> BackendType {
         BackendType::GitHub
     }
+
     fn install_dir(&self) -> PathBuf {
         self.install_dir.clone()
     }
@@ -139,14 +152,20 @@ impl ToolBackend for GitHubBackend {
         }
 
         let asset = self.resolve_asset_name(version);
-        let archive_path = self.install_dir.join(format!("{}.tar.gz", version));
+        let bin_dir = version_path.join("bin");
+        let download_path = bin_dir.join(if cfg!(windows) {
+            format!("{}.exe", self.name)
+        } else {
+            self.name.clone()
+        });
 
-        // Try each tag form (e.g. "1.2.3", then "v1.2.3") until one downloads.
+        // Try each tag form (e.g. "4.3.1", then "v4.3.1") until one
+        // downloads successfully. See `candidate_tags` for details.
         let mut last_error: Option<String> = None;
         let mut downloaded_url = String::new();
         for tag in candidate_tags(version) {
             let url = self.asset_url(&tag, &asset);
-            match download_file(&url, &archive_path).await {
+            match download_file(&url, &download_path).await {
                 Ok(()) => {
                     downloaded_url = url;
                     break;
@@ -163,11 +182,15 @@ impl ToolBackend for GitHubBackend {
             )));
         }
 
-        tokio::fs::create_dir_all(&version_path).await?;
-        extract_tarball(&archive_path, &version_path).await?;
+        // Mark executable on Unix so it can be invoked directly.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = std::fs::Permissions::from_mode(0o755);
+            std::fs::set_permissions(&download_path, perms)?;
+        }
 
-        let checksum = sha256_digest(&archive_path).await?;
-        let _ = tokio::fs::remove_file(&archive_path).await;
+        let checksum = sha256_digest(&download_path).await?;
 
         Ok(ToolVersion {
             name: self.name.clone(),

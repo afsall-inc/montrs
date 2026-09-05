@@ -39,7 +39,6 @@ default = [
     "science", "seasons", "security", "shapes", "shopping",
     "social", "sports", "sustainability", "text", "time",
     "tools", "transportation", "travel", "weather",
-    "animated",
 ]
 design = []
 development = []

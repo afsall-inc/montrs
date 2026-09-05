@@ -33,7 +33,9 @@ use std::path::Path;
 use tokio::process::Command as TokioCommand;
 
 pub async fn run() -> anyhow::Result<()> {
-    let pipeline = Pipeline::from_root(Path::new("."))?;
+    let mut pipeline = Pipeline::from_root(Path::new("."))?;
+    pipeline.release |= crate::config::current_release();
+    crate::command::resolve_pipeline_bins(&mut pipeline);
 
     pipeline.build_all()?;
 
@@ -41,10 +43,7 @@ pub async fn run() -> anyhow::Result<()> {
     let site_root = pipeline.site_root.to_string_lossy().to_string();
     let pkg_dir = pipeline.pkg_dir.to_string_lossy().to_string();
 
-    let bin = pipeline
-        .workspace_target_dir
-        .join("debug")
-        .join(&pipeline.server_bin_name);
+    let bin = pipeline.server_bin_path();
 
     if !bin.exists() {
         anyhow::bail!(
