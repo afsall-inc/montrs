@@ -45,7 +45,7 @@ pub mod registry;
 pub mod animated;
 
 #[cfg(feature = "animated")]
-pub use animated::AnimatedIcon;
+pub use animated::{AnimatedIcon, AnimationProfile, animation_profile};
 pub use glyph::Glyph;
 pub use icon::{CustomIcon, Icon};
 pub use registry::*;

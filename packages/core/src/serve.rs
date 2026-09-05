@@ -118,8 +118,13 @@ where
             axum_routes,
             {
                 let r = router.clone();
+                let leptos_options = conf.leptos_options.clone();
                 move || {
                     provide_context(r.clone());
+                    // The SSR shell reads `LeptosOptions` (output_name,
+                    // site_root, pkg dir) to render the hydration bootstrap
+                    // scripts that match the WASM bundle names.
+                    provide_context(leptos_options.clone());
                 }
             },
             app_fn,

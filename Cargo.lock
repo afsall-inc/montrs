@@ -9514,6 +9514,7 @@ dependencies = [
  "async-trait",
  "console_error_panic_hook",
  "getrandom 0.2.17",
+ "js-sys",
  "leptos",
  "leptos_meta",
  "leptos_router",

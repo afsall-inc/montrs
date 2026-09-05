@@ -49,6 +49,11 @@ pub enum AnimationProfile {
 }
 
 /// Animated icon component with spring physics on hover.
+///
+/// Sizing: pass Tailwind size utilities via `class` (e.g. `class="w-6 h-6"`)
+/// or the `size` prop (e.g. `size="24"`). The class is applied directly to
+/// the `<svg>` element so CSS width/height override the presentation
+/// attributes, mirroring the behavior of [`crate::icon::Icon`].
 #[component]
 pub fn AnimatedIcon(
     #[prop(into)] glyph: Signal<Glyph>,
@@ -57,9 +62,14 @@ pub fn AnimatedIcon(
     #[prop(into, optional)] fill: Option<TextProp>,
     #[prop(into, optional)] stroke: Option<TextProp>,
     #[prop(into, optional)] stroke_width: Option<TextProp>,
+    /// Override the auto-detected animation profile (`None` = auto).
+    #[prop(into, optional)] profile: Signal<Option<AnimationProfile>>,
 ) -> impl IntoView {
-    let (hovered, set_hovered) = signal(false);
-    let profile = Memo::new(move |_| animation_profile(glyph.get()));
+    let profile = Memo::new(move |_| {
+        profile
+            .get()
+            .unwrap_or_else(|| animation_profile(glyph.get()))
+    });
 
     let svg_data = TextProp::from(move || glyph.get().svg());
     let class_val = class.unwrap_or_else(|| "".into());
@@ -84,7 +94,6 @@ pub fn AnimatedIcon(
         let po = path_offset;
         let spin = is_spinning;
         move |_: leptos::ev::MouseEvent| {
-            set_hovered.set(true);
             match p.get() {
                 AnimationProfile::Pulse => {
                     s.set(1.15);
@@ -162,7 +171,6 @@ pub fn AnimatedIcon(
         let po = path_offset;
         let spin = is_spinning;
         move |_: leptos::ev::MouseEvent| {
-            set_hovered.set(false);
             spin.set(false);
             s.set(1.0);
             r.set(0.0);
@@ -171,17 +179,27 @@ pub fn AnimatedIcon(
         }
     };
 
-    let style = move || {
-        let p = profile.get();
+    // Per-frame style lives on the `<svg>`: transform + the SVG stroke
+    // properties (dasharray/dashoffset) must target the `<svg>` (or its
+    // children) directly. A CSS transition smooths the spring-out but would
+    // add lag to continuous spin/shake, so it is only applied while idle.
+    let svg_style = move || {
         let mut styles = format!(
-            "display: inline-flex; cursor: pointer; transform: scale({}) \
-             rotate({}deg) translateY({}px); transition: all 0.3s \
-             cubic-bezier(0.16,1,0.3,1);",
+            "transform: scale({}) rotate({}deg) translateY({}px); \
+             transform-origin: center;",
             scale.get(),
             rotate.get(),
             translate_y.get()
         );
-        if p == AnimationProfile::PathDraw && hovered.get() {
+        if is_spinning.get() {
+            styles.push_str(" transition: none;");
+        } else {
+            styles.push_str(
+                " transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), \
+                 stroke-dashoffset 0.12s linear;",
+            );
+        }
+        if profile.get() == AnimationProfile::PathDraw {
             styles.push_str(&format!(
                 " stroke-dasharray: 100; stroke-dashoffset: {};",
                 path_offset.get()
@@ -191,12 +209,14 @@ pub fn AnimatedIcon(
     };
 
     view! {
-        <span class=move || class_val.get() style=style
+        <span
+            class="inline-flex cursor-pointer"
             on:mouseenter=on_enter
             on:mouseleave=on_leave
         >
             <svg
               xmlns="http://www.w3.org/2000/svg"
+              class=move || class_val.get()
               width=move || size_val.get()
               height=move || size2.get()
               viewBox="0 0 24 24"
@@ -205,13 +225,15 @@ pub fn AnimatedIcon(
               stroke-width=move || sw.get()
               stroke-linecap="round"
               stroke-linejoin="round"
+              style=svg_style
               inner_html=move || svg_data.get()
             />
         </span>
     }
 }
 
-fn animation_profile(glyph: Glyph) -> AnimationProfile {
+/// The auto-detected animation profile for a glyph.
+pub fn animation_profile(glyph: Glyph) -> AnimationProfile {
     let name = glyph.name();
     if name.contains("Loader")
         || name.contains("Spinner")
