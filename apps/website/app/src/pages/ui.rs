@@ -182,12 +182,16 @@ pub fn Ui() -> impl IntoView {
                         <div class="mt-3 flex items-center justify-between gap-3">
                             <span>
                                 <span class="terminal-prompt">"$"</span>
-                                " montrs add lucide-home --icon --collection brand"
+                                " montrs add lucide/home --icon"
                             </span>
-                            <CopyButton
-                                text="montrs add lucide-home --icon --collection brand"
-                                label="Copy"
-                            />
+                            <CopyButton text="montrs add lucide/home --icon" label="Copy" />
+                        </div>
+                        <div class="mt-3 flex items-center justify-between gap-3">
+                            <span>
+                                <span class="terminal-prompt">"$"</span>
+                                " montrs add tabler/arrow-right --icon"
+                            </span>
+                            <CopyButton text="montrs add tabler/arrow-right --icon" label="Copy" />
                         </div>
                         <div class="mt-3 flex items-center justify-between gap-3">
                             <span>

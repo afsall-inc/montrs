@@ -246,8 +246,9 @@ pub enum Commands {
         /// Add a UI theme preset to style/main.css, e.g. `montrs add --theme dark`.
         #[arg(long, value_name = "THEME")]
         theme: Option<String>,
-        /// Add a single icon as a standalone component, e.g. `montrs add --icon lucide-home`.
-        #[arg(long, value_name = "GLYPH")]
+        /// Add a single icon as a standalone component,
+        /// e.g. `montrs add --icon lucide/home` or `montrs add --icon tabler/arrow-right`.
+        #[arg(long, value_name = "COLLECTION/NAME")]
         icon: Option<String>,
         /// List everything available to add.
         #[arg(long)]
