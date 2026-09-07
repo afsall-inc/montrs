@@ -52,7 +52,6 @@ pub fn Header() -> impl IntoView {
         ("/runtime", "Runtime"),
         ("/ai", "AI Kit"),
         ("/orm", "ORM"),
-        ("/ui/motion", "Motion"),
         ("/foundations", "Foundations"),
         ("/templates", "Templates"),
         ("/docs", "Docs"),
@@ -63,6 +62,7 @@ pub fn Header() -> impl IntoView {
         ("/ui/components", "Components"),
         ("/ui/blocks", "Blocks"),
         ("/ui/icons", "Icons"),
+        ("/ui/motion", "Motion"),
         ("/ui/themes", "Themes"),
         ("/ui/backgrounds", "Backgrounds"),
     ];
@@ -71,6 +71,7 @@ pub fn Header() -> impl IntoView {
     let customize_open = RwSignal::new(false);
     let nav_for_ui = navigate.clone();
     let search_q = RwSignal::new(String::new());
+    let search_open = RwSignal::new(false);
     let search_ref: NodeRef<leptos::html::Input> = NodeRef::new();
     let search_nav = navigate.clone();
 
@@ -84,9 +85,20 @@ pub fn Header() -> impl IntoView {
                     Default::default(),
                 );
                 search_q.set(String::new());
+                search_open.set(false);
             }
         }
     };
+
+    // Focus the search input whenever the overlay opens (`/` shortcut).
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        if search_open.get() {
+            if let Some(input) = search_ref.get() {
+                let _ = input.focus();
+            }
+        }
+    });
 
     // "C" opens/closes the theme customizer (shark-ui style).
     #[cfg(target_arch = "wasm32")]
@@ -108,13 +120,12 @@ pub fn Header() -> impl IntoView {
                     ui_open.set(false);
                     mobile_open.set(false);
                     customize_open.set(false);
+                    search_open.set(false);
                     return;
                 }
                 if key == "/" && !ev.meta_key() && !ev.ctrl_key() && !in_field {
                     ev.prevent_default();
-                    if let Some(input) = search_ref.get() {
-                        let _ = input.focus();
-                    }
+                    search_open.set(true);
                     return;
                 }
                 if (key == "c" || key == "C")
@@ -230,19 +241,44 @@ pub fn Header() -> impl IntoView {
                     </div>
 
                     <div class="relative hidden md:block">
-                        <Icon
-                            glyph=Glyph::Search
-                            class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
-                        />
-                        <input
-                            type="search"
-                            placeholder="Search icons…  (/)"
-                            class="h-8 w-40 rounded-md border border-input bg-background pl-8 pr-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-52"
-                            node_ref=search_ref
-                            prop:value=search_q
-                            on:keydown=on_search_keydown
+                        <button
+                            type="button"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |_| search_open.update(|o| *o = !*o)
                             aria-label="Search icons"
-                        />
+                            aria-expanded=move || search_open.get()
+                            title="Search (/)"
+                        >
+                            <Icon glyph=Glyph::Search class="h-4 w-4" />
+                        </button>
+                        <Show when=move || search_open.get()>
+                            <div
+                                class="fixed inset-0 z-40"
+                                on:click=move |_| search_open.set(false)
+                            ></div>
+                        </Show>
+                        <div
+                            class="fixed inset-x-0 top-16 z-50 flex justify-center px-4"
+                            hidden=move || !search_open.get()
+                        >
+                            <div class="w-full max-w-xl rounded-lg border border-border bg-background p-2 shadow-xl">
+                                <div class="relative">
+                                    <Icon
+                                        glyph=Glyph::Search
+                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                    />
+                                    <input
+                                        type="search"
+                                        placeholder="Search 22,000+ icons…  (Enter)"
+                                        class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        node_ref=search_ref
+                                        prop:value=search_q
+                                        on:keydown=on_search_keydown
+                                        aria-label="Search icons"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="relative flex items-center gap-2">
