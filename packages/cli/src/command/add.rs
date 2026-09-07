@@ -462,10 +462,13 @@ fn list_available() {
     println!("\n{} Themes:", style("Themes").green().bold());
     print_columns(&["orange", "rose", "emerald", "sky", "violet", "zinc"]);
 
-    println!("\n{} Icons (collection/name):", style("Icons").green().bold());
     println!(
-        "  montrs add --icon lucide/home\n  montrs add --icon tabler/arrow-right\n  \
-         montrs add --icon simple-icons/github"
+        "\n{} Icons (collection/name):",
+        style("Icons").green().bold()
+    );
+    println!(
+        "  montrs add --icon lucide/home\n  montrs add --icon \
+         tabler/arrow-right\n  montrs add --icon simple-icons/github"
     );
 
     println!("\n{} Libraries:", style("Libraries").green().bold());

@@ -47,12 +47,21 @@ pub fn Blocks() -> impl IntoView {
                     "Pre-built UI sections built from real MontRS Plates.
                     Copy, paste, and customize — no generators, no magic."
                 </p>
-                <div class="terminal mt-6 flex max-w-xl items-center justify-between gap-4">
-                    <span>
-                        <span class="terminal-prompt">"$"</span>
-                        " montrs serve"
-                    </span>
-                    <CopyButton text="montrs serve".to_string() label="Copy" />
+                <div class="terminal mt-6 flex max-w-xl flex-col gap-2">
+                    <div class="flex items-center justify-between gap-4">
+                        <span>
+                            <span class="terminal-prompt">"$"</span>
+                            " montrs add faq01 --block"
+                        </span>
+                        <CopyButton text="montrs add faq01 --block".to_string() label="Copy" />
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <span>
+                            <span class="terminal-prompt">"$"</span>
+                            " montrs add sidenav --block"
+                        </span>
+                        <CopyButton text="montrs add sidenav --block".to_string() label="Copy" />
+                    </div>
                 </div>
             </div>
 
@@ -208,7 +217,8 @@ fn BlockCard(
     // Like shadcn/ui, the copied snippet is the implementation only — the
     // SPDX license header is stripped before highlighting.
     let code_html = highlight_rust(strip_license(source));
-    let cli = "montrs new".to_string();
+    let block_key = name.strip_suffix(".rs").unwrap_or(name);
+    let cli = format!("montrs add {block_key} --block");
 
     view! {
         <div class="showcase-card flex flex-col">

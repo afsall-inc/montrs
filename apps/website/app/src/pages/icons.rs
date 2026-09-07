@@ -1196,7 +1196,8 @@ pub fn Icons() -> impl IntoView {
 }
 
 /// Static render of a glyph (works for Lucide and collection tables),
-/// style-aware: fill collections ignore stroke color/width.
+/// style-aware: fill collections apply the picked color as their fill and
+/// ignore stroke width/color.
 #[component]
 fn CustomGlyphView(
     glyph: CollectedGlyph,
@@ -1206,9 +1207,21 @@ fn CustomGlyphView(
 ) -> impl IntoView {
     let size2 = size.clone();
     let is_fill = glyph.stroke == "none";
+    let fill_color = stroke.clone();
+    let fill_ok = move || {
+        let c = fill_color.get();
+        if is_fill && !c.is_empty() {
+            c.to_string()
+        } else {
+            glyph.fill.to_string()
+        }
+    };
+    let stroke_color = stroke.clone();
     let stroke_ok = move || {
-        let c = stroke.get();
-        if is_fill || c.is_empty() {
+        let c = stroke_color.get();
+        if is_fill {
+            "none".to_string()
+        } else if c.is_empty() {
             glyph.stroke.to_string()
         } else {
             c.to_string()
@@ -1232,7 +1245,7 @@ fn CustomGlyphView(
             width=move || size.get()
             height=move || size2.get()
             viewBox=move || glyph.viewbox
-            fill=move || glyph.fill
+            fill=fill_ok
             stroke=stroke_ok
             stroke-width=sw_ok
             stroke-linecap="round"
@@ -1254,9 +1267,21 @@ fn AnimatedGlyphView(
     >,
 ) -> impl IntoView {
     let is_fill = glyph.stroke == "none";
+    let fill_color = stroke.clone();
+    let fill_ok = move || {
+        let c = fill_color.get();
+        if is_fill && !c.is_empty() {
+            c.to_string()
+        } else {
+            glyph.fill.to_string()
+        }
+    };
+    let stroke_color = stroke.clone();
     let stroke_ok = move || {
-        let c = stroke.get();
-        if is_fill || c.is_empty() {
+        let c = stroke_color.get();
+        if is_fill {
+            "none".to_string()
+        } else if c.is_empty() {
             glyph.stroke.to_string()
         } else {
             c.to_string()
@@ -1278,7 +1303,7 @@ fn AnimatedGlyphView(
         <AnimatedSvg
             svg={TextProp::from(glyph.svg)}
             viewbox={TextProp::from(glyph.viewbox)}
-            fill={TextProp::from(glyph.fill)}
+            fill={TextProp::from(fill_ok)}
             stroke={TextProp::from(stroke_ok)}
             stroke_width={TextProp::from(sw_ok)}
             size=size

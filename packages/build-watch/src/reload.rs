@@ -55,9 +55,9 @@ impl LiveReload {
     pub async fn start(port: u16) -> Result<Self> {
         let (tx, _rx) = broadcast::channel::<String>(16);
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
-        let listener = TcpListener::bind(addr)
-            .await
-            .with_context(|| format!("could not bind live-reload port {port}"))?;
+        let listener = TcpListener::bind(addr).await.with_context(|| {
+            format!("could not bind live-reload port {port}")
+        })?;
 
         let tx2 = tx.clone();
         tokio::spawn(async move {
@@ -67,18 +67,15 @@ impl LiveReload {
                 };
                 let tx = tx2.clone();
                 tokio::spawn(async move {
-                    let Ok(mut ws) = tokio_tungstenite::accept_async(stream).await
+                    let Ok(mut ws) =
+                        tokio_tungstenite::accept_async(stream).await
                     else {
                         return;
                     };
                     let mut rx = tx.subscribe();
                     while let Ok(msg) = rx.recv().await {
                         use tokio_tungstenite::tungstenite::Message;
-                        if ws
-                            .send(Message::Text(msg.into()))
-                            .await
-                            .is_err()
-                        {
+                        if ws.send(Message::Text(msg.into())).await.is_err() {
                             break;
                         }
                     }
