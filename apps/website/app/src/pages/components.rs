@@ -282,6 +282,18 @@ pub fn Components() -> impl IntoView {
                     "91 shadcn-inspired components built on montrs-ui and Tailwind CSS.
                     Copy the source, own every pixel."
                 </p>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {SECTIONS.iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_1fr]">

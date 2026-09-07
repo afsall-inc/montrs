@@ -47,6 +47,18 @@ pub fn Blocks() -> impl IntoView {
                     "Pre-built UI sections built from real MontRS Plates.
                     Copy, paste, and customize — no generators, no magic."
                 </p>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {[("faq", "FAQ"), ("footers", "Footers"), ("headers", "Headers"), ("integrations", "Integrations"), ("login", "Login"), ("sidenav", "Sidenav")].iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
                 <div class="terminal mt-6 flex max-w-xl flex-col gap-2">
                     <div class="flex items-center justify-between gap-4">
                         <span>

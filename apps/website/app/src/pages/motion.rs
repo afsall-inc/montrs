@@ -54,6 +54,18 @@ pub fn Motion() -> impl IntoView {
                     interpolation, shape morphing, and gesture-driven motion — all
                     built on the montrs-motion FrameLoop."
                 </p>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {demos.iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">

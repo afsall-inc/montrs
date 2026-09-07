@@ -322,7 +322,7 @@ fn BentoGrid() -> impl IntoView {
                                 class="rounded-md border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
                             >"Browse"</a>
                         </div>
-                        <div class="mt-6 grid grid-cols-6 gap-2">
+                        <div class="mt-6 grid grid-cols-4 gap-2 sm:grid-cols-6">
                             {[
                                 Glyph::Heart,
                                 Glyph::Rocket,
