@@ -237,11 +237,7 @@ pub fn AnimatedSvg(
     };
 
     view! {
-            <span
-                class="inline-flex cursor-pointer"
-                on:mouseenter=on_enter
-                on:mouseleave=on_leave
-            >
+            <span class="inline-flex cursor-pointer">
     <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class=move || {
@@ -262,6 +258,8 @@ pub fn AnimatedSvg(
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   style=svg_style
+                  on:mouseenter=on_enter
+                  on:mouseleave=on_leave
                   inner_html=move || svg_text.get()
                 />
             </span>
@@ -312,13 +310,19 @@ pub fn AnimatedIcon(
     }
 }
 
-/// Resolve the `<svg>` element from a mouse event by walking up the DOM from
-/// the event target (avoids needing a typed NodeRef for the SVG namespace).
+/// Resolve the `<svg>` element from a mouse event: prefer the element the
+/// listener is attached to (`current_target`), then walk up from the target.
 #[allow(unused_variables)]
 fn resolve_svg(ev: &leptos::ev::MouseEvent) -> Option<web_sys::SvgElement> {
     #[cfg(target_arch = "wasm32")]
     {
         use wasm_bindgen::JsCast;
+        if let Some(svg) = ev
+            .current_target()
+            .and_then(|t| t.dyn_into::<web_sys::SvgElement>().ok())
+        {
+            return Some(svg);
+        }
         let mut node =
             ev.target().and_then(|t| t.dyn_into::<web_sys::Node>().ok());
         while let Some(n) = node.clone() {

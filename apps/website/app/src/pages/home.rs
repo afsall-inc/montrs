@@ -764,9 +764,9 @@ fn TaskRunnerAndSponsors() -> impl IntoView {
                             "One task runner. Zero setup."
                         </h2>
                         <p class="mt-4 text-lg leading-8 text-muted-foreground">
-                            "MontRS ships a built-in task runner configured from
-                            your <code class=\"font-mono text-foreground\">montrs.toml</code> —
-                            the same file that defines your app. No Makefiles,
+                            "MontRS ships a built-in task runner configured from your "
+                            <code class="font-mono text-foreground">"montrs.toml"</code>
+                            " — the same file that defines your app. No Makefiles,
                             no package.json scripts, no extra tools."
                         </p>
                         <div class="code-window mt-6">
@@ -781,17 +781,35 @@ fn TaskRunnerAndSponsors() -> impl IntoView {
                     </div>
 
                     <div class="flex flex-col justify-center">
-                        <p class="icons-sidebar-heading">"Backed by"</p>
-                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                            {["Afsall Inc.", "OpenCode", "Leptos", "Tailwind", "shadcn", "Your org here"].iter().map(|s| view! {
-                                <div class="showcase-card flex h-20 items-center justify-center px-4 text-center font-mono text-sm text-muted-foreground">
-                                    {*s}
+                        <p class="icons-sidebar-heading">"Backed by the community"</p>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            "MontRS is free and MIT/Apache-2.0 licensed. Sponsors keep
+                            the framework growing and the builds fast."
+                        </p>
+                        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                            {[
+                                ("Afsall Inc.", Glyph::Flame),
+                                ("OpenCode", Glyph::Terminal),
+                                ("Leptos", Glyph::Atom),
+                                ("Tailwind", Glyph::Wind),
+                                ("shadcn", Glyph::Blocks),
+                                ("Your org here", Glyph::Sparkles),
+                            ].into_iter().map(|(s, g)| view! {
+                                <div class="sponsor-card flex h-24 items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/60 px-4 text-center font-mono text-sm text-muted-foreground shadow-lg backdrop-blur-sm">
+                                    <Icon glyph=g class="h-4 w-4 text-primary/70" />
+                                    {s}
                                 </div>
                             }).collect::<Vec<_>>()}
                         </div>
-                        <p class="mt-6 text-sm text-muted-foreground">
-                            "Sponsor MontRS to keep the framework free and going."
-                        </p>
+                        <a
+                            href="https://github.com/sponsors/afsall-inc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="mt-6 inline-flex h-10 w-fit items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-accent"
+                        >
+                            <Icon glyph=Glyph::Heart class="h-4 w-4 text-primary" />
+                            "Become a sponsor"
+                        </a>
                     </div>
                 </div>
             </div>
@@ -821,7 +839,7 @@ fn FinalCta() -> impl IntoView {
                             "Get Started"
                         </a>
                         <a
-                            href="https://github.com/montrs/montrs"
+                            href="https://github.com/afsall-inc/montrs"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent"

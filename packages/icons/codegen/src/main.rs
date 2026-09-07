@@ -30,7 +30,7 @@ const COLLECTIONS: &[(&str, &str, &str, &str, &str, &str, &str, &str, bool)] =
             "MIT",
             "WorkOS (Radix UI)",
             "https://github.com/radix-ui/icons",
-            "mixed",
+            "stroke",
             false,
         ),
         (

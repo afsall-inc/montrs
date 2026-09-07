@@ -28,6 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use crate::components::theme_customizer::ThemeCustomizer;
 use leptos::prelude::*;
 use montrs_core::nav::*;
 use montrs_icons::*;
@@ -66,6 +67,39 @@ pub fn Header() -> impl IntoView {
     ];
 
     let ui_open = RwSignal::new(false);
+    let customize_open = RwSignal::new(false);
+
+    // "C" opens/closes the theme customizer (shark-ui style).
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        use wasm_bindgen::{JsCast, prelude::Closure};
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(Box::new(
+            move |ev: web_sys::KeyboardEvent| {
+                let key = ev.key();
+                if (key == "c" || key == "C")
+                    && !ev.ctrl_key()
+                    && !ev.meta_key()
+                    && ev
+                        .target()
+                        .and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
+                        .is_none_or(|el| {
+                            el.tag_name() != "INPUT"
+                                && el.tag_name() != "TEXTAREA"
+                        })
+                {
+                    customize_open.update(|o| *o = !*o);
+                }
+            },
+        ));
+        let _ = window.add_event_listener_with_callback(
+            "keydown",
+            cb.as_ref().unchecked_ref(),
+        );
+        cb.forget();
+    });
 
     // Segmented toggle order: Light · Device · Dark (device = system default).
     let theme_modes = [
@@ -212,7 +246,7 @@ pub fn Header() -> impl IntoView {
                                 class="fixed inset-0 z-40"
                                 on:click=move |_| mobile_open.set(false)
                             ></div>
-                            <div class="absolute right-0 top-12 z-50 w-44 rounded-md border border-border bg-popover p-1 shadow-lg md:hidden">
+                            <div class="absolute right-0 top-12 z-50 w-52 rounded-md border border-border bg-popover p-1 shadow-lg md:hidden">
                                 {core::iter::once(("/", "Home"))
                                     .chain(nav_links.iter().copied())
                                     .map(|(href, label)| {
@@ -230,6 +264,65 @@ pub fn Header() -> impl IntoView {
                                         >{label}</a>
                                     }
                                 }).collect::<Vec<_>>()}
+                                <p class="mt-1 border-t border-border px-3 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                    "UI"
+                                </p>
+                                {ui_links.iter().copied().map(|(href, label)| {
+                                    let nav = navigate.clone();
+                                    let close_menu = mobile_open;
+                                    view! {
+                                        <a
+                                            href=href
+                                            class="block rounded-sm px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            on:click=move |ev| {
+                                                ev.prevent_default();
+                                                nav(href, Default::default());
+                                                close_menu.set(false);
+                                            }
+                                        >{label}</a>
+                                    }
+                                }).collect::<Vec<_>>()}
+                            </div>
+                        </Show>
+
+                        // Customize button (shark-ui style): wand icon, opens a
+                        // right sheet with gray / primary / radius controls.
+                        <button
+                            type="button"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |_| customize_open.update(|o| *o = !*o)
+                            aria-label="Customize theme"
+                            aria-expanded=move || customize_open.get()
+                            title="Customize (C)"
+                        >
+                            <Icon glyph=Glyph::WandSparkles class="h-4 w-4" />
+                        </button>
+
+                        <Show when=move || customize_open.get()>
+                            <div
+                                class="fixed inset-0 z-40"
+                                on:click=move |_| customize_open.set(false)
+                            ></div>
+                            <div class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-xl">
+                                <div class="flex items-start justify-between border-b border-border px-6 py-4">
+                                    <div>
+                                        <h2 class="text-lg font-semibold">"Make it yours"</h2>
+                                        <p class="mt-0.5 text-sm text-muted-foreground">
+                                            "Change the theme to match your style."
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                        on:click=move |_| customize_open.set(false)
+                                        aria-label="Close customize panel"
+                                    >
+                                        <Icon glyph=Glyph::X class="h-4 w-4" />
+                                    </button>
+                                </div>
+                                <div class="flex-1 overflow-y-auto px-6 py-5">
+                                    <ThemeCustomizer />
+                                </div>
                             </div>
                         </Show>
                     </div>

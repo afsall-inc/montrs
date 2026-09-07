@@ -555,14 +555,17 @@ fn GestureDemo() -> impl IntoView {
 
     let on_pan_down = move |e: leptos::ev::MouseEvent| {
         pan_down(e);
-        mvx_down.jump(0.0);
-        mvy_down.jump(0.0);
     };
     let on_pan_move = move |e: leptos::ev::MouseEvent| {
         pan_move(e);
-        let (dx, dy) = delta.get();
-        mvx_move.jump(dx);
-        mvy_move.jump(dy);
+        // Only track while actually dragging — a plain hover/mousemove must
+        // not re-seat the tile (it would fight the spring-back and appear
+        // to drag itself across the screen).
+        if dragging.get() {
+            let (dx, dy) = delta.get();
+            mvx_move.jump(dx);
+            mvy_move.jump(dy);
+        }
     };
     let on_pan_up = move |e: leptos::ev::MouseEvent| {
         pan_up(e);

@@ -300,6 +300,30 @@ html {
       );
   }
 
+  /* remocn-style floating sponsor cards */
+  .sponsor-card {
+    animation: sponsor-float 5s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .sponsor-card:nth-child(2n) {
+    animation-delay: -2.5s;
+  }
+
+  .sponsor-card:nth-child(3n) {
+    animation-delay: -1.2s;
+  }
+
+  @keyframes sponsor-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
   /* Scroll-triggered reveal (JS adds `.is-visible`) */
   .reveal {
     opacity: 0;

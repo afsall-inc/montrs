@@ -77,6 +77,35 @@ const GRAY_OPTIONS: &[(&str, &str, &str, &str, &str)] = &[
     ("Neutral", "0 0% 9%", "0 0% 98%", "0 0% 65%", "0 0% 20%"),
 ];
 
+/// Light-mode neutral palettes (same families, `:root`-style). The theme
+/// customizer applies the palette that matches the current Light/Device/Dark
+/// mode so the mode toggle keeps controlling the whole site.
+const LIGHT_GRAY_OPTIONS: &[(&str, &str, &str, &str, &str)] = &[
+    (
+        "Near Black",
+        "0 0% 100%",
+        "0 0% 3.9%",
+        "240 5% 46%",
+        "240 6% 90%",
+    ),
+    (
+        "Zinc",
+        "240 5% 96%",
+        "240 10% 3.9%",
+        "240 5% 46%",
+        "240 6% 90%",
+    ),
+    (
+        "Slate",
+        "210 20% 98%",
+        "222 47% 11%",
+        "215 16% 47%",
+        "214 32% 91%",
+    ),
+    ("Stone", "60 9% 98%", "24 10% 10%", "24 6% 45%", "24 6% 83%"),
+    ("Neutral", "0 0% 100%", "0 0% 3.9%", "0 0% 46%", "0 0% 89%"),
+];
+
 const RADIUS_OPTIONS: &[(&str, &str)] = &[
     ("Sharp", "0rem"),
     ("Small", "0.25rem"),
@@ -138,7 +167,7 @@ fn save_cfg(cfg: ThemeCfg) {
 }
 
 #[allow(unused_variables)]
-fn apply_cfg(cfg: ThemeCfg) {
+fn apply_cfg(cfg: ThemeCfg, dark: bool) {
     #[cfg(target_arch = "wasm32")]
     {
         use wasm_bindgen::JsCast;
@@ -147,7 +176,12 @@ fn apply_cfg(cfg: ThemeCfg) {
             && let Some(html) = doc_el.dyn_ref::<web_sys::HtmlElement>()
         {
             let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-            let (_, bg, fg, muted_fg, border) = GRAY_OPTIONS[cfg.gray];
+            let palette = if dark {
+                GRAY_OPTIONS
+            } else {
+                LIGHT_GRAY_OPTIONS
+            };
+            let (_, bg, fg, muted_fg, border) = palette[cfg.gray];
             let (_, radius) = RADIUS_OPTIONS[cfg.radius];
             let s = html.style();
             let _ = s.set_property("--primary", primary);
@@ -165,14 +199,19 @@ fn apply_cfg(cfg: ThemeCfg) {
 
 fn copy_css(cfg: ThemeCfg) -> String {
     let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-    let (_, bg, fg, muted_fg, border) = GRAY_OPTIONS[cfg.gray];
     let (radius_label, radius) = RADIUS_OPTIONS[cfg.radius];
+    let (_, d_bg, d_fg, d_muted, d_border) = GRAY_OPTIONS[cfg.gray];
+    let (_, l_bg, l_fg, l_muted, l_border) = LIGHT_GRAY_OPTIONS[cfg.gray];
     format!(
         "/* {radius_label} radius · primary {primary} */\n:root {{\n  \
-         --radius: {radius};\n  --background: {bg};\n  --foreground: {fg};\n  \
-         --muted-foreground: {muted_fg};\n  --border: {border};\n  --input: \
-         {border};\n  --primary: {primary};\n  --primary-foreground: \
-         {primary_fg};\n  --ring: {primary};\n}}\n"
+         --radius: {radius};\n  --background: {l_bg};\n  --foreground: \
+         {l_fg};\n  --muted-foreground: {l_muted};\n  --border: {l_border};\n  \
+         --input: {l_border};\n  --primary: {primary};\n  \
+         --primary-foreground: {primary_fg};\n  --ring: {primary};\n}}\n.dark \
+         {{\n  --radius: {radius};\n  --background: {d_bg};\n  --foreground: \
+         {d_fg};\n  --muted-foreground: {d_muted};\n  --border: {d_border};\n  \
+         --input: {d_border};\n  --primary: {primary};\n  \
+         --primary-foreground: {primary_fg};\n  --ring: {primary};\n}}\n"
     )
 }
 
@@ -180,10 +219,12 @@ fn copy_css(cfg: ThemeCfg) -> String {
 pub fn ThemeCustomizer() -> impl IntoView {
     let cfg = RwSignal::new(load_cfg());
     let copied = RwSignal::new(false);
+    let theme = use_theme();
 
     Effect::new(move |_| {
         let c = cfg.get();
-        apply_cfg(c);
+        let dark = theme.get().is_dark();
+        apply_cfg(c, dark);
         save_cfg(c);
     });
 
@@ -255,11 +296,19 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     "Background"
                 </p>
                 <div class="grid grid-cols-5 gap-2">
-                    {GRAY_OPTIONS.iter().enumerate().map(|(i, (label, bg, fg, _, _))| {
+                    {(0..GRAY_OPTIONS.len()).map(|i| {
                         let i2 = i;
                         let is_active = move || cfg.get().gray == i2;
-                        let swatch = format!("hsl({bg})");
-                        let fg2 = format!("hsl({fg})");
+                        let label = GRAY_OPTIONS[i2].0.to_string();
+                        let swatch = move || {
+                            let palette = if theme.get().is_dark() {
+                                GRAY_OPTIONS
+                            } else {
+                                LIGHT_GRAY_OPTIONS
+                            };
+                            let (_, bg, fg, _, _) = palette[i2];
+                            format!("background-color: hsl({bg}); color: hsl({fg});")
+                        };
                         view! {
                             <button
                                 type="button"
@@ -273,8 +322,8 @@ pub fn ThemeCustomizer() -> impl IntoView {
                                 }
                                 on:click=move |_| cfg.update(|c| c.gray = i2)
                             >
-                                <span class="h-5 w-5 rounded-full border border-border" style=format!("background-color: {swatch}; color: {fg2};")></span>
-                                <span class="text-[10px] text-muted-foreground">{*label}</span>
+                                <span class="h-5 w-5 rounded-full border border-border" style=swatch></span>
+                                <span class="text-[10px] text-muted-foreground">{label}</span>
                             </button>
                         }
                     }).collect::<Vec<_>>()}

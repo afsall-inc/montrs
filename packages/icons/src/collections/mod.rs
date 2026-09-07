@@ -93,25 +93,26 @@ pub enum Collection {
 }
 
 impl Collection {
-    /// Every locally available collection (Lucide + feature-gated extras).
+    /// Every locally available collection (Lucide + feature-gated extras),
+    /// alphabetically ordered for UI listing.
     pub const ALL: &'static [Collection] = &[
-        Collection::Lucide,
-        #[cfg(feature = "col-radix")]
-        Collection::Radix,
-        #[cfg(feature = "col-tabler")]
-        Collection::Tabler,
-        #[cfg(feature = "col-iconoir")]
-        Collection::Iconoir,
-        #[cfg(feature = "col-phosphor")]
-        Collection::Phosphor,
-        #[cfg(feature = "col-mdi")]
-        Collection::Mdi,
         #[cfg(feature = "col-bootstrap")]
         Collection::Bootstrap,
-        #[cfg(feature = "col-simple-icons")]
-        Collection::SimpleIcons,
         #[cfg(feature = "col-cryptocurrency")]
         Collection::Cryptocurrency,
+        #[cfg(feature = "col-iconoir")]
+        Collection::Iconoir,
+        Collection::Lucide,
+        #[cfg(feature = "col-mdi")]
+        Collection::Mdi,
+        #[cfg(feature = "col-phosphor")]
+        Collection::Phosphor,
+        #[cfg(feature = "col-radix")]
+        Collection::Radix,
+        #[cfg(feature = "col-simple-icons")]
+        Collection::SimpleIcons,
+        #[cfg(feature = "col-tabler")]
+        Collection::Tabler,
     ];
 
     pub fn label(self) -> &'static str {
@@ -144,11 +145,11 @@ impl Collection {
     pub fn style(self) -> &'static str {
         match self {
             Collection::Lucide
+            | Collection::Radix
             | Collection::Tabler
             | Collection::Iconoir
             | Collection::Phosphor => "stroke",
-            Collection::Radix
-            | Collection::Mdi
+            Collection::Mdi
             | Collection::Bootstrap
             | Collection::SimpleIcons
             | Collection::Cryptocurrency => "fill",

@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+﻿// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -37,6 +37,229 @@ use montrs_icons::{
 use montrs_ui::prelude::*;
 
 const PAGE_SIZE: usize = 200;
+
+/// Total glyphs across every enabled collection (used by the sidebar).
+static ALL_TOTAL_ICONS: std::sync::LazyLock<usize> =
+    std::sync::LazyLock::new(|| {
+        Collection::ALL.iter().map(|c| c.count()).sum()
+    });
+
+/// Keyword-based category classification for non-Lucide collections, which
+/// don't carry upstream category metadata. Names are matched as substrings.
+const CATEGORY_RULES: &[(&str, &[&str])] = &[
+    (
+        "Arrows",
+        &[
+            "arrow",
+            "chevron",
+            "caret",
+            "corner",
+            "direction",
+            "forward",
+            "backward",
+        ],
+    ),
+    (
+        "Brands",
+        &[
+            "github",
+            "twitter",
+            "facebook",
+            "youtube",
+            "linkedin",
+            "instagram",
+            "discord",
+            "slack",
+            "whatsapp",
+            "telegram",
+            "tiktok",
+            "reddit",
+            "chrome",
+            "firefox",
+            "windows",
+            "apple",
+            "android",
+            "google",
+            "microsoft",
+            "amazon",
+            "netflix",
+            "spotify",
+            "brand",
+            "logo",
+            "patreon",
+            "paypal",
+            "stripe",
+        ],
+    ),
+    (
+        "Crypto",
+        &[
+            "bitcoin",
+            "btc",
+            "ethereum",
+            "eth",
+            "litecoin",
+            "monero",
+            "xrp",
+            "dogecoin",
+            "solana",
+            "polkadot",
+            "cardano",
+            "usdt",
+            "tether",
+            "binance",
+            "coin",
+            "blockchain",
+            "crypto",
+        ],
+    ),
+    (
+        "Communication",
+        &[
+            "chat",
+            "message",
+            "mail",
+            "envelope",
+            "phone",
+            "call",
+            "send",
+            "comment",
+            "speech",
+            "inbox",
+            "notification",
+            "bell",
+            "fax",
+        ],
+    ),
+    (
+        "Currency",
+        &[
+            "currency", "money", "bank", "cash", "wallet", "credit", "card",
+            "dollar", "euro", "yen", "pound", "naira", "ruble", "rupee", "won",
+            "frank", "lira", "baht", "shekel", "bitcoin",
+        ],
+    ),
+    (
+        "Files",
+        &[
+            "file",
+            "folder",
+            "document",
+            "archive",
+            "clipboard",
+            "download",
+            "upload",
+            "copy",
+            "print",
+            "save",
+        ],
+    ),
+    (
+        "Health",
+        &[
+            "health",
+            "medical",
+            "pulse",
+            "activity",
+            "pill",
+            "vaccine",
+            "stethoscope",
+            "hospital",
+            "heartbeat",
+            "first-aid",
+        ],
+    ),
+    (
+        "Media",
+        &[
+            "play", "pause", "stop", "music", "video", "film", "camera",
+            "image", "photo", "volume", "mic", "audio", "tv", "cast", "record",
+        ],
+    ),
+    (
+        "Shapes",
+        &[
+            "circle",
+            "square",
+            "triangle",
+            "rectangle",
+            "hexagon",
+            "diamond",
+            "ring",
+            "oval",
+            "polygon",
+        ],
+    ),
+    (
+        "Time",
+        &[
+            "clock",
+            "time",
+            "hour",
+            "calendar",
+            "date",
+            "watch",
+            "timer",
+            "alarm",
+            "stopwatch",
+        ],
+    ),
+    (
+        "Transport",
+        &[
+            "car",
+            "truck",
+            "plane",
+            "train",
+            "bus",
+            "bike",
+            "ship",
+            "boat",
+            "anchor",
+            "map",
+            "pin",
+            "location",
+            "navigation",
+            "route",
+            "road",
+            "traffic",
+        ],
+    ),
+    (
+        "UI",
+        &[
+            "menu", "close", "plus", "minus", "check", "search", "filter",
+            "settings", "cog", "slider", "toggle", "switch", "star", "heart",
+            "bookmark", "flag", "home", "user", "lock", "shield", "eye",
+            "trash", "edit", "pencil", "refresh", "grid", "list", "layout",
+        ],
+    ),
+    (
+        "Weather",
+        &[
+            "sun",
+            "moon",
+            "cloud",
+            "rain",
+            "snow",
+            "wind",
+            "storm",
+            "thunder",
+            "lightning",
+            "drop",
+            "umbrella",
+            "snowflake",
+        ],
+    ),
+];
+
+/// Does `name` belong to a derived (keyword-based) category?
+fn name_in_category(name: &str, category: &str) -> bool {
+    CATEGORY_RULES
+        .iter()
+        .find(|(title, _)| *title == category)
+        .is_some_and(|(_, keywords)| keywords.iter().any(|k| name.contains(k)))
+}
 
 fn formatted_name(name: &str) -> String {
     name.split('-')
@@ -112,12 +335,19 @@ pub fn Icons() -> impl IntoView {
     let query = use_query_map();
     let navigate = use_navigate();
 
+    // `None` = "All collections"; `Some(c)` = a single collection.
     let collection = RwSignal::new(
         query
             .get()
             .get("collection")
-            .and_then(|k| Collection::from_key(&k))
-            .unwrap_or(Collection::Lucide),
+            .and_then(|k| {
+                if k.eq_ignore_ascii_case("all") {
+                    None
+                } else {
+                    Collection::from_key(&k)
+                }
+            })
+            .or(Some(Collection::Lucide)),
     );
     let initial_collection = collection.get_untracked();
     let search = RwSignal::new(query.get().get("q").unwrap_or_default());
@@ -133,7 +363,11 @@ pub fn Icons() -> impl IntoView {
             .get()
             .get("sw")
             .and_then(|s| s.parse::<f64>().ok())
-            .unwrap_or_else(|| initial_collection.default_stroke_width()),
+            .unwrap_or_else(|| {
+                initial_collection
+                    .map(|c| c.default_stroke_width())
+                    .unwrap_or(1.5)
+            }),
     );
     let color = RwSignal::new(query.get().get("color").unwrap_or_default());
     let category = RwSignal::new(query.get().get("cat").unwrap_or_default());
@@ -144,6 +378,7 @@ pub fn Icons() -> impl IntoView {
     let hydrated = RwSignal::new(false);
     let mru = RwSignal::new(Vec::<(Collection, String)>::new());
     let selected_icon = RwSignal::new(None::<CollectedGlyph>);
+    let selected_owner = RwSignal::new(None::<Collection>);
     let anim_choice = RwSignal::new("auto".to_string());
 
     Effect::new(move |_| {
@@ -161,42 +396,58 @@ pub fn Icons() -> impl IntoView {
         page.set(1);
     });
 
-    let is_lucide = move || collection.get() == Collection::Lucide;
+    let is_all = move || collection.get().is_none();
     // Stroke-based collections expose a stroke-width control; fill-based
     // collections (Radix, MDI, Bootstrap, Simple Icons, crypto) ignore it.
-    let is_stroke_style = move || collection.get().style() == "stroke";
+    let is_stroke_style =
+        move || collection.get().is_some_and(|c| c.style() == "stroke");
 
     let filtered = Memo::new(move |_| {
         let s = search.get().to_lowercase();
         let cat = category.get();
-        if collection.get() == Collection::Lucide {
-            let mut found = if s.is_empty() {
-                Glyph::find("")
-            } else {
-                Glyph::find(&s)
-            };
-            if !cat.is_empty() {
-                found.retain(|g| {
-                    g.categories().any(|c| c.eq_ignore_ascii_case(&cat))
-                });
+        match collection.get() {
+            None => {
+                // All collections, concatenated in alphabetical order.
+                Collection::ALL
+                    .iter()
+                    .flat_map(|c| c.icons())
+                    .filter(|g| {
+                        (s.is_empty() || g.name.to_lowercase().contains(&s))
+                            && (cat.is_empty()
+                                || name_in_category(g.name, &cat))
+                    })
+                    .collect::<Vec<_>>()
             }
-            found
-                .into_iter()
-                .map(|g| CollectedGlyph {
-                    name: g.name(),
-                    svg: g.svg(),
-                    viewbox: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                })
-                .collect::<Vec<_>>()
-        } else {
-            collection
-                .get()
+            Some(Collection::Lucide) => {
+                let mut found = if s.is_empty() {
+                    Glyph::find("")
+                } else {
+                    Glyph::find(&s)
+                };
+                if !cat.is_empty() {
+                    found.retain(|g| {
+                        g.categories().any(|c| c.eq_ignore_ascii_case(&cat))
+                    });
+                }
+                found
+                    .into_iter()
+                    .map(|g| CollectedGlyph {
+                        name: g.name(),
+                        svg: g.svg(),
+                        viewbox: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                    })
+                    .collect::<Vec<_>>()
+            }
+            Some(c) => c
                 .icons()
                 .into_iter()
-                .filter(|g| s.is_empty() || g.name.to_lowercase().contains(&s))
-                .collect::<Vec<_>>()
+                .filter(|g| {
+                    (s.is_empty() || g.name.to_lowercase().contains(&s))
+                        && (cat.is_empty() || name_in_category(g.name, &cat))
+                })
+                .collect::<Vec<_>>(),
         }
     });
 
@@ -215,14 +466,52 @@ pub fn Icons() -> impl IntoView {
             .collect::<Vec<_>>()
     });
 
-    let categories = Glyph::all_categories();
+    // Category list: Lucide uses its built-in categories; every other
+    // collection (and the "All" view) uses keyword-derived categories so
+    // filtering works everywhere.
+    let categories = Memo::new(move |_| {
+        let icons: Vec<CollectedGlyph> = match collection.get() {
+            Some(Collection::Lucide) => {
+                return Glyph::all_categories()
+                    .iter()
+                    .map(|(title, count)| (title.clone(), *count as usize))
+                    .collect::<Vec<_>>();
+            }
+            Some(c) => c.icons(),
+            None => Collection::ALL
+                .iter()
+                .flat_map(|c| c.icons())
+                .collect::<Vec<_>>(),
+        };
+        CATEGORY_RULES
+            .iter()
+            .filter_map(|(title, keywords)| {
+                let count = icons
+                    .iter()
+                    .filter(|g| keywords.iter().any(|k| g.name.contains(k)))
+                    .count();
+                (count > 0).then(|| (title.to_string(), count))
+            })
+            .collect::<Vec<_>>()
+    });
 
     let select_icon = move |glyph: CollectedGlyph| {
         selected_icon.set(Some(glyph));
         anim_choice.set("auto".to_string());
+        // In the "All" view the active collection is unknown â€” resolve the
+        // owning collection so MRU re-renders can find the glyph again.
+        let owner = collection.get().unwrap_or_else(|| {
+            Collection::ALL
+                .iter()
+                .copied()
+                .find(|c| c.glyph(glyph.name).is_some())
+                .unwrap_or(Collection::Lucide)
+        });
+        selected_owner.set(Some(owner));
+        selected_owner.set(Some(owner));
         mru.update(|v| {
             v.retain(|(_, n)| *n != glyph.name);
-            v.insert(0, (collection.get(), glyph.name.to_string()));
+            v.insert(0, (owner, glyph.name.to_string()));
             v.truncate(8);
             save_mru(v);
         });
@@ -236,9 +525,9 @@ pub fn Icons() -> impl IntoView {
     let sync_url = {
         let nav = navigate.clone();
         move || {
+            let col = collection.get().map(|c| c.key()).unwrap_or("all");
             let mut q = format!(
-                "/ui/icons?collection={}&size={}&sw={}",
-                collection.get().key(),
+                "/ui/icons?collection={col}&size={}&sw={}",
                 size_px.get(),
                 stroke_w.get()
             );
@@ -383,26 +672,44 @@ pub fn Icons() -> impl IntoView {
             // ---------------------------------------------------------------
             <aside class="icons-sidebar hidden lg:block">
                 <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                    <div class="icons-sidebar-section">
-                        <div class="flex items-center gap-2">
-                            <img src="/logo-64.png" alt="MontRS" class="h-8 w-8 rounded" />
-                            <div>
-                                <p class="text-sm font-semibold">"Icons"</p>
-                                <p class="font-mono text-[11px] text-muted-foreground">
-                                    {move || format!("{} icons", filtered.get().len())}
-                                </p>
-                            </div>
-                        </div>
+                    <div class="flex items-center justify-between px-4 py-3">
+                        <p class="text-sm font-semibold">"Icons"</p>
+                        <p class="font-mono text-[11px] text-muted-foreground">
+                            {move || format!("{} total", *ALL_TOTAL_ICONS)}
+                        </p>
                     </div>
 
                     <div class="icons-sidebar-section">
                         <p class="icons-sidebar-heading">"Collection"</p>
                         <div class="space-y-0.5">
+                            <button
+                                type="button"
+                                class=move || {
+                                    let base = "flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition-colors";
+                                    if is_all() {
+                                        format!("{base} bg-accent font-medium text-foreground")
+                                    } else {
+                                        format!("{base} text-muted-foreground hover:bg-accent/60 hover:text-foreground")
+                                    }
+                                }
+                                on:click={
+                                    let sync = sync_url.clone();
+                                    move |_| {
+                                        collection.set(None);
+                                        category.set(String::new());
+                                        sync();
+                                    }
+                                }
+                            >
+                                <span>"All collections"</span>
+                                <span class="font-mono text-[10px]">{(*ALL_TOTAL_ICONS).to_string()}</span>
+                            </button>
                             {Collection::ALL.iter().map(|c| {
                                 let c = *c;
                                 let label = c.label().to_string();
                                 let count = c.count();
-                                let is_active = move || collection.get() == c;
+                                let is_lucide_item = c == Collection::Lucide;
+                                let is_active = move || collection.get() == Some(c);
                                 view! {
                                     <button
                                         type="button"
@@ -417,14 +724,23 @@ pub fn Icons() -> impl IntoView {
                                         on:click={
                                             let sync = sync_url.clone();
                                             move |_| {
-                                                collection.set(c);
+                                                collection.set(Some(c));
                                                 stroke_w.set(c.default_stroke_width());
                                                 category.set(String::new());
                                                 sync();
                                             }
                                         }
                                     >
-                                        <span>{label}</span>
+                                        <span class="flex items-center gap-1.5">
+                                            {label}
+                                            {if is_lucide_item {
+                                                Some(view! {
+                                                    <span class="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-px text-[9px] font-medium text-primary">
+                                                        "default"
+                                                    </span>
+                                                }.into_any())
+                                            } else { None }}
+                                        </span>
                                         <span class="font-mono text-[10px]">{count.to_string()}</span>
                                     </button>
                                 }
@@ -444,7 +760,7 @@ pub fn Icons() -> impl IntoView {
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || size_px.get().to_string()
                                         on:change=on_size_input
-                                        title="14–48"
+                                        title="14â€“48"
                                     />
                                 </span>
                                 <input
@@ -466,7 +782,7 @@ pub fn Icons() -> impl IntoView {
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || format!("{:.2}", stroke_w.get())
                                         on:change=on_stroke_input
-                                        title="0.5–3"
+                                        title="0.5â€“3"
                                         disabled=move || !is_stroke_style()
                                     />
                                 </span>
@@ -550,8 +866,7 @@ pub fn Icons() -> impl IntoView {
                         </div>
                     </div>
 
-                    <Show when=is_lucide>
-                        <div class="icons-sidebar-section">
+                                        <div class="icons-sidebar-section">
                             <p class="icons-sidebar-heading">"Categories"</p>
                             <div class="max-h-64 space-y-0.5 overflow-y-auto pr-1">
                                 <button
@@ -570,9 +885,9 @@ pub fn Icons() -> impl IntoView {
                                     }
                                 >
                                     <span>"All"</span>
-                                    <span class="font-mono text-[10px]">{Glyph::count().to_string()}</span>
+                                    <span class="font-mono text-[10px]">{move || collection.get().map(|c| c.count()).unwrap_or(*ALL_TOTAL_ICONS).to_string()}</span>
                                 </button>
-                                {categories.iter().map(|(title, count)| {
+                                {categories.get().iter().map(|(title, count)| {
                                     let cat = title.clone();
                                     let title2 = title.clone();
                                     let count2 = count.to_string();
@@ -600,7 +915,6 @@ pub fn Icons() -> impl IntoView {
                                 }).collect::<Vec<_>>()}
                             </div>
                         </div>
-                    </Show>
                 </div>
             </aside>
 
@@ -612,14 +926,14 @@ pub fn Icons() -> impl IntoView {
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">"Icons"</h1>
                         <p class="mt-1 text-sm text-muted-foreground">
-                            {move || format!("{} shown · hover to play", page_icons.get().len())}
+                            {move || format!("{} shown Â· hover to play", page_icons.get().len())}
                         </p>
                     </div>
                     <div class="relative w-full max-w-sm">
                         <Icon glyph=Glyph::Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="search"
-                            placeholder="Search icons…"
+                            placeholder="Search iconsâ€¦"
                             class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             prop:value=search
                             on:input=on_search
@@ -650,7 +964,10 @@ pub fn Icons() -> impl IntoView {
                 <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
                     <For
                         each=move || page_icons.get()
-                        key=move |g| format!("{}:{}", collection.get().key(), g.name)
+                        key=move |g| {
+                            let col = collection.get().map(|c| c.key()).unwrap_or("all");
+                            format!("{col}:{}", g.name)
+                        }
                         children=move |glyph| {
                             let kebab = glyph.name.to_string();
                             let is_animated = animated;
@@ -733,7 +1050,7 @@ pub fn Icons() -> impl IntoView {
                 {move || selected_icon.get().map(|glyph| {
                     let name = glyph.name.to_string();
                     let svg_markup = full_svg_markup(&glyph, size_px.get(), stroke_w.get());
-                    let col = collection.get();
+                    let col = selected_owner.get().unwrap_or(Collection::Lucide);
                     let usage = if col == Collection::Lucide {
                         format!(r#"<Icon glyph=Glyph::{name} class="w-6 h-6" />"#)
                     } else {
@@ -758,7 +1075,7 @@ pub fn Icons() -> impl IntoView {
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <p class="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-                                            {move || collection.get().label()}
+                                            {move || col.label()}
                                         </p>
                                         <h2 class="mt-1 text-lg font-semibold">{formatted_name(&name)}</h2>
                                         <p class="font-mono text-xs text-muted-foreground">{name.clone()}</p>

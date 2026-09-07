@@ -230,6 +230,32 @@ pub enum Commands {
         #[command(subcommand)]
         subcommand: UiSubcommand,
     },
+    /// Add components, icons, themes, or libraries to a MontRS app
+    /// (shadcn-style registry). Run `montrs add --list` to see everything.
+    Add {
+        /// Items to add (e.g. `button`, `card`, `badge`). Components resolve
+        /// against the montrs-ui registry.
+        #[arg(value_name = "ITEMS")]
+        items: Vec<String>,
+        /// Add a library (crate) dependency, e.g. `montrs add --library montrs-content`.
+        #[arg(long, value_name = "CRATE")]
+        library: Option<String>,
+        /// Add the montrs-icons library dependency.
+        #[arg(long)]
+        icons: bool,
+        /// Add a UI theme preset to style/main.css, e.g. `montrs add --theme dark`.
+        #[arg(long, value_name = "THEME")]
+        theme: Option<String>,
+        /// Add a single icon as a standalone component, e.g. `montrs add --icon lucide-home`.
+        #[arg(long, value_name = "GLYPH")]
+        icon: Option<String>,
+        /// List everything available to add.
+        #[arg(long)]
+        list: bool,
+        /// Directory of the MontRS app (defaults to the current directory).
+        #[arg(short, long, default_value = ".")]
+        path: String,
+    },
     /// Manage environment variables (montrs.toml [env]).
     Env {
         #[command(subcommand)]
@@ -701,6 +727,18 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
                 .await
             }
         },
+        Commands::Add {
+            items,
+            library,
+            icons,
+            theme,
+            icon,
+            list,
+            path,
+        } => {
+            command::add::run(items, library, icons, theme, icon, list, &path)
+                .await
+        }
         Commands::Env { subcommand } => match subcommand {
             EnvSubcommand::List => command::env::list().await,
             EnvSubcommand::Set { key_value } => {
@@ -755,7 +793,10 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
 
 /// Commands that don't need agent snapshot regeneration.
 fn is_no_agent_command(cmd: &str) -> bool {
-    matches!(cmd, "serve" | "watch" | "build" | "bench" | "test" | "fmt")
+    matches!(
+        cmd,
+        "serve" | "watch" | "build" | "bench" | "test" | "fmt" | "add"
+    )
 }
 
 /// Main entry point for the CLI, handling both standalone and cargo subcommand modes.

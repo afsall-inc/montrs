@@ -28,6 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+pub mod add;
+pub mod add_registry;
 pub mod agent;
 #[cfg(feature = "auth")]
 pub mod auth;
