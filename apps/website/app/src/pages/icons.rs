@@ -427,15 +427,18 @@ pub fn Icons() -> impl IntoView {
         let Some(window) = web_sys::window() else {
             return;
         };
-        let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(
-            Box::new(move |ev: web_sys::KeyboardEvent| {
+        let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(Box::new(
+            move |ev: web_sys::KeyboardEvent| {
                 if ev.key() == "Escape" {
                     selected_icon.set(None);
                     sidebar_open.set(false);
                 }
-            }),
+            },
+        ));
+        let _ = window.add_event_listener_with_callback(
+            "keydown",
+            cb.as_ref().unchecked_ref(),
         );
-        let _ = window.add_event_listener_with_callback("keydown", cb.as_ref().unchecked_ref());
         cb.forget();
     });
 

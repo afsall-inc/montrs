@@ -100,8 +100,7 @@ pub fn Header() -> impl IntoView {
                     .target()
                     .and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
                     .is_some_and(|el| {
-                        el.tag_name() == "INPUT"
-                            || el.tag_name() == "TEXTAREA"
+                        el.tag_name() == "INPUT" || el.tag_name() == "TEXTAREA"
                     });
                 if key == "Escape" {
                     ui_open.set(false);
@@ -109,8 +108,7 @@ pub fn Header() -> impl IntoView {
                     customize_open.set(false);
                     return;
                 }
-                if key == "/" && !ev.meta_key() && !ev.ctrl_key() && !in_field
-                {
+                if key == "/" && !ev.meta_key() && !ev.ctrl_key() && !in_field {
                     ev.prevent_default();
                     if let Some(input) = search_ref.get() {
                         let _ = input.focus();
