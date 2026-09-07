@@ -43,6 +43,18 @@ use std::{path::Path, sync::mpsc, time::Duration};
 
 pub mod reload;
 
+/// Path components that must never trigger a rebuild — build outputs, git
+/// internals, and node_modules cause infinite rebuild loops otherwise.
+fn is_ignored(path: &Path) -> bool {
+    const IGNORED: &[&str] =
+        &["target", ".git", "node_modules", ".agent", ".opencode"];
+    path.components().any(|c| {
+        IGNORED
+            .iter()
+            .any(|ig| c.as_os_str() == Path::new(ig).as_os_str())
+    })
+}
+
 /// Watch a directory for changes, triggering a rebuild via the pipeline.
 ///
 /// Uses debouncing: after the first change event, waits 300ms for more
@@ -60,6 +72,7 @@ pub fn watch_directory(
                     event.kind,
                     EventKind::Modify(_) | EventKind::Create(_)
                 )
+                && !event.paths.iter().all(|p| is_ignored(p))
             {
                 let _ = tx.send(());
             }

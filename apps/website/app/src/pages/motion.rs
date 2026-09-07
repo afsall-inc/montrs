@@ -42,7 +42,6 @@ pub fn Motion() -> impl IntoView {
         ("keyframes", "Keyframes"),
         ("morph", "Shape Morphing"),
         ("gesture", "Gesture Primitives"),
-        ("pentagon", "Pentagon Balls"),
     ];
 
     view! {
@@ -103,9 +102,6 @@ pub fn Motion() -> impl IntoView {
                     </section>
                     <section id="gesture" class="mt-10 scroll-mt-24">
                         <GestureDemo />
-                    </section>
-                    <section id="pentagon" class="mt-10 scroll-mt-24">
-                        <PentagonBallsDemo />
                     </section>
                 </div>
             </div>
@@ -701,168 +697,6 @@ fn GestureDemo() -> impl IntoView {
                 <p>{move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}</p>
                 <p>{move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}</p>
                 <p>{move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}</p>
-            </div>
-        </div>
-    }
-}
-
-/// A spinning pentagon with balls bouncing inside it — gravity, circle-wall
-/// collisions, and a rotation all driven by a single continuous FrameLoop.
-#[component]
-fn PentagonBallsDemo() -> impl IntoView {
-    let rot = RwSignal::new(0.0);
-    const BALL_R: f64 = 4.5;
-    const N: usize = 12;
-    // (x, y, vx, vy) per ball, seeded deterministically with a spread so the
-    // demo visibly bounces from the very first frame.
-    let balls: Vec<RwSignal<(f64, f64, f64, f64)>> = (0..N)
-        .map(|i| {
-            let a = i as f64 / N as f64 * std::f64::consts::TAU + 0.31;
-            let r = 16.0 + (i % 3) as f64 * 12.0;
-            RwSignal::new((
-                100.0 + r * a.cos(),
-                100.0 + r * a.sin(),
-                (i as f64 - N as f64 / 2.0) * 70.0,
-                (i as f64 - N as f64 / 2.0) * 24.0,
-            ))
-        })
-        .collect();
-
-    // Pentagon collision polygon — the same vertices the SVG draws.
-    let verts: Vec<(f64, f64)> = (0..5)
-        .map(|i| {
-            let a = -std::f64::consts::FRAC_PI_2
-                + i as f64 / 5.0 * std::f64::consts::TAU;
-            (100.0 + 80.0 * a.cos(), 100.0 + 80.0 * a.sin())
-        })
-        .collect();
-
-    let start = FrameLoop::now();
-    let balls_for_loop = balls.clone();
-    FrameLoop::on_frame(move || {
-        let t = FrameLoop::now() - start;
-        rot.set((t * 30.0) % 360.0);
-        let dt = 1.0 / 60.0;
-
-        let mut pts: Vec<(f64, f64, f64, f64)> =
-            balls_for_loop.iter().map(|b| b.get()).collect();
-
-        // Integrate (gravity pulls down; no damping so they stay lively).
-        for p in pts.iter_mut() {
-            p.3 += 220.0 * dt;
-            p.0 += p.2 * dt;
-            p.1 += p.3 * dt;
-        }
-
-        // Reflect off the five pentagon walls (outward normals, CCW poly).
-        for p in pts.iter_mut() {
-            for i in 0..5 {
-                let (ax, ay) = verts[i];
-                let (bx, by) = verts[(i + 1) % 5];
-                let ex = bx - ax;
-                let ey = by - ay;
-                let len = (ex * ex + ey * ey).sqrt().max(1e-9);
-                let nx = ey / len;
-                let ny = -ex / len;
-                let d = (p.0 - ax) * nx + (p.1 - ay) * ny;
-                if d > BALL_R {
-                    p.0 -= nx * (d - BALL_R);
-                    p.1 -= ny * (d - BALL_R);
-                    let vn = p.2 * nx + p.3 * ny;
-                    if vn > 0.0 {
-                        p.2 -= 2.0 * vn * nx;
-                        p.3 -= 2.0 * vn * ny;
-                        p.2 *= 0.985;
-                        p.3 *= 0.985;
-                    }
-                }
-            }
-        }
-
-        // Inter-ball collisions (equal mass, elastic — keeps them separated).
-        for a in 0..pts.len() {
-            for b in a + 1..pts.len() {
-                let (ax, ay, avx, avy) = pts[a];
-                let (bx, by, bvx, bvy) = pts[b];
-                let dx = bx - ax;
-                let dy = by - ay;
-                let dist = (dx * dx + dy * dy).sqrt();
-                let min = BALL_R * 2.0;
-                if dist < min && dist > 1e-6 {
-                    let nx = dx / dist;
-                    let ny = dy / dist;
-                    let overlap = (min - dist) / 2.0;
-                    pts[a].0 -= nx * overlap;
-                    pts[a].1 -= ny * overlap;
-                    pts[b].0 += nx * overlap;
-                    pts[b].1 += ny * overlap;
-                    let rel = (bvx - avx) * nx + (bvy - avy) * ny;
-                    if rel < 0.0 {
-                        pts[a].2 += rel * nx;
-                        pts[a].3 += rel * ny;
-                        pts[b].2 -= rel * nx;
-                        pts[b].3 -= rel * ny;
-                    }
-                }
-            }
-        }
-
-        for (i, p) in pts.iter().enumerate() {
-            balls_for_loop[i].set(*p);
-        }
-        true
-    });
-
-    // Pentagon vertices at radius 80 around the center.
-    let pent_pts: String = (0..5)
-        .map(|i| {
-            let a = -std::f64::consts::FRAC_PI_2
-                + i as f64 / 5.0 * std::f64::consts::TAU;
-            format!(
-                "{:.1},{:.1}",
-                100.0 + 80.0 * a.cos(),
-                100.0 + 80.0 * a.sin()
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    view! {
-        <div class="showcase-card p-6">
-            <div class="flex items-center gap-2">
-                <Icon glyph=Glyph::Hexagon class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Bouncing Balls in a Spinning Pentagon"</h2>
-            </div>
-            <p class="mt-1 text-sm text-muted-foreground">
-                "Gravity, elastic wall collisions, and continuous rotation — one
-                FrameLoop, zero CSS keyframes."
-            </p>
-            <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
-                <svg viewBox="0 0 200 200" class="h-64 w-64">
-                    <g transform=move || format!("rotate({} 100 100)", rot.get())>
-                        <polygon
-                            points=pent_pts
-                            fill="hsl(var(--primary) / 0.06)"
-                            stroke="hsl(var(--primary))"
-                            stroke-width="2"
-                            stroke-linejoin="round"
-                        />
-                    </g>
-                    {balls.iter().map(|b| {
-                        let ball = *b;
-                        let cx = move || format!("{:.1}", ball.get().0);
-                        let cy = move || format!("{:.1}", ball.get().1);
-                        view! {
-                            <circle
-                                cx=cx
-                                cy=cy
-                                r="5"
-                                fill="hsl(var(--primary))"
-                                style=format!("transition: none;")
-                            />
-                        }
-                    }).collect::<Vec<_>>()}
-                </svg>
             </div>
         </div>
     }
