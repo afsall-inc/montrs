@@ -182,14 +182,15 @@ pub fn Header() -> impl IntoView {
                                         if ui_open.get() { "h-3 w-3 transition-transform rotate-180" } else { "h-3 w-3 transition-transform" }
                                     } />
                                 </button>
+                                <Show when=move || ui_open.get()>
                                 <div
                                     class="fixed inset-0 z-40"
-                                    hidden=move || !ui_open.get()
                                     on:click=move |_| ui_open.set(false)
                                 ></div>
+                            </Show>
+                            <Show when=move || ui_open.get()>
                                 <div
                                     class="absolute left-0 z-50 mt-1 w-40 rounded-md border border-border bg-popover p-1 shadow-lg"
-                                    hidden=move || !ui_open.get()
                                     role="menu"
                                     aria-label="UI"
                                 >
@@ -209,6 +210,7 @@ pub fn Header() -> impl IntoView {
                                         }
                                     }).collect::<Vec<_>>()}
                                 </div>
+                            </Show>
                             </div>
                             {nav_links.into_iter().map(|(href, label)| {
                                 let nav = navigate.clone();
