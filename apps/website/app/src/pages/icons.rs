@@ -420,6 +420,25 @@ pub fn Icons() -> impl IntoView {
     let selected_owner = RwSignal::new(None::<Collection>);
     let anim_choice = RwSignal::new("auto".to_string());
 
+    // Escape closes the detail drawer and the mobile filters sidebar.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        use wasm_bindgen::{JsCast, prelude::Closure};
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(
+            Box::new(move |ev: web_sys::KeyboardEvent| {
+                if ev.key() == "Escape" {
+                    selected_icon.set(None);
+                    sidebar_open.set(false);
+                }
+            }),
+        );
+        let _ = window.add_event_listener_with_callback("keydown", cb.as_ref().unchecked_ref());
+        cb.forget();
+    });
+
     Effect::new(move |_| {
         if !hydrated.get() {
             hydrated.set(true);
@@ -1154,16 +1173,71 @@ pub fn Icons() -> impl IntoView {
                         )
                     };
                     let cats: Vec<String> = if col == Collection::Lucide {
-                        Glyph::by_name(glyph.name).map(|g| g.categories().map(|c| c.to_string()).collect()).unwrap_or_default()
-                    } else { Vec::new() };
-                    let related: Vec<CollectedGlyph> = if col == Collection::Lucide {
-                        Glyph::by_name(glyph.name).map(|g| g.related(8).into_iter().map(|g| CollectedGlyph {
-                            name: g.name(), svg: g.svg(), viewbox: "0 0 24 24", fill: "none", stroke: "currentColor",
-                        }).collect()).unwrap_or_default()
-                    } else { Vec::new() };
+                        Glyph::by_name(glyph.name)
+                            .map(|g| {
+                                g.categories().map(|c| c.to_string()).collect()
+                            })
+                            .unwrap_or_default()
+                    } else {
+                        // Derived keyword categories this glyph belongs to.
+                        CATEGORY_RULES
+                            .iter()
+                            .filter(|(_, kws)| {
+                                kws.iter().any(|k| glyph.name.contains(k))
+                            })
+                            .map(|(title, _)| title.to_string())
+                            .collect()
+                    };
+                    let related: Vec<CollectedGlyph> =
+                        if col == Collection::Lucide {
+                            Glyph::by_name(glyph.name)
+                                .map(|g| {
+                                    g.related(8)
+                                        .into_iter()
+                                        .map(|g| CollectedGlyph {
+                                            name: g.name(),
+                                            svg: g.svg(),
+                                            viewbox: "0 0 24 24",
+                                            fill: "none",
+                                            stroke: "currentColor",
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default()
+                        } else {
+                            // Same inferred category, or a shared name token,
+                            // from the same collection — excluding the icon
+                            // itself.
+                            let self_cat =
+                                CATEGORY_RULES.iter().find(|(_, kws)| {
+                                    kws.iter().any(|k| glyph.name.contains(k))
+                                });
+                            let tokens = glyph
+                                .name
+                                .split('-')
+                                .filter(|t| t.len() > 2)
+                                .collect::<Vec<_>>();
+                            col.icons()
+                                .into_iter()
+                                .filter(|g| g.name != glyph.name)
+                                .filter(|g| {
+                                    self_cat.is_some_and(|(cat, _)| {
+                                        name_in_category(g.name, cat)
+                                    }) || tokens.iter().any(|t| g.name.contains(t))
+                                })
+                                .take(8)
+                                .collect()
+                        };
                     let has_related = !related.is_empty();
                     let choice = anim_choice;
+                    let close_drawer = move |_| selected_icon.set(None);
                     view! {
+                        <>
+                        <div
+                            class="fixed inset-0 z-[35]"
+                            on:click=close_drawer
+                            aria-hidden="true"
+                        ></div>
                         <div class="icon-drawer open" role="dialog" aria-label={format!("{name} details")}>
                             <div class="p-5">
                                 <div class="flex items-start justify-between">
@@ -1282,6 +1356,7 @@ pub fn Icons() -> impl IntoView {
                                 </Show>
                             </div>
                         </div>
+                        </>
                     }
                 })}
             </div>

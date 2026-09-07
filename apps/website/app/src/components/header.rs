@@ -68,6 +68,23 @@ pub fn Header() -> impl IntoView {
 
     let ui_open = RwSignal::new(false);
     let customize_open = RwSignal::new(false);
+    let search_q = RwSignal::new(String::new());
+    let search_ref: NodeRef<leptos::html::Input> = NodeRef::new();
+    let search_nav = navigate.clone();
+
+    let on_search_keydown = move |ev: leptos::ev::KeyboardEvent| {
+        if ev.key() == "Enter" {
+            ev.prevent_default();
+            let q = search_q.get().trim().to_string();
+            if !q.is_empty() {
+                search_nav(
+                    &format!("/ui/icons?q={}", url_enc(&q)),
+                    Default::default(),
+                );
+                search_q.set(String::new());
+            }
+        }
+    };
 
     // "C" opens/closes the theme customizer (shark-ui style).
     #[cfg(target_arch = "wasm32")]
@@ -79,16 +96,31 @@ pub fn Header() -> impl IntoView {
         let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(Box::new(
             move |ev: web_sys::KeyboardEvent| {
                 let key = ev.key();
+                let in_field = ev
+                    .target()
+                    .and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
+                    .is_some_and(|el| {
+                        el.tag_name() == "INPUT"
+                            || el.tag_name() == "TEXTAREA"
+                    });
+                if key == "Escape" {
+                    ui_open.set(false);
+                    mobile_open.set(false);
+                    customize_open.set(false);
+                    return;
+                }
+                if key == "/" && !ev.meta_key() && !ev.ctrl_key() && !in_field
+                {
+                    ev.prevent_default();
+                    if let Some(input) = search_ref.get() {
+                        let _ = input.focus();
+                    }
+                    return;
+                }
                 if (key == "c" || key == "C")
-                    && !ev.ctrl_key()
                     && !ev.meta_key()
-                    && ev
-                        .target()
-                        .and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
-                        .is_none_or(|el| {
-                            el.tag_name() != "INPUT"
-                                && el.tag_name() != "TEXTAREA"
-                        })
+                    && !ev.ctrl_key()
+                    && !in_field
                 {
                     customize_open.update(|o| *o = !*o);
                 }
@@ -193,6 +225,22 @@ pub fn Header() -> impl IntoView {
                                 }
                             }).collect::<Vec<_>>()}
                         </nav>
+                    </div>
+
+                    <div class="relative hidden md:block">
+                        <Icon
+                            glyph=Glyph::Search
+                            class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+                        />
+                        <input
+                            type="search"
+                            placeholder="Search icons…  (/)"
+                            class="h-8 w-40 rounded-md border border-input bg-background pl-8 pr-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-52"
+                            node_ref=search_ref
+                            prop:value=search_q
+                            on:keydown=on_search_keydown
+                            aria-label="Search icons"
+                        />
                     </div>
 
                     <div class="relative flex items-center gap-2">
@@ -431,4 +479,12 @@ fn format_count(n: u32) -> String {
     } else {
         n.to_string()
     }
+}
+
+/// Minimal query-string encoding (spaces → `+`, others left as-is).
+fn url_enc(s: &str) -> String {
+    s.replace(' ', "+")
+        .replace('#', "%23")
+        .replace('&', "%26")
+        .replace('=', "%3D")
 }
