@@ -85,7 +85,7 @@ pub fn DevOverlay() -> impl IntoView {
 
         // Dev-mode detection: the live-reload WebSocket only exists when
         // `montrs serve` / `montrs watch` is running.
-        let host = window.location().host().unwrap_or_default();
+        let host = window.location().hostname().unwrap_or_default();
         let url = format!("ws://{host}:3001");
         if let Ok(ws) = web_sys::WebSocket::new(&url) {
             let dev = dev;

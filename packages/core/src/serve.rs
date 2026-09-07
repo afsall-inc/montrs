@@ -106,6 +106,9 @@ where
         std::env::set_var("LEPTOS_SITE_ROOT", &site_root);
         std::env::set_var("LEPTOS_SITE_PKG_DIR", &pkg_dir);
         std::env::set_var("LEPTOS_RELOAD_PORT", &reload_port);
+        // Leptos only injects the live-reload script (which opens the
+        // WebSocket to the reload port) when LEPTOS_WATCH is set.
+        std::env::set_var("LEPTOS_WATCH", "1");
     }
 
     let mut conf = get_configuration(None).unwrap();
