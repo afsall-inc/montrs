@@ -35,6 +35,16 @@ use montrs_ui::{components::slider::Slider, prelude::*};
 
 #[component]
 pub fn Motion() -> impl IntoView {
+    let demos = [
+        ("spring", "Spring Physics"),
+        ("tween", "Tween Easing"),
+        ("path", "SVG Path Draw"),
+        ("keyframes", "Keyframes"),
+        ("morph", "Shape Morphing"),
+        ("gesture", "Gesture Primitives"),
+        ("pentagon", "Pentagon Balls"),
+    ];
+
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
@@ -46,28 +56,69 @@ pub fn Motion() -> impl IntoView {
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <SpringDemo />
-                <TweenDemo />
-            </div>
+            <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">
+                <nav class="hidden lg:block">
+                    <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
+                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">"Demos"</p>
+                        {demos.iter().map(|(id, label)| {
+                            let on_click = scroll_to(id);
+                            view! {
+                                <a
+                                    href="#"
+                                    class="block rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=on_click
+                                >{*label}</a>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </div>
+                </nav>
 
-            <div class="mt-6">
-                <PathDemo />
-            </div>
-
-            <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <KeyframesDemo />
-                <MorphDemo />
-            </div>
-
-            <div class="mt-6">
-                <GestureDemo />
-            </div>
-
-            <div class="mt-6">
-                <PentagonBallsDemo />
+                <div class="min-w-0">
+                    <section id="spring" class="scroll-mt-24">
+                        <SpringDemo />
+                    </section>
+                    <section id="tween" class="mt-10 scroll-mt-24">
+                        <TweenDemo />
+                    </section>
+                    <section id="path" class="mt-10 scroll-mt-24">
+                        <PathDemo />
+                    </section>
+                    <section id="keyframes" class="mt-10 scroll-mt-24">
+                        <KeyframesDemo />
+                    </section>
+                    <section id="morph" class="mt-10 scroll-mt-24">
+                        <MorphDemo />
+                    </section>
+                    <section id="gesture" class="mt-10 scroll-mt-24">
+                        <GestureDemo />
+                    </section>
+                    <section id="pentagon" class="mt-10 scroll-mt-24">
+                        <PentagonBallsDemo />
+                    </section>
+                </div>
             </div>
         </div>
+    }
+}
+
+/// Smooth-scroll to an element id without touching the URL.
+fn scroll_to(id: &str) -> impl Fn(leptos::ev::MouseEvent) {
+    let id = id.to_string();
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = &id;
+    move |ev: leptos::ev::MouseEvent| {
+        ev.prevent_default();
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            if let Some(doc) = web_sys::window().and_then(|w| w.document())
+                && let Some(el) = doc.get_element_by_id(&id)
+            {
+                if let Some(html) = el.dyn_ref::<web_sys::HtmlElement>() {
+                    let _ = html.scroll_into_view();
+                }
+            }
+        }
     }
 }
 
