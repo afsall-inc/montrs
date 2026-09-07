@@ -143,6 +143,13 @@ where
             app_fn,
         )
         .fallback_service(ServeDir::new(&site_root))
+        // Dev servers must never serve stale bundles: the hydration entry
+        // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
+        // URLs, so force the browser to revalidate on every request.
+        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
+            axum::http::header::CACHE_CONTROL,
+            axum::http::header::HeaderValue::from_static("no-cache"),
+        ))
         .with_state(conf.leptos_options);
 
     let (host, port_str) = addr.rsplit_once(':').unwrap_or((&addr, "3000"));
