@@ -41,6 +41,8 @@ use notify::{
 };
 use std::{path::Path, sync::mpsc, time::Duration};
 
+pub mod reload;
+
 /// Watch a directory for changes, triggering a rebuild via the pipeline.
 ///
 /// Uses debouncing: after the first change event, waits 300ms for more

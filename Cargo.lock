@@ -4331,9 +4331,12 @@ name = "montrs-build-watch"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "futures-util",
  "montrs-build-core",
  "montrs-metadata",
  "notify",
+ "tokio",
+ "tokio-tungstenite",
  "tracing",
 ]
 
