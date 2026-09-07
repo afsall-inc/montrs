@@ -28,7 +28,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::glyph::Glyph;
+#[cfg(feature = "animated")]
+use crate::animated::{AnimatedSvg, AnimationProfile};
+use crate::{collections::CollectedGlyph, glyph::Glyph};
 use leptos::{prelude::*, text_prop::TextProp};
 
 pub const DEFAULT_SIZE: &str = "24";
@@ -65,6 +67,158 @@ pub fn CustomIcon(
     viewbox: Option<TextProp>,
 ) -> impl IntoView {
     render_svg(svg, class, size, fill, stroke, stroke_width, viewbox)
+}
+
+/// Render a collection glyph with `Icon`-style ergonomics.
+///
+/// `color` tints the glyph via CSS `color` so `currentColor` paths in any
+/// collection (Phosphor, Iconoir, Radix, MDI, Bootstrap, Simple Icons, …)
+/// tint correctly. Fill-based collections tint their fills; stroke-based
+/// collections tint their strokes.
+#[component]
+pub fn CollectionIcon(
+    #[prop(into)] glyph: Signal<CollectedGlyph>,
+    #[prop(into, optional)] class: Option<TextProp>,
+    #[prop(into, optional)] size: Option<TextProp>,
+    #[prop(into, optional)] stroke_width: Option<TextProp>,
+    /// Optional CSS color applied to the glyph (any CSS color string).
+    #[prop(into, optional)]
+    color: Option<TextProp>,
+) -> impl IntoView {
+    let class = class.unwrap_or_else(|| "".into());
+    let size = size.unwrap_or_else(|| DEFAULT_SIZE.into());
+    let size2 = size.clone();
+    let stroke_width = stroke_width.unwrap_or_else(|| "".into());
+    let color = color.unwrap_or_else(|| "".into());
+    let is_fill = move || glyph.get().stroke == "none";
+    let fill_color = color.clone();
+    let fill_ok = move || {
+        let c = fill_color.get();
+        if is_fill() && !c.is_empty() {
+            c.to_string()
+        } else {
+            glyph.get().fill.to_string()
+        }
+    };
+    let stroke_color = color.clone();
+    let stroke_ok = move || {
+        let c = stroke_color.get();
+        if is_fill() {
+            "none".to_string()
+        } else if c.is_empty() {
+            glyph.get().stroke.to_string()
+        } else {
+            c.to_string()
+        }
+    };
+    let style_color = color.clone();
+    let style_ok = move || {
+        let c = style_color.get();
+        if c.is_empty() {
+            String::new()
+        } else {
+            format!("color: {c};")
+        }
+    };
+    let sw_color = stroke_width.clone();
+    let sw_ok = move || {
+        if is_fill() {
+            String::new()
+        } else {
+            let s = sw_color.get();
+            if s.is_empty() {
+                DEFAULT_STROKE_WIDTH.to_string()
+            } else {
+                s.to_string()
+            }
+        }
+    };
+    view! {
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class=move || class.get()
+            width=move || size.get()
+            height=move || size2.get()
+            viewBox=move || glyph.get().viewbox
+            fill=fill_ok
+            stroke=stroke_ok
+            stroke-width=sw_ok
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style=style_ok
+            inner_html=move || glyph.get().svg
+        />
+    }
+}
+
+/// Hover-animated version of [`CollectionIcon`] — wraps [`AnimatedSvg`].
+#[cfg(feature = "animated")]
+#[component]
+pub fn AnimatedCollectionIcon(
+    #[prop(into)] glyph: Signal<CollectedGlyph>,
+    #[prop(into, optional)] class: Option<TextProp>,
+    #[prop(into, optional)] size: Option<TextProp>,
+    #[prop(into, optional)] stroke_width: Option<TextProp>,
+    #[prop(into, optional)] color: Option<TextProp>,
+    #[prop(into, optional)] profile: Signal<Option<AnimationProfile>>,
+) -> impl IntoView {
+    let color = color.unwrap_or_else(|| "".into());
+    let is_fill = move || glyph.get().stroke == "none";
+    let fill_color = color.clone();
+    let fill_ok = move || {
+        let c = fill_color.get();
+        if is_fill() && !c.is_empty() {
+            c.to_string()
+        } else {
+            glyph.get().fill.to_string()
+        }
+    };
+    let stroke_color = color.clone();
+    let stroke_ok = move || {
+        let c = stroke_color.get();
+        if is_fill() {
+            "none".to_string()
+        } else if c.is_empty() {
+            glyph.get().stroke.to_string()
+        } else {
+            c.to_string()
+        }
+    };
+    let tint_color = color.clone();
+    let color_ok = move || {
+        if is_fill() {
+            tint_color.get().to_string()
+        } else {
+            String::new()
+        }
+    };
+    let sw = stroke_width.unwrap_or_else(|| "".into());
+    let sw_color = sw;
+    let sw_ok = move || {
+        if is_fill() {
+            String::new()
+        } else {
+            let s = sw_color.get();
+            if s.is_empty() {
+                DEFAULT_STROKE_WIDTH.to_string()
+            } else {
+                s.to_string()
+            }
+        }
+    };
+    view! {
+        <AnimatedSvg
+            svg={TextProp::from(move || glyph.get().svg)}
+            viewbox={TextProp::from(move || glyph.get().viewbox)}
+            fill={TextProp::from(fill_ok)}
+            stroke={TextProp::from(stroke_ok)}
+            stroke_width={TextProp::from(sw_ok)}
+            color={TextProp::from(color_ok)}
+            class={class.unwrap_or_else(|| "".into())}
+            size={size.unwrap_or_else(|| DEFAULT_SIZE.into())}
+            profile=profile
+        />
+    }
 }
 
 pub fn render_svg(
