@@ -699,16 +699,29 @@ fn GestureDemo() -> impl IntoView {
 #[component]
 fn PentagonBallsDemo() -> impl IntoView {
     let rot = RwSignal::new(0.0);
-    // (x, y, vx, vy) per ball.
-    let balls: Vec<RwSignal<(f64, f64, f64, f64)>> = (0..9)
+    const BALL_R: f64 = 4.5;
+    const N: usize = 12;
+    // (x, y, vx, vy) per ball, seeded deterministically with a spread so the
+    // demo visibly bounces from the very first frame.
+    let balls: Vec<RwSignal<(f64, f64, f64, f64)>> = (0..N)
         .map(|i| {
-            let a = i as f64 / 9.0 * std::f64::consts::TAU;
+            let a = i as f64 / N as f64 * std::f64::consts::TAU + 0.31;
+            let r = 16.0 + (i % 3) as f64 * 12.0;
             RwSignal::new((
-                100.0 + 50.0 * a.cos(),
-                100.0 + 50.0 * a.sin(),
-                (i as f64 - 4.0) * 42.0,
-                (i as f64 - 4.0) * 30.0,
+                100.0 + r * a.cos(),
+                100.0 + r * a.sin(),
+                (i as f64 - N as f64 / 2.0) * 70.0,
+                (i as f64 - N as f64 / 2.0) * 24.0,
             ))
+        })
+        .collect();
+
+    // Pentagon collision polygon — the same vertices the SVG draws.
+    let verts: Vec<(f64, f64)> = (0..5)
+        .map(|i| {
+            let a = -std::f64::consts::FRAC_PI_2
+                + i as f64 / 5.0 * std::f64::consts::TAU;
+            (100.0 + 80.0 * a.cos(), 100.0 + 80.0 * a.sin())
         })
         .collect();
 
@@ -716,35 +729,74 @@ fn PentagonBallsDemo() -> impl IntoView {
     let balls_for_loop = balls.clone();
     FrameLoop::on_frame(move || {
         let t = FrameLoop::now() - start;
-        rot.set((t * 34.0) % 360.0);
+        rot.set((t * 30.0) % 360.0);
         let dt = 1.0 / 60.0;
-        let mut updated: Vec<(usize, (f64, f64, f64, f64))> = Vec::new();
-        for (i, b) in balls_for_loop.iter().enumerate() {
-            let (mut x, mut y, mut vx, mut vy) = b.get();
-            vy += 300.0 * dt;
-            x += vx * dt;
-            y += vy * dt;
-            let dx = x - 100.0;
-            let dy = y - 100.0;
-            let r = (dx * dx + dy * dy).sqrt();
-            let bound = 60.0;
-            if r > bound && r > 0.0 {
-                let nx = dx / r;
-                let ny = dy / r;
-                let vn = vx * nx + vy * ny;
-                if vn > 0.0 {
-                    vx -= 2.0 * vn * nx;
-                    vy -= 2.0 * vn * ny;
-                    vx *= 0.96;
-                    vy *= 0.96;
-                }
-                x = 100.0 + nx * bound;
-                y = 100.0 + ny * bound;
-            }
-            updated.push((i, (x, y, vx, vy)));
+
+        let mut pts: Vec<(f64, f64, f64, f64)> =
+            balls_for_loop.iter().map(|b| b.get()).collect();
+
+        // Integrate (gravity pulls down; no damping so they stay lively).
+        for p in pts.iter_mut() {
+            p.3 += 220.0 * dt;
+            p.0 += p.2 * dt;
+            p.1 += p.3 * dt;
         }
-        for (i, v) in updated {
-            balls_for_loop[i].set(v);
+
+        // Reflect off the five pentagon walls (outward normals, CCW poly).
+        for p in pts.iter_mut() {
+            for i in 0..5 {
+                let (ax, ay) = verts[i];
+                let (bx, by) = verts[(i + 1) % 5];
+                let ex = bx - ax;
+                let ey = by - ay;
+                let len = (ex * ex + ey * ey).sqrt().max(1e-9);
+                let nx = ey / len;
+                let ny = -ex / len;
+                let d = (p.0 - ax) * nx + (p.1 - ay) * ny;
+                if d > BALL_R {
+                    p.0 -= nx * (d - BALL_R);
+                    p.1 -= ny * (d - BALL_R);
+                    let vn = p.2 * nx + p.3 * ny;
+                    if vn > 0.0 {
+                        p.2 -= 2.0 * vn * nx;
+                        p.3 -= 2.0 * vn * ny;
+                        p.2 *= 0.985;
+                        p.3 *= 0.985;
+                    }
+                }
+            }
+        }
+
+        // Inter-ball collisions (equal mass, elastic — keeps them separated).
+        for a in 0..pts.len() {
+            for b in a + 1..pts.len() {
+                let (ax, ay, avx, avy) = pts[a];
+                let (bx, by, bvx, bvy) = pts[b];
+                let dx = bx - ax;
+                let dy = by - ay;
+                let dist = (dx * dx + dy * dy).sqrt();
+                let min = BALL_R * 2.0;
+                if dist < min && dist > 1e-6 {
+                    let nx = dx / dist;
+                    let ny = dy / dist;
+                    let overlap = (min - dist) / 2.0;
+                    pts[a].0 -= nx * overlap;
+                    pts[a].1 -= ny * overlap;
+                    pts[b].0 += nx * overlap;
+                    pts[b].1 += ny * overlap;
+                    let rel = (bvx - avx) * nx + (bvy - avy) * ny;
+                    if rel < 0.0 {
+                        pts[a].2 += rel * nx;
+                        pts[a].3 += rel * ny;
+                        pts[b].2 -= rel * nx;
+                        pts[b].3 -= rel * ny;
+                    }
+                }
+            }
+        }
+
+        for (i, p) in pts.iter().enumerate() {
+            balls_for_loop[i].set(*p);
         }
         true
     });

@@ -51,7 +51,9 @@ pub use animated::{
 };
 pub use collections::{CollectedGlyph, Collection, CollectionInfo};
 pub use glyph::Glyph;
-pub use icon::{CustomIcon, Icon};
+#[cfg(feature = "animated")]
+pub use icon::AnimatedCollectionIcon;
+pub use icon::{CollectionIcon, CustomIcon, Icon};
 pub use registry::*;
 
 /// Re-export strum traits for iterating/looking up icons.

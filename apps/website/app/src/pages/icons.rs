@@ -32,7 +32,8 @@ use crate::copy::CopyButton;
 use leptos::prelude::*;
 use montrs_core::nav::*;
 use montrs_icons::{
-    AnimatedSvg, Collection, Glyph, Icon, collections::CollectedGlyph,
+    AnimatedCollectionIcon, Collection, CollectionIcon, Glyph, Icon,
+    collections::CollectedGlyph,
 };
 use montrs_ui::prelude::*;
 
@@ -1367,9 +1368,8 @@ pub fn Icons() -> impl IntoView {
     }
 }
 
-/// Static render of a glyph (works for Lucide and collection tables),
-/// style-aware: fill collections apply the picked color as their fill and
-/// ignore stroke width/color.
+/// Static render of a glyph — delegates to the library `CollectionIcon` so
+/// every collection uses the same `Icon`-style API.
 #[component]
 fn CustomGlyphView(
     glyph: CollectedGlyph,
@@ -1377,67 +1377,32 @@ fn CustomGlyphView(
     #[prop(into)] stroke_width: TextProp,
     #[prop(into)] stroke: TextProp,
 ) -> impl IntoView {
-    let size2 = size.clone();
-    let is_fill = glyph.stroke == "none";
-    let fill_color = stroke.clone();
-    let style_color = fill_color.clone();
-    let color_style = move || {
-        let c = style_color.get();
-        if c.is_empty() {
+    let glyph = Signal::derive(move || glyph);
+    // The page's `stroke` prop is the color signal; map "currentColor"
+    // (its "no override" value) to empty so library defaults apply.
+    let color = TextProp::from(move || {
+        let c = stroke.get();
+        if c == "currentColor" {
             String::new()
-        } else {
-            format!("color: {c};")
-        }
-    };
-    let fill_ok = move || {
-        let c = fill_color.get();
-        if is_fill && !c.is_empty() {
-            c.to_string()
-        } else {
-            glyph.fill.to_string()
-        }
-    };
-    let stroke_color = stroke.clone();
-    let stroke_ok = move || {
-        let c = stroke_color.get();
-        if is_fill {
-            "none".to_string()
-        } else if c.is_empty() {
-            glyph.stroke.to_string()
         } else {
             c.to_string()
         }
-    };
-    let sw_ok = move || {
-        if is_fill {
+    });
+    let sw = TextProp::from(move || {
+        let s = stroke_width.get();
+        if s == "1.5" {
             String::new()
         } else {
-            let s = stroke_width.get();
-            if s.is_empty() {
-                "1.5".to_string()
-            } else {
-                s.to_string()
-            }
+            s.to_string()
         }
-    };
+    });
     view! {
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width=move || size.get()
-            height=move || size2.get()
-            viewBox=move || glyph.viewbox
-            fill=fill_ok
-            stroke=stroke_ok
-            stroke-width=sw_ok
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            style=color_style
-            inner_html=move || glyph.svg
-        />
+        <CollectionIcon glyph=glyph size=size stroke_width=sw color=color />
     }
 }
 
-/// Hover-animated render of a glyph, style-aware like the static view.
+/// Hover-animated render of a glyph — delegates to the library
+/// `AnimatedCollectionIcon`.
 #[component]
 fn AnimatedGlyphView(
     glyph: CollectedGlyph,
@@ -1448,57 +1413,29 @@ fn AnimatedGlyphView(
         Option<montrs_icons::AnimationProfile>,
     >,
 ) -> impl IntoView {
-    let is_fill = glyph.stroke == "none";
-    let fill_color = stroke.clone();
-    let tint_color = fill_color.clone();
-    let color_ok = move || {
-        let c = tint_color.get();
-        if is_fill {
-            c.to_string()
-        } else {
-            String::new()
-        }
-    };
-    let fill_ok = move || {
-        let c = fill_color.get();
-        if is_fill && !c.is_empty() {
-            c.to_string()
-        } else {
-            glyph.fill.to_string()
-        }
-    };
-    let stroke_color = stroke.clone();
-    let stroke_ok = move || {
-        let c = stroke_color.get();
-        if is_fill {
-            "none".to_string()
-        } else if c.is_empty() {
-            glyph.stroke.to_string()
-        } else {
-            c.to_string()
-        }
-    };
-    let sw_ok = move || {
-        if is_fill {
+    let glyph = Signal::derive(move || glyph);
+    let color = TextProp::from(move || {
+        let c = stroke.get();
+        if c == "currentColor" {
             String::new()
         } else {
-            let s = stroke_width.get();
-            if s.is_empty() {
-                "1.5".to_string()
-            } else {
-                s.to_string()
-            }
+            c.to_string()
         }
-    };
+    });
+    let sw = TextProp::from(move || {
+        let s = stroke_width.get();
+        if s == "1.5" {
+            String::new()
+        } else {
+            s.to_string()
+        }
+    });
     view! {
-        <AnimatedSvg
-            svg={TextProp::from(glyph.svg)}
-            viewbox={TextProp::from(glyph.viewbox)}
-            fill={TextProp::from(fill_ok)}
-            stroke={TextProp::from(stroke_ok)}
-            stroke_width={TextProp::from(sw_ok)}
-            color={TextProp::from(color_ok)}
+        <AnimatedCollectionIcon
+            glyph=glyph
             size=size
+            stroke_width=sw
+            color=color
             profile=profile
         />
     }
