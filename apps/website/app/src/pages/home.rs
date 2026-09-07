@@ -101,9 +101,17 @@ fn Hero() -> impl IntoView {
                     </div>
 
                     <h1 class="mt-6 text-4xl font-bold tracking-tight sm:text-6xl">
-                        "The most comprehensive full-stack framework for "
-                        <span class="text-gradient">"Rust."</span>
+                        "The most comprehensive full-stack framework."
                     </h1>
+
+                    <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                        <span class="pill">
+                            <span class="pill-accent">"Built in"</span>
+                        </span>
+                        <span class="text-gradient text-4xl font-bold tracking-tight sm:text-6xl">
+                            "Rust"
+                        </span>
+                    </div>
 
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                         "MontRS gives you a unified, trait-driven environment for web,
@@ -306,7 +314,7 @@ fn BentoGrid() -> impl IntoView {
                             <div>
                                 <h3 class="font-semibold">"Icons"</h3>
                                 <p class="mt-1 text-sm text-muted-foreground">
-                                    "1,600+ Lucide icons as Leptos components."
+                                    "22,000+ icons across 9 collections as Leptos components."
                                 </p>
                             </div>
                             <a

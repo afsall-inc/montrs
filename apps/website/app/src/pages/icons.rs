@@ -1,4 +1,4 @@
-﻿// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -261,6 +261,44 @@ fn name_in_category(name: &str, category: &str) -> bool {
         .is_some_and(|(_, keywords)| keywords.iter().any(|k| name.contains(k)))
 }
 
+/// Search aliases: icon names that users might not know (e.g. cryptocurrency
+/// tickers like `btc`) get mapped to the terms they'd actually type
+/// (`bitcoin`). A query matches an icon if it matches its name OR any alias.
+const KEYWORD_ALIASES: &[(&str, &[&str])] = &[
+    ("btc", &["bitcoin", "btc"]),
+    ("eth", &["ethereum"]),
+    ("xrp", &["ripple"]),
+    ("ltc", &["litecoin"]),
+    ("xmr", &["monero"]),
+    ("doge", &["dogecoin"]),
+    ("ada", &["cardano"]),
+    ("dot", &["polkadot"]),
+    ("sol", &["solana"]),
+    ("usdt", &["tether"]),
+    ("bnb", &["binance"]),
+    ("avax", &["avalanche"]),
+    ("matic", &["polygon"]),
+    ("uni", &["uniswap"]),
+    ("shib", &["shiba"]),
+    ("trx", &["tron"]),
+    ("atom", &["cosmos"]),
+    ("link", &["chainlink"]),
+    ("near", &["near protocol"]),
+    ("ftm", &["fantom"]),
+    ("aave", &["aave"]),
+    ("comp", &["compound"]),
+    ("sushi", &["sushiswap"]),
+    ("pancakeswap", &["cake"]),
+];
+
+/// True when `name` matches `query` either directly or via an alias.
+fn keyword_matches(name: &str, query: &str) -> bool {
+    KEYWORD_ALIASES.iter().any(|(ticker, aliases)| {
+        ticker.eq_ignore_ascii_case(name)
+            && aliases.iter().any(|a| a.to_lowercase().contains(query))
+    })
+}
+
 fn formatted_name(name: &str) -> String {
     name.split('-')
         .map(|part| {
@@ -403,21 +441,29 @@ pub fn Icons() -> impl IntoView {
     let is_stroke_style =
         move || collection.get().is_some_and(|c| c.style() == "stroke");
 
+    // Items carry a unique `(key, glyph)` pair so the `For` component can
+    // distinguish identical names from different collections in the "All" view.
     let filtered = Memo::new(move |_| {
         let s = search.get().to_lowercase();
         let cat = category.get();
+        let matches = |name: &str| {
+            (s.is_empty()
+                || name.to_lowercase().contains(&s)
+                || keyword_matches(name, &s))
+                && (cat.is_empty() || name_in_category(name, &cat))
+        };
         match collection.get() {
             None => {
                 // All collections, concatenated in alphabetical order.
-                Collection::ALL
-                    .iter()
-                    .flat_map(|c| c.icons())
-                    .filter(|g| {
-                        (s.is_empty() || g.name.to_lowercase().contains(&s))
-                            && (cat.is_empty()
-                                || name_in_category(g.name, &cat))
-                    })
-                    .collect::<Vec<_>>()
+                let mut out = Vec::new();
+                for c in Collection::ALL {
+                    for g in c.icons() {
+                        if matches(g.name) {
+                            out.push((format!("{}:{}", c.key(), g.name), g));
+                        }
+                    }
+                }
+                out
             }
             Some(Collection::Lucide) => {
                 let mut found = if s.is_empty() {
@@ -432,22 +478,26 @@ pub fn Icons() -> impl IntoView {
                 }
                 found
                     .into_iter()
-                    .map(|g| CollectedGlyph {
-                        name: g.name(),
-                        svg: g.svg(),
-                        viewbox: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
+                    .map(|g| {
+                        let name = g.name();
+                        (
+                            format!("lucide:{name}"),
+                            CollectedGlyph {
+                                name,
+                                svg: g.svg(),
+                                viewbox: "0 0 24 24",
+                                fill: "none",
+                                stroke: "currentColor",
+                            },
+                        )
                     })
                     .collect::<Vec<_>>()
             }
             Some(c) => c
                 .icons()
                 .into_iter()
-                .filter(|g| {
-                    (s.is_empty() || g.name.to_lowercase().contains(&s))
-                        && (cat.is_empty() || name_in_category(g.name, &cat))
-                })
+                .filter(|g| matches(g.name))
+                .map(|g| (format!("{}:{}", c.key(), g.name), g))
                 .collect::<Vec<_>>(),
         }
     });
@@ -495,6 +545,10 @@ pub fn Icons() -> impl IntoView {
             })
             .collect::<Vec<_>>()
     });
+
+    // Some collections (e.g. cryptocurrency tickers) derive no categories —
+    // in that case the Categories sidebar section is hidden entirely.
+    let categories_have = Memo::new(move |_| !categories.get().is_empty());
 
     let select_icon = move |glyph: CollectedGlyph| {
         selected_icon.set(Some(glyph));
@@ -889,7 +943,8 @@ pub fn Icons() -> impl IntoView {
                         </div>
                     </div>
 
-                                        <div class="icons-sidebar-section">
+                    <Show when=move || categories_have.get()>
+                        <div class="icons-sidebar-section">
                             <p class="icons-sidebar-heading">"Categories"</p>
                             <div class="max-h-64 space-y-0.5 overflow-y-auto pr-1">
                                 <button
@@ -938,6 +993,7 @@ pub fn Icons() -> impl IntoView {
                                 }).collect::<Vec<_>>()}
                             </div>
                         </div>
+                    </Show>
                 </div>
             </aside>
 
@@ -1005,11 +1061,8 @@ pub fn Icons() -> impl IntoView {
                 <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
                     <For
                         each=move || page_icons.get()
-                        key=move |g| {
-                            let col = collection.get().map(|c| c.key()).unwrap_or("all");
-                            format!("{col}:{}", g.name)
-                        }
-                        children=move |glyph| {
+                        key=move |(k, _)| k.clone()
+                        children=move |(_k, glyph)| {
                             let kebab = glyph.name.to_string();
                             let is_animated = animated;
                             let on_click = select_icon;
@@ -1249,6 +1302,15 @@ fn CustomGlyphView(
     let size2 = size.clone();
     let is_fill = glyph.stroke == "none";
     let fill_color = stroke.clone();
+    let style_color = fill_color.clone();
+    let color_style = move || {
+        let c = style_color.get();
+        if c.is_empty() {
+            String::new()
+        } else {
+            format!("color: {c};")
+        }
+    };
     let fill_ok = move || {
         let c = fill_color.get();
         if is_fill && !c.is_empty() {
@@ -1291,6 +1353,7 @@ fn CustomGlyphView(
             stroke-width=sw_ok
             stroke-linecap="round"
             stroke-linejoin="round"
+            style=color_style
             inner_html=move || glyph.svg
         />
     }
@@ -1309,6 +1372,15 @@ fn AnimatedGlyphView(
 ) -> impl IntoView {
     let is_fill = glyph.stroke == "none";
     let fill_color = stroke.clone();
+    let tint_color = fill_color.clone();
+    let color_ok = move || {
+        let c = tint_color.get();
+        if is_fill {
+            c.to_string()
+        } else {
+            String::new()
+        }
+    };
     let fill_ok = move || {
         let c = fill_color.get();
         if is_fill && !c.is_empty() {
@@ -1347,6 +1419,7 @@ fn AnimatedGlyphView(
             fill={TextProp::from(fill_ok)}
             stroke={TextProp::from(stroke_ok)}
             stroke_width={TextProp::from(sw_ok)}
+            color={TextProp::from(color_ok)}
             size=size
             profile=profile
         />

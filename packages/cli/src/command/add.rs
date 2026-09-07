@@ -34,13 +34,16 @@
 //! created by `montrs new`. Components are embedded from the canonical
 //! montrs-ui sources at build time (see `add_registry.rs`).
 
-use super::add_registry;
+use super::{add_blocks, add_registry};
 use anyhow::{Context, Result, bail};
 use console::style;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
+
+const THEME_NAMES: &[&str] =
+    &["orange", "rose", "emerald", "sky", "violet", "zinc"];
 
 pub async fn run(
     items: Vec<String>,
@@ -62,6 +65,7 @@ pub async fn run(
     }
     let src = app_src(&root)?;
     let components_ui = src.join("components/ui");
+    let blocks_dir = src.join("components/blocks");
     let icons_dir = src.join("components/icons");
     let cargo_toml = if root.join("app/Cargo.toml").exists() {
         root.join("app/Cargo.toml")
@@ -102,7 +106,25 @@ pub async fn run(
     }
 
     for item in &items {
-        add_component(&components_ui, &src, &cargo_toml, item)?;
+        let item = item.as_str();
+        if item.contains('/') {
+            add_icon(&icons_dir, &src, item)?;
+        } else if THEME_NAMES.contains(&item) {
+            add_theme(&style_css, item)?;
+        } else if add_registry::COMPONENTS
+            .iter()
+            .any(|(k, _)| *k == item.replace('-', "_").as_str())
+        {
+            add_component(&components_ui, &src, &cargo_toml, item)?;
+        } else if add_blocks::BLOCKS.iter().any(|(k, _)| *k == item) {
+            add_block(&blocks_dir, &src, &cargo_toml, item)?;
+        } else {
+            bail!(
+                "Could not resolve `{item}`. Is it a component, block, theme, \
+                 or icon (`collection/name`)? Run `montrs add --list` to see \
+                 what you can add."
+            );
+        }
         wrote_any = true;
     }
 
@@ -172,6 +194,55 @@ fn add_component(
         style("→").cyan().bold(),
         key,
         pascal_case(&key)
+    );
+    Ok(())
+}
+
+fn add_block(
+    dir: &Path,
+    src: &Path,
+    cargo_toml: &Path,
+    name: &str,
+) -> Result<()> {
+    let (_, source) = add_blocks::BLOCKS
+        .iter()
+        .find(|(k, _)| *k == name)
+        .with_context(|| {
+            format!(
+                "Unknown block `{name}`. Run `montrs add --list` to see every \
+                 available block."
+            )
+        })?;
+
+    fs::create_dir_all(dir).context("creating components/blocks directory")?;
+    let dest = dir.join(format!("{name}.rs"));
+    fs::write(&dest, *source)
+        .with_context(|| format!("failed to write {}", dest.display()))?;
+
+    let components_mod = dir.parent().unwrap().join("mod.rs");
+    ensure_mod_line(&components_mod, "pub mod blocks;")?;
+    ensure_mod_line(&dir.join("mod.rs"), &format!("pub mod {name};"))?;
+
+    let lib_rs = src.join("lib.rs");
+    let lib_text = fs::read_to_string(&lib_rs).unwrap_or_default();
+    if !lib_text.contains("mod components;") {
+        println!(
+            "  {} Add `pub mod components;` to your crate root ({}).",
+            style("!").yellow().bold(),
+            lib_rs.display()
+        );
+    }
+
+    ensure_dep(cargo_toml, "montrs-ui")?;
+    ensure_dep(cargo_toml, "montrs-icons")?;
+    println!(
+        "  {} Wrote {} (uses montrs-ui + montrs-icons)",
+        style("✓").green().bold(),
+        dest.display()
+    );
+    println!(
+        "  {} Import it with `use components::blocks::{name}::...`.",
+        style("→").cyan().bold()
     );
     Ok(())
 }
@@ -458,6 +529,17 @@ fn list_available() {
         .map(|(n, _)| *n)
         .collect::<Vec<_>>();
     print_columns(&names);
+
+    println!(
+        "\n{} Blocks ({} available):",
+        style("Blocks").green().bold(),
+        add_blocks::BLOCKS.len()
+    );
+    let block_names = add_blocks::BLOCKS
+        .iter()
+        .map(|(n, _)| *n)
+        .collect::<Vec<_>>();
+    print_columns(&block_names);
 
     println!("\n{} Themes:", style("Themes").green().bold());
     print_columns(&["orange", "rose", "emerald", "sky", "violet", "zinc"]);

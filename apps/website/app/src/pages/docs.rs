@@ -50,11 +50,7 @@ const PACKAGES: &[(&str, &str, &str)] = &[
     ("runner", "Custom task runner config", "Core"),
     ("validator", "Compile-time validation (derive)", "Core"),
     ("ui", "91 shadcn-inspired components", "Experience"),
-    (
-        "icons",
-        "1,600+ Lucide icons as Leptos components",
-        "Experience",
-    ),
+    ("icons", "22,000+ icons across 9 collections", "Experience"),
     (
         "motion",
         "Springs, tweens, keyframes, gestures",

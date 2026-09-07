@@ -29,6 +29,7 @@
 // SOFTWARE.
 
 pub mod add;
+pub mod add_blocks;
 pub mod add_registry;
 pub mod agent;
 #[cfg(feature = "auth")]

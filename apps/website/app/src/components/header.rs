@@ -349,6 +349,15 @@ fn GithubStars() -> impl IntoView {
                 return;
             }
             fetched.set(true);
+            // Show a cached count immediately so a rate-limited first load
+            // still displays the last known value.
+            if let Some(window) = web_sys::window()
+                && let Ok(Some(raw)) = window.local_storage()
+                && let Ok(Some(cached)) = raw.get_item("montrs-stars")
+                && let Ok(n) = cached.parse::<u32>()
+            {
+                s.set(Some(n));
+            }
             leptos::task::spawn_local(async move {
                 use wasm_bindgen::JsCast;
                 use wasm_bindgen_futures::JsFuture;
@@ -362,6 +371,9 @@ fn GithubStars() -> impl IntoView {
                 let Ok(resp) = resp.dyn_into::<web_sys::Response>() else {
                     return;
                 };
+                if !resp.ok() {
+                    return; // rate-limited / transient — keep cached value
+                }
                 let Ok(text) = resp.text() else {
                     return;
                 };
@@ -379,7 +391,13 @@ fn GithubStars() -> impl IntoView {
                     .get("stargazers_count")
                     .and_then(|v| v.as_u64())
                     .unwrap_or(0) as u32;
-                s.set(Some(n));
+                if n > 0 {
+                    s.set(Some(n));
+                    if let Ok(Some(storage)) = window.local_storage() {
+                        let _ =
+                            storage.set_item("montrs-stars", &n.to_string());
+                    }
+                }
             });
         });
     }

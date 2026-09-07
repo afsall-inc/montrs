@@ -74,8 +74,8 @@ pub fn Ui() -> impl IntoView {
             "/ui/icons",
             Glyph::Shapes,
             "Icons",
-            "22,000+ icons across 8 license-safe collections: Lucide, Radix, \
-             Tabler, Iconoir, Phosphor, MDI, Bootstrap, Simple Icons and \
+            "22,000+ icons across 9 collections: Lucide, Radix, Tabler, \
+             Iconoir, Phosphor, MDI, Bootstrap, Simple Icons and \
              cryptocurrency logos — searchable, sizeable, animatable.",
         ),
         (

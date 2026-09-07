@@ -66,6 +66,10 @@ pub fn AnimatedSvg(
     #[prop(into, optional)] fill: TextProp,
     #[prop(into, optional)] stroke: TextProp,
     #[prop(into, optional)] stroke_width: TextProp,
+    /// Optional CSS `color` override — tints every `currentColor` fill/stroke
+    /// in any collection (fill sets rely on this instead of the stroke attr).
+    #[prop(into, optional)]
+    color: TextProp,
     /// Defaults to "0 0 24 24".
     #[prop(into, optional)]
     viewbox: TextProp,
@@ -78,6 +82,7 @@ pub fn AnimatedSvg(
     let size_val = size;
     let fill_val = fill;
     let stroke_val = stroke;
+    let color_val = color;
     let sw = stroke_width;
     let viewbox_val = viewbox;
 
@@ -85,14 +90,13 @@ pub fn AnimatedSvg(
     // `stroke="none"` in their data; they should not get a stroke width and
     // default to a visible (non-draw) animation.
     let stroke_prof = stroke_val.clone();
-    let profile = Memo::new(move |_| {
-        profile.get().unwrap_or_else(|| {
-            if stroke_prof.get() == "none" {
-                AnimationProfile::Pulse
-            } else {
-                AnimationProfile::PathDraw
-            }
-        })
+    let profile = Memo::new(move |_| match profile.get() {
+        Some(AnimationProfile::PathDraw) if stroke_prof.get() == "none" => {
+            AnimationProfile::Pulse
+        }
+        Some(p) => p,
+        None if stroke_prof.get() == "none" => AnimationProfile::Pulse,
+        None => AnimationProfile::PathDraw,
     });
 
     // Empty props (omitted) fall back to the Lucide defaults.
@@ -218,14 +222,22 @@ pub fn AnimatedSvg(
 
     // Per-frame transform lives on the `<svg>`; CSS keyframe classes
     // (pulse/bounce/ping) are layered on top via the class attribute.
+    // The user's picked color is applied via CSS `color` so every
+    // `currentColor` stroke/fill (in any collection) tints correctly.
     let svg_style = move || {
-        let mut styles = format!(
-            "transform: scale({}) rotate({})deg translateY({}px); \
+        let color = color_val.get();
+        let mut styles = if color.is_empty() {
+            String::new()
+        } else {
+            format!("color: {color}; ")
+        };
+        styles.push_str(&format!(
+            "transform: scale({}) rotate({}deg) translateY({}px); \
              transform-origin: center;",
             scale.get(),
             rotate.get(),
             translate_y.get()
-        );
+        ));
         if is_spinning.get() {
             styles.push_str(" transition: none;");
         } else {
