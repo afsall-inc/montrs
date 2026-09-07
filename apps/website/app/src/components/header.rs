@@ -69,6 +69,7 @@ pub fn Header() -> impl IntoView {
 
     let ui_open = RwSignal::new(false);
     let customize_open = RwSignal::new(false);
+    let nav_for_ui = navigate.clone();
     let search_q = RwSignal::new(String::new());
     let search_ref: NodeRef<leptos::html::Input> = NodeRef::new();
     let search_nav = navigate.clone();
@@ -195,7 +196,7 @@ pub fn Header() -> impl IntoView {
                                     aria-label="UI"
                                 >
                                     {ui_links.into_iter().map(|(href, label)| {
-                                        let nav = navigate.clone();
+                                        let nav = nav_for_ui.clone();
                                         let close = ui_open;
                                         view! {
                                             <a
