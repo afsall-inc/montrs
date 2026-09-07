@@ -28,9 +28,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use crate::{copy::CopyButton, highlight::highlight_rust};
 use leptos::prelude::*;
 use montrs_icons::*;
 use montrs_ui::prelude::*;
+
+const SDK_SNIPPET: &str = r#"use montrs_ai::prelude::*;
+
+// Streaming chat with tool-calling — deterministic under the
+// TestRuntime (a fake LLM is swapped in for tests).
+#[component]
+fn SupportChat() -> impl IntoView {
+    let llm = ChatModel::new("anthropic", "claude-sonnet-4")
+        .with_api_key(env!("ANTHROPIC_API_KEY"))
+        .with_tools([kb_search(), montrs_registry()]);
+
+    view! {
+        <Agent model=llm system="You are a MontRS expert.">
+            <StreamingChat />
+        </Agent>
+    }
+}"#;
 
 #[component]
 pub fn AiKit() -> impl IntoView {
@@ -125,6 +143,51 @@ pub fn AiKit() -> impl IntoView {
                     <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">
                         <Icon glyph=Glyph::Workflow class="h-4 w-4 shrink-0 text-primary" />
                         "Invariant checks surface exactly what you need — nothing more."
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-16 border-t border-border pt-12">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h2 class="text-2xl font-bold tracking-tight">"montrs-ai SDK"</h2>
+                    <span class="pill">
+                        <span class="pill-accent">"In development"</span>
+                    </span>
+                </div>
+                <p class="mt-3 max-w-2xl text-muted-foreground">
+                    "The native AI SDK for MontRS apps: streaming chat, tool-calling,
+                    and agent loops with the same determinism guarantees as the rest
+                    of the framework. Swap a real provider for a scripted fake LLM in
+                    tests — no mocking, no flakes."
+                </p>
+
+                <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+                    <div class="code-window">
+                        <div class="code-window-bar">
+                            <span class="traffic-light traffic-light-red"></span>
+                            <span class="traffic-light traffic-light-yellow"></span>
+                            <span class="traffic-light traffic-light-green"></span>
+                            <span class="code-window-tab">"support_chat.rs"</span>
+                            <span class="ml-auto">
+                                <CopyButton text=SDK_SNIPPET.to_string() label="Copy" />
+                            </span>
+                        </div>
+                        <pre class="code-window-body text-left" inner_html=highlight_rust(SDK_SNIPPET)></pre>
+                    </div>
+
+                    <div class="flex flex-col justify-center gap-3 text-sm text-muted-foreground">
+                        {[
+                            (Glyph::Cpu, "Provider adapters — Anthropic, OpenAI, Groq"),
+                            (Glyph::MessageSquare, "Streaming chat components out of the box"),
+                            (Glyph::Workflow, "Tool-calling and agent loops"),
+                            (Glyph::FlaskConical, "Deterministic fake-LLM test harness"),
+                            (Glyph::Bot, "Plugs into the montrs agent toolkit"),
+                        ].into_iter().map(|(icon, label)| view! {
+                            <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">
+                                <Icon glyph=icon class="h-4 w-4 shrink-0 text-primary" />
+                                {label}
+                            </div>
+                        }).collect::<Vec<_>>()}
                     </div>
                 </div>
             </div>
