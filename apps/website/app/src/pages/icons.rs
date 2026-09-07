@@ -376,6 +376,7 @@ pub fn Icons() -> impl IntoView {
     let page = RwSignal::new(1usize);
 
     let hydrated = RwSignal::new(false);
+    let sidebar_open = RwSignal::new(false);
     let mru = RwSignal::new(Vec::<(Collection, String)>::new());
     let selected_icon = RwSignal::new(None::<CollectedGlyph>);
     let selected_owner = RwSignal::new(None::<Collection>);
@@ -498,7 +499,7 @@ pub fn Icons() -> impl IntoView {
     let select_icon = move |glyph: CollectedGlyph| {
         selected_icon.set(Some(glyph));
         anim_choice.set("auto".to_string());
-        // In the "All" view the active collection is unknown â€” resolve the
+        // In the "All" view the active collection is unknown — resolve the
         // owning collection so MRU re-renders can find the glyph again.
         let owner = collection.get().unwrap_or_else(|| {
             Collection::ALL
@@ -670,13 +671,35 @@ pub fn Icons() -> impl IntoView {
             // ---------------------------------------------------------------
             // Sidebar
             // ---------------------------------------------------------------
-            <aside class="icons-sidebar hidden lg:block">
+                        <aside class=move || {
+                if sidebar_open.get() {
+                    "icons-sidebar fixed inset-y-0 left-0 z-50 block w-72 overflow-y-auto border-r border-border bg-background shadow-xl lg:hidden"
+                        .to_string()
+                } else {
+                    "icons-sidebar hidden lg:block".to_string()
+                }
+            }>
                 <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto">
                     <div class="flex items-center justify-between px-4 py-3">
-                        <p class="text-sm font-semibold">"Icons"</p>
-                        <p class="font-mono text-[11px] text-muted-foreground">
-                            {move || format!("{} total", *ALL_TOTAL_ICONS)}
-                        </p>
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold">"Icons"</p>
+                            <span class="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-px text-[9px] font-medium text-primary lg:hidden">
+                                "filters"
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <p class="font-mono text-[11px] text-muted-foreground">
+                                {move || format!("{} total", *ALL_TOTAL_ICONS)}
+                            </p>
+                            <button
+                                type="button"
+                                class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                                on:click=move |_| sidebar_open.set(false)
+                                aria-label="Close filters"
+                            >
+                                <Icon glyph=Glyph::X class="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
 
                     <div class="icons-sidebar-section">
@@ -760,7 +783,7 @@ pub fn Icons() -> impl IntoView {
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || size_px.get().to_string()
                                         on:change=on_size_input
-                                        title="14â€“48"
+                                        title="14–48"
                                     />
                                 </span>
                                 <input
@@ -782,7 +805,7 @@ pub fn Icons() -> impl IntoView {
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || format!("{:.2}", stroke_w.get())
                                         on:change=on_stroke_input
-                                        title="0.5â€“3"
+                                        title="0.5–3"
                                         disabled=move || !is_stroke_style()
                                     />
                                 </span>
@@ -918,6 +941,13 @@ pub fn Icons() -> impl IntoView {
                 </div>
             </aside>
 
+            <Show when=move || sidebar_open.get()>
+                <div
+                    class="fixed inset-0 z-40 bg-black/40 lg:hidden"
+                    on:click=move |_| sidebar_open.set(false)
+                ></div>
+            </Show>
+
             // ---------------------------------------------------------------
             // Main column
             // ---------------------------------------------------------------
@@ -926,18 +956,29 @@ pub fn Icons() -> impl IntoView {
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">"Icons"</h1>
                         <p class="mt-1 text-sm text-muted-foreground">
-                            {move || format!("{} shown Â· hover to play", page_icons.get().len())}
+                            {move || format!("{} shown · hover to play", page_icons.get().len())}
                         </p>
                     </div>
-                    <div class="relative w-full max-w-sm">
-                        <Icon glyph=Glyph::Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            type="search"
-                            placeholder="Search iconsâ€¦"
-                            class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            prop:value=search
-                            on:input=on_search
-                        />
+                    <div class="flex w-full max-w-sm items-center gap-2">
+                        <button
+                            type="button"
+                            class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                            on:click=move |_| sidebar_open.update(|o| *o = !*o)
+                            aria-expanded=move || sidebar_open.get()
+                        >
+                            <Icon glyph=Glyph::SlidersHorizontal class="h-4 w-4" />
+                            "Filters"
+                        </button>
+                        <div class="relative w-full">
+                            <Icon glyph=Glyph::Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="search"
+                                placeholder="Search icons…"
+                                class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                prop:value=search
+                                on:input=on_search
+                            />
+                        </div>
                     </div>
                 </div>
 

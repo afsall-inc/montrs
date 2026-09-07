@@ -111,7 +111,7 @@ pub async fn run() -> anyhow::Result<()> {
     let reload_for_watch = reload.clone();
     let _watcher = tokio::task::spawn_blocking(move || {
         let _ = montrs_build::watch_directory(Path::new("."), move || {
-            println!("Change detected â€” rebuilding...");
+            println!("Change detected — rebuilding...");
             match pipeline.build_all() {
                 Ok(_) => {
                     println!("Rebuild complete.");
