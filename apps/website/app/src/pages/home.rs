@@ -106,7 +106,7 @@ fn Hero() -> impl IntoView {
 
                     <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
                         <span class="pill">
-                            <span class="pill-accent">"Built in"</span>
+                            <span class="pill-accent">"Built with"</span>
                         </span>
                         <span class="text-gradient text-4xl font-bold tracking-tight sm:text-6xl">
                             "Rust"
