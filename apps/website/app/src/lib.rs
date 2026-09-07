@@ -128,6 +128,7 @@ pub fn App() -> impl IntoView {
                     {RouterOutlet::<MyConfig>()}
                 </main>
                 <Footer />
+                <dev_overlay::DevOverlay />
             </ThemeProvider>
         </leptos_router::components::Router>
     }
