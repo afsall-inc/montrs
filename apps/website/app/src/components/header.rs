@@ -53,6 +53,7 @@ pub fn Header() -> impl IntoView {
         ("/ai", "AI Kit"),
         ("/orm", "ORM"),
         ("/ui/motion", "Motion"),
+        ("/foundations", "Foundations"),
         ("/templates", "Templates"),
         ("/docs", "Docs"),
     ];
