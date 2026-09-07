@@ -44,15 +44,6 @@ const LINKS: &[(&str, &str)] = &[
     ("/ui/backgrounds", "Backgrounds"),
 ];
 
-/// Breadcrumb label for the current path (falls back to "UI").
-fn crumb_label(path: &str) -> &'static str {
-    LINKS
-        .iter()
-        .find(|(href, _)| *href == path)
-        .map(|(_, label)| *label)
-        .unwrap_or("UI")
-}
-
 #[component]
 pub fn UiSubNav() -> impl IntoView {
     let navigate = use_navigate();
@@ -62,8 +53,6 @@ pub fn UiSubNav() -> impl IntoView {
     // Only render inside the /ui section.
     let visible = move || path.get().starts_with("/ui");
 
-    let crumb = move || crumb_label(&path.get());
-
     view! {
         <Show when=move || visible()>
             <nav
@@ -71,49 +60,6 @@ pub fn UiSubNav() -> impl IntoView {
                 aria-label="UI sections"
             >
                 <div class="page-container flex flex-col gap-2 py-2">
-                    <ol class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <li>
-                            <a
-                                href="/"
-                                class="transition-colors hover:text-foreground"
-                                on:click={
-                                    let nav = navigate.clone();
-                                    move |ev| {
-                                        ev.prevent_default();
-                                        nav("/", Default::default());
-                                    }
-                                }
-                            >"Home"</a>
-                        </li>
-                        <li aria-hidden="true">"/"</li>
-                        <li>
-                            <a
-                                href="/ui"
-                                class="transition-colors hover:text-foreground"
-                                on:click={
-                                    let nav = navigate.clone();
-                                    move |ev| {
-                                        ev.prevent_default();
-                                        nav("/ui", Default::default());
-                                    }
-                                }
-                            >"UI"</a>
-                        </li>
-                        {move || {
-                            let c = crumb();
-                            if c == "UI" {
-                                None
-                            } else {
-                                Some(view! {
-                                    <>
-                                        <li aria-hidden="true">"/"</li>
-                                        <li class="text-foreground">{c}</li>
-                                    </>
-                                }.into_any())
-                            }
-                        }}
-                    </ol>
-
                     <div class="flex flex-wrap items-center gap-1">
                         {LINKS.iter().copied().map(|(href, label)| {
                             let nav = navigate.clone();

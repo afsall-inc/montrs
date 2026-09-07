@@ -28,7 +28,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::components::theme_customizer::ThemeCustomizer;
 use leptos::prelude::*;
 use montrs_core::nav::*;
 use montrs_icons::*;
@@ -51,10 +50,9 @@ pub fn Header() -> impl IntoView {
         ("/auth", "Auth"),
         ("/runtime", "Runtime"),
         ("/ai", "AI Kit"),
-        ("/orm", "ORM"),
         ("/foundations", "Foundations"),
         ("/templates", "Templates"),
-        ("/docs", "Docs"),
+        ("/packages", "Packages"),
     ];
 
     let ui_links = [
@@ -68,7 +66,6 @@ pub fn Header() -> impl IntoView {
     ];
 
     let ui_open = RwSignal::new(false);
-    let customize_open = RwSignal::new(false);
     let nav_for_ui = navigate.clone();
     let search_q = RwSignal::new(String::new());
     let search_open = RwSignal::new(false);
@@ -119,7 +116,6 @@ pub fn Header() -> impl IntoView {
                 if key == "Escape" {
                     ui_open.set(false);
                     mobile_open.set(false);
-                    customize_open.set(false);
                     search_open.set(false);
                     return;
                 }
@@ -127,13 +123,6 @@ pub fn Header() -> impl IntoView {
                     ev.prevent_default();
                     search_open.set(true);
                     return;
-                }
-                if (key == "c" || key == "C")
-                    && !ev.meta_key()
-                    && !ev.ctrl_key()
-                    && !in_field
-                {
-                    customize_open.update(|o| *o = !*o);
                 }
             },
         ));
@@ -368,47 +357,6 @@ pub fn Header() -> impl IntoView {
                                         >{label}</a>
                                     }
                                 }).collect::<Vec<_>>()}
-                            </div>
-                        </Show>
-
-                        // Customize button (shark-ui style): wand icon, opens a
-                        // right sheet with gray / primary / radius controls.
-                        <button
-                            type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                            on:click=move |_| customize_open.update(|o| *o = !*o)
-                            aria-label="Customize theme"
-                            aria-expanded=move || customize_open.get()
-                            title="Customize (C)"
-                        >
-                            <Icon glyph=Glyph::WandSparkles class="h-4 w-4" />
-                        </button>
-
-                        <Show when=move || customize_open.get()>
-                            <div
-                                class="fixed inset-0 z-40"
-                                on:click=move |_| customize_open.set(false)
-                            ></div>
-                            <div class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-xl">
-                                <div class="flex items-start justify-between border-b border-border px-6 py-4">
-                                    <div>
-                                        <h2 class="text-lg font-semibold">"Make it yours"</h2>
-                                        <p class="mt-0.5 text-sm text-muted-foreground">
-                                            "Change the theme to match your style."
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                        on:click=move |_| customize_open.set(false)
-                                        aria-label="Close customize panel"
-                                    >
-                                        <Icon glyph=Glyph::X class="h-4 w-4" />
-                                    </button>
-                                </div>
-                                <div class="flex-1 overflow-y-auto px-6 py-5">
-                                    <ThemeCustomizer />
-                                </div>
                             </div>
                         </Show>
                     </div>

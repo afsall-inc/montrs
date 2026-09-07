@@ -129,10 +129,10 @@ fn Hero() -> impl IntoView {
                             <Icon glyph=Glyph::ArrowRight class="ml-2 h-4 w-4" />
                         </a>
                         <a
-                            href="/docs"
+                            href="/packages"
                             class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent"
                         >
-                            "Read the Docs"
+                            "Browse packages"
                         </a>
                     </div>
 
@@ -422,20 +422,15 @@ fn BentoGrid() -> impl IntoView {
 
                     // Auth + ORM
                     <div class="showcase-card reveal flex flex-col p-6">
-                        <h3 class="font-semibold">"Auth · ORM · services"</h3>
+                        <h3 class="font-semibold">"Auth · services"</h3>
                         <p class="mt-1 text-sm text-muted-foreground">
-                            "Plugin-based auth and a SQL-first ORM, gated behind traits."
+                            "Plugin-based auth and a service supervisor, gated behind traits."
                         </p>
-                        <div class="mt-5 grid grid-cols-2 gap-2 text-xs">
+                        <div class="mt-5 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                             <a href="/auth" class="rounded-md border border-border p-3 transition-colors hover:bg-accent">
                                 <Icon glyph=Glyph::KeyRound class="mb-2 h-4 w-4 text-primary" />
                                 <p class="font-medium">"Auth"</p>
                                 <p class="mt-1 text-muted-foreground">"OAuth · 2FA · API keys · SSO"</p>
-                            </a>
-                            <a href="/orm" class="rounded-md border border-border p-3 transition-colors hover:bg-accent">
-                                <Icon glyph=Glyph::Database class="mb-2 h-4 w-4 text-primary" />
-                                <p class="font-medium">"ORM"</p>
-                                <p class="mt-1 text-muted-foreground">"SQL-first, backend-agnostic"</p>
                             </a>
                         </div>
                     </div>
@@ -700,7 +695,7 @@ fn SectionLinks() -> impl IntoView {
             "/ui",
             Glyph::Blocks,
             "UI",
-            "91 components · 16k+ icons · blocks · motion",
+            "91 components · 22k+ icons · blocks · motion",
         ),
         (
             "/auth",
@@ -720,12 +715,6 @@ fn SectionLinks() -> impl IntoView {
             "AI Kit",
             "Agentic framework, spec snapshots, skills",
         ),
-        (
-            "/orm",
-            Glyph::Database,
-            "ORM",
-            "SQL-first, backend-agnostic data layer",
-        ),
     ];
 
     view! {
@@ -739,7 +728,7 @@ fn SectionLinks() -> impl IntoView {
                         "One framework. Five pillars."
                     </p>
                 </div>
-                <div class="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <div class="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {sections.into_iter().map(|(href, icon, title, desc)| view! {
                         <a href=href class="showcase-card reveal flex flex-col items-center p-6 text-center">
                             <Icon glyph=icon class="h-6 w-6 text-primary" />
