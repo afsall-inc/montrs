@@ -123,6 +123,7 @@ pub fn App() -> impl IntoView {
             <ThemeProvider>
                 <RevealOnScroll />
                 <Header />
+                <ui_subnav::UiSubNav />
                 <main class="min-h-screen">
                     {RouterOutlet::<MyConfig>()}
                 </main>

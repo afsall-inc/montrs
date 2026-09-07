@@ -33,6 +33,7 @@ pub mod header;
 pub mod layout;
 pub mod reveal;
 pub mod theme_customizer;
+pub mod ui_subnav;
 
 pub use layout::*;
 pub use reveal::RevealOnScroll;
