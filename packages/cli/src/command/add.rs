@@ -42,8 +42,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const THEME_NAMES: &[&str] =
-    &["orange", "rose", "emerald", "sky", "violet", "zinc"];
+const THEME_NAMES: &[&str] = &[
+    "dark",
+    "light",
+    "orange",
+    "rose",
+    "emerald",
+    "sky",
+    "violet",
+    "zinc",
+];
 
 pub async fn run(
     items: Vec<String>,
@@ -418,6 +426,7 @@ fn add_theme(css: &Path, name: &str) -> Result<()> {
 fn theme_block(name: &str) -> Option<String> {
     // hsl() values tuned for both light (:root) and dark (.dark) modes.
     let (light, dark) = match name {
+        "dark" | "light" => ("25 95% 53%", "25 95% 55%"),
         "orange" => ("24 96% 53%", "24 96% 55%"),
         "rose" => ("350 89% 60%", "350 89% 62%"),
         "emerald" => ("152 76% 40%", "152 76% 44%"),
@@ -542,7 +551,9 @@ fn list_available() {
     print_columns(&block_names);
 
     println!("\n{} Themes:", style("Themes").green().bold());
-    print_columns(&["orange", "rose", "emerald", "sky", "violet", "zinc"]);
+    print_columns(&[
+        "dark", "light", "orange", "rose", "emerald", "sky", "violet", "zinc",
+    ]);
 
     println!(
         "\n{} Icons (collection/name):",
