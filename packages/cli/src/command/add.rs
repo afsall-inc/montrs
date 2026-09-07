@@ -43,14 +43,7 @@ use std::{
 };
 
 const THEME_NAMES: &[&str] = &[
-    "dark",
-    "light",
-    "orange",
-    "rose",
-    "emerald",
-    "sky",
-    "violet",
-    "zinc",
+    "dark", "light", "orange", "rose", "emerald", "sky", "violet", "zinc",
 ];
 
 pub async fn run(

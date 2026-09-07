@@ -52,6 +52,7 @@ pub fn Header() -> impl IntoView {
         ("/runtime", "Runtime"),
         ("/ai", "AI Kit"),
         ("/orm", "ORM"),
+        ("/ui/motion", "Motion"),
         ("/templates", "Templates"),
         ("/docs", "Docs"),
     ];
@@ -61,7 +62,6 @@ pub fn Header() -> impl IntoView {
         ("/ui/components", "Components"),
         ("/ui/blocks", "Blocks"),
         ("/ui/icons", "Icons"),
-        ("/ui/motion", "Motion"),
         ("/ui/themes", "Themes"),
         ("/ui/backgrounds", "Backgrounds"),
     ];

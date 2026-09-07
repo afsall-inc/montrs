@@ -63,6 +63,10 @@ pub fn Motion() -> impl IntoView {
             <div class="mt-6">
                 <GestureDemo />
             </div>
+
+            <div class="mt-6">
+                <PentagonBallsDemo />
+            </div>
         </div>
     }
 }
@@ -634,6 +638,116 @@ fn GestureDemo() -> impl IntoView {
                 <p>{move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}</p>
                 <p>{move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}</p>
                 <p>{move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}</p>
+            </div>
+        </div>
+    }
+}
+
+/// A spinning pentagon with balls bouncing inside it — gravity, circle-wall
+/// collisions, and a rotation all driven by a single continuous FrameLoop.
+#[component]
+fn PentagonBallsDemo() -> impl IntoView {
+    let rot = RwSignal::new(0.0);
+    // (x, y, vx, vy) per ball.
+    let balls: Vec<RwSignal<(f64, f64, f64, f64)>> = (0..9)
+        .map(|i| {
+            let a = i as f64 / 9.0 * std::f64::consts::TAU;
+            RwSignal::new((
+                100.0 + 50.0 * a.cos(),
+                100.0 + 50.0 * a.sin(),
+                (i as f64 - 4.0) * 42.0,
+                (i as f64 - 4.0) * 30.0,
+            ))
+        })
+        .collect();
+
+    let start = FrameLoop::now();
+    let balls_for_loop = balls.clone();
+    FrameLoop::on_frame(move || {
+        let t = FrameLoop::now() - start;
+        rot.set((t * 34.0) % 360.0);
+        let dt = 1.0 / 60.0;
+        let mut updated: Vec<(usize, (f64, f64, f64, f64))> = Vec::new();
+        for (i, b) in balls_for_loop.iter().enumerate() {
+            let (mut x, mut y, mut vx, mut vy) = b.get();
+            vy += 300.0 * dt;
+            x += vx * dt;
+            y += vy * dt;
+            let dx = x - 100.0;
+            let dy = y - 100.0;
+            let r = (dx * dx + dy * dy).sqrt();
+            let bound = 60.0;
+            if r > bound && r > 0.0 {
+                let nx = dx / r;
+                let ny = dy / r;
+                let vn = vx * nx + vy * ny;
+                if vn > 0.0 {
+                    vx -= 2.0 * vn * nx;
+                    vy -= 2.0 * vn * ny;
+                    vx *= 0.96;
+                    vy *= 0.96;
+                }
+                x = 100.0 + nx * bound;
+                y = 100.0 + ny * bound;
+            }
+            updated.push((i, (x, y, vx, vy)));
+        }
+        for (i, v) in updated {
+            balls_for_loop[i].set(v);
+        }
+        true
+    });
+
+    // Pentagon vertices at radius 80 around the center.
+    let pent_pts: String = (0..5)
+        .map(|i| {
+            let a = -std::f64::consts::FRAC_PI_2
+                + i as f64 / 5.0 * std::f64::consts::TAU;
+            format!(
+                "{:.1},{:.1}",
+                100.0 + 80.0 * a.cos(),
+                100.0 + 80.0 * a.sin()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    view! {
+        <div class="showcase-card p-6">
+            <div class="flex items-center gap-2">
+                <Icon glyph=Glyph::Hexagon class="h-5 w-5 text-primary" />
+                <h2 class="text-xl font-semibold">"Bouncing Balls in a Spinning Pentagon"</h2>
+            </div>
+            <p class="mt-1 text-sm text-muted-foreground">
+                "Gravity, elastic wall collisions, and continuous rotation — one
+                FrameLoop, zero CSS keyframes."
+            </p>
+            <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
+                <svg viewBox="0 0 200 200" class="h-64 w-64">
+                    <g transform=move || format!("rotate({} 100 100)", rot.get())>
+                        <polygon
+                            points=pent_pts
+                            fill="hsl(var(--primary) / 0.06)"
+                            stroke="hsl(var(--primary))"
+                            stroke-width="2"
+                            stroke-linejoin="round"
+                        />
+                    </g>
+                    {balls.iter().map(|b| {
+                        let ball = *b;
+                        let cx = move || format!("{:.1}", ball.get().0);
+                        let cy = move || format!("{:.1}", ball.get().1);
+                        view! {
+                            <circle
+                                cx=cx
+                                cy=cy
+                                r="5"
+                                fill="hsl(var(--primary))"
+                                style=format!("transition: none;")
+                            />
+                        }
+                    }).collect::<Vec<_>>()}
+                </svg>
             </div>
         </div>
     }
