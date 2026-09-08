@@ -181,7 +181,9 @@ where
 /// `montrs serve`/`watch`, surfaces runtime errors without opening the
 /// console, and reports live-reload connection status.
 #[cfg(feature = "ssr")]
-const DEV_OVERLAY_JS: &str = r###"(function(){
+const DEV_OVERLAY_SCRIPT: &str = concat!(
+    "<script>",
+    r###"(function(){
 if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
 var E = [];
 function push(k, m) { E.push([k, m]); if (E.length > 60) E.shift(); }
@@ -236,7 +238,9 @@ try {
   ws.onclose = function () { live = '○'; if (open) render(); };
 } catch (_) {}
 })();
-"###;
+"###,
+    "</script>"
+);
 
 /// Axum middleware: appends the dev overlay script to HTML responses so every
 /// MontRS app gets it in dev, without touching the app's own code.
@@ -261,7 +265,7 @@ async fn inject_dev_overlay(
     let stream = body.into_data_stream();
     let script = futures::stream::once(async move {
         Ok::<_, axum::Error>(axum::body::Bytes::from_static(
-            DEV_OVERLAY_JS.as_bytes(),
+            DEV_OVERLAY_SCRIPT.as_bytes(),
         ))
     });
     let merged = stream.chain(script);
