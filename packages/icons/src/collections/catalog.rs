@@ -2,9 +2,11 @@
 
 pub const COLLECTION_LIST: &[CollectionInfo] = &[
     CollectionInfo { key: "radix", label: "Radix", license: "MIT", source: "https://github.com/radix-ui/icons" },
-    CollectionInfo { key: "heroicons", label: "Heroicons", license: "MIT", source: "https://github.com/tailwindlabs/heroicons" },
     CollectionInfo { key: "tabler", label: "Tabler", license: "MIT", source: "https://github.com/tabler/tabler-icons" },
     CollectionInfo { key: "iconoir", label: "Iconoir", license: "MIT", source: "https://github.com/iconoir-icons/iconoir" },
     CollectionInfo { key: "phosphor", label: "Phosphor", license: "MIT", source: "https://github.com/phosphor-icons/core" },
     CollectionInfo { key: "mdi", label: "Mdi", license: "Apache-2.0", source: "https://github.com/Templarian/MaterialDesign" },
+    CollectionInfo { key: "bootstrap", label: "Bootstrap", license: "MIT", source: "https://github.com/twbs/icons" },
+    CollectionInfo { key: "simple-icons", label: "Simple Icons", license: "CC0-1.0", source: "https://github.com/simple-icons/simple-icons" },
+    CollectionInfo { key: "cryptocurrency", label: "Cryptocurrency", license: "CC0-1.0", source: "https://github.com/spothq/cryptocurrency-icons" },
 ];

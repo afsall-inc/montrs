@@ -50,11 +50,7 @@ const PACKAGES: &[(&str, &str, &str)] = &[
     ("runner", "Custom task runner config", "Core"),
     ("validator", "Compile-time validation (derive)", "Core"),
     ("ui", "91 shadcn-inspired components", "Experience"),
-    (
-        "icons",
-        "1,600+ Lucide icons as Leptos components",
-        "Experience",
-    ),
+    ("icons", "22,000+ icons across 9 collections", "Experience"),
     (
         "motion",
         "Springs, tweens, keyframes, gestures",
@@ -154,7 +150,7 @@ const TEMPLATES: &[(&str, &str)] = &[
 ];
 
 #[component]
-pub fn Docs() -> impl IntoView {
+pub fn Packages() -> impl IntoView {
     let filter = RwSignal::new("All".to_string());
     let groups = [
         "All",
@@ -177,7 +173,7 @@ pub fn Docs() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Documentation"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">"Packages"</h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "One framework. Forty packages. Every layer documented,
                     trait-driven, and deterministic."

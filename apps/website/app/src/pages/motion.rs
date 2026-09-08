@@ -35,25 +35,98 @@ use montrs_ui::{components::slider::Slider, prelude::*};
 
 #[component]
 pub fn Motion() -> impl IntoView {
+    let demos = [
+        ("spring", "Spring Physics"),
+        ("tween", "Tween Easing"),
+        ("path", "SVG Path Draw"),
+        ("keyframes", "Keyframes"),
+        ("morph", "Shape Morphing"),
+        ("gesture", "Gesture Primitives"),
+    ];
+
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
                 <h1 class="text-3xl font-bold tracking-tight">"Motion & Animation"</h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
-                    "Interactive demos of spring physics, tween easing, and SVG path
-                    animation — all driven by the montrs-motion FrameLoop."
+                    "Interactive demos of spring physics, tween easing, keyframe
+                    interpolation, shape morphing, and gesture-driven motion — all
+                    built on the montrs-motion FrameLoop."
                 </p>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {demos.iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <SpringDemo />
-                <TweenDemo />
-            </div>
+            <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">
+                <nav class="hidden lg:block">
+                    <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
+                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">"Demos"</p>
+                        {demos.iter().map(|(id, label)| {
+                            let on_click = scroll_to(id);
+                            view! {
+                                <a
+                                    href="#"
+                                    class="block rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=on_click
+                                >{*label}</a>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </div>
+                </nav>
 
-            <div class="mt-6">
-                <PathDemo />
+                <div class="min-w-0">
+                    <section id="spring" class="scroll-mt-24">
+                        <SpringDemo />
+                    </section>
+                    <section id="tween" class="mt-10 scroll-mt-24">
+                        <TweenDemo />
+                    </section>
+                    <section id="path" class="mt-10 scroll-mt-24">
+                        <PathDemo />
+                    </section>
+                    <section id="keyframes" class="mt-10 scroll-mt-24">
+                        <KeyframesDemo />
+                    </section>
+                    <section id="morph" class="mt-10 scroll-mt-24">
+                        <MorphDemo />
+                    </section>
+                    <section id="gesture" class="mt-10 scroll-mt-24">
+                        <GestureDemo />
+                    </section>
+                </div>
             </div>
         </div>
+    }
+}
+
+/// Smooth-scroll to an element id without touching the URL.
+fn scroll_to(id: &str) -> impl Fn(leptos::ev::MouseEvent) {
+    let id = id.to_string();
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = &id;
+    move |ev: leptos::ev::MouseEvent| {
+        ev.prevent_default();
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            if let Some(doc) = web_sys::window().and_then(|w| w.document())
+                && let Some(el) = doc.get_element_by_id(&id)
+            {
+                if let Some(html) = el.dyn_ref::<web_sys::HtmlElement>() {
+                    let _ = html.scroll_into_view();
+                }
+            }
+        }
     }
 }
 
@@ -330,6 +403,300 @@ fn PathDemo() -> impl IntoView {
                         }
                     }}
                 </svg>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn KeyframesDemo() -> impl IntoView {
+    let progress = RwSignal::new(0.0);
+    let playing = RwSignal::new(false);
+
+    // Keyframe stops: x travels right while y bounces with per-segment easing.
+    let x_stops = vec![0.0, 42.0, 84.0, 126.0, 168.0];
+    let y_stops = vec![0.0, -58.0, 0.0, -34.0, 0.0];
+    let xs = Keyframes::new(vec![0.0, 0.25, 0.5, 0.75, 1.0], x_stops.clone())
+        .with_easings(vec![Easing::EaseInOut; 4]);
+    let ys = Keyframes::new(vec![0.0, 0.25, 0.5, 0.75, 1.0], y_stops.clone())
+        .with_easings(vec![
+            Easing::QuadIn,
+            Easing::QuadOut,
+            Easing::QuadIn,
+            Easing::QuadOut,
+        ]);
+
+    // Pre-computed trail so the full interpolated path stays visible.
+    let trail: Vec<(f64, f64)> = (0..=64)
+        .map(|i| {
+            let t = i as f64 / 64.0;
+            (20.0 + xs.sample(t), 100.0 + ys.sample(t))
+        })
+        .collect();
+    let trail_d = format!(
+        "M{}",
+        trail
+            .iter()
+            .map(|(x, y)| format!("{:.1} {:.1}", x, y))
+            .collect::<Vec<_>>()
+            .join(" L")
+    );
+
+    let play_kf = move |_| {
+        if playing.get() {
+            return;
+        }
+        playing.set(true);
+        progress.set(0.0);
+        let start = FrameLoop::now();
+        FrameLoop::on_frame(move || {
+            let elapsed = FrameLoop::now() - start;
+            let t = (elapsed / 2.4).min(1.0);
+            progress.set(t);
+            if elapsed > 2.4 {
+                playing.set(false);
+                false
+            } else {
+                true
+            }
+        });
+    };
+
+    let xs_ball = xs.clone();
+    let ys_ball = ys.clone();
+
+    view! {
+        <div class="showcase-card p-6">
+            <div class="flex items-center gap-2">
+                <Icon glyph=Glyph::Layers class="h-5 w-5 text-primary" />
+                <h2 class="text-xl font-semibold">"Keyframe Interpolation"</h2>
+            </div>
+            <p class="mt-1 text-sm text-muted-foreground">
+                "Multi-segment interpolation with per-segment easing between stops."
+            </p>
+
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
+                <button
+                    type="button"
+                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    on:click=play_kf
+                    disabled=move || playing.get()
+                >
+                    <Icon glyph=Glyph::Play class="h-4 w-4" />
+                    {move || if playing.get() { "Bouncing…" } else { "Play Keyframes" }}
+                </button>
+                <span class="font-mono text-sm text-muted-foreground">
+                    {move || format!("{:.0}%", progress.get() * 100.0)}
+                </span>
+            </div>
+
+            <div class="mt-6">
+                <svg viewBox="0 0 220 120" class="h-40 w-full rounded-md border border-border bg-background">
+                    <line
+                        x1="20" y1="100" x2="200" y2="100"
+                        stroke="hsl(var(--foreground))" stroke-width="1" opacity="0.15"
+                    />
+                    {x_stops.iter().zip(&y_stops).map(|(x, y)| {
+                        let cx = (20.0 + x).to_string();
+                        let cy = (100.0 + y).to_string();
+                        view! {
+                            <circle cx=cx cy=cy r="3.5" fill="hsl(var(--foreground))" opacity="0.35" />
+                        }
+                    }).collect::<Vec<_>>()}
+                    <path
+                        d=trail_d
+                        stroke="hsl(var(--primary))" stroke-width="1.5" fill="none"
+                        opacity="0.4" stroke-dasharray="2 4"
+                    />
+                    {move || {
+                        let t = progress.get();
+                        let bx = (20.0 + xs_ball.sample(t)).to_string();
+                        let by = (100.0 + ys_ball.sample(t)).to_string();
+                        view! {
+                            <circle cx=bx cy=by r="7" fill="hsl(var(--primary))" />
+                        }
+                    }}
+                </svg>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn MorphDemo() -> impl IntoView {
+    let shape_toggle = MotionValue::new(0.0);
+    let shape_name = shape_toggle.clone();
+    let shape_pts = shape_toggle.clone();
+    let shape_p = shape_toggle.clone();
+    let shape_v = shape_toggle.clone();
+
+    let toggle = move |_| {
+        let target = if shape_toggle.get() < 0.5 { 1.0 } else { 0.0 };
+        shape_toggle.animate_to(target, 240.0, 18.0, 1.0);
+    };
+
+    let name = move || {
+        if shape_name.get() < 0.5 {
+            "Blob".to_string()
+        } else {
+            "Burst".to_string()
+        }
+    };
+
+    let pts = move || {
+        let p = shape_pts.get();
+        (0..48)
+            .map(|i| {
+                let th = i as f64 / 48.0 * std::f64::consts::TAU;
+                let r =
+                    30.0 + p * 22.0 * (5.0 * th + std::f64::consts::PI).cos();
+                let x = 100.0 + r * th.cos();
+                let y = 100.0 + r * th.sin();
+                format!("{:.1},{:.1}", x, y)
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+
+    view! {
+        <div class="showcase-card p-6">
+            <div class="flex items-center gap-2">
+                <Icon glyph=Glyph::Star class="h-5 w-5 text-primary" />
+                <h2 class="text-xl font-semibold">"Shape Morphing"</h2>
+            </div>
+            <p class="mt-1 text-sm text-muted-foreground">
+                "A spring-driven MotionValue interpolates every vertex between two shapes."
+            </p>
+
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
+                <button
+                    type="button"
+                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                    on:click=toggle
+                >
+                    <Icon glyph=Glyph::Repeat class="h-4 w-4" />
+                    "Morph"
+                </button>
+                <div class="flex items-center gap-3 font-mono text-xs text-muted-foreground">
+                    <span>{name}</span>
+                    <span>{move || format!("p={:.2}", shape_p.get())}</span>
+                    <span>{move || format!("v={:+.0}", shape_v.velocity())}</span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
+                <svg viewBox="0 0 200 200" class="h-48 w-48">
+                    <polygon
+                        points=pts
+                        fill="hsl(var(--primary) / 0.12)"
+                        stroke="hsl(var(--primary))"
+                        stroke-width="2"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn GestureDemo() -> impl IntoView {
+    let (hover_enter, hover_leave, hovered) = use_hover();
+    let (press_down, press_up, pressed) = use_press();
+    let (pan_down, pan_move, pan_up, delta, dragging) = use_pan();
+
+    let mvx_down = MotionValue::new(0.0);
+    let mvy_down = MotionValue::new(0.0);
+    let mvx_move = mvx_down.clone();
+    let mvy_move = mvy_down.clone();
+    let mvx_up = mvx_down.clone();
+    let mvy_up = mvy_down.clone();
+    let mvx_style = mvx_down.clone();
+    let mvy_style = mvy_down.clone();
+    let mvx_read = mvx_down.clone();
+    let mvy_read = mvy_down.clone();
+
+    let on_pan_down = move |e: leptos::ev::MouseEvent| {
+        pan_down(e);
+    };
+    let on_pan_move = move |e: leptos::ev::MouseEvent| {
+        pan_move(e);
+        // Only track while actually dragging — a plain hover/mousemove must
+        // not re-seat the tile (it would fight the spring-back and appear
+        // to drag itself across the screen).
+        if dragging.get() {
+            let (dx, dy) = delta.get();
+            mvx_move.jump(dx);
+            mvy_move.jump(dy);
+        }
+    };
+    let on_pan_up = move |e: leptos::ev::MouseEvent| {
+        pan_up(e);
+        mvx_up.animate_to(0.0, 320.0, 22.0, 1.0);
+        mvy_up.animate_to(0.0, 320.0, 22.0, 1.0);
+    };
+
+    let hover_scale = move || if hovered.get() { 1.05 } else { 1.0 };
+    let press_scale = move || if pressed.get() { 0.94 } else { 1.0 };
+    let drag_style = move || {
+        format!(
+            "transform: {};",
+            transform_2d(mvx_style.get(), mvy_style.get(), 1.0, 0.0)
+        )
+    };
+
+    let press_up_leave = press_up.clone();
+    let pan_up_leave = on_pan_up.clone();
+
+    view! {
+        <div class="showcase-card p-6">
+            <div class="flex items-center gap-2">
+                <Icon glyph=Glyph::Move class="h-5 w-5 text-primary" />
+                <h2 class="text-xl font-semibold">"Gesture Primitives"</h2>
+            </div>
+            <p class="mt-1 text-sm text-muted-foreground">
+                "Hover, press, and pan helpers — drag the tile and it springs back."
+            </p>
+
+            <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <button
+                    type="button"
+                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors"
+                    on:mouseenter=hover_enter
+                    on:mouseleave=hover_leave
+                    style=move || format!("transform: scale({:.2}); transition: {};", hover_scale(), SCALE)
+                >
+                    <Icon glyph=Glyph::Mouse class="h-5 w-5" />
+                    {move || if hovered.get() { "hovered" } else { "hover" }}
+                </button>
+                <button
+                    type="button"
+                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors"
+                    on:mousedown=press_down
+                    on:mouseup=press_up
+                    on:mouseleave=press_up_leave
+                    style=move || format!("transform: scale({:.2}); transition: {};", press_scale(), SCALE)
+                >
+                    <Icon glyph=Glyph::Hand class="h-5 w-5" />
+                    {move || if pressed.get() { "pressed" } else { "press" }}
+                </button>
+                <div
+                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground cursor-grab active:cursor-grabbing select-none touch-none"
+                    on:mousedown=on_pan_down
+                    on:mousemove=on_pan_move
+                    on:mouseup=on_pan_up
+                    on:mouseleave=pan_up_leave
+                    style=drag_style
+                >
+                    <Icon glyph=Glyph::Grip class="h-5 w-5" />
+                    {move || if dragging.get() { "dragging" } else { "drag me" }}
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-1 font-mono text-xs text-muted-foreground">
+                <p>{move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}</p>
+                <p>{move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}</p>
+                <p>{move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}</p>
             </div>
         </div>
     }

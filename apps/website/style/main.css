@@ -12,6 +12,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Tailwind v4 auto-detects class sources relative to the app, but montrs-ui
+ * (and other library packages) live outside it — scan them explicitly so
+ * component-only utilities (e.g. h-[24px], translate-x-5) are generated.
+ */
+@source "../../../packages/ui/src";
+@source "../../../packages/icons/src";
+
 @theme {
   /* UI typefaces — loaded via <link> in the SSR shell head */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -262,6 +270,60 @@ html {
     );
   }
 
+  /* Brand-gradient hero backdrop (works in light + dark modes) */
+  .hero-glow {
+    background:
+      radial-gradient(
+        42% 48% at 16% 0%,
+        rgba(255, 99, 16, 0.18),
+        transparent 65%
+      ),
+      radial-gradient(
+        36% 44% at 84% 4%,
+        rgba(5, 223, 101, 0.14),
+        transparent 65%
+      ),
+      radial-gradient(
+        30% 42% at 50% 22%,
+        rgba(46, 216, 233, 0.12),
+        transparent 70%
+      ),
+      radial-gradient(
+        26% 38% at 68% 30%,
+        rgba(26, 7, 115, 0.14),
+        transparent 70%
+      ),
+      radial-gradient(
+        22% 32% at 30% 38%,
+        rgba(255, 0, 4, 0.08),
+        transparent 70%
+      );
+  }
+
+  /* remocn-style floating sponsor cards */
+  .sponsor-card {
+    animation: sponsor-float 5s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .sponsor-card:nth-child(2n) {
+    animation-delay: -2.5s;
+  }
+
+  .sponsor-card:nth-child(3n) {
+    animation-delay: -1.2s;
+  }
+
+  @keyframes sponsor-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
   /* Scroll-triggered reveal (JS adds `.is-visible`) */
   .reveal {
     opacity: 0;
@@ -466,15 +528,135 @@ html {
     color: hsl(var(--foreground));
   }
 
-  /* Gradient text for hero accents */
+  /* Gradient text for hero accents — mirrors the MontRS logo arc:
+     orange → amber → green → cyan. */
   .text-gradient {
     background: linear-gradient(
-      to right,
-      hsl(var(--primary)),
-      hsl(16 100% 66%)
+      92deg,
+      #ff6310 0%,
+      #ff6b01 22%,
+      #ed8805 40%,
+      #05df65 68%,
+      #2ed8e9 88%,
+      #2aeae7 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* Segmented Light / Device / Dark theme toggle (shark-ui style) */
+  .theme-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid hsl(var(--border));
+    border-radius: 9999px;
+    padding: 3px;
+    background: hsl(var(--background));
+  }
+
+  .theme-toggle-indicator {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: 30px;
+    border-radius: 9999px;
+    background: hsl(var(--accent));
+    box-shadow: inset 0 0 0 1px hsl(var(--border) / 0.6);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(calc(var(--theme-pos, 1) * 32px));
+  }
+
+  .theme-toggle button {
+    position: relative;
+    z-index: 1;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    color: hsl(var(--muted-foreground));
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .theme-toggle button:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .theme-toggle button:active {
+    transform: scale(0.92);
+  }
+
+  .theme-toggle button[aria-pressed="true"] {
+    color: hsl(var(--foreground));
+  }
+
+  /* Decorative background patterns (aceternity-style) */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 75%);
+  }
+
+  .bg-dots {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.09) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+
+  .bg-dots-lg {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.08) 2px, transparent 2px);
+    background-size: 32px 32px;
+  }
+
+  .bg-diagonal {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      hsl(var(--foreground) / 0.06) 0,
+      hsl(var(--foreground) / 0.06) 1px,
+      transparent 1px,
+      transparent 12px
+    );
+  }
+
+  .bg-diagonal-lines {
+    background-image: repeating-linear-gradient(
+      45deg,
+      hsl(var(--foreground) / 0.04) 0,
+      hsl(var(--foreground) / 0.04) 1px,
+      transparent 1px,
+      transparent 22px
+    );
+  }
+
+  .bg-boxes {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
+  .bg-radial-glow {
+    background: radial-gradient(
+      60% 50% at 50% 0%,
+      hsl(var(--primary) / 0.12),
+      transparent 70%
+    );
   }
 }

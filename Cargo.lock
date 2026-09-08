@@ -4331,9 +4331,12 @@ name = "montrs-build-watch"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "futures-util",
  "montrs-build-core",
  "montrs-metadata",
  "notify",
+ "tokio",
+ "tokio-tungstenite",
  "tracing",
 ]
 
@@ -9536,6 +9539,7 @@ dependencies = [
  "tracing-subscriber",
  "tw_merge",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
 ]
 

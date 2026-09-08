@@ -14,63 +14,103 @@ use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-/// (key, repo, branch, in-repo svg path prefix, spdx, author, source URL)
-const COLLECTIONS: &[(&str, &str, &str, &str, &str, &str, &str)] = &[
-    (
-        "radix",
-        "radix-ui/icons",
-        "main",
-        "packages/radix-icons/icons",
-        "MIT",
-        "WorkOS (Radix UI)",
-        "https://github.com/radix-ui/icons",
-    ),
-    (
-        "heroicons",
-        "tailwindlabs/heroicons",
-        "master",
-        "src/24/outline",
-        "MIT",
-        "Tailwind Labs Inc.",
-        "https://github.com/tailwindlabs/heroicons",
-    ),
-    (
-        "tabler",
-        "tabler/tabler-icons",
-        "main",
-        "icons/outline",
-        "MIT",
-        "Paweł Kuna",
-        "https://github.com/tabler/tabler-icons",
-    ),
-    (
-        "iconoir",
-        "iconoir-icons/iconoir",
-        "main",
-        "icons",
-        "MIT",
-        "Iconoir contributors",
-        "https://github.com/iconoir-icons/iconoir",
-    ),
-    (
-        "phosphor",
-        "phosphor-icons/core",
-        "main",
-        "assets/regular",
-        "MIT",
-        "Phosphor Icons contributors",
-        "https://github.com/phosphor-icons/core",
-    ),
-    (
-        "mdi",
-        "Templarian/MaterialDesign",
-        "master",
-        "svg",
-        "Apache-2.0",
-        "Austin Andrews (Templarian)",
-        "https://github.com/Templarian/MaterialDesign",
-    ),
-];
+/// (key, repo, branch, in-repo svg path prefix, spdx, author, source URL,
+///  style, mono)
+/// `style`: "stroke" (stroke-based outlines), "fill" (filled paths),
+/// "mixed" (per-path fill/stroke, like Radix — paths self-describe).
+/// `mono`: for fill sets, rewrite every explicit path fill to `currentColor`
+/// so the site's color control and themes can tint them.
+const COLLECTIONS: &[(&str, &str, &str, &str, &str, &str, &str, &str, bool)] =
+    &[
+        (
+            "radix",
+            "radix-ui/icons",
+            "main",
+            "packages/radix-icons/icons",
+            "MIT",
+            "WorkOS (Radix UI)",
+            "https://github.com/radix-ui/icons",
+            "stroke",
+            false,
+        ),
+        (
+            "tabler",
+            "tabler/tabler-icons",
+            "main",
+            "icons/outline",
+            "MIT",
+            "Paweł Kuna",
+            "https://github.com/tabler/tabler-icons",
+            "stroke",
+            false,
+        ),
+        (
+            "iconoir",
+            "iconoir-icons/iconoir",
+            "main",
+            "icons",
+            "MIT",
+            "Iconoir contributors",
+            "https://github.com/iconoir-icons/iconoir",
+            "stroke",
+            false,
+        ),
+        (
+            "phosphor",
+            "phosphor-icons/core",
+            "main",
+            "assets/regular",
+            "MIT",
+            "Phosphor Icons contributors",
+            "https://github.com/phosphor-icons/core",
+            "stroke",
+            false,
+        ),
+        (
+            "mdi",
+            "Templarian/MaterialDesign",
+            "master",
+            "svg",
+            "Apache-2.0",
+            "Austin Andrews (Templarian)",
+            "https://github.com/Templarian/MaterialDesign",
+            "fill",
+            false,
+        ),
+        (
+            "bootstrap",
+            "twbs/icons",
+            "main",
+            "icons",
+            "MIT",
+            "The Bootstrap Authors",
+            "https://github.com/twbs/icons",
+            "fill",
+            false,
+        ),
+        (
+            "simple-icons",
+            "simple-icons/simple-icons",
+            "develop",
+            "icons",
+            "CC0-1.0",
+            "Simple Icons Contributors",
+            "https://github.com/simple-icons/simple-icons",
+            "fill",
+            true,
+        ),
+        (
+            "cryptocurrency",
+            "spothq/cryptocurrency-icons",
+            "master",
+            "svg/black",
+            "CC0-1.0",
+            "Spothq contributors",
+            "https://github.com/spothq/cryptocurrency-icons",
+            "fill",
+            true,
+        ),
+    ];
 
 struct CollectionSpec {
     key: &'static str,
@@ -80,6 +120,8 @@ struct CollectionSpec {
     license: &'static str,
     author: &'static str,
     url: &'static str,
+    style: &'static str,
+    mono: bool,
 }
 
 struct ParsedIcon {
@@ -104,7 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let spec_list: Vec<CollectionSpec> = COLLECTIONS
         .iter()
-        .map(|(k, r, b, p, l, a, u)| CollectionSpec {
+        .map(|(k, r, b, p, l, a, u, s, m)| CollectionSpec {
             key: k,
             repo: r,
             branch: b,
@@ -112,6 +154,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             license: l,
             author: a,
             url: u,
+            style: s,
+            mono: *m,
         })
         .collect();
 
@@ -125,7 +169,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for spec in &spec_list {
         let tarball = fetch_tarball(spec, &cache_dir)?;
-        let icons = extract_icons(spec, &tarball)?;
+        let mut icons = extract_icons(spec, &tarball)?;
+        for icon in &mut icons {
+            normalize_style(icon, spec.style, spec.mono);
+        }
         let count = icons.len();
         all_counts.push((spec.key.to_string(), count));
         let table_name = format!("{}_ICONS", spec.key.to_uppercase().replace('-', "_"));
@@ -304,6 +351,71 @@ fn parse_svg(path: &Path, content: &str) -> Option<ParsedIcon> {
     })
 }
 
+/// Normalize a glyph's root style so the rendering pipeline can rely on a
+/// single convention: stroke-based sets use `fill="none" stroke="currentColor"`
+/// and get a stroke width; fill-based sets use `fill="currentColor" stroke="none"`
+/// and ignore stroke width; mixed sets (Radix) leave both neutral because the
+/// paths carry their own fill/stroke attributes.
+fn normalize_style(icon: &mut ParsedIcon, style: &str, mono: bool) {
+    match style {
+        "stroke" => {
+            icon.fill = "none".to_string();
+            icon.stroke = "currentColor".to_string();
+        }
+        "fill" => {
+            icon.fill = "currentColor".to_string();
+            icon.stroke = "none".to_string();
+            if mono {
+                icon.svg = strip_title(&monoize(&icon.svg));
+            }
+        }
+        "mixed" => {
+            icon.fill = "none".to_string();
+            icon.stroke = "none".to_string();
+        }
+        _ => {}
+    }
+}
+
+/// Rewrite every explicit `fill="#RRGGBB"` on inner elements to
+/// `fill="currentColor"` so theme colors can tint monochrome sets.
+fn monoize(svg: &str) -> String {
+    let mut out = String::with_capacity(svg.len());
+    let mut rest = svg;
+    while let Some(idx) = rest.find("fill=\"#") {
+        out.push_str(&rest[..idx + 6]);
+        let after = &rest[idx + 6..];
+        match after.find('"') {
+            Some(end) => {
+                out.push_str("currentColor");
+                out.push('"');
+                rest = &after[end + 1..];
+            }
+            None => {
+                out.push_str(after);
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+/// Remove `<title>…</title>` elements (Simple Icons embeds them).
+fn strip_title(svg: &str) -> String {
+    let mut out = String::with_capacity(svg.len());
+    let mut rest = svg;
+    while let Some(idx) = rest.find("<title") {
+        out.push_str(&rest[..idx]);
+        match rest[idx..].find("</title>") {
+            Some(close) => rest = &rest[idx + close + 8..],
+            None => return out,
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 /// Naive but sufficient attribute pull from a tag string.
 fn attr(tag: &str, key: &str) -> Option<String> {
     let pat = format!("{key}=\"");
@@ -342,11 +454,16 @@ fn escape(s: &str) -> String {
 }
 
 fn title_case(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-        None => String::new(),
-    }
+    s.split('-')
+        .map(|part| {
+            let mut c = part.chars();
+            match c.next() {
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 #[allow(dead_code)]

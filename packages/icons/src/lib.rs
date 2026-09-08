@@ -46,10 +46,14 @@ pub mod registry;
 pub mod animated;
 
 #[cfg(feature = "animated")]
-pub use animated::{AnimatedIcon, AnimatedSvg, AnimationProfile, animation_profile};
+pub use animated::{
+    AnimatedIcon, AnimatedSvg, AnimationProfile, animation_profile,
+};
 pub use collections::{CollectedGlyph, Collection, CollectionInfo};
 pub use glyph::Glyph;
-pub use icon::{CustomIcon, Icon};
+#[cfg(feature = "animated")]
+pub use icon::AnimatedCollectionIcon;
+pub use icon::{CollectionIcon, CustomIcon, Icon};
 pub use registry::*;
 
 /// Re-export strum traits for iterating/looking up icons.

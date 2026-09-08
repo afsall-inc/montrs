@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -28,8 +28,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use montrs_build::{BuildPipeline, Pipeline};
-use std::{path::Path, process::Command};
+use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
+use std::path::Path;
+use tokio::process::Command as TokioCommand;
 
 pub async fn run() -> anyhow::Result<()> {
     let mut pipeline = match Pipeline::from_root(Path::new(".")) {
@@ -71,14 +72,27 @@ pub async fn run() -> anyhow::Result<()> {
     println!("Site root: {site_root}");
     println!("PKG dir: {pkg_dir}");
 
-    let status = Command::new(&bin)
+    // Live-reload: the SSR shell's hydration scripts open a WebSocket here
+    // and reload the tab whenever we broadcast after a successful rebuild.
+    let reload_port = pipeline.meta.serve.reload_port;
+    let reload = match LiveReload::start(reload_port).await {
+        Ok(r) => {
+            println!("Live reload listening on ws://0.0.0.0:{reload_port}");
+            Some(r)
+        }
+        Err(e) => {
+            eprintln!(
+                "Live reload unavailable ({e}); page won't auto-refresh."
+            );
+            None
+        }
+    };
+
+    let mut server_child = TokioCommand::new(&bin)
         .env("MONTRS_SITE_ROOT", &site_root)
         .env("MONTRS_SITE_PKG_DIR", &pkg_dir)
         .env("MONTRS_SITE_ADDR", &addr)
-        .env(
-            "MONTRS_RELOAD_PORT",
-            pipeline.meta.serve.reload_port.to_string(),
-        )
+        .env("MONTRS_RELOAD_PORT", reload_port.to_string())
         .env(
             "MONTRS_OUTPUT_NAME",
             pipeline
@@ -90,8 +104,27 @@ pub async fn run() -> anyhow::Result<()> {
         )
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
-        .status()?;
+        .kill_on_drop(true)
+        .spawn()?;
 
+    // Watch for source changes: rebuild, then tell the browser to reload.
+    let reload_for_watch = reload.clone();
+    let _watcher = tokio::task::spawn_blocking(move || {
+        let _ = montrs_build::watch_directory(Path::new("."), move || {
+            println!("Change detected — rebuilding...");
+            match pipeline.build_all() {
+                Ok(_) => {
+                    println!("Rebuild complete.");
+                    if let Some(r) = &reload_for_watch {
+                        r.notify();
+                    }
+                }
+                Err(e) => eprintln!("Build error: {e}"),
+            }
+        });
+    });
+
+    let status = server_child.wait().await?;
     if !status.success() {
         anyhow::bail!("SSR server exited with error code");
     }

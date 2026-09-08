@@ -49,10 +49,9 @@ pub fn Footer() -> impl IntoView {
                     <div>
                         <h3 class="text-sm font-semibold">"Framework"</h3>
                         <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
-                            <li><a class="transition-colors hover:text-foreground" href="/docs">"Docs"</a></li>
+                            <li><a class="transition-colors hover:text-foreground" href="/packages">"Packages"</a></li>
                             <li><a class="transition-colors hover:text-foreground" href="/auth">"Auth"</a></li>
                             <li><a class="transition-colors hover:text-foreground" href="/runtime">"Runtime"</a></li>
-                            <li><a class="transition-colors hover:text-foreground" href="/orm">"ORM"</a></li>
                         </ul>
                     </div>
                     <div>

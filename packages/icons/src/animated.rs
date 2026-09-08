@@ -1,4 +1,4 @@
-﻿// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -33,8 +33,10 @@
 //! Each icon gets a physics-based animation profile on hover.
 //! Requires the `animated` feature flag.
 
-use crate::glyph::Glyph;
-use crate::icon::{DEFAULT_FILL, DEFAULT_SIZE, DEFAULT_STROKE, DEFAULT_STROKE_WIDTH};
+use crate::{
+    glyph::Glyph,
+    icon::{DEFAULT_FILL, DEFAULT_SIZE, DEFAULT_STROKE, DEFAULT_STROKE_WIDTH},
+};
 use leptos::{prelude::*, text_prop::TextProp};
 use montrs_motion::FrameLoop;
 
@@ -57,29 +59,45 @@ pub enum AnimationProfile {
 #[component]
 pub fn AnimatedSvg(
     /// Inner SVG markup (the child elements, without the `<svg>` wrapper).
-    #[prop(into)] svg: TextProp,
+    #[prop(into)]
+    svg: TextProp,
     #[prop(into, optional)] class: TextProp,
     #[prop(into, optional)] size: TextProp,
     #[prop(into, optional)] fill: TextProp,
     #[prop(into, optional)] stroke: TextProp,
     #[prop(into, optional)] stroke_width: TextProp,
+    /// Optional CSS `color` override — tints every `currentColor` fill/stroke
+    /// in any collection (fill sets rely on this instead of the stroke attr).
+    #[prop(into, optional)]
+    color: TextProp,
     /// Defaults to "0 0 24 24".
-    #[prop(into, optional)] viewbox: TextProp,
+    #[prop(into, optional)]
+    viewbox: TextProp,
     /// Animation profile (`None` = PathDraw).
     #[prop(into, optional)]
     profile: Signal<Option<AnimationProfile>>,
 ) -> impl IntoView {
-    let profile = Memo::new(move |_| {
-        profile.get().unwrap_or(AnimationProfile::PathDraw)
-    });
-
     let svg_text = svg;
     let class_val = class;
     let size_val = size;
     let fill_val = fill;
     let stroke_val = stroke;
+    let color_val = color;
     let sw = stroke_width;
     let viewbox_val = viewbox;
+
+    // Fill-mode collections (Radix, MDI, Bootstrap, Simple Icons, …) carry
+    // `stroke="none"` in their data; they should not get a stroke width and
+    // default to a visible (non-draw) animation.
+    let stroke_prof = stroke_val.clone();
+    let profile = Memo::new(move |_| match profile.get() {
+        Some(AnimationProfile::PathDraw) if stroke_prof.get() == "none" => {
+            AnimationProfile::Pulse
+        }
+        Some(p) => p,
+        None if stroke_prof.get() == "none" => AnimationProfile::Pulse,
+        None => AnimationProfile::PathDraw,
+    });
 
     // Empty props (omitted) fall back to the Lucide defaults.
     let size_ok = move || {
@@ -93,23 +111,47 @@ pub fn AnimatedSvg(
     let size2_ok = size_ok.clone();
     let fill_ok = move || {
         let s = fill_val.get();
-        if s.is_empty() { "none".to_string() } else { s.to_string() }
-    };
-    let stroke_ok = move || {
-        let s = stroke_val.get();
-        if s.is_empty() { "currentColor".to_string() } else { s.to_string() }
-    };
-    let sw_ok = move || {
-        let s = sw.get();
         if s.is_empty() {
-            DEFAULT_STROKE_WIDTH.to_string()
+            "none".to_string()
         } else {
             s.to_string()
         }
     };
+    let stroke_detect = stroke_val.clone();
+    let stroke_color = stroke_val.clone();
+    let stroke_ok = move || {
+        if stroke_detect.get() == "none" {
+            String::new()
+        } else {
+            let s = stroke_color.get();
+            if s.is_empty() {
+                "currentColor".to_string()
+            } else {
+                s.to_string()
+            }
+        }
+    };
+    let sw_stroke = stroke_val.clone();
+    let sw_color = sw.clone();
+    let sw_ok = move || {
+        if sw_stroke.get() == "none" {
+            String::new()
+        } else {
+            let s = sw_color.get();
+            if s.is_empty() {
+                DEFAULT_STROKE_WIDTH.to_string()
+            } else {
+                s.to_string()
+            }
+        }
+    };
     let viewbox_ok = move || {
         let s = viewbox_val.get();
-        if s.is_empty() { "0 0 24 24".to_string() } else { s.to_string() }
+        if s.is_empty() {
+            "0 0 24 24".to_string()
+        } else {
+            s.to_string()
+        }
     };
 
     // Spring animation values
@@ -120,51 +162,49 @@ pub fn AnimatedSvg(
     // CSS keyframe class applied on hover (pulse / bounce / ping).
     let css_class = RwSignal::new("");
 
-    let on_enter = move |ev: leptos::ev::MouseEvent| {
-        match profile.get() {
-            AnimationProfile::Pulse => css_class.set("montrs-pulse"),
-            AnimationProfile::Bounce => css_class.set("montrs-bounce"),
-            AnimationProfile::Ping => css_class.set("montrs-ping"),
-            AnimationProfile::Spin => {
-                is_spinning.set(true);
-                let start = FrameLoop::now();
-                FrameLoop::on_frame(move || {
-                    if !is_spinning.get() {
-                        return false;
-                    }
-                    let elapsed = FrameLoop::now() - start;
-                    rotate.set((elapsed * 360.0 * 1.5) % 360.0);
-                    true
-                });
-            }
-            AnimationProfile::Shake => {
-                is_spinning.set(true);
-                let start = FrameLoop::now();
-                FrameLoop::on_frame(move || {
-                    let elapsed = FrameLoop::now() - start;
-                    if elapsed > 0.6 || !is_spinning.get() {
-                        return false;
-                    }
-                    rotate.set((elapsed * 40.0).sin() * 10.0);
-                    true
-                });
-            }
-            AnimationProfile::Nod => {
-                translate_y.set(-4.0);
-                FrameLoop::on_frame(move || {
-                    let current: f64 = translate_y.get();
-                    let next: f64 = current + (0.0 - current) * 0.2;
-                    translate_y.set(next);
-                    next.abs() > 0.1
-                });
-            }
-            AnimationProfile::PathDraw => {
-                if let Some(svg) = resolve_svg(&ev) {
-                    draw_svg(&svg, 350, 0);
+    let on_enter = move |ev: leptos::ev::MouseEvent| match profile.get() {
+        AnimationProfile::Pulse => css_class.set("montrs-pulse"),
+        AnimationProfile::Bounce => css_class.set("montrs-bounce"),
+        AnimationProfile::Ping => css_class.set("montrs-ping"),
+        AnimationProfile::Spin => {
+            is_spinning.set(true);
+            let start = FrameLoop::now();
+            FrameLoop::on_frame(move || {
+                if !is_spinning.get() {
+                    return false;
                 }
-            }
-            AnimationProfile::None => {}
+                let elapsed = FrameLoop::now() - start;
+                rotate.set((elapsed * 360.0 * 1.5) % 360.0);
+                true
+            });
         }
+        AnimationProfile::Shake => {
+            is_spinning.set(true);
+            let start = FrameLoop::now();
+            FrameLoop::on_frame(move || {
+                let elapsed = FrameLoop::now() - start;
+                if elapsed > 0.6 || !is_spinning.get() {
+                    return false;
+                }
+                rotate.set((elapsed * 40.0).sin() * 10.0);
+                true
+            });
+        }
+        AnimationProfile::Nod => {
+            translate_y.set(-4.0);
+            FrameLoop::on_frame(move || {
+                let current: f64 = translate_y.get();
+                let next: f64 = current + (0.0 - current) * 0.2;
+                translate_y.set(next);
+                next.abs() > 0.1
+            });
+        }
+        AnimationProfile::PathDraw => {
+            if let Some(svg) = resolve_svg(&ev) {
+                draw_svg(&svg, 350, 0);
+            }
+        }
+        AnimationProfile::None => {}
     };
 
     let on_leave = move |ev: leptos::ev::MouseEvent| {
@@ -182,14 +222,22 @@ pub fn AnimatedSvg(
 
     // Per-frame transform lives on the `<svg>`; CSS keyframe classes
     // (pulse/bounce/ping) are layered on top via the class attribute.
+    // The user's picked color is applied via CSS `color` so every
+    // `currentColor` stroke/fill (in any collection) tints correctly.
     let svg_style = move || {
-        let mut styles = format!(
-            "transform: scale({}) rotate({})deg translateY({}px); \
+        let color = color_val.get();
+        let mut styles = if color.is_empty() {
+            String::new()
+        } else {
+            format!("color: {color}; ")
+        };
+        styles.push_str(&format!(
+            "transform: scale({}) rotate({}deg) translateY({}px); \
              transform-origin: center;",
             scale.get(),
             rotate.get(),
             translate_y.get()
-        );
+        ));
         if is_spinning.get() {
             styles.push_str(" transition: none;");
         } else {
@@ -201,35 +249,33 @@ pub fn AnimatedSvg(
     };
 
     view! {
-        <span
-            class="inline-flex cursor-pointer"
-            on:mouseenter=on_enter
-            on:mouseleave=on_leave
-        >
-<svg
-              xmlns="http://www.w3.org/2000/svg"
-              class=move || {
-                  let extra = css_class.get();
-                  let base = class_val.get();
-                  if extra.is_empty() {
-                      base.to_string()
-                  } else {
-                      format!("{} {}", base, extra)
+            <span class="inline-flex cursor-pointer">
+    <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class=move || {
+                      let extra = css_class.get();
+                      let base = class_val.get();
+                      if extra.is_empty() {
+                          base.to_string()
+                      } else {
+                          format!("{} {}", base, extra)
+                      }
                   }
-              }
-              width=move || size_ok()
-              height=move || size2_ok()
-              viewBox=move || viewbox_ok()
-              fill=move || fill_ok()
-              stroke=move || stroke_ok()
-              stroke-width=move || sw_ok()
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              style=svg_style
-              inner_html=move || svg_text.get()
-            />
-        </span>
-    }
+                  width=size_ok
+                  height=size2_ok
+                  viewBox=viewbox_ok
+                  fill=fill_ok
+                  stroke=stroke_ok
+                  stroke-width=sw_ok
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style=svg_style
+                  on:mouseenter=on_enter
+                  on:mouseleave=on_leave
+                  inner_html=move || svg_text.get()
+                />
+            </span>
+        }
 }
 
 /// Animated icon component for built-in [`Glyph`]s with spring physics on hover.
@@ -251,7 +297,8 @@ pub fn AnimatedIcon(
     #[prop(into, optional)] stroke: Option<TextProp>,
     #[prop(into, optional)] stroke_width: Option<TextProp>,
     /// Defaults to "0 0 24 24".
-    #[prop(into, optional)] viewbox: Option<TextProp>,
+    #[prop(into, optional)]
+    viewbox: Option<TextProp>,
     /// Override the auto-detected animation profile (`None` = auto).
     #[prop(into, optional)]
     profile: Signal<Option<AnimationProfile>>,
@@ -275,14 +322,21 @@ pub fn AnimatedIcon(
     }
 }
 
-/// Resolve the `<svg>` element from a mouse event by walking up the DOM from
-/// the event target (avoids needing a typed NodeRef for the SVG namespace).
+/// Resolve the `<svg>` element from a mouse event: prefer the element the
+/// listener is attached to (`current_target`), then walk up from the target.
 #[allow(unused_variables)]
 fn resolve_svg(ev: &leptos::ev::MouseEvent) -> Option<web_sys::SvgElement> {
     #[cfg(target_arch = "wasm32")]
     {
         use wasm_bindgen::JsCast;
-        let mut node = ev.target().and_then(|t| t.dyn_into::<web_sys::Node>().ok());
+        if let Some(svg) = ev
+            .current_target()
+            .and_then(|t| t.dyn_into::<web_sys::SvgElement>().ok())
+        {
+            return Some(svg);
+        }
+        let mut node =
+            ev.target().and_then(|t| t.dyn_into::<web_sys::Node>().ok());
         while let Some(n) = node.clone() {
             if let Ok(el) = n.clone().dyn_into::<web_sys::Element>() {
                 if el.tag_name().eq_ignore_ascii_case("svg") {
@@ -304,8 +358,7 @@ fn resolve_svg(ev: &leptos::ev::MouseEvent) -> Option<web_sys::SvgElement> {
 fn draw_svg(svg: &web_sys::SvgElement, duration_ms: u32, delay_ms: u32) {
     #[cfg(target_arch = "wasm32")]
     {
-        use wasm_bindgen::prelude::Closure;
-        use wasm_bindgen::JsCast;
+        use wasm_bindgen::{JsCast, prelude::Closure};
 
         let svg: web_sys::Element = svg.clone().into();
         // Apply per-element measured dash lengths (hides every stroke).
@@ -325,26 +378,32 @@ fn draw_svg(svg: &web_sys::SvgElement, duration_ms: u32, delay_ms: u32) {
                         let _ = style.set_property(
                             "transition",
                             &format!(
-                                "stroke-dashoffset {duration_ms}ms ease-in-out \
-                                 {delay_ms}ms"
+                                "stroke-dashoffset {duration_ms}ms \
+                                 ease-in-out {delay_ms}ms"
                             ),
                         );
                         let _ = style.set_property("stroke-dashoffset", "0");
                     });
-                }) as Box<dyn FnMut()>);
-                let _ = win.request_animation_frame(closure2.as_ref().unchecked_ref());
+                })
+                    as Box<dyn FnMut()>);
+                let _ = win
+                    .request_animation_frame(closure2.as_ref().unchecked_ref());
                 closure2.forget();
             }
         }) as Box<dyn FnMut()>);
         if let Some(win) = web_sys::window() {
-            let _ = win.request_animation_frame(closure1.as_ref().unchecked_ref());
+            let _ =
+                win.request_animation_frame(closure1.as_ref().unchecked_ref());
         }
         closure1.forget();
     }
 }
 
 #[cfg(target_arch = "wasm32")]
-fn set_geometry_state<F: Fn(&web_sys::CssStyleDeclaration)>(svg: &web_sys::Element, f: F) {
+fn set_geometry_state<F: Fn(&web_sys::CssStyleDeclaration)>(
+    svg: &web_sys::Element,
+    f: F,
+) {
     use wasm_bindgen::JsCast;
     let children = svg.children();
     for i in 0..children.length() {

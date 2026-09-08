@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -79,10 +79,10 @@ impl RouteView for MotionView {
     }
 }
 
-pub struct DocsView;
-impl RouteView for DocsView {
+pub struct PackagesView;
+impl RouteView for PackagesView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Docs /> }
+        view! { <crate::pages::Packages /> }
     }
 }
 
@@ -107,17 +107,31 @@ impl RouteView for AiKitView {
     }
 }
 
-pub struct OrmView;
-impl RouteView for OrmView {
-    fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Orm /> }
-    }
-}
-
 pub struct FoundationsView;
 impl RouteView for FoundationsView {
     fn render(&self) -> impl IntoView {
         view! { <crate::pages::Foundations /> }
+    }
+}
+
+pub struct ThemesView;
+impl RouteView for ThemesView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Themes /> }
+    }
+}
+
+pub struct BackgroundsView;
+impl RouteView for BackgroundsView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Backgrounds /> }
+    }
+}
+
+pub struct TemplatesView;
+impl RouteView for TemplatesView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Templates /> }
     }
 }
 
@@ -135,12 +149,16 @@ view_route! { IconsRoute, "/ui/icons", IconsView }
 view_route! { MotionRoute, "/ui/motion", MotionView }
 
 // Framework sections
-view_route! { DocsRoute, "/docs", DocsView }
+view_route! { PackagesRoute, "/packages", PackagesView }
 view_route! { AuthRoute, "/auth", AuthView }
 view_route! { RuntimeRoute, "/runtime", RuntimeView }
 view_route! { AiKitRoute, "/ai", AiKitView }
-view_route! { OrmRoute, "/orm", OrmView }
 view_route! { FoundationsRoute, "/foundations", FoundationsView }
+
+// Themes / backgrounds / templates
+view_route! { ThemesRoute, "/ui/themes", ThemesView }
+view_route! { BackgroundsRoute, "/ui/backgrounds", BackgroundsView }
+view_route! { TemplatesRoute, "/templates", TemplatesView }
 
 // ---------------------------------------------------------------------------
 // Website Plate
@@ -155,7 +173,7 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
     }
 
     fn description(&self) -> &'static str {
-        "MontRS website — montrs.com"
+        "MontRS website â€” montrs.com"
     }
 
     fn dependencies(&self) -> Vec<&'static str> {
@@ -176,11 +194,13 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(BlocksRoute);
         router.register(IconsRoute);
         router.register(MotionRoute);
-        router.register(DocsRoute);
+        router.register(ThemesRoute);
+        router.register(BackgroundsRoute);
+        router.register(TemplatesRoute);
+        router.register(PackagesRoute);
         router.register(AuthRoute);
         router.register(RuntimeRoute);
         router.register(AiKitRoute);
-        router.register(OrmRoute);
         router.register(FoundationsRoute);
     }
 }

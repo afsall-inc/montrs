@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -31,12 +31,274 @@
 use crate::copy::CopyButton;
 use leptos::prelude::*;
 use montrs_core::nav::*;
-use montrs_icons::collections::CollectedGlyph;
-use montrs_icons::{Collection, Glyph, Icon, AnimatedSvg};
-use montrs_ui::components::switch::Switch;
+use montrs_icons::{
+    AnimatedCollectionIcon, Collection, CollectionIcon, Glyph, Icon,
+    collections::CollectedGlyph,
+};
 use montrs_ui::prelude::*;
 
-const CHUNK_SIZE: usize = 240;
+const PAGE_SIZE: usize = 200;
+
+/// Total glyphs across every enabled collection (used by the sidebar).
+static ALL_TOTAL_ICONS: std::sync::LazyLock<usize> =
+    std::sync::LazyLock::new(|| {
+        Collection::ALL.iter().map(|c| c.count()).sum()
+    });
+
+/// Keyword-based category classification for non-Lucide collections, which
+/// don't carry upstream category metadata. Names are matched as substrings.
+const CATEGORY_RULES: &[(&str, &[&str])] = &[
+    (
+        "Arrows",
+        &[
+            "arrow",
+            "chevron",
+            "caret",
+            "corner",
+            "direction",
+            "forward",
+            "backward",
+        ],
+    ),
+    (
+        "Brands",
+        &[
+            "github",
+            "twitter",
+            "facebook",
+            "youtube",
+            "linkedin",
+            "instagram",
+            "discord",
+            "slack",
+            "whatsapp",
+            "telegram",
+            "tiktok",
+            "reddit",
+            "chrome",
+            "firefox",
+            "windows",
+            "apple",
+            "android",
+            "google",
+            "microsoft",
+            "amazon",
+            "netflix",
+            "spotify",
+            "brand",
+            "logo",
+            "patreon",
+            "paypal",
+            "stripe",
+        ],
+    ),
+    (
+        "Crypto",
+        &[
+            "bitcoin",
+            "btc",
+            "ethereum",
+            "eth",
+            "litecoin",
+            "monero",
+            "xrp",
+            "dogecoin",
+            "solana",
+            "polkadot",
+            "cardano",
+            "usdt",
+            "tether",
+            "binance",
+            "coin",
+            "blockchain",
+            "crypto",
+        ],
+    ),
+    (
+        "Communication",
+        &[
+            "chat",
+            "message",
+            "mail",
+            "envelope",
+            "phone",
+            "call",
+            "send",
+            "comment",
+            "speech",
+            "inbox",
+            "notification",
+            "bell",
+            "fax",
+        ],
+    ),
+    (
+        "Currency",
+        &[
+            "currency", "money", "bank", "cash", "wallet", "credit", "card",
+            "dollar", "euro", "yen", "pound", "naira", "ruble", "rupee", "won",
+            "frank", "lira", "baht", "shekel", "bitcoin",
+        ],
+    ),
+    (
+        "Files",
+        &[
+            "file",
+            "folder",
+            "document",
+            "archive",
+            "clipboard",
+            "download",
+            "upload",
+            "copy",
+            "print",
+            "save",
+        ],
+    ),
+    (
+        "Health",
+        &[
+            "health",
+            "medical",
+            "pulse",
+            "activity",
+            "pill",
+            "vaccine",
+            "stethoscope",
+            "hospital",
+            "heartbeat",
+            "first-aid",
+        ],
+    ),
+    (
+        "Media",
+        &[
+            "play", "pause", "stop", "music", "video", "film", "camera",
+            "image", "photo", "volume", "mic", "audio", "tv", "cast", "record",
+        ],
+    ),
+    (
+        "Shapes",
+        &[
+            "circle",
+            "square",
+            "triangle",
+            "rectangle",
+            "hexagon",
+            "diamond",
+            "ring",
+            "oval",
+            "polygon",
+        ],
+    ),
+    (
+        "Time",
+        &[
+            "clock",
+            "time",
+            "hour",
+            "calendar",
+            "date",
+            "watch",
+            "timer",
+            "alarm",
+            "stopwatch",
+        ],
+    ),
+    (
+        "Transport",
+        &[
+            "car",
+            "truck",
+            "plane",
+            "train",
+            "bus",
+            "bike",
+            "ship",
+            "boat",
+            "anchor",
+            "map",
+            "pin",
+            "location",
+            "navigation",
+            "route",
+            "road",
+            "traffic",
+        ],
+    ),
+    (
+        "UI",
+        &[
+            "menu", "close", "plus", "minus", "check", "search", "filter",
+            "settings", "cog", "slider", "toggle", "switch", "star", "heart",
+            "bookmark", "flag", "home", "user", "lock", "shield", "eye",
+            "trash", "edit", "pencil", "refresh", "grid", "list", "layout",
+        ],
+    ),
+    (
+        "Weather",
+        &[
+            "sun",
+            "moon",
+            "cloud",
+            "rain",
+            "snow",
+            "wind",
+            "storm",
+            "thunder",
+            "lightning",
+            "drop",
+            "umbrella",
+            "snowflake",
+        ],
+    ),
+];
+
+/// Does `name` belong to a derived (keyword-based) category?
+fn name_in_category(name: &str, category: &str) -> bool {
+    CATEGORY_RULES
+        .iter()
+        .find(|(title, _)| *title == category)
+        .is_some_and(|(_, keywords)| keywords.iter().any(|k| name.contains(k)))
+}
+
+/// Search aliases: icon names that users might not know (e.g. cryptocurrency
+/// tickers like `btc`) get mapped to the terms they'd actually type
+/// (`bitcoin`). A query matches an icon if it matches its name OR any alias.
+const KEYWORD_ALIASES: &[(&str, &[&str])] = &[
+    ("btc", &["bitcoin", "btc"]),
+    ("eth", &["ethereum"]),
+    ("xrp", &["ripple"]),
+    ("ltc", &["litecoin"]),
+    ("xmr", &["monero"]),
+    ("doge", &["dogecoin"]),
+    ("ada", &["cardano"]),
+    ("dot", &["polkadot"]),
+    ("sol", &["solana"]),
+    ("usdt", &["tether"]),
+    ("bnb", &["binance"]),
+    ("avax", &["avalanche"]),
+    ("matic", &["polygon"]),
+    ("uni", &["uniswap"]),
+    ("shib", &["shiba"]),
+    ("trx", &["tron"]),
+    ("atom", &["cosmos"]),
+    ("link", &["chainlink"]),
+    ("near", &["near protocol"]),
+    ("ftm", &["fantom"]),
+    ("aave", &["aave"]),
+    ("comp", &["compound"]),
+    ("sushi", &["sushiswap"]),
+    ("pancakeswap", &["cake"]),
+];
+
+/// True when `name` matches `query` either directly or via an alias.
+fn keyword_matches(name: &str, query: &str) -> bool {
+    KEYWORD_ALIASES.iter().any(|(ticker, aliases)| {
+        ticker.eq_ignore_ascii_case(name)
+            && aliases.iter().any(|a| a.to_lowercase().contains(query))
+    })
+}
 
 fn formatted_name(name: &str) -> String {
     name.split('-')
@@ -52,30 +314,37 @@ fn formatted_name(name: &str) -> String {
 }
 
 fn full_svg_markup(g: &CollectedGlyph, size: u32, stroke_w: f64) -> String {
+    let sw = if g.stroke == "none" {
+        String::new()
+    } else {
+        format!(" stroke-width=\"{stroke_w}\"")
+    };
     format!(
         "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{size}\" \
-         height=\"{size}\" viewBox=\"{}\" fill=\"{}\" stroke=\"{}\" \
-         stroke-width=\"{stroke_w}\" stroke-linecap=\"round\" \
-         stroke-linejoin=\"round\">{}</svg>",
+         height=\"{size}\" viewBox=\"{}\" fill=\"{}\" stroke=\"{}\"{sw} \
+         stroke-linecap=\"round\" stroke-linejoin=\"round\">{}</svg>",
         g.viewbox, g.fill, g.stroke, g.svg
     )
 }
 
 // ---------------------------------------------------------------------------
-// MRU (localStorage, client-only, Lucide-only)
+// MRU (localStorage, client-only, works for every collection)
 // ---------------------------------------------------------------------------
 
-fn load_mru() -> Vec<Glyph> {
+fn load_mru() -> Vec<(Collection, String)> {
     #[cfg(target_arch = "wasm32")]
     {
         if let Some(window) = web_sys::window()
             && let Ok(Some(storage)) = window.local_storage()
             && let Ok(Some(raw)) = storage.get_item("montrs-icons-mru")
-            && let Ok(names) = serde_json::from_str::<Vec<String>>(&raw)
+            && let Ok(items) =
+                serde_json::from_str::<Vec<(String, String)>>(&raw)
         {
-            return names
-                .iter()
-                .filter_map(|n| Glyph::by_name(n))
+            return items
+                .into_iter()
+                .filter_map(|(col, name)| {
+                    Collection::from_key(&col).map(|c| (c, name))
+                })
                 .collect::<Vec<_>>();
         }
     }
@@ -83,13 +352,15 @@ fn load_mru() -> Vec<Glyph> {
 }
 
 #[allow(unused_variables)]
-fn save_mru(items: &[Glyph]) {
+fn save_mru(items: &[(Collection, String)]) {
     #[cfg(target_arch = "wasm32")]
     {
         if let Some(window) = web_sys::window() {
-            let names: Vec<String> =
-                items.iter().map(|g| g.name().to_string()).collect();
-            if let Ok(json) = serde_json::to_string(&names)
+            let data: Vec<(String, String)> = items
+                .iter()
+                .map(|(c, n)| (c.key().to_string(), n.clone()))
+                .collect();
+            if let Ok(json) = serde_json::to_string(&data)
                 && let Ok(Some(storage)) = window.local_storage()
             {
                 let _ = storage.set_item("montrs-icons-mru", &json);
@@ -103,13 +374,21 @@ pub fn Icons() -> impl IntoView {
     let query = use_query_map();
     let navigate = use_navigate();
 
+    // `None` = "All collections"; `Some(c)` = a single collection.
     let collection = RwSignal::new(
         query
             .get()
             .get("collection")
-            .and_then(|k| Collection::from_key(&k))
-            .unwrap_or(Collection::Lucide),
+            .and_then(|k| {
+                if k.eq_ignore_ascii_case("all") {
+                    None
+                } else {
+                    Collection::from_key(&k)
+                }
+            })
+            .or(Some(Collection::Lucide)),
     );
+    let initial_collection = collection.get_untracked();
     let search = RwSignal::new(query.get().get("q").unwrap_or_default());
     let size_px = RwSignal::new(
         query
@@ -123,21 +402,47 @@ pub fn Icons() -> impl IntoView {
             .get()
             .get("sw")
             .and_then(|s| s.parse::<f64>().ok())
-            .unwrap_or(1.5),
+            .unwrap_or_else(|| {
+                initial_collection
+                    .map(|c| c.default_stroke_width())
+                    .unwrap_or(1.5)
+            }),
     );
     let color = RwSignal::new(query.get().get("color").unwrap_or_default());
     let category = RwSignal::new(query.get().get("cat").unwrap_or_default());
-    let animated = RwSignal::new(
-        query.get().get("anim").is_some_and(|v| v == "1"),
-    );
+    let animated =
+        RwSignal::new(query.get().get("anim").is_none_or(|v| v != "0"));
+    let page = RwSignal::new(1usize);
 
     let hydrated = RwSignal::new(false);
-    let mru = RwSignal::new(Vec::<Glyph>::new());
-    let visible_count = RwSignal::new(CHUNK_SIZE);
+    let sidebar_open = RwSignal::new(false);
+    let mru = RwSignal::new(Vec::<(Collection, String)>::new());
     let selected_icon = RwSignal::new(None::<CollectedGlyph>);
+    let selected_owner = RwSignal::new(None::<Collection>);
     let anim_choice = RwSignal::new("auto".to_string());
 
-    // Set MRU + hydration flag after mount so SSR and hydration stay in sync.
+    // Escape closes the detail drawer and the mobile filters sidebar.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        use wasm_bindgen::{JsCast, prelude::Closure};
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let cb = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::wrap(Box::new(
+            move |ev: web_sys::KeyboardEvent| {
+                if ev.key() == "Escape" {
+                    selected_icon.set(None);
+                    sidebar_open.set(false);
+                }
+            },
+        ));
+        let _ = window.add_event_listener_with_callback(
+            "keydown",
+            cb.as_ref().unchecked_ref(),
+        );
+        cb.forget();
+    });
+
     Effect::new(move |_| {
         if !hydrated.get() {
             hydrated.set(true);
@@ -145,105 +450,149 @@ pub fn Icons() -> impl IntoView {
         }
     });
 
-    // Reset the visible chunk whenever the filter changes.
+    // Reset pagination whenever filters or the collection change.
     Effect::new(move |_| {
         search.get();
         category.get();
         collection.get();
-        visible_count.set(CHUNK_SIZE);
+        page.set(1);
     });
 
-    let is_lucide = move || collection.get() == Collection::Lucide;
+    let is_all = move || collection.get().is_none();
+    // Stroke-based collections expose a stroke-width control; fill-based
+    // collections (Radix, MDI, Bootstrap, Simple Icons, crypto) ignore it.
+    let is_stroke_style =
+        move || collection.get().is_some_and(|c| c.style() == "stroke");
 
-    // Unified filtered list over the active collection.
+    // Items carry a unique `(key, glyph)` pair so the `For` component can
+    // distinguish identical names from different collections in the "All" view.
     let filtered = Memo::new(move |_| {
         let s = search.get().to_lowercase();
         let cat = category.get();
-        if collection.get() == Collection::Lucide {
-            let mut found = if s.is_empty() {
-                Glyph::find("")
-            } else {
-                Glyph::find(&s)
-            };
-            if !cat.is_empty() {
-                found.retain(|g| {
-                    g.categories().any(|c| c.eq_ignore_ascii_case(&cat))
-                });
-            }
-            found
-                .into_iter()
-                .map(|g| CollectedGlyph {
-                    name: g.name(),
-                    svg: g.svg(),
-                    viewbox: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                })
-                .collect::<Vec<_>>()
-        } else {
-            collection
-                .get()
-                .icons()
-                .into_iter()
-                .filter(|g| s.is_empty() || g.name.to_lowercase().contains(&s))
-                .collect::<Vec<_>>()
-        }
-    });
-
-    let filtered_limited = Memo::new(move |_| {
-        let mut v = filtered.get();
-        v.truncate(visible_count.get());
-        v
-    });
-
-    let categories = Glyph::all_categories();
-
-    // Infinite scroll: observe the sentinel and extend the chunk.
-    Effect::new(move |_| {
-        #[cfg(target_arch = "wasm32")]
-        {
-            use wasm_bindgen::JsCast;
-            if let Some(document) = web_sys::window().and_then(|w| w.document()) {
-                let cb = wasm_bindgen::prelude::Closure::wrap(Box::new(
-                    move |entries: js_sys::Array| {
-                        for i in 0..entries.length() {
-                            if let Some(entry) = entries
-                                .get(i)
-                                .dyn_ref::<web_sys::IntersectionObserverEntry>()
-                                && entry.is_intersecting()
-                            {
-                                visible_count.update(|c| *c += CHUNK_SIZE);
-                            }
+        let matches = |name: &str| {
+            (s.is_empty()
+                || name.to_lowercase().contains(&s)
+                || keyword_matches(name, &s))
+                && (cat.is_empty() || name_in_category(name, &cat))
+        };
+        match collection.get() {
+            None => {
+                // All collections, concatenated in alphabetical order.
+                let mut out = Vec::new();
+                for c in Collection::ALL {
+                    for g in c.icons() {
+                        if matches(g.name) {
+                            out.push((format!("{}:{}", c.key(), g.name), g));
                         }
-                    },
-                ) as Box<dyn FnMut(js_sys::Array)>);
-                if let Ok(observer) = web_sys::IntersectionObserver::new(
-                    cb.as_ref().unchecked_ref(),
-                ) {
-                    if let Some(el) =
-                        document.get_element_by_id("icons-sentinel")
-                    {
-                        observer.observe(&el);
                     }
                 }
-                cb.forget();
+                out
             }
+            Some(Collection::Lucide) => {
+                let mut found = if s.is_empty() {
+                    Glyph::find("")
+                } else {
+                    Glyph::find(&s)
+                };
+                if !cat.is_empty() {
+                    found.retain(|g| {
+                        g.categories().any(|c| c.eq_ignore_ascii_case(&cat))
+                    });
+                }
+                found
+                    .into_iter()
+                    .map(|g| {
+                        let name = g.name();
+                        (
+                            format!("lucide:{name}"),
+                            CollectedGlyph {
+                                name,
+                                svg: g.svg(),
+                                viewbox: "0 0 24 24",
+                                fill: "none",
+                                stroke: "currentColor",
+                            },
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            }
+            Some(c) => c
+                .icons()
+                .into_iter()
+                .filter(|g| matches(g.name))
+                .map(|g| (format!("{}:{}", c.key(), g.name), g))
+                .collect::<Vec<_>>(),
         }
     });
+
+    let total_pages = Memo::new(move |_| {
+        let len = filtered.get().len();
+        if len == 0 { 1 } else { len.div_ceil(PAGE_SIZE) }
+    });
+
+    let page_icons = Memo::new(move |_| {
+        let all = filtered.get();
+        let p = page.get().min(total_pages.get()).max(1);
+        let start = (p - 1) * PAGE_SIZE;
+        all.into_iter()
+            .skip(start)
+            .take(PAGE_SIZE)
+            .collect::<Vec<_>>()
+    });
+
+    // Category list: Lucide uses its built-in categories; every other
+    // collection (and the "All" view) uses keyword-derived categories so
+    // filtering works everywhere.
+    let categories = Memo::new(move |_| {
+        let icons: Vec<CollectedGlyph> = match collection.get() {
+            Some(Collection::Lucide) => {
+                return Glyph::all_categories()
+                    .iter()
+                    .map(|(title, count)| (title.clone(), *count as usize))
+                    .collect::<Vec<_>>();
+            }
+            Some(c) => c.icons(),
+            None => Collection::ALL
+                .iter()
+                .flat_map(|c| c.icons())
+                .collect::<Vec<_>>(),
+        };
+        CATEGORY_RULES
+            .iter()
+            .filter_map(|(title, keywords)| {
+                let count = icons
+                    .iter()
+                    .filter(|g| keywords.iter().any(|k| g.name.contains(k)))
+                    .count();
+                (count > 0).then(|| (title.to_string(), count))
+            })
+            .collect::<Vec<_>>()
+    });
+
+    // Some collections (e.g. cryptocurrency tickers) derive no categories —
+    // in that case the Categories sidebar section is hidden entirely.
+    let categories_have = Memo::new(move |_| !categories.get().is_empty());
 
     let select_icon = move |glyph: CollectedGlyph| {
         selected_icon.set(Some(glyph));
         anim_choice.set("auto".to_string());
-        if collection.get() == Collection::Lucide {
-            if let Some(g) = Glyph::by_name(glyph.name) {
-                mru.update(|v| {
-                    v.retain(|x| *x != g);
-                    v.insert(0, g);
-                    v.truncate(8);
-                    save_mru(v);
-                });
-            }
-        }
+        // In the "All" view the active collection is unknown — resolve the
+        // owning collection so MRU re-renders can find the glyph again.
+        let owner = collection.get().unwrap_or_else(|| {
+            Collection::ALL
+                .iter()
+                .copied()
+                .find(|c| c.glyph(glyph.name).is_some())
+                .unwrap_or(Collection::Lucide)
+        });
+        selected_owner.set(Some(owner));
+        selected_owner.set(Some(owner));
+        mru.update(|v| {
+            v.retain(|(_, n)| *n != glyph.name);
+            v.insert(0, (owner, glyph.name.to_string()));
+            v.truncate(8);
+            save_mru(v);
+        });
     };
 
     let clear_filters = move |_: leptos::ev::MouseEvent| {
@@ -254,9 +603,9 @@ pub fn Icons() -> impl IntoView {
     let sync_url = {
         let nav = navigate.clone();
         move || {
+            let col = collection.get().map(|c| c.key()).unwrap_or("all");
             let mut q = format!(
-                "/ui/icons?collection={}&size={}&sw={}",
-                collection.get().key(),
+                "/ui/icons?collection={col}&size={}&sw={}",
                 size_px.get(),
                 stroke_w.get()
             );
@@ -272,8 +621,8 @@ pub fn Icons() -> impl IntoView {
             if !cat.is_empty() {
                 q.push_str(&format!("&cat={}", cat));
             }
-            if animated.get() {
-                q.push_str("&anim=1");
+            if !animated.get() {
+                q.push_str("&anim=0");
             }
             nav(
                 &q,
@@ -296,7 +645,7 @@ pub fn Icons() -> impl IntoView {
         let sync = sync_url.clone();
         move |e: leptos::ev::Event| {
             if let Ok(v) = event_target_value(&e).parse::<u32>() {
-                size_px.set(v);
+                size_px.set(v.clamp(14, 48));
             }
             sync();
         }
@@ -305,7 +654,7 @@ pub fn Icons() -> impl IntoView {
         let sync = sync_url.clone();
         move |e: leptos::ev::Event| {
             if let Ok(v) = event_target_value(&e).parse::<f64>() {
-                stroke_w.set(v);
+                stroke_w.set(v.clamp(0.5, 3.0));
             }
             sync();
         }
@@ -317,19 +666,70 @@ pub fn Icons() -> impl IntoView {
             sync();
         }
     };
-    let size_text = move || format!("{}px", size_px.get());
-    let sw_text = move || format!("{:.2}px", stroke_w.get());
+    let on_color_pick = {
+        let sync = sync_url.clone();
+        move |e: leptos::ev::Event| {
+            let val = event_target_value(&e);
+            if !val.is_empty() {
+                color.set(val);
+                sync();
+            }
+        }
+    };
+    let picker_val = move || {
+        let c = color.get();
+        if c.starts_with('#') && c.len() >= 4 {
+            c
+        } else {
+            "#f97316".to_string()
+        }
+    };
+    let on_color_reset = {
+        let sync = sync_url.clone();
+        move |_: leptos::ev::MouseEvent| {
+            color.set(String::new());
+            sync();
+        }
+    };
+    let on_size_input = {
+        let sync = sync_url.clone();
+        move |e: leptos::ev::Event| {
+            let val = event_target_value(&e);
+            if let Ok(v) = val.parse::<u32>() {
+                size_px.set(v.clamp(14, 48));
+            }
+            sync();
+        }
+    };
+    let on_stroke_input = {
+        let sync = sync_url.clone();
+        move |e: leptos::ev::Event| {
+            let val = event_target_value(&e);
+            if let Ok(v) = val.parse::<f64>() {
+                stroke_w.set(v.clamp(0.5, 3.0));
+            }
+            sync();
+        }
+    };
+
     let stroke_val = Signal::derive(move || {
         let c = color.get();
-        if c.is_empty() { "currentColor".to_string() } else { c }
+        if c.is_empty() {
+            "currentColor".to_string()
+        } else {
+            c
+        }
     });
     let size_val = Signal::derive(move || size_px.get().to_string());
     let sw_val = Signal::derive(move || format!("{:.2}", stroke_w.get()));
-    let mru_visible = move || {
-        collection.get() == Collection::Lucide
-            && search.get().is_empty()
-            && category.get().is_empty()
-    };
+    let mru_visible =
+        move || search.get().is_empty() && category.get().is_empty();
+
+    let prev_disabled = move || page.get() <= 1;
+    let next_disabled = move || page.get() >= total_pages.get();
+    let go_prev = move |_| page.update(|p| *p = p.saturating_sub(1));
+    let go_next =
+        move |_| page.update(|p| *p = (*p + 1).min(total_pages.get()));
 
     let anim_choices = [
         ("auto", "Auto"),
@@ -348,28 +748,68 @@ pub fn Icons() -> impl IntoView {
             // ---------------------------------------------------------------
             // Sidebar
             // ---------------------------------------------------------------
-            <aside class="icons-sidebar hidden lg:block">
+                        <aside class=move || {
+                if sidebar_open.get() {
+                    "icons-sidebar fixed inset-y-0 left-0 z-50 block w-72 overflow-y-auto border-r border-border bg-background shadow-xl lg:hidden"
+                        .to_string()
+                } else {
+                    "icons-sidebar hidden lg:block".to_string()
+                }
+            }>
                 <div class="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                    <div class="icons-sidebar-section">
+                    <div class="flex items-center justify-between px-4 py-3">
                         <div class="flex items-center gap-2">
-                            <img src="/logo-64.png" alt="MontRS" class="h-8 w-8 rounded" />
-                            <div>
-                                <p class="text-sm font-semibold">"Icons"</p>
-                                <p class="font-mono text-[11px] text-muted-foreground">
-                                    {move || format!("{} icons", filtered.get().len())}
-                                </p>
-                            </div>
+                            <p class="text-sm font-semibold">"Icons"</p>
+                            <span class="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-px text-[9px] font-medium text-primary lg:hidden">
+                                "filters"
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <p class="font-mono text-[11px] text-muted-foreground">
+                                {move || format!("{} total", *ALL_TOTAL_ICONS)}
+                            </p>
+                            <button
+                                type="button"
+                                class="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                                on:click=move |_| sidebar_open.set(false)
+                                aria-label="Close filters"
+                            >
+                                <Icon glyph=Glyph::X class="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
 
                     <div class="icons-sidebar-section">
                         <p class="icons-sidebar-heading">"Collection"</p>
                         <div class="space-y-0.5">
+                            <button
+                                type="button"
+                                class=move || {
+                                    let base = "flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition-colors";
+                                    if is_all() {
+                                        format!("{base} bg-accent font-medium text-foreground")
+                                    } else {
+                                        format!("{base} text-muted-foreground hover:bg-accent/60 hover:text-foreground")
+                                    }
+                                }
+                                on:click={
+                                    let sync = sync_url.clone();
+                                    move |_| {
+                                        collection.set(None);
+                                        category.set(String::new());
+                                        sync();
+                                    }
+                                }
+                            >
+                                <span>"All collections"</span>
+                                <span class="font-mono text-[10px]">{(*ALL_TOTAL_ICONS).to_string()}</span>
+                            </button>
                             {Collection::ALL.iter().map(|c| {
                                 let c = *c;
                                 let label = c.label().to_string();
                                 let count = c.count();
-                                let is_active = move || collection.get() == c;
+                                let is_lucide_item = c == Collection::Lucide;
+                                let is_active = move || collection.get() == Some(c);
                                 view! {
                                     <button
                                         type="button"
@@ -382,11 +822,25 @@ pub fn Icons() -> impl IntoView {
                                             }
                                         }
                                         on:click={
-                                                let sync = sync_url.clone();
-                                                move |_| { collection.set(c); category.set(String::new()); sync(); }
+                                            let sync = sync_url.clone();
+                                            move |_| {
+                                                collection.set(Some(c));
+                                                stroke_w.set(c.default_stroke_width());
+                                                category.set(String::new());
+                                                sync();
                                             }
+                                        }
                                     >
-                                        <span>{label}</span>
+                                        <span class="flex items-center gap-1.5">
+                                            {label}
+                                            {if is_lucide_item {
+                                                Some(view! {
+                                                    <span class="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-px text-[9px] font-medium text-primary">
+                                                        "default"
+                                                    </span>
+                                                }.into_any())
+                                            } else { None }}
+                                        </span>
                                         <span class="font-mono text-[10px]">{count.to_string()}</span>
                                     </button>
                                 }
@@ -398,9 +852,16 @@ pub fn Icons() -> impl IntoView {
                         <p class="icons-sidebar-heading">"Customize"</p>
                         <div class="space-y-4">
                             <label class="block">
-                                <span class="flex justify-between text-xs text-muted-foreground">
+                                <span class="flex items-center justify-between text-xs text-muted-foreground">
                                     "Size"
-                                    <span class="font-mono text-foreground">{size_text}</span>
+                                    <input
+                                        type="text"
+                                        inputmode="numeric"
+                                        class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
+                                        prop:value=move || size_px.get().to_string()
+                                        on:change=on_size_input
+                                        title="14–48"
+                                    />
                                 </span>
                                 <input
                                     type="range"
@@ -413,32 +874,85 @@ pub fn Icons() -> impl IntoView {
                                 />
                             </label>
                             <label class="block">
-                                <span class="flex justify-between text-xs text-muted-foreground">
+                                <span class="flex items-center justify-between text-xs text-muted-foreground">
                                     "Stroke width"
-                                    <span class="font-mono text-foreground">{sw_text}</span>
+                                    <input
+                                        type="text"
+                                        inputmode="decimal"
+                                        class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
+                                        prop:value=move || format!("{:.2}", stroke_w.get())
+                                        on:change=on_stroke_input
+                                        title="0.5–3"
+                                        disabled=move || !is_stroke_style()
+                                    />
                                 </span>
                                 <input
                                     type="range"
                                     min="0.5"
                                     max="3"
                                     step="0.25"
-                                    class="icon-range mt-1"
+                                    class=move || {
+                                        let base = "icon-range mt-1";
+                                        if is_stroke_style() { base.to_string() } else { format!("{base} opacity-40") }
+                                    }
                                     prop:value=move || stroke_w.get().to_string()
                                     on:input=on_stroke_w
+                                    disabled=move || !is_stroke_style()
                                 />
                             </label>
-                            <label class="flex items-center justify-between text-xs text-muted-foreground">
-                                "Stroke color"
-                                <input
-                                    type="color"
-                                    class="h-7 w-9 cursor-pointer rounded border border-border bg-transparent"
-                                    prop:value=move || color.get()
-                                    on:input=on_color
-                                />
+                            <label class="block">
+                                <span class="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                                    "Color"
+                                    <button
+                                        type="button"
+                                        class="text-[10px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                        on:click=on_color_reset
+                                    >
+                                        "reset"
+                                    </button>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        class="h-8 w-9 shrink-0 cursor-pointer rounded-md border border-input bg-transparent p-0.5"
+                                        prop:value=picker_val
+                                        on:input=on_color_pick
+                                        title="Pick a color"
+                                        aria-label="Pick a color"
+                                    />
+                                    <input
+                                        type="text"
+                                        spellcheck="false"
+                                        placeholder="#f97316"
+                                        class="h-8 w-full rounded-md border border-input bg-background px-2 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        prop:value=color
+                                        on:input=on_color
+                                    />
+                                </div>
+                                <p class="mt-1 text-[10px] text-muted-foreground">
+                                    "hex, rgb() or hsl()"
+                                </p>
                             </label>
                             <label class="flex items-center justify-between text-xs text-muted-foreground">
                                 "Animated"
-                                <Switch checked=animated />
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked=animated
+                                    class=move || {
+                                        let base = "relative h-6 w-11 rounded-full border transition-colors";
+                                        if animated.get() { format!("{base} border-primary bg-primary/30") } else { format!("{base} border-border bg-muted") }
+                                    }
+                                    on:click={
+                                        let sync = sync_url.clone();
+                                        move |_| { animated.update(|v| *v = !*v); sync(); }
+                                    }
+                                >
+                                    <span class=move || {
+                                        let base = "pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-primary shadow transition-all";
+                                        if animated.get() { format!("{base} left-6") } else { format!("{base} left-1 bg-muted-foreground") }
+                                    }></span>
+                                </button>
                             </label>
                             <Show when=move || !search.get().is_empty() || !category.get().is_empty()>
                                 <button
@@ -452,7 +966,7 @@ pub fn Icons() -> impl IntoView {
                         </div>
                     </div>
 
-                    <Show when=is_lucide>
+                    <Show when=move || categories_have.get()>
                         <div class="icons-sidebar-section">
                             <p class="icons-sidebar-heading">"Categories"</p>
                             <div class="max-h-64 space-y-0.5 overflow-y-auto pr-1">
@@ -472,9 +986,9 @@ pub fn Icons() -> impl IntoView {
                                     }
                                 >
                                     <span>"All"</span>
-                                    <span class="font-mono text-[10px]">{Glyph::count().to_string()}</span>
+                                    <span class="font-mono text-[10px]">{move || collection.get().map(|c| c.count()).unwrap_or(*ALL_TOTAL_ICONS).to_string()}</span>
                                 </button>
-                                {categories.iter().map(|(title, count)| {
+                                {categories.get().iter().map(|(title, count)| {
                                     let cat = title.clone();
                                     let title2 = title.clone();
                                     let count2 = count.to_string();
@@ -506,6 +1020,13 @@ pub fn Icons() -> impl IntoView {
                 </div>
             </aside>
 
+            <Show when=move || sidebar_open.get()>
+                <div
+                    class="fixed inset-0 z-40 bg-black/40 lg:hidden"
+                    on:click=move |_| sidebar_open.set(false)
+                ></div>
+            </Show>
+
             // ---------------------------------------------------------------
             // Main column
             // ---------------------------------------------------------------
@@ -514,18 +1035,29 @@ pub fn Icons() -> impl IntoView {
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">"Icons"</h1>
                         <p class="mt-1 text-sm text-muted-foreground">
-                            {move || format!("{} shown · hover to play", filtered_limited.get().len())}
+                            {move || format!("{} shown · hover to play", page_icons.get().len())}
                         </p>
                     </div>
-                    <div class="relative w-full max-w-sm">
-                        <Icon glyph=Glyph::Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            type="search"
-                            placeholder="Search icons…"
-                            class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            prop:value=search
-                            on:input=on_search
-                        />
+                    <div class="flex w-full max-w-sm items-center gap-2">
+                        <button
+                            type="button"
+                            class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                            on:click=move |_| sidebar_open.update(|o| *o = !*o)
+                            aria-expanded=move || sidebar_open.get()
+                        >
+                            <Icon glyph=Glyph::SlidersHorizontal class="h-4 w-4" />
+                            "Filters"
+                        </button>
+                        <div class="relative w-full">
+                            <Icon glyph=Glyph::Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                type="search"
+                                placeholder="Search icons…"
+                                class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                prop:value=search
+                                on:input=on_search
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -535,24 +1067,15 @@ pub fn Icons() -> impl IntoView {
                             "Recent"
                         </span>
                         <div class="flex flex-nowrap gap-2 overflow-x-auto">
-                            {move || mru.get().iter().map(|g| {
-                                let glyph = *g;
-                                view! {
-                                    <button
-                                        type="button"
-                                        class="mru-cell"
-                                        title=g.kebab_name()
-                                        on:click=move |_| select_icon(CollectedGlyph {
-                                            name: glyph.name(),
-                                            svg: glyph.svg(),
-                                            viewbox: "0 0 24 24",
-                                            fill: "none",
-                                            stroke: "currentColor",
-                                        })
-                                    >
-                                        <Icon glyph=Signal::from(glyph) size=size_val stroke_width=sw_val stroke=stroke_val />
+                            {move || mru.get().iter().filter_map(|(c, name)| {
+                                let glyph = c.glyph(name)?;
+                                let label = name.clone();
+                                let select = select_icon;
+                                Some(view! {
+                                    <button type="button" class="mru-cell" title=label on:click=move |_| select(glyph)>
+                                        <CustomGlyphView glyph=glyph size=size_val stroke_width=sw_val stroke=stroke_val />
                                     </button>
-                                }
+                                }.into_any())
                             }).collect::<Vec<_>>()}
                         </div>
                     </div>
@@ -560,9 +1083,9 @@ pub fn Icons() -> impl IntoView {
 
                 <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12">
                     <For
-                        each=move || filtered_limited.get()
-                        key=move |g| format!("{}:{}", collection.get().key(), g.name)
-                        children=move |glyph| {
+                        each=move || page_icons.get()
+                        key=move |(k, _)| k.clone()
+                        children=move |(_k, glyph)| {
                             let kebab = glyph.name.to_string();
                             let is_animated = animated;
                             let on_click = select_icon;
@@ -590,7 +1113,53 @@ pub fn Icons() -> impl IntoView {
                     />
                 </div>
 
-                <div id="icons-sentinel" class="h-10"></div>
+                // Pagination
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                        type="button"
+                        class="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+                        disabled=prev_disabled
+                        on:click=go_prev
+                    >
+                        "Previous"
+                    </button>
+                    {move || {
+                        let cur = page.get();
+                        let total = total_pages.get();
+                        let mut nums: Vec<usize> = Vec::new();
+                        let start = cur.saturating_sub(2).max(1);
+                        let end = (start + 4).min(total);
+                        for n in start..=end { nums.push(n); }
+                        nums.into_iter().map(|n| {
+                            let is_cur = move || page.get() == n;
+                            view! {
+                                <button
+                                    type="button"
+                                    class=move || {
+                                        let base = "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors";
+                                        if is_cur() {
+                                            format!("{base} border-primary bg-primary/10 text-primary")
+                                        } else {
+                                            format!("{base} border-border text-muted-foreground hover:bg-accent")
+                                        }
+                                    }
+                                    on:click=move |_| page.set(n)
+                                >{n.to_string()}</button>
+                            }
+                        }).collect::<Vec<_>>()
+                    }}
+                    <span class="px-2 font-mono text-xs text-muted-foreground">
+                        {move || format!("/ {}", total_pages.get())}
+                    </span>
+                    <button
+                        type="button"
+                        class="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm font-medium transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+                        disabled=next_disabled
+                        on:click=go_next
+                    >
+                        "Next"
+                    </button>
+                </div>
 
                 // -----------------------------------------------------------
                 // Detail drawer
@@ -598,7 +1167,7 @@ pub fn Icons() -> impl IntoView {
                 {move || selected_icon.get().map(|glyph| {
                     let name = glyph.name.to_string();
                     let svg_markup = full_svg_markup(&glyph, size_px.get(), stroke_w.get());
-                    let col = collection.get();
+                    let col = selected_owner.get().unwrap_or(Collection::Lucide);
                     let usage = if col == Collection::Lucide {
                         format!(r#"<Icon glyph=Glyph::{name} class="w-6 h-6" />"#)
                     } else {
@@ -608,22 +1177,77 @@ pub fn Icons() -> impl IntoView {
                         )
                     };
                     let cats: Vec<String> = if col == Collection::Lucide {
-                        Glyph::by_name(glyph.name).map(|g| g.categories().map(|c| c.to_string()).collect()).unwrap_or_default()
-                    } else { Vec::new() };
-                    let related: Vec<CollectedGlyph> = if col == Collection::Lucide {
-                        Glyph::by_name(glyph.name).map(|g| g.related(8).into_iter().map(|g| CollectedGlyph {
-                            name: g.name(), svg: g.svg(), viewbox: "0 0 24 24", fill: "none", stroke: "currentColor",
-                        }).collect()).unwrap_or_default()
-                    } else { Vec::new() };
+                        Glyph::by_name(glyph.name)
+                            .map(|g| {
+                                g.categories().map(|c| c.to_string()).collect()
+                            })
+                            .unwrap_or_default()
+                    } else {
+                        // Derived keyword categories this glyph belongs to.
+                        CATEGORY_RULES
+                            .iter()
+                            .filter(|(_, kws)| {
+                                kws.iter().any(|k| glyph.name.contains(k))
+                            })
+                            .map(|(title, _)| title.to_string())
+                            .collect()
+                    };
+                    let related: Vec<CollectedGlyph> =
+                        if col == Collection::Lucide {
+                            Glyph::by_name(glyph.name)
+                                .map(|g| {
+                                    g.related(8)
+                                        .into_iter()
+                                        .map(|g| CollectedGlyph {
+                                            name: g.name(),
+                                            svg: g.svg(),
+                                            viewbox: "0 0 24 24",
+                                            fill: "none",
+                                            stroke: "currentColor",
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default()
+                        } else {
+                            // Same inferred category, or a shared name token,
+                            // from the same collection — excluding the icon
+                            // itself.
+                            let self_cat =
+                                CATEGORY_RULES.iter().find(|(_, kws)| {
+                                    kws.iter().any(|k| glyph.name.contains(k))
+                                });
+                            let tokens = glyph
+                                .name
+                                .split('-')
+                                .filter(|t| t.len() > 2)
+                                .collect::<Vec<_>>();
+                            col.icons()
+                                .into_iter()
+                                .filter(|g| g.name != glyph.name)
+                                .filter(|g| {
+                                    self_cat.is_some_and(|(cat, _)| {
+                                        name_in_category(g.name, cat)
+                                    }) || tokens.iter().any(|t| g.name.contains(t))
+                                })
+                                .take(8)
+                                .collect()
+                        };
                     let has_related = !related.is_empty();
                     let choice = anim_choice;
+                    let close_drawer = move |_| selected_icon.set(None);
                     view! {
+                        <>
+                        <div
+                            class="fixed inset-0 z-[35]"
+                            on:click=close_drawer
+                            aria-hidden="true"
+                        ></div>
                         <div class="icon-drawer open" role="dialog" aria-label={format!("{name} details")}>
                             <div class="p-5">
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <p class="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-                                            {move || collection.get().label()}
+                                            {move || col.label()}
                                         </p>
                                         <h2 class="mt-1 text-lg font-semibold">{formatted_name(&name)}</h2>
                                         <p class="font-mono text-xs text-muted-foreground">{name.clone()}</p>
@@ -642,13 +1266,13 @@ pub fn Icons() -> impl IntoView {
                                     <Show
                                         when=move || choice.get() != "off"
                                         fallback=move || view! {
-                                            <CustomGlyphView glyph=glyph size="80" stroke_width="2" stroke=stroke_val />
+                                            <CustomGlyphView glyph=glyph size="80" stroke_width=sw_val stroke=stroke_val />
                                         }
                                     >
                                         <AnimatedGlyphView
                                             glyph=glyph
                                             size="80"
-                                            stroke_width="2"
+                                            stroke_width=sw_val
                                             stroke=stroke_val
                                             profile=Signal::derive(move || match choice.get().as_str() {
                                                 "draw" => Some(montrs_icons::AnimationProfile::PathDraw),
@@ -672,7 +1296,7 @@ pub fn Icons() -> impl IntoView {
                                             }).collect::<Vec<_>>()}
                                         </div>
                                     }.into_any()
-                                } else { view! {}.into_any() }}
+                                } else { view! { <span></span> }.into_any() }}
 
                                 <div class="mt-4">
                                     <p class="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">"Animation"</p>
@@ -736,6 +1360,7 @@ pub fn Icons() -> impl IntoView {
                                 </Show>
                             </div>
                         </div>
+                        </>
                     }
                 })}
             </div>
@@ -743,7 +1368,8 @@ pub fn Icons() -> impl IntoView {
     }
 }
 
-/// Static render of a glyph (works for Lucide and collection tables).
+/// Static render of a glyph — delegates to the library `CollectionIcon` so
+/// every collection uses the same `Icon`-style API.
 #[component]
 fn CustomGlyphView(
     glyph: CollectedGlyph,
@@ -751,56 +1377,65 @@ fn CustomGlyphView(
     #[prop(into)] stroke_width: TextProp,
     #[prop(into)] stroke: TextProp,
 ) -> impl IntoView {
-    let size2 = size.clone();
-    let stroke_ok = move || {
+    let glyph = Signal::derive(move || glyph);
+    // The page's `stroke` prop is the color signal; map "currentColor"
+    // (its "no override" value) to empty so library defaults apply.
+    let color = TextProp::from(move || {
         let c = stroke.get();
-        if c.is_empty() {
-            glyph.stroke.to_string()
+        if c == "currentColor" {
+            String::new()
         } else {
             c.to_string()
         }
-    };
+    });
+    let sw = TextProp::from(move || {
+        let s = stroke_width.get();
+        if s == "1.5" {
+            String::new()
+        } else {
+            s.to_string()
+        }
+    });
     view! {
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width=move || size.get()
-            height=move || size2.get()
-            viewBox=move || glyph.viewbox
-            fill=move || glyph.fill
-            stroke=move || stroke_ok()
-            stroke-width=move || stroke_width.get()
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            inner_html=move || glyph.svg
-        />
+        <CollectionIcon glyph=glyph size=size stroke_width=sw color=color />
     }
 }
 
-/// Hover-animated render of a glyph (Lucide or collection table).
+/// Hover-animated render of a glyph — delegates to the library
+/// `AnimatedCollectionIcon`.
 #[component]
 fn AnimatedGlyphView(
     glyph: CollectedGlyph,
     #[prop(into)] size: TextProp,
     #[prop(into)] stroke_width: TextProp,
     #[prop(into)] stroke: TextProp,
-    #[prop(into, optional)] profile: Signal<Option<montrs_icons::AnimationProfile>>,
+    #[prop(into, optional)] profile: Signal<
+        Option<montrs_icons::AnimationProfile>,
+    >,
 ) -> impl IntoView {
-    let stroke_ok = move || {
+    let glyph = Signal::derive(move || glyph);
+    let color = TextProp::from(move || {
         let c = stroke.get();
-        if c.is_empty() {
-            glyph.stroke.to_string()
+        if c == "currentColor" {
+            String::new()
         } else {
             c.to_string()
         }
-    };
+    });
+    let sw = TextProp::from(move || {
+        let s = stroke_width.get();
+        if s == "1.5" {
+            String::new()
+        } else {
+            s.to_string()
+        }
+    });
     view! {
-        <AnimatedSvg
-            svg={TextProp::from(glyph.svg)}
-            viewbox={TextProp::from(glyph.viewbox)}
-            fill={TextProp::from(glyph.fill)}
-            stroke={TextProp::from(move || stroke_ok())}
+        <AnimatedCollectionIcon
+            glyph=glyph
             size=size
-            stroke_width=stroke_width
+            stroke_width=sw
+            color=color
             profile=profile
         />
     }

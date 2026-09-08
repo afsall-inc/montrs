@@ -33,12 +33,33 @@ use leptos::prelude::*;
 use montrs_icons::*;
 use montrs_ui::components::{
     accordion::{Accordion, AccordionContent, AccordionItem, AccordionTrigger},
+    alert::{Alert, AlertVariant},
     badge::{Badge, BadgeSize, BadgeVariant},
     button::{Button, ButtonSize, ButtonVariant},
     card::{Card, CardContent, CardDescription, CardHeader, CardTitle},
+    checkbox::Checkbox,
+    collapsible::{Collapsible, CollapsibleContent, CollapsibleTrigger},
+    dialog::{
+        Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+        DialogTrigger,
+    },
+    dropdown_menu::{
+        DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+        DropdownMenuTrigger,
+    },
     input::Input,
+    label::Label,
+    progress::Progress,
+    radio_button::RadioButton,
+    radio_button_group::RadioButtonGroup,
+    select::{Select, SelectContent, SelectItem},
+    separator::Separator,
+    skeleton::Skeleton,
+    spinner::Spinner,
     switch::Switch,
     tabs::{Tabs, TabsContent, TabsList, TabsTrigger},
+    textarea::Textarea,
+    tooltip::Tooltip,
 };
 
 const BUTTON_SNIPPET: &str = r#"use montrs_ui::components::button::{Button, ButtonVariant};
@@ -107,6 +128,105 @@ const ACCORDION_SNIPPET: &str = r#"use montrs_ui::components::accordion::*;
     </AccordionItem>
 </Accordion>"#;
 
+const ALERT_SNIPPET: &str = r#"use montrs_ui::components::alert::{Alert, AlertVariant};
+
+<Alert>"A new version of MontRS is available."</Alert>
+<Alert variant=AlertVariant::Destructive>"Build failed — fix the lints."</Alert>"#;
+
+const CHECKBOX_SNIPPET: &str = r#"use montrs_ui::components::checkbox::Checkbox;
+
+let opted_in = RwSignal::new(true);
+
+<Checkbox label="Send me product updates" checked=opted_in />"#;
+
+const COLLAPSIBLE_SNIPPET: &str = r#"use montrs_ui::components::collapsible::*;
+
+<Collapsible>
+    <CollapsibleTrigger>"Show system details"</CollapsibleTrigger>
+    <CollapsibleContent>"Rust 1.8x · Leptos hydrate · 48 packages"</CollapsibleContent>
+</Collapsible>"#;
+
+const DIALOG_SNIPPET: &str = r#"use montrs_ui::components::dialog::*;
+
+<Dialog>
+    <DialogTrigger><Button>"Open dialog"</Button></DialogTrigger>
+    <DialogContent>
+        <DialogHeader><DialogTitle>"Confirm"</DialogTitle></DialogHeader>
+        "Delete the deployed service?"
+        <DialogFooter><Button variant=ButtonVariant::Destructive>"Delete"</Button></DialogFooter>
+    </DialogContent>
+</Dialog>"#;
+
+const DROPDOWN_SNIPPET: &str = r#"use montrs_ui::components::dropdown_menu::*;
+
+<DropdownMenu>
+    <DropdownMenuTrigger><Button variant=ButtonVariant::Outline>"Menu"</Button></DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem>"Profile"</DropdownMenuItem>
+        <DropdownMenuItem>"Settings"</DropdownMenuItem>
+        <DropdownMenuItem>"Log out"</DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>"#;
+
+const LABEL_SNIPPET: &str = r#"use montrs_ui::components::label::Label;
+use montrs_ui::components::input::Input;
+
+<Label>"Email address"</Label>
+<Input placeholder="you@example.com" />"#;
+
+const PROGRESS_SNIPPET: &str = r#"use montrs_ui::components::progress::Progress;
+
+<Progress value=64.0 max=100.0 />"#;
+
+const RADIO_SNIPPET: &str = r#"use montrs_ui::components::radio_button::*;
+
+<RadioButtonGroup>
+    <RadioButton value="free".to_string() label="Free" />
+    <RadioButton value="pro".to_string() label="Pro" />
+</RadioButtonGroup>"#;
+
+const SELECT_SNIPPET: &str = r#"use montrs_ui::components::select::*;
+
+let env = RwSignal::new(String::from("prod"));
+
+<Select value=env>
+    <SelectContent>
+        <SelectItem value="dev".to_string()>"Development"</SelectItem>
+        <SelectItem value="staging".to_string()>"Staging"</SelectItem>
+        <SelectItem value="prod".to_string()>"Production"</SelectItem>
+    </SelectContent>
+</Select>"#;
+
+const SEPARATOR_SNIPPET: &str = r#"use montrs_ui::components::separator::Separator;
+
+"Above the line"
+<Separator class="my-4" />
+"Below the line""#;
+
+const SKELETON_SNIPPET: &str = r#"use montrs_ui::components::skeleton::Skeleton;
+
+<div class="flex items-center gap-3">
+    <Skeleton class="h-10 w-10 rounded-full" />
+    <div class="space-y-2">
+        <Skeleton class="h-4 w-40" />
+        <Skeleton class="h-3 w-24" />
+    </div>
+</div>"#;
+
+const SPINNER_SNIPPET: &str = r#"use montrs_ui::components::spinner::Spinner;
+
+<Spinner class="h-6 w-6" />"#;
+
+const TEXTAREA_SNIPPET: &str = r#"use montrs_ui::components::textarea::Textarea;
+
+<Textarea placeholder="Describe your plate…" rows=4 />"#;
+
+const TOOLTIP_SNIPPET: &str = r#"use montrs_ui::components::tooltip::Tooltip;
+
+<Tooltip text="Copied to clipboard">
+    <Button variant=ButtonVariant::Outline>"Copy"</Button>
+</Tooltip>"#;
+
 const SECTIONS: &[(&str, &str)] = &[
     ("button", "Button"),
     ("badge", "Badge"),
@@ -115,6 +235,20 @@ const SECTIONS: &[(&str, &str)] = &[
     ("switch", "Switch"),
     ("tabs", "Tabs"),
     ("accordion", "Accordion"),
+    ("alert", "Alert"),
+    ("checkbox", "Checkbox"),
+    ("collapsible", "Collapsible"),
+    ("dialog", "Dialog"),
+    ("dropdown", "Dropdown Menu"),
+    ("label", "Label"),
+    ("progress", "Progress"),
+    ("radio", "Radio Group"),
+    ("select", "Select"),
+    ("separator", "Separator"),
+    ("skeleton", "Skeleton"),
+    ("spinner", "Spinner"),
+    ("textarea", "Textarea"),
+    ("tooltip", "Tooltip"),
 ];
 
 /// Smooth-scroll to an element id without touching the URL (anchor links
@@ -148,6 +282,18 @@ pub fn Components() -> impl IntoView {
                     "91 shadcn-inspired components built on montrs-ui and Tailwind CSS.
                     Copy the source, own every pixel."
                 </p>
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {SECTIONS.iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_1fr]">
@@ -303,6 +449,183 @@ pub fn Components() -> impl IntoView {
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="alert"
+                        title="Alert"
+                        description="Inline feedback for important states."
+                        snippet=ALERT_SNIPPET
+                    >
+                        <div class="space-y-3">
+                            <Alert>"A new version of MontRS is available."</Alert>
+                            <Alert variant=AlertVariant::Destructive>"Build failed — fix the lints."</Alert>
+                        </div>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="checkbox"
+                        title="Checkbox"
+                        description="Binary selection with an optional label."
+                        snippet=CHECKBOX_SNIPPET
+                    >
+                        <Checkbox label="Send me product updates" checked=RwSignal::new(true) />
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="collapsible"
+                        title="Collapsible"
+                        description="Expand/collapse a hidden region."
+                        snippet=COLLAPSIBLE_SNIPPET
+                    >
+                        <Collapsible class="w-full max-w-sm">
+                            <CollapsibleTrigger class="rounded-md border border-border px-3 py-1.5 text-sm">
+                                "Show system details"
+                            </CollapsibleTrigger>
+                            <CollapsibleContent class="mt-2 rounded-md border border-border bg-background p-3 text-sm text-muted-foreground">
+                                "Rust 1.8x · Leptos hydrate · 48 packages"
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="dialog"
+                        title="Dialog"
+                        description="Modal dialogs with focus trapping."
+                        snippet=DIALOG_SNIPPET
+                    >
+                        <Dialog>
+                            <DialogTrigger><Button>"Open dialog"</Button></DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader><DialogTitle>"Confirm"</DialogTitle></DialogHeader>
+                                "Delete the deployed service?"
+                                <DialogFooter><Button variant=ButtonVariant::Destructive>"Delete"</Button></DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="dropdown"
+                        title="Dropdown Menu"
+                        description="Action menus triggered by a button."
+                        snippet=DROPDOWN_SNIPPET
+                    >
+                        <DropdownMenu>
+                            <DropdownMenuTrigger><Button variant=ButtonVariant::Outline>"Menu"</Button></DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem>"Profile"</DropdownMenuItem>
+                                <DropdownMenuItem>"Settings"</DropdownMenuItem>
+                                <DropdownMenuItem>"Log out"</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="label"
+                        title="Label"
+                        description="Accessible field labels."
+                        snippet=LABEL_SNIPPET
+                    >
+                        <div class="space-y-2">
+                            <Label>"Email address"</Label>
+                            <Input placeholder="you@example.com" />
+                        </div>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="progress"
+                        title="Progress"
+                        description="Determinate progress bars."
+                        snippet=PROGRESS_SNIPPET
+                    >
+                        <div class="w-full max-w-sm space-y-3">
+                            <Progress value=64.0 max=100.0 />
+                            <Progress value=92.0 max=100.0 />
+                        </div>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="radio"
+                        title="Radio Group"
+                        description="Single-choice selection."
+                        snippet=RADIO_SNIPPET
+                    >
+                        <RadioButtonGroup>
+                            <RadioButton value="free".to_string() label="Free" />
+                            <RadioButton value="pro".to_string() label="Pro" />
+                        </RadioButtonGroup>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="select"
+                        title="Select"
+                        description="Native-feeling listbox picker."
+                        snippet=SELECT_SNIPPET
+                    >
+                        <Select value=RwSignal::new(String::from("prod")) class="w-full max-w-xs">
+                            <SelectContent>
+                                <SelectItem value="dev".to_string()>"Development"</SelectItem>
+                                <SelectItem value="staging".to_string()>"Staging"</SelectItem>
+                                <SelectItem value="prod".to_string()>"Production"</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="separator"
+                        title="Separator"
+                        description="Visual dividers."
+                        snippet=SEPARATOR_SNIPPET
+                    >
+                        <div>
+                            <p class="text-sm text-muted-foreground">"Above the line"</p>
+                            <Separator class="my-4" />
+                            <p class="text-sm text-muted-foreground">"Below the line"</p>
+                        </div>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="skeleton"
+                        title="Skeleton"
+                        description="Loading placeholders."
+                        snippet=SKELETON_SNIPPET
+                    >
+                        <div class="flex items-center gap-3">
+                            <Skeleton class="h-10 w-10 rounded-full" />
+                            <div class="space-y-2">
+                                <Skeleton class="h-4 w-40" />
+                                <Skeleton class="h-3 w-24" />
+                            </div>
+                        </div>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="spinner"
+                        title="Spinner"
+                        description="Indeterminate loading indicator."
+                        snippet=SPINNER_SNIPPET
+                    >
+                        <Spinner class="h-6 w-6" />
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="textarea"
+                        title="Textarea"
+                        description="Multi-line text entry."
+                        snippet=TEXTAREA_SNIPPET
+                    >
+                        <Textarea placeholder="Describe your plate…" rows=4 class="w-full max-w-sm" />
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="tooltip"
+                        title="Tooltip"
+                        description="Contextual hints on hover/focus."
+                        snippet=TOOLTIP_SNIPPET
+                    >
+                        <Tooltip text="Copied to clipboard">
+                            <Button variant=ButtonVariant::Outline>"Copy"</Button>
+                        </Tooltip>
                     </ComponentSection>
                 </div>
             </div>

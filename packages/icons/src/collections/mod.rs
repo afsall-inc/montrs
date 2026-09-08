@@ -1,4 +1,4 @@
-// بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم
+// Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„ÙŽÙ‘Ù‡Ù Ø§Ù„Ø±ÙŽÙ‘Ø­Ù’Ù…ÙŽÙ†Ù Ø§Ù„Ø±ÙŽÙ‘Ø­ÙÙŠÙ…
 // This file is part of montrs.
 // Copyright (C) 2026-Present Afsall Inc.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
@@ -32,8 +32,8 @@
 //!
 //! Collections are license-safe (MIT / Apache-2.0 only), fetched from the
 //! upstream GitHub repositories by `montrs-icons-codegen`, and embedded as
-//! static data tables behind per-collection Cargo features (`col-radix`,
-//! `col-heroicons`, …). See `THIRD_PARTY_NOTICES.md` at the repo root.
+//! static data tables behind per-collection Cargo features. See
+//! THIRD_PARTY_NOTICES.md at the repo root.
 
 use crate::glyph::Glyph;
 
@@ -59,7 +59,9 @@ impl CollectedGlyph {
             .map(|part| {
                 let mut c = part.chars();
                 match c.next() {
-                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                    Some(f) => {
+                        f.to_uppercase().collect::<String>() + c.as_str()
+                    }
                     None => String::new(),
                 }
             })
@@ -81,29 +83,36 @@ pub struct CollectionInfo {
 pub enum Collection {
     Lucide,
     Radix,
-    Heroicons,
     Tabler,
     Iconoir,
     Phosphor,
     Mdi,
+    Bootstrap,
+    SimpleIcons,
+    Cryptocurrency,
 }
 
 impl Collection {
-    /// Every locally available collection (Lucide + feature-gated extras).
+    /// Every locally available collection (Lucide + feature-gated extras),
+    /// alphabetically ordered for UI listing.
     pub const ALL: &'static [Collection] = &[
-        Collection::Lucide,
-        #[cfg(feature = "col-radix")]
-        Collection::Radix,
-        #[cfg(feature = "col-heroicons")]
-        Collection::Heroicons,
-        #[cfg(feature = "col-tabler")]
-        Collection::Tabler,
+        #[cfg(feature = "col-bootstrap")]
+        Collection::Bootstrap,
+        #[cfg(feature = "col-cryptocurrency")]
+        Collection::Cryptocurrency,
         #[cfg(feature = "col-iconoir")]
         Collection::Iconoir,
-        #[cfg(feature = "col-phosphor")]
-        Collection::Phosphor,
+        Collection::Lucide,
         #[cfg(feature = "col-mdi")]
         Collection::Mdi,
+        #[cfg(feature = "col-phosphor")]
+        Collection::Phosphor,
+        #[cfg(feature = "col-radix")]
+        Collection::Radix,
+        #[cfg(feature = "col-simple-icons")]
+        Collection::SimpleIcons,
+        #[cfg(feature = "col-tabler")]
+        Collection::Tabler,
     ];
 
     pub fn label(self) -> &'static str {
@@ -121,15 +130,43 @@ impl Collection {
         match self {
             Collection::Lucide => "lucide",
             Collection::Radix => "radix",
-            Collection::Heroicons => "heroicons",
             Collection::Tabler => "tabler",
             Collection::Iconoir => "iconoir",
             Collection::Phosphor => "phosphor",
             Collection::Mdi => "mdi",
+            Collection::Bootstrap => "bootstrap",
+            Collection::SimpleIcons => "simple-icons",
+            Collection::Cryptocurrency => "cryptocurrency",
         }
     }
 
-    /// Resolve a collection by its key string (unknown keys → `None`).
+    /// Rendering style: "stroke" sets draw with strokes; "fill" sets draw
+    /// with filled paths and should ignore stroke width/color overrides.
+    pub fn style(self) -> &'static str {
+        match self {
+            Collection::Lucide
+            | Collection::Radix
+            | Collection::Tabler
+            | Collection::Iconoir
+            | Collection::Phosphor => "stroke",
+            Collection::Mdi
+            | Collection::Bootstrap
+            | Collection::SimpleIcons
+            | Collection::Cryptocurrency => "fill",
+        }
+    }
+
+    /// Stroke width that suits this collection's view-box (fill sets return
+    /// their captured value, which callers can ignore).
+    pub fn default_stroke_width(self) -> f64 {
+        match self {
+            Collection::Tabler => 2.0,
+            Collection::Radix => 0.5,
+            _ => 1.5,
+        }
+    }
+
+    /// Resolve a collection by its key string (unknown keys â†’ `None`).
     pub fn from_key(key: &str) -> Option<Collection> {
         Collection::ALL.iter().copied().find(|c| c.key() == key)
     }
@@ -162,17 +199,31 @@ impl Collection {
                 })
                 .collect(),
             #[cfg(feature = "col-radix")]
-            Collection::Radix => table(&crate::collections::data::RADIX_ICONS),
-            #[cfg(feature = "col-heroicons")]
-            Collection::Heroicons => table(&crate::collections::data::HEROICONS_ICONS),
+            Collection::Radix => table(crate::collections::data::RADIX_ICONS),
             #[cfg(feature = "col-tabler")]
-            Collection::Tabler => table(&crate::collections::data::TABLER_ICONS),
+            Collection::Tabler => table(crate::collections::data::TABLER_ICONS),
             #[cfg(feature = "col-iconoir")]
-            Collection::Iconoir => table(&crate::collections::data::ICONOIR_ICONS),
+            Collection::Iconoir => {
+                table(crate::collections::data::ICONOIR_ICONS)
+            }
             #[cfg(feature = "col-phosphor")]
-            Collection::Phosphor => table(&crate::collections::data::PHOSPHOR_ICONS),
+            Collection::Phosphor => {
+                table(crate::collections::data::PHOSPHOR_ICONS)
+            }
             #[cfg(feature = "col-mdi")]
-            Collection::Mdi => table(&crate::collections::data::MDI_ICONS),
+            Collection::Mdi => table(crate::collections::data::MDI_ICONS),
+            #[cfg(feature = "col-bootstrap")]
+            Collection::Bootstrap => {
+                table(crate::collections::data::BOOTSTRAP_ICONS)
+            }
+            #[cfg(feature = "col-simple-icons")]
+            Collection::SimpleIcons => {
+                table(crate::collections::data::SIMPLE_ICONS_ICONS)
+            }
+            #[cfg(feature = "col-cryptocurrency")]
+            Collection::Cryptocurrency => {
+                table(crate::collections::data::CRYPTOCURRENCY_ICONS)
+            }
             _ => Vec::new(),
         }
     }
@@ -184,16 +235,30 @@ impl Collection {
             Collection::Lucide => Glyph::count(),
             #[cfg(feature = "col-radix")]
             Collection::Radix => crate::collections::data::RADIX_ICONS.len(),
-            #[cfg(feature = "col-heroicons")]
-            Collection::Heroicons => crate::collections::data::HEROICONS_ICONS.len(),
             #[cfg(feature = "col-tabler")]
             Collection::Tabler => crate::collections::data::TABLER_ICONS.len(),
             #[cfg(feature = "col-iconoir")]
-            Collection::Iconoir => crate::collections::data::ICONOIR_ICONS.len(),
+            Collection::Iconoir => {
+                crate::collections::data::ICONOIR_ICONS.len()
+            }
             #[cfg(feature = "col-phosphor")]
-            Collection::Phosphor => crate::collections::data::PHOSPHOR_ICONS.len(),
+            Collection::Phosphor => {
+                crate::collections::data::PHOSPHOR_ICONS.len()
+            }
             #[cfg(feature = "col-mdi")]
             Collection::Mdi => crate::collections::data::MDI_ICONS.len(),
+            #[cfg(feature = "col-bootstrap")]
+            Collection::Bootstrap => {
+                crate::collections::data::BOOTSTRAP_ICONS.len()
+            }
+            #[cfg(feature = "col-simple-icons")]
+            Collection::SimpleIcons => {
+                crate::collections::data::SIMPLE_ICONS_ICONS.len()
+            }
+            #[cfg(feature = "col-cryptocurrency")]
+            Collection::Cryptocurrency => {
+                crate::collections::data::CRYPTOCURRENCY_ICONS.len()
+            }
             _ => 0,
         }
     }

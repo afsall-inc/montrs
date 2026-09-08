@@ -28,10 +28,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+pub mod dev_overlay;
 pub mod footer;
 pub mod header;
 pub mod layout;
 pub mod reveal;
+pub mod theme_customizer;
+pub mod ui_subnav;
 
 pub use layout::*;
 pub use reveal::RevealOnScroll;
+pub use theme_customizer::ThemeCustomizer;

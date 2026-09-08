@@ -47,16 +47,55 @@ pub fn Blocks() -> impl IntoView {
                     "Pre-built UI sections built from real MontRS Plates.
                     Copy, paste, and customize — no generators, no magic."
                 </p>
-                <div class="terminal mt-6 flex max-w-xl items-center justify-between gap-4">
-                    <span>
-                        <span class="terminal-prompt">"$"</span>
-                        " montrs serve"
-                    </span>
-                    <CopyButton text="montrs serve".to_string() label="Copy" />
+                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+                    {[("faq", "FAQ"), ("footers", "Footers"), ("headers", "Headers"), ("integrations", "Integrations"), ("login", "Login"), ("sidenav", "Sidenav")].iter().map(|(id, label)| {
+                        let on_click = scroll_to(id);
+                        view! {
+                            <a
+                                href="#"
+                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=on_click
+                            >{*label}</a>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
+                <div class="terminal mt-6 flex max-w-xl flex-col gap-2">
+                    <div class="flex items-center justify-between gap-4">
+                        <span>
+                            <span class="terminal-prompt">"$"</span>
+                            " montrs add faq01"
+                        </span>
+                        <CopyButton text="montrs add faq01".to_string() label="Copy" />
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <span>
+                            <span class="terminal-prompt">"$"</span>
+                            " montrs add sidenav01"
+                        </span>
+                        <CopyButton text="montrs add sidenav01".to_string() label="Copy" />
+                    </div>
                 </div>
             </div>
 
-            <SectionTitle>"FAQ"</SectionTitle>
+            <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">
+                <nav class="hidden lg:block">
+                    <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
+                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">"Blocks"</p>
+                        {[("faq", "FAQ"), ("footers", "Footers"), ("headers", "Headers"), ("integrations", "Integrations"), ("login", "Login"), ("sidenav", "Sidenav")].iter().map(|(id, label)| {
+                            let on_click = scroll_to(id);
+                            view! {
+                                <a
+                                    href="#"
+                                    class="block rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=on_click
+                                >{*label}</a>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </div>
+                </nav>
+
+                <div class="min-w-0">
+            <SectionTitle id="faq">"FAQ"</SectionTitle>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <BlockCard name="faq-01.rs" source=include_str!("../blocks/faq/faq01.rs")>
                     <Faq01 />
@@ -69,7 +108,7 @@ pub fn Blocks() -> impl IntoView {
                 </BlockCard>
             </div>
 
-            <SectionTitle>"Footers"</SectionTitle>
+            <SectionTitle id="footers">"Footers"</SectionTitle>
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <BlockCard name="footer-01.rs" source=include_str!("../blocks/footer/footer01.rs")>
                     <Footer01 />
@@ -91,12 +130,12 @@ pub fn Blocks() -> impl IntoView {
                 </BlockCard>
             </div>
 
-            <SectionTitle>"Headers"</SectionTitle>
+            <SectionTitle id="headers">"Headers"</SectionTitle>
             <BlockCard name="header-01.rs" source=include_str!("../blocks/header/header01.rs")>
                 <Header01 />
             </BlockCard>
 
-            <SectionTitle>"Integrations"</SectionTitle>
+            <SectionTitle id="integrations">"Integrations"</SectionTitle>
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <BlockCard name="integration-01.rs" source=include_str!("../blocks/integration/integration01.rs")>
                     <Integration01 />
@@ -121,7 +160,7 @@ pub fn Blocks() -> impl IntoView {
                 </BlockCard>
             </div>
 
-            <SectionTitle>"Login"</SectionTitle>
+            <SectionTitle id="login">"Login"</SectionTitle>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <BlockCard name="login-01.rs" source=include_str!("../blocks/login/login01.rs")>
                     <Login01 />
@@ -137,8 +176,8 @@ pub fn Blocks() -> impl IntoView {
                 </BlockCard>
             </div>
 
-            <SectionTitle>"Sidenav"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <SectionTitle id="sidenav">"Sidenav"</SectionTitle>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <BlockCard name="sidenav-01.rs" source=include_str!("../blocks/sidenav/sidenav01.rs")>
                     <Sidenav01 />
                 </BlockCard>
@@ -185,14 +224,37 @@ pub fn Blocks() -> impl IntoView {
                     <SidenavRoutesSimplified />
                 </BlockCard>
             </div>
+                </div>
+            </div>
         </div>
     }
 }
 
+/// Smooth-scroll to an element id without touching the URL.
+fn scroll_to(id: &str) -> impl Fn(leptos::ev::MouseEvent) {
+    let id = id.to_string();
+    #[cfg(not(target_arch = "wasm32"))]
+    let _ = &id;
+    move |ev: leptos::ev::MouseEvent| {
+        ev.prevent_default();
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            if let Some(doc) = web_sys::window().and_then(|w| w.document())
+                && let Some(el) = doc.get_element_by_id(&id)
+            {
+                if let Some(html) = el.dyn_ref::<web_sys::HtmlElement>() {
+                    let _ = html.scroll_into_view();
+                }
+            }
+        }
+    }
+}
+
 #[component]
-fn SectionTitle(children: Children) -> impl IntoView {
+fn SectionTitle(id: &'static str, children: Children) -> impl IntoView {
     view! {
-        <h2 class="mb-4 mt-12 text-xl font-semibold tracking-tight first:mt-0">
+        <h2 id=id class="mb-4 mt-12 scroll-mt-24 text-xl font-semibold tracking-tight first:mt-0">
             {children()}
         </h2>
     }
@@ -208,7 +270,8 @@ fn BlockCard(
     // Like shadcn/ui, the copied snippet is the implementation only — the
     // SPDX license header is stripped before highlighting.
     let code_html = highlight_rust(strip_license(source));
-    let cli = "montrs new".to_string();
+    let block_key = name.strip_suffix(".rs").unwrap_or(name);
+    let cli = format!("montrs add {block_key} --block");
 
     view! {
         <div class="showcase-card flex flex-col">
