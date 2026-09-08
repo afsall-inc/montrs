@@ -204,8 +204,20 @@ function css() {
 var live = 'o';
 var btn = document.createElement('button');
 btn.title = 'MontRS dev console';
-btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#ff6310"/><rect x="6" y="6" width="5" height="12" rx="2" fill="#fff" opacity="0.9"/><rect x="13" y="6" width="5" height="7" rx="2" fill="#fff" opacity="0.9"/></svg>';
 btn.style.cssText = css().btn;
+// Use the app's own logo (favicon link) so it works in every MontRS app;
+// fall back to an inline MontRS-style mark if none is available.
+var logo = null;
+try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo = l.href; } catch (_) {}
+if (logo) {
+  btn.innerHTML = '';
+  btn.style.backgroundImage = 'url(' + logo + ')';
+  btn.style.backgroundSize = '72%';
+  btn.style.backgroundRepeat = 'no-repeat';
+  btn.style.backgroundPosition = 'center';
+} else {
+  btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 var panel = null, open = false;
 function render() {
   if (!panel) return;
