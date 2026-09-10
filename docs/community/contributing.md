@@ -6,7 +6,7 @@ Thank you for your interest in contributing to MontRS! This framework is built f
 
 1.  **Clone the Repo**:
     ```bash
-    git clone https://github.com/montrs/montrs.git
+    git clone https://github.com/afsall-inc/montrs.git
     cd montrs
     ```
 2.  **Install Dependencies**:
