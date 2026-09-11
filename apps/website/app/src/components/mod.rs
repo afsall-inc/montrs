@@ -28,7 +28,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub mod dev_overlay;
 pub mod footer;
 pub mod header;
 pub mod layout;

@@ -86,8 +86,15 @@ impl LiveReload {
         Ok(Self { tx })
     }
 
-    /// Ask every connected browser tab to reload.
+    /// Ask every connected browser tab to reload — the Leptos `reload_script.js`
+    /// handshake expects JSON (`{"all": true}` → full reload, `{"css": …}` →
+    /// stylesheet swap), not a raw string.
     pub fn notify(&self) {
-        let _ = self.tx.send("reload".to_string());
+        let _ = self.tx.send(r#"{"all":true}"#.to_string());
+    }
+
+    /// Hot-swap a stylesheet without a full reload (`{"css":"main.css"}`).
+    pub fn notify_css(&self, css: &str) {
+        let _ = self.tx.send(format!(r#"{{"css":"{css}"}}"#));
     }
 }

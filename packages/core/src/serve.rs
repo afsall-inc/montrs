@@ -106,6 +106,9 @@ where
         std::env::set_var("LEPTOS_SITE_ROOT", &site_root);
         std::env::set_var("LEPTOS_SITE_PKG_DIR", &pkg_dir);
         std::env::set_var("LEPTOS_RELOAD_PORT", &reload_port);
+        // Leptos only injects the live-reload script (which opens the
+        // WebSocket to the reload port) when LEPTOS_WATCH is set.
+        std::env::set_var("LEPTOS_WATCH", "1");
     }
 
     let mut conf = get_configuration(None).unwrap();
@@ -122,7 +125,7 @@ where
 
     let axum_routes = router.to_axum_route_listings();
 
-    let app = AxumRouter::new()
+    let mut app = AxumRouter::new()
         .leptos_routes_with_context(
             &conf.leptos_options,
             axum_routes,
@@ -139,7 +142,22 @@ where
             },
             app_fn,
         )
-        .fallback_service(ServeDir::new(&site_root))
+        .fallback_service(ServeDir::new(&site_root));
+
+    // Next.js-style dev overlay, injected by the framework itself (not the
+    // app) so it appears in every MontRS app during `montrs serve`/`watch`.
+    if std::env::var("LEPTOS_WATCH").is_ok() {
+        app = app.layer(axum::middleware::from_fn(inject_dev_overlay));
+    }
+
+    let app = app
+        // Dev servers must never serve stale bundles: the hydration entry
+        // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
+        // URLs, so force the browser to revalidate on every request.
+        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
+            axum::http::header::CACHE_CONTROL,
+            axum::http::header::HeaderValue::from_static("no-cache"),
+        ))
         .with_state(conf.leptos_options);
 
     let (host, port_str) = addr.rsplit_once(':').unwrap_or((&addr, "3000"));
@@ -156,4 +174,118 @@ where
         port += 1;
     }
     Err("Could not bind to any port in range".into())
+}
+
+/// Next.js-style dev overlay script (framework-injected). Shows a floating
+/// MontRS button in the bottom-right of any MontRS app during
+/// `montrs serve`/`watch`, surfaces runtime errors without opening the
+/// console, and reports live-reload connection status.
+#[cfg(feature = "ssr")]
+const DEV_OVERLAY_SCRIPT: &str = concat!(
+    "<script>",
+    r###"(function(){
+if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
+var E = [];
+function push(k, m) { E.push([k, m]); if (E.length > 60) E.shift(); }
+window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
+window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; push('rejection', r ? String(r) : 'Promise rejected'); });
+try { (function (ce) { console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); }; })(console.error); } catch (_) {}
+function dark() { return document.documentElement.classList.contains('dark'); }
+function css() {
+  var d = dark();
+  var bg = d ? '#1a1a1a' : '#ffffff';
+  var fg = d ? '#e5e5e5' : '#111111';
+  var bd = d ? '#3a3a3a' : 'rgba(0,0,0,0.12)';
+  return {
+    btn: 'position:fixed;bottom:16px;right:16px;z-index:2147483000;width:40px;height:40px;border-radius:9999px;border:1px solid ' + bd + ';background:' + bg + ';box-shadow:0 8px 24px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;',
+    panel: 'position:fixed;bottom:64px;right:16px;z-index:2147483000;width:320px;max-height:60vh;overflow:auto;background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);font:11px/1.5 ui-monospace,Menlo,monospace;color:' + fg + ';'
+  };
+}
+var live = 'o';
+var btn = document.createElement('button');
+btn.title = 'MontRS dev console';
+btn.style.cssText = css().btn;
+// Use the app's own logo (favicon link) so it works in every MontRS app;
+// fall back to an inline MontRS-style mark if none is available.
+var logo = null;
+try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo = l.href; } catch (_) {}
+if (logo) {
+  btn.innerHTML = '';
+  btn.style.backgroundImage = 'url(' + logo + ')';
+  btn.style.backgroundSize = '72%';
+  btn.style.backgroundRepeat = 'no-repeat';
+  btn.style.backgroundPosition = 'center';
+} else {
+  btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+var panel = null, open = false;
+function render() {
+  if (!panel) return;
+  var sep = dark() ? '#333' : '#eee';
+  var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span>' + live + ' live reload</span></div>';
+  if (E.length === 0) {
+    out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
+  } else {
+    for (var i = 0; i < E.length; i++) {
+      var c = E[i][0] === 'error' ? '#e5484d' : '#b7791f';
+      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + ';color:' + c + ';white-space:pre-wrap;word-break:break-word">' + E[i][1] + '</div>';
+    }
+  }
+  panel.innerHTML = out;
+}
+btn.onclick = function () {
+  open = !open;
+  if (open) {
+    if (!panel) { panel = document.createElement('div'); document.body.appendChild(panel); }
+    panel.style.cssText = css().panel;
+    render();
+  } else if (panel) { panel.remove(); panel = null; }
+};
+document.body.appendChild(btn);
+var port = '3001';
+try { var m = document.querySelector('meta[name="montrs:reload-port"]'); if (m && m.content) port = m.content; } catch (_) {}
+try {
+  var ws = new WebSocket('ws://' + (location.hostname || 'localhost') + ':' + port);
+  ws.onopen = function () { live = '●'; if (open) render(); };
+  ws.onclose = function () { live = '○'; if (open) render(); };
+} catch (_) {}
+})();
+"###,
+    "</script>"
+);
+
+/// Axum middleware: appends the dev overlay script to HTML responses so every
+/// MontRS app gets it in dev, without touching the app's own code.
+#[cfg(feature = "ssr")]
+async fn inject_dev_overlay(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use futures::StreamExt;
+
+    let res = next.run(req).await;
+    let is_html = res
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|ct| ct.starts_with("text/html"));
+    if !is_html {
+        return res;
+    }
+    let headers = res.headers().clone();
+    let body = res.into_body();
+    let stream = body.into_data_stream();
+    let script = futures::stream::once(async move {
+        Ok::<_, axum::Error>(axum::body::Bytes::from_static(
+            DEV_OVERLAY_SCRIPT.as_bytes(),
+        ))
+    });
+    let merged = stream.chain(script);
+    let mut new_res =
+        axum::response::Response::new(axum::body::Body::from_stream(merged));
+    *new_res.headers_mut() = headers;
+    new_res
+        .headers_mut()
+        .remove(axum::http::header::CONTENT_LENGTH);
+    new_res
 }

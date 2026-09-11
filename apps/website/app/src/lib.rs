@@ -79,6 +79,8 @@ pub fn hydrate() {
 pub fn Shell() -> impl IntoView {
     let leptos_options = use_context::<LeptosOptions>()
         .expect("LeptosOptions must be provided by the SSR server");
+    let dev_port = leptos_options.reload_port.to_string();
+    let is_dev = std::env::var("LEPTOS_WATCH").is_ok();
 
     view! {
         <html lang="en">
@@ -104,6 +106,16 @@ pub fn Shell() -> impl IntoView {
                     "(function(){try{var t=localStorage.getItem('montrs-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();"
                 </script>
                 <HydrationScripts options=leptos_options />
+                {is_dev.then(|| {
+                    let port = dev_port.clone();
+                    view! {
+                        <>
+                            <meta name="montrs:dev" content="1" />
+                            <meta name="montrs:reload-port" content={port} />
+                        </>
+                    }
+                    .into_any()
+                })}
             </head>
             <body>
                 <App />
@@ -128,7 +140,6 @@ pub fn App() -> impl IntoView {
                     {RouterOutlet::<MyConfig>()}
                 </main>
                 <Footer />
-                <dev_overlay::DevOverlay />
             </ThemeProvider>
         </leptos_router::components::Router>
     }

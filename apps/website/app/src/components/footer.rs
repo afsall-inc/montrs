@@ -67,12 +67,12 @@ pub fn Footer() -> impl IntoView {
                         <h3 class="text-sm font-semibold">"Community"</h3>
                         <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
                             <li>
-                                <a class="transition-colors hover:text-foreground" href="https://github.com/montrs/montrs" target="_blank" rel="noopener noreferrer">
+                                <a class="transition-colors hover:text-foreground" href="https://github.com/afsall-inc/montrs" target="_blank" rel="noopener noreferrer">
                                     "GitHub"
                                 </a>
                             </li>
                             <li>
-                                <a class="transition-colors hover:text-foreground" href="https://github.com/montrs/montrs" target="_blank" rel="noopener noreferrer">
+                                <a class="transition-colors hover:text-foreground" href="https://github.com/afsall-inc/montrs" target="_blank" rel="noopener noreferrer">
                                     "Documentation"
                                 </a>
                             </li>
@@ -84,7 +84,7 @@ pub fn Footer() -> impl IntoView {
                     <p>"© 2026 MontRS — Apache-2.0 / MIT"</p>
                     <a
                         class="font-mono text-xs transition-colors hover:text-foreground"
-                        href="https://github.com/montrs/montrs"
+                        href="https://github.com/afsall-inc/montrs"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
