@@ -49,6 +49,7 @@ montrs-utils = { path = "../utils" }
 montrs-runner = { path = "../runner" }
 montrs-metadata = { path = "../metadata" }
 montrs-build = { path = "../build" }
+montrs-build-serve = { path = "../build-serve" }
 montrs-env = { path = "../env" }
 montrs-lockfile = { path = "../lockfile" }
 montrs-shell = { path = "../shell" }

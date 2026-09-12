@@ -42,18 +42,52 @@ mod pipeline;
 
 pub use pipeline::Pipeline;
 
-/// Run a cargo command and stream output.
-/// Automatically sets RUSTFLAGS to enable Leptos `erase_components`
-/// for reduced type-depth and faster compiles.
+/// Run a cargo command, streaming its output to the terminal while capturing
+/// it.
+///
+/// Automatically sets RUSTFLAGS to enable Leptos `erase_components` for
+/// reduced type-depth and faster compiles. On failure the full compiler
+/// output is returned as the error message so the dev server can forward it
+/// to the browser error overlay.
 pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
-    let status = std::process::Command::new("cargo")
+    use std::io::{BufRead, BufReader};
+    use std::process::{Command, Stdio};
+
+    let mut child = Command::new("cargo")
         .env("RUSTFLAGS", "--cfg erase_components")
         .args(args)
-        .stdout(std::process::Stdio::inherit())
-        .stderr(std::process::Stdio::inherit())
-        .status()?;
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    let stdout = child.stdout.take().expect("piped stdout");
+    let stderr = child.stderr.take().expect("piped stderr");
+
+    let out_handle = std::thread::spawn(move || {
+        let mut buf = String::new();
+        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+            println!("{line}");
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        buf
+    });
+    let err_handle = std::thread::spawn(move || {
+        let mut buf = String::new();
+        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+            eprintln!("{line}");
+            buf.push_str(&line);
+            buf.push('\n');
+        }
+        buf
+    });
+
+    let status = child.wait()?;
+    let mut text = out_handle.join().unwrap_or_default();
+    text.push_str(&err_handle.join().unwrap_or_default());
+
     if !status.success() {
-        anyhow::bail!("cargo command failed: cargo {}", args.join(" "));
+        anyhow::bail!("{}", text.trim());
     }
     Ok(())
 }

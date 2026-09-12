@@ -84,3 +84,95 @@ where
     axum::serve(listener, app).await?;
     Ok(())
 }
+
+/// Fallback page shown when the very first build has not produced an SSR
+/// binary yet. It keeps the dev server (and its live-reload socket) alive and
+/// renders build errors in place until a successful build takes over.
+const FALLBACK_TEMPLATE: &str = r#"<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MontRS — compiling…</title>
+<style>
+:root { color-scheme: dark; }
+body { margin:0; background:#0a0a0a; color:#e5e5e5; font:14px/1.6 ui-sans-serif,system-ui,sans-serif; display:flex; min-height:100vh; align-items:center; justify-content:center; }
+.box { max-width:680px; width:100%; padding:32px; text-align:center; }
+.spin { width:24px; height:24px; border:2px solid #333; border-top-color:#f97316; border-radius:50%; animation:sp .8s linear infinite; margin:0 auto 16px; }
+@keyframes sp { to { transform:rotate(360deg); } }
+h1 { font-size:16px; margin:0 0 4px; }
+p { color:#a1a1aa; margin:0; }
+pre { display:none; margin-top:16px; padding:16px; background:#111; border:1px solid #262626; border-radius:10px; text-align:left; font:12px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap; max-height:55vh; overflow:auto; color:#fca5a5; }
+.err .spin { display:none; }
+.err pre { display:block; }
+</style>
+</head>
+<body>
+<div class="box" id="box">
+  <div class="spin"></div>
+  <h1>MontRS is compiling…</h1>
+  <p>The first build is in progress. This page reloads automatically when it finishes.</p>
+  <pre id="msg"></pre>
+</div>
+<script>
+(function () {
+  var port = __RELOAD_PORT__;
+  var box = document.getElementById('box');
+  var msg = document.getElementById('msg');
+  function connect() {
+    var ws = new WebSocket('ws://' + location.hostname + ':' + port);
+    ws.onopen = function () { ws.send('{"hello":"montrs-overlay"}'); };
+    ws.onmessage = function (e) {
+      var data;
+      try { data = JSON.parse(e.data); } catch (_) { return; }
+      if (data.type === 'build-error' || data.type === 'server-error') {
+        box.classList.add('err');
+        msg.textContent = (data.message || '').trim();
+      } else if (data.type === 'build-ok') {
+        box.classList.remove('err');
+        msg.textContent = '';
+        location.reload();
+      }
+    };
+    ws.onclose = function () { setTimeout(connect, 1000); };
+  }
+  connect();
+})();
+</script>
+</body>
+</html>
+"#;
+
+/// The rendered fallback page for a given reload port.
+pub fn fallback_page(reload_port: u16) -> String {
+    FALLBACK_TEMPLATE.replace("__RELOAD_PORT__", &reload_port.to_string())
+}
+
+/// Serve the fallback page (and any existing site assets) until `shutdown`
+/// resolves. Used while the first build is failing or still running.
+pub async fn serve_fallback_with_shutdown<F>(
+    config: ServeConfig,
+    reload_port: u16,
+    shutdown: F,
+) -> Result<()>
+where
+    F: std::future::Future<Output = ()> + Send + 'static,
+{
+    let page = fallback_page(reload_port);
+    let app = Router::new()
+        .route(
+            "/",
+            axum::routing::get(move || {
+                let page = page.clone();
+                async move { axum::response::Html(page) }
+            }),
+        )
+        .fallback_service(ServeDir::new(&config.site_root));
+
+    let listener = tokio::net::TcpListener::bind(&config.addr).await?;
+    info!("Dev fallback server listening on {}", config.addr);
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown)
+        .await?;
+    Ok(())
+}

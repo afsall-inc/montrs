@@ -28,32 +28,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Live-reload WebSocket broadcaster for `montrs serve` / `montrs watch`.
+//! Live-reload + dev-tools WebSocket for `montrs serve` / `montrs watch`.
 //!
-//! Listens on the project's `[serve] reload-port` (default 3001). The SSR
-//! shell's hydration scripts connect here and reload the page whenever the
-//! watcher finishes a successful rebuild — the Leptos reload script reloads
-//! on any incoming message, so we broadcast a simple "reload" text frame.
+//! Listens on the project's `[serve] reload-port` (default 3001). Two kinds
+//! of clients connect:
+//!
+//! * the Leptos reload script, which expects JSON reload frames
+//!   (`{"all":true}` / `{"css":"…"}`) and reloads on any message it receives;
+//! * the MontRS dev overlay, which sends `{"hello":"montrs-overlay"}` first and
+//!   then only wants structured build/server events.
+//!
+//! Connections are tagged from their hello frame so Leptos never receives a
+//! dev-tools event (which it would treat as a reload) and the overlay never
+//! receives a reload frame.
 
 use anyhow::{Context, Result};
-use futures_util::SinkExt;
+use futures_util::{SinkExt, StreamExt};
+use serde_json::json;
 use std::net::SocketAddr;
+use std::time::Duration;
 use tokio::{net::TcpListener, sync::broadcast};
 
-/// A tiny WS server that broadcasts reload notifications to every connected
-/// browser tab.
+/// A tiny WS server that fans out dev events to every connected browser tab.
 #[derive(Clone)]
 pub struct LiveReload {
     tx: broadcast::Sender<String>,
 }
 
 impl LiveReload {
-    /// Bind `0.0.0.0:{port}` and start accepting reload connections.
+    /// Bind `0.0.0.0:{port}` and start accepting connections.
     ///
     /// Fails gracefully if the port is already in use (e.g. another dev
     /// server is running) so the dev loop can keep going.
     pub async fn start(port: u16) -> Result<Self> {
-        let (tx, _rx) = broadcast::channel::<String>(16);
+        let (tx, _rx) = broadcast::channel::<String>(64);
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
         let listener = TcpListener::bind(addr).await.with_context(|| {
             format!("could not bind live-reload port {port}")
@@ -67,15 +75,33 @@ impl LiveReload {
                 };
                 let tx = tx2.clone();
                 tokio::spawn(async move {
-                    let Ok(mut ws) =
-                        tokio_tungstenite::accept_async(stream).await
+                    let Ok(mut ws) = tokio_tungstenite::accept_async(stream).await
                     else {
                         return;
                     };
+
+                    // Read the hello frame (if any) to tag this connection.
+                    let hello = tokio::time::timeout(
+                        Duration::from_millis(750),
+                        ws.next(),
+                    )
+                    .await
+                    .ok()
+                    .flatten()
+                    .and_then(|m| m.ok())
+                    .and_then(|m| m.into_text().ok())
+                    .unwrap_or_default();
+                    let is_overlay = hello.contains("montrs-overlay");
+
                     let mut rx = tx.subscribe();
                     while let Ok(msg) = rx.recv().await {
                         use tokio_tungstenite::tungstenite::Message;
-                        if ws.send(Message::Text(msg.into())).await.is_err() {
+                        // Dev-tools frames always carry a `"type"` field; reload
+                        // frames never do. Route them to the right client.
+                        let is_event = msg.contains("\"type\"");
+                        if is_event == is_overlay
+                            && ws.send(Message::Text(msg.into())).await.is_err()
+                        {
                             break;
                         }
                     }
@@ -86,15 +112,54 @@ impl LiveReload {
         Ok(Self { tx })
     }
 
-    /// Ask every connected browser tab to reload — the Leptos `reload_script.js`
-    /// handshake expects JSON (`{"all": true}` → full reload, `{"css": …}` →
-    /// stylesheet swap), not a raw string.
+    fn send_text(&self, text: String) {
+        let _ = self.tx.send(text);
+    }
+
+    /// Ask every connected browser tab to reload — the Leptos reload script
+    /// expects JSON (`{"all": true}` → full reload).
     pub fn notify(&self) {
-        let _ = self.tx.send(r#"{"all":true}"#.to_string());
+        self.send_text(r#"{"all":true}"#.to_string());
     }
 
     /// Hot-swap a stylesheet without a full reload (`{"css":"main.css"}`).
     pub fn notify_css(&self, css: &str) {
-        let _ = self.tx.send(format!(r#"{{"css":"{css}"}}"#));
+        self.send_text(format!(r#"{{"css":"{css}"}}"#));
+    }
+
+    /// A rebuild started.
+    pub fn building(&self) {
+        self.send_text(json!({ "type": "building" }).to_string());
+    }
+
+    /// A rebuild succeeded with no errors.
+    pub fn build_ok(&self) {
+        self.send_text(json!({ "type": "build-ok" }).to_string());
+    }
+
+    /// A build failed. `frame` is an optional pre-formatted code frame.
+    pub fn build_error(
+        &self,
+        message: &str,
+        file: Option<&str>,
+        line: Option<u32>,
+        column: Option<u32>,
+        frame: Option<&str>,
+    ) {
+        let value = json!({
+            "type": "build-error",
+            "message": message,
+            "file": file,
+            "line": line,
+            "column": column,
+            "frame": frame,
+        });
+        self.send_text(value.to_string());
+    }
+
+    /// The SSR server process failed to start or crashed.
+    pub fn server_error(&self, message: &str) {
+        let value = json!({ "type": "server-error", "message": message });
+        self.send_text(value.to_string());
     }
 }

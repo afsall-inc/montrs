@@ -189,7 +189,7 @@ const DEV_OVERLAY_SCRIPT: &str = concat!(
     r###"(function(){
 if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
 var E = [];
-function push(k, m) { E.push([k, m]); if (E.length > 60) E.shift(); }
+function push(k, m, f) { E.push([k, m, f || '']); if (E.length > 60) E.shift(); }
 window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
 window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; push('rejection', r ? String(r) : 'Promise rejected'); });
 try { (function (ce) { console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); }; })(console.error); } catch (_) {}
@@ -201,40 +201,51 @@ function css() {
   var bd = d ? '#3a3a3a' : 'rgba(0,0,0,0.12)';
   return {
     btn: 'position:fixed;bottom:16px;right:16px;z-index:2147483000;width:40px;height:40px;border-radius:9999px;border:1px solid ' + bd + ';background:' + bg + ';box-shadow:0 8px 24px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;',
-    panel: 'position:fixed;bottom:64px;right:16px;z-index:2147483000;width:320px;max-height:60vh;overflow:auto;background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);font:11px/1.5 ui-monospace,Menlo,monospace;color:' + fg + ';'
+    panel: 'position:fixed;bottom:64px;right:16px;z-index:2147483000;width:380px;max-height:70vh;overflow:auto;background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);font:11px/1.5 ui-monospace,Menlo,monospace;color:' + fg + ';',
+    frame: 'display:block;margin:8px 0 12px;padding:10px;background:#0c0c0c;border:1px solid #2a2a2a;border-radius:6px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;max-height:220px;overflow:auto;',
+    copy: 'position:absolute;top:6px;right:6px;padding:2px 8px;font-size:10px;background:#2a2a2a;color:#e5e5e5;border:1px solid #3a3a3a;border-radius:4px;cursor:pointer;'
   };
 }
-var live = 'o';
+var live = '○', busy = false;
 var btn = document.createElement('button');
 btn.title = 'MontRS dev console';
 btn.style.cssText = css().btn;
-// Use the app's own logo (favicon link) so it works in every MontRS app;
-// fall back to an inline MontRS-style mark if none is available.
 var logo = null;
 try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo = l.href; } catch (_) {}
 if (logo) {
-  btn.innerHTML = '';
   btn.style.backgroundImage = 'url(' + logo + ')';
-  btn.style.backgroundSize = '72%';
+  btn.style.backgroundSize = '64%';
   btn.style.backgroundRepeat = 'no-repeat';
   btn.style.backgroundPosition = 'center';
 } else {
-  btn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 var panel = null, open = false;
+function badge(k){ return k==='error' ? '#e5484d' : k==='rejection' ? '#b7791f' : '#60a5fa'; }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function render() {
   if (!panel) return;
   var sep = dark() ? '#333' : '#eee';
-  var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span>' + live + ' live reload</span></div>';
+  var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span style="opacity:0.8">' + (busy ? 'compiling…' : (live === '●' ? 'live' : 'disconnected')) + '</span></div>';
   if (E.length === 0) {
     out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
   } else {
     for (var i = 0; i < E.length; i++) {
-      var c = E[i][0] === 'error' ? '#e5484d' : '#b7791f';
-      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + ';color:' + c + ';white-space:pre-wrap;word-break:break-word">' + E[i][1] + '</div>';
+      var c = badge(E[i][0]);
+      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + ';color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
+      if (E[i][2]) {
+        out += '<pre style="position:relative">' + esc(E[i][2]) + '<button class="copy" style="' + css().copy + '" data-i="' + i + '">copy</button></pre>';
+      }
     }
   }
   panel.innerHTML = out;
+  panel.querySelectorAll && panel.querySelectorAll('.copy').forEach(function (b) {
+    b.onclick = function () {
+      var i = parseInt(b.getAttribute('data-i'), 10);
+      var t = E[i] && E[i][2] || '';
+      try { navigator.clipboard.writeText(t); b.textContent = 'copied'; } catch (_) { b.textContent = 'fail'; }
+    };
+  });
 }
 btn.onclick = function () {
   open = !open;
@@ -251,14 +262,22 @@ try {
   var ws = new WebSocket('ws://' + (location.hostname || 'localhost') + ':' + port);
   ws.onopen = function () { live = '●'; if (open) render(); };
   ws.onclose = function () { live = '○'; if (open) render(); };
+  ws.onmessage = function (e) {
+    var data; try { data = JSON.parse(e.data); } catch (_) { return; }
+    if (data.type === 'building') { busy = true; if (open) render(); }
+    else if (data.type === 'build-ok') { busy = false; live = '●'; if (open) render(); }
+    else if (data.type === 'build-error') { busy = false; push('build', data.message || 'Build error', data.frame || ''); if (open) render(); }
+    else if (data.type === 'server-error') { busy = false; push('server', data.message || 'Server error'); if (open) render(); }
+  };
 } catch (_) {}
 })();
 "###,
     "</script>"
 );
 
-/// Axum middleware: appends the dev overlay script to HTML responses so every
-/// MontRS app gets it in dev, without touching the app's own code.
+/// Axum middleware: injects the dev overlay script + a meta tag with the
+/// actual reload port into HTML responses so every MontRS app gets it in
+/// dev, without touching the app's own code.
 #[cfg(feature = "ssr")]
 async fn inject_dev_overlay(
     req: axum::extract::Request,
@@ -275,15 +294,23 @@ async fn inject_dev_overlay(
     if !is_html {
         return res;
     }
+
+    let port = std::env::var("MONTRS_RELOAD_PORT")
+        .unwrap_or_else(|_| "3001".to_string());
+    let meta_tag = format!(
+        "<meta name=\"montrs:reload-port\" content=\"{}\">",
+        port
+    );
+    let script = DEV_OVERLAY_SCRIPT;
+    let injection = format!("{meta_tag}\n{script}");
+
     let headers = res.headers().clone();
     let body = res.into_body();
     let stream = body.into_data_stream();
-    let script = futures::stream::once(async move {
-        Ok::<_, axum::Error>(axum::body::Bytes::from_static(
-            DEV_OVERLAY_SCRIPT.as_bytes(),
-        ))
+    let script_bytes = futures::stream::once(async move {
+        Ok::<_, axum::Error>(axum::body::Bytes::from(injection))
     });
-    let merged = stream.chain(script);
+    let merged = stream.chain(script_bytes);
     let mut new_res =
         axum::response::Response::new(axum::body::Body::from_stream(merged));
     *new_res.headers_mut() = headers;
