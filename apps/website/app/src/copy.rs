@@ -42,12 +42,15 @@ pub fn copy_text(text: &str) -> bool {
 
     let promise = clipboard.write_text(text);
     // Attach a no-op catch so a rejected promise (e.g. permissions) doesn't
-    // produce an unhandledrejection in the console.
-    let mut closure = wasm_bindgen::prelude::Closure::wrap(Box::new(
+    // produce an unhandledrejection in the console. The closure must be leaked
+    // (`forget`) — dropping it here would leave JS holding a dangling wasm
+    // closure, which throws when the promise later settles.
+    let closure = wasm_bindgen::prelude::Closure::wrap(Box::new(
         |_: wasm_bindgen::JsValue| {},
     )
         as Box<dyn FnMut(wasm_bindgen::JsValue)>);
-    let _ = promise.catch(&mut closure);
+    let _ = promise.catch(&closure);
+    closure.forget();
     true
 }
 
@@ -75,19 +78,18 @@ pub fn CopyButton(
         copied.set(true);
         #[cfg(target_arch = "wasm32")]
         {
-            use wasm_bindgen::prelude::*;
+            use wasm_bindgen::JsCast;
             let copied2 = copied;
-            let cb = Closure::wrap(
-                Box::new(move || copied2.set(false)) as Box<dyn FnMut()>
-            );
+            let cb = wasm_bindgen::prelude::Closure::once_into_js(move || {
+                copied2.set(false)
+            });
             if let Some(window) = web_sys::window() {
                 let _ = window
                     .set_timeout_with_callback_and_timeout_and_arguments_0(
-                        cb.as_ref().unchecked_ref(),
+                        cb.unchecked_ref(),
                         1500,
                     );
             }
-            cb.forget();
         }
     };
 

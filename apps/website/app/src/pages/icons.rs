@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use crate::copy::CopyButton;
+use crate::copy::{CopyButton, copy_text};
 use leptos::prelude::*;
 use montrs_core::nav::*;
 use montrs_icons::{
@@ -327,6 +327,20 @@ fn full_svg_markup(g: &CollectedGlyph, size: u32, stroke_w: f64) -> String {
     )
 }
 
+/// Valid copy-paste usage for a glyph, based on its owning collection.
+fn usage_snippet(col: Collection, glyph: &CollectedGlyph) -> String {
+    if col == Collection::Lucide {
+        format!(r#"<Icon glyph=Glyph::{} class="w-6 h-6" />"#, glyph.name)
+    } else {
+        format!(
+            "use montrs_icons::{{CustomIcon, Collection}};\n\
+             let icon = Collection::{col:?}.glyph(\"{}\").unwrap();\n\
+             <CustomIcon svg=icon.svg viewbox=icon.viewbox />",
+            glyph.name.to_lowercase()
+        )
+    }
+}
+
 // ---------------------------------------------------------------------------
 // MRU (localStorage, client-only, works for every collection)
 // ---------------------------------------------------------------------------
@@ -375,19 +389,11 @@ pub fn Icons() -> impl IntoView {
     let navigate = use_navigate();
 
     // `None` = "All collections"; `Some(c)` = a single collection.
-    let collection = RwSignal::new(
-        query
-            .get()
-            .get("collection")
-            .and_then(|k| {
-                if k.eq_ignore_ascii_case("all") {
-                    None
-                } else {
-                    Collection::from_key(&k)
-                }
-            })
-            .or(Some(Collection::Lucide)),
-    );
+    let collection = RwSignal::new(match query.get().get("collection") {
+        Some(k) if k.eq_ignore_ascii_case("all") => None,
+        Some(k) => Collection::from_key(&k).or(Some(Collection::Lucide)),
+        None => Some(Collection::Lucide),
+    });
     let initial_collection = collection.get_untracked();
     let search = RwSignal::new(query.get().get("q").unwrap_or_default());
     let size_px = RwSignal::new(
@@ -420,6 +426,7 @@ pub fn Icons() -> impl IntoView {
     let selected_icon = RwSignal::new(None::<CollectedGlyph>);
     let selected_owner = RwSignal::new(None::<Collection>);
     let anim_choice = RwSignal::new("auto".to_string());
+    let copied_name = RwSignal::new(String::new());
 
     // Escape closes the detail drawer and the mobile filters sidebar.
     #[cfg(target_arch = "wasm32")]
@@ -441,6 +448,19 @@ pub fn Icons() -> impl IntoView {
             cb.as_ref().unchecked_ref(),
         );
         cb.forget();
+    });
+
+    // Lock body scroll while the mobile sidebar or the detail drawer is open.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        let locked = sidebar_open.get() || selected_icon.get().is_some();
+        if let Some(document) = web_sys::window().and_then(|w| w.document())
+            && let Some(body) = document.body()
+        {
+            let _ = body
+                .style()
+                .set_property("overflow", if locked { "hidden" } else { "" });
+        }
     });
 
     Effect::new(move |_| {
@@ -585,7 +605,6 @@ pub fn Icons() -> impl IntoView {
                 .find(|c| c.glyph(glyph.name).is_some())
                 .unwrap_or(Collection::Lucide)
         });
-        selected_owner.set(Some(owner));
         selected_owner.set(Some(owner));
         mru.update(|v| {
             v.retain(|(_, n)| *n != glyph.name);
@@ -748,6 +767,12 @@ pub fn Icons() -> impl IntoView {
             // ---------------------------------------------------------------
             // Sidebar
             // ---------------------------------------------------------------
+            <Show when=move || sidebar_open.get()>
+                <div
+                    class="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm lg:hidden"
+                    on:click=move |_| sidebar_open.set(false)
+                ></div>
+            </Show>
                         <aside class=move || {
                 if sidebar_open.get() {
                     "icons-sidebar fixed inset-y-0 left-0 z-50 block w-72 overflow-y-auto border-r border-border bg-background shadow-xl lg:hidden"
@@ -859,7 +884,7 @@ pub fn Icons() -> impl IntoView {
                                         inputmode="numeric"
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || size_px.get().to_string()
-                                        on:change=on_size_input
+                                        on:input=on_size_input
                                         title="14–48"
                                     />
                                 </span>
@@ -881,7 +906,7 @@ pub fn Icons() -> impl IntoView {
                                         inputmode="decimal"
                                         class="h-6 w-16 rounded border border-border bg-background px-1 text-center font-mono text-xs text-foreground"
                                         prop:value=move || format!("{:.2}", stroke_w.get())
-                                        on:change=on_stroke_input
+                                        on:input=on_stroke_input
                                         title="0.5–3"
                                         disabled=move || !is_stroke_style()
                                     />
@@ -1087,27 +1112,78 @@ pub fn Icons() -> impl IntoView {
                         key=move |(k, _)| k.clone()
                         children=move |(_k, glyph)| {
                             let kebab = glyph.name.to_string();
+                            let title = kebab.clone();
+                            let shown = kebab.clone();
+                            let copied_key = kebab;
                             let is_animated = animated;
                             let on_click = select_icon;
+                            let copy_owner = collection;
+                            let copied = copied_name;
                             view! {
-                                <button
-                                    type="button"
-                                    class="flex flex-col items-center gap-1.5 rounded-lg border border-border p-2 transition-colors hover:border-ring/40 hover:bg-accent"
-                                    on:click=move |_| on_click(glyph)
-                                    title=kebab.clone()
-                                >
-                                    <Show
-                                        when=move || is_animated.get()
-                                        fallback=move || view! {
-                                            <CustomGlyphView glyph=glyph size=size_val stroke_width=sw_val stroke=stroke_val />
+                                <div class="group relative">
+                                    <button
+                                        type="button"
+                                        class="flex w-full flex-col items-center gap-1.5 rounded-lg border border-border p-2 transition-colors hover:border-ring/40 hover:bg-accent"
+                                        on:click=move |_| on_click(glyph)
+                                        title=title
+                                    >
+                                        <Show
+                                            when=move || is_animated.get()
+                                            fallback=move || view! {
+                                                <CustomGlyphView glyph=glyph size=size_val stroke_width=sw_val stroke=stroke_val />
+                                            }
+                                        >
+                                            <AnimatedGlyphView glyph=glyph size=size_val stroke_width=sw_val stroke=stroke_val />
+                                        </Show>
+                                        <span class="w-full truncate text-center font-mono text-[9px] text-muted-foreground">
+                                            {shown}
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="absolute right-1 top-1 inline-flex h-5 w-5 items-center justify-center rounded border border-border bg-background/90 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
+                                        title="Copy usage"
+                                        aria-label="Copy usage"
+                                        on:click=move |ev: leptos::ev::MouseEvent| {
+                                            ev.stop_propagation();
+                                            let owner = copy_owner.get().unwrap_or_else(|| {
+                                                Collection::ALL
+                                                    .iter()
+                                                    .copied()
+                                                    .find(|c| c.glyph(glyph.name).is_some())
+                                                    .unwrap_or(Collection::Lucide)
+                                            });
+                                            copy_text(&usage_snippet(owner, &glyph));
+                                            copied.set(glyph.name.to_string());
+                                            #[cfg(target_arch = "wasm32")]
+                                            {
+                                                use wasm_bindgen::{JsCast, prelude::Closure};
+                                                let current = glyph.name.to_string();
+                                                if let Some(window) = web_sys::window() {
+                                                    let cb = Closure::once_into_js(move || {
+                                                        if copied.get_untracked() == current {
+                                                            copied.set(String::new());
+                                                        }
+                                                    });
+                                                    let _ = window
+                                                        .set_timeout_with_callback_and_timeout_and_arguments_0(
+                                                            cb.unchecked_ref(),
+                                                            1200,
+                                                        );
+                                                }
+                                            }
                                         }
                                     >
-                                        <AnimatedGlyphView glyph=glyph size=size_val stroke_width=sw_val stroke=stroke_val />
-                                    </Show>
-                                    <span class="w-full truncate text-center font-mono text-[9px] text-muted-foreground">
-                                        {kebab.clone()}
-                                    </span>
-                                </button>
+                                        <Show
+                                            when=move || copied.get() == copied_key
+                                            fallback=move || view! {
+                                                <Icon glyph=Glyph::Copy class="h-3 w-3" />
+                                            }
+                                        >
+                                            <Icon glyph=Glyph::Check class="h-3 w-3 text-green-500" />
+                                        </Show>
+                                    </button>
+                                </div>
                             }
                         }
                     />
@@ -1168,14 +1244,7 @@ pub fn Icons() -> impl IntoView {
                     let name = glyph.name.to_string();
                     let svg_markup = full_svg_markup(&glyph, size_px.get(), stroke_w.get());
                     let col = selected_owner.get().unwrap_or(Collection::Lucide);
-                    let usage = if col == Collection::Lucide {
-                        format!(r#"<Icon glyph=Glyph::{name} class="w-6 h-6" />"#)
-                    } else {
-                        format!(
-                            "use montrs_icons::{{CustomIcon, Collection}};\nlet icon = Collection::{}.glyph(\"{}\").unwrap();\n<CustomIcon svg=icon.svg viewbox=icon.viewbox />",
-                            col.label(), glyph.name.to_lowercase()
-                        )
-                    };
+                    let usage = usage_snippet(col, &glyph);
                     let cats: Vec<String> = if col == Collection::Lucide {
                         Glyph::by_name(glyph.name)
                             .map(|g| {

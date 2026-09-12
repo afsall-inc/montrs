@@ -32,7 +32,13 @@ use crate::{copy::CopyButton, highlight::highlight_rust};
 use leptos::prelude::*;
 use montrs_icons::*;
 use montrs_ui::{
-    components::{input::Input, switch::Switch},
+    components::{
+        accordion::{
+            Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+        },
+        input::Input,
+        switch::Switch,
+    },
     prelude::*,
 };
 
@@ -73,11 +79,14 @@ ship = { command = "montrs build", category = "Release", depends = ["test"] }"#;
 pub fn Home() -> impl IntoView {
     view! {
         <Hero />
+        <StatsRow />
         <BentoGrid />
         <GoldenPath />
         <Philosophy />
         <AgentFirst />
         <SectionLinks />
+        <DocsCards />
+        <Faq />
         <TaskRunnerAndSponsors />
         <FinalCta />
     }
@@ -845,6 +854,189 @@ fn FinalCta() -> impl IntoView {
                             "Star on GitHub"
                         </a>
                     </div>
+                </div>
+            </div>
+        </section>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Stats strip
+// ---------------------------------------------------------------------------
+
+#[component]
+fn StatsRow() -> impl IntoView {
+    const STATS: &[(&str, &str)] = &[
+        ("48", "workspace packages"),
+        ("90+", "UI components"),
+        ("23,000+", "icons · 9 collections"),
+        ("3", "targets: web · desktop · mobile"),
+        ("MIT / Apache-2.0", "dual licensed"),
+    ];
+
+    view! {
+        <section class="border-t border-border">
+            <div class="page-container grid grid-cols-2 gap-x-4 gap-y-6 py-10 sm:grid-cols-3 lg:grid-cols-5">
+                {STATS.iter().map(|(value, label)| {
+                    view! {
+                        <div class="text-center">
+                            <p class="font-mono text-xl font-semibold tracking-tight sm:text-2xl">
+                                {*value}
+                            </p>
+                            <p class="mt-1 text-xs text-muted-foreground">{*label}</p>
+                        </div>
+                    }
+                }).collect::<Vec<_>>()}
+            </div>
+        </section>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Docs for every audience
+// ---------------------------------------------------------------------------
+
+#[component]
+fn DocsCards() -> impl IntoView {
+    view! {
+        <section class="border-t border-border py-20">
+            <div class="page-container">
+                <div class="mx-auto max-w-2xl text-center">
+                    <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+                        "Docs for every audience"
+                    </h2>
+                    <p class="mt-4 text-muted-foreground">
+                        "Application developers, framework contributors, and agents —
+                        each gets a path through the same spec."
+                    </p>
+                </div>
+
+                <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <DocCard
+                        icon=Glyph::Rocket
+                        title="Application developers"
+                        subtitle="Building with MontRS"
+                        links=vec![
+                            ("First 30 Minutes", "/ui/components"),
+                            ("Golden Path", "/packages"),
+                            ("Common Mistakes", "/foundations"),
+                        ]
+                    />
+                    <DocCard
+                        icon=Glyph::Wrench
+                        title="Framework contributors"
+                        subtitle="Working on MontRS"
+                        links=vec![
+                            ("Architecture Overview", "/runtime"),
+                            ("Package Boundaries", "/packages"),
+                            ("Invariants & Philosophy", "/foundations"),
+                        ]
+                    />
+                    <DocCard
+                        icon=Glyph::Bot
+                        title="Agents"
+                        subtitle="Machine-readable context"
+                        links=vec![
+                            ("Spec Snapshot", "/ai"),
+                            ("Skills System", "/ai"),
+                            ("agent.json", "/ai"),
+                        ]
+                    />
+                </div>
+            </div>
+        </section>
+    }
+}
+
+#[component]
+fn DocCard(
+    icon: Glyph,
+    title: &'static str,
+    subtitle: &'static str,
+    links: Vec<(&'static str, &'static str)>,
+) -> impl IntoView {
+    view! {
+        <div class="showcase-card reveal p-6">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40">
+                <Icon glyph=icon class="h-4 w-4 text-primary" />
+            </span>
+            <h3 class="mt-4 font-semibold">{title}</h3>
+            <p class="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            <ul class="mt-4 space-y-2 text-sm">
+                {links.into_iter().map(|(label, href)| {
+                    view! {
+                        <li>
+                            <a
+                                href=href
+                                class="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                                {label}
+                                <Icon glyph=Glyph::ArrowRight class="h-3 w-3" />
+                            </a>
+                        </li>
+                    }
+                }).collect::<Vec<_>>()}
+            </ul>
+        </div>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FAQ
+// ---------------------------------------------------------------------------
+
+#[component]
+fn Faq() -> impl IntoView {
+    const FAQ: &[(&str, &str)] = &[
+        (
+            "Do I need to know Rust?",
+            "Yes — but the Golden Path and `montrs new` get you productive fast, and the compiler is the teacher.",
+        ),
+        (
+            "Is it on crates.io?",
+            "Not yet. Install from source with `cargo install --path packages/cli`, or run `montrs new` in a checkout.",
+        ),
+        (
+            "How does cross-platform work?",
+            "One AppSpec, plus adapters for WASM web, winit/wgpu desktop, and mobile shells. Same routes, same loaders.",
+        ),
+        (
+            "What is a Plate?",
+            "A feature module with explicit trait boundaries that registers its routes, tools, and invariants.",
+        ),
+        (
+            "How do agents use MontRS?",
+            "Spec snapshots, skills, and `montrs agent doctor` make every project machine-readable — no prompt archaeology.",
+        ),
+        (
+            "What's the license?",
+            "Dual-licensed Apache-2.0 and MIT. Use it commercially, contribute back if you can.",
+        ),
+    ];
+
+    view! {
+        <section class="border-t border-border py-20">
+            <div class="page-container">
+                <div class="mx-auto max-w-2xl text-center">
+                    <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+                        "Before you ask"
+                    </h2>
+                    <p class="mt-4 text-muted-foreground">
+                        "The questions every framework site gets, answered without the fluff."
+                    </p>
+                </div>
+
+                <div class="mx-auto mt-10 max-w-3xl">
+                    <Accordion class="rounded-xl border border-border">
+                        {FAQ.iter().map(|(question, answer)| {
+                            view! {
+                                <AccordionItem value=question.to_string()>
+                                    <AccordionTrigger>{*question}</AccordionTrigger>
+                                    <AccordionContent>{*answer}</AccordionContent>
+                                </AccordionItem>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </Accordion>
                 </div>
             </div>
         </section>

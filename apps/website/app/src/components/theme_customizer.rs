@@ -33,6 +33,7 @@
 //! re-themes live. "Copy theme" emits a `:root` CSS snippet for your project.
 
 use leptos::prelude::*;
+use leptos_router::hooks::{use_navigate, use_query_map};
 use montrs_icons::*;
 use montrs_ui::prelude::*;
 
@@ -114,6 +115,16 @@ const RADIUS_OPTIONS: &[(&str, &str)] = &[
     ("Pill", "1rem"),
 ];
 
+/// `(label, primary idx, gray idx, radius idx)` quick-pick combinations.
+const PRESETS: &[(&str, usize, usize, usize)] = &[
+    ("Rust", 0, 0, 2),
+    ("Midnight", 7, 1, 2),
+    ("Emerald", 5, 2, 1),
+    ("Violet", 8, 1, 3),
+    ("Stone", 3, 3, 2),
+    ("Pill", 0, 4, 4),
+];
+
 #[allow(dead_code)]
 const STORAGE_KEY: &str = "montrs-theme-config";
 
@@ -175,58 +186,134 @@ fn apply_cfg(cfg: ThemeCfg, dark: bool) {
             && let Some(doc_el) = document.document_element()
             && let Some(html) = doc_el.dyn_ref::<web_sys::HtmlElement>()
         {
-            let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-            let palette = if dark {
-                GRAY_OPTIONS
-            } else {
-                LIGHT_GRAY_OPTIONS
-            };
-            let (_, bg, fg, muted_fg, border) = palette[cfg.gray];
-            let (_, radius) = RADIUS_OPTIONS[cfg.radius];
             let s = html.style();
-            let _ = s.set_property("--primary", primary);
-            let _ = s.set_property("--primary-foreground", primary_fg);
-            let _ = s.set_property("--ring", primary);
-            let _ = s.set_property("--background", bg);
-            let _ = s.set_property("--foreground", fg);
-            let _ = s.set_property("--muted-foreground", muted_fg);
-            let _ = s.set_property("--border", border);
-            let _ = s.set_property("--input", border);
-            let _ = s.set_property("--radius", radius);
+            for (key, value) in tokens_for(cfg, dark) {
+                let _ = s.set_property(key, &value);
+            }
         }
     }
 }
 
-fn copy_css(cfg: ThemeCfg) -> String {
+/// Rotate the hue of an `H S% L%` triplet and return a new triplet.
+fn rotate_hue(hsl: &str, delta: f64) -> String {
+    let mut parts = hsl.split_whitespace();
+    let hue = parts
+        .next()
+        .and_then(|s| s.parse::<f64>().ok())
+        .unwrap_or(0.0);
+    let sat = parts.next().unwrap_or("80%");
+    let light = parts.next().unwrap_or("50%");
+    let new_hue = (hue + delta).rem_euclid(360.0);
+    format!("{new_hue:.1} {sat} {light}")
+}
+
+/// Full semantic token set for a configuration and color mode.
+fn tokens_for(cfg: ThemeCfg, dark: bool) -> Vec<(&'static str, String)> {
     let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-    let (radius_label, radius) = RADIUS_OPTIONS[cfg.radius];
-    let (_, d_bg, d_fg, d_muted, d_border) = GRAY_OPTIONS[cfg.gray];
-    let (_, l_bg, l_fg, l_muted, l_border) = LIGHT_GRAY_OPTIONS[cfg.gray];
-    format!(
-        "/* {radius_label} radius · primary {primary} */\n:root {{\n  \
-         --radius: {radius};\n  --background: {l_bg};\n  --foreground: \
-         {l_fg};\n  --muted-foreground: {l_muted};\n  --border: {l_border};\n  \
-         --input: {l_border};\n  --primary: {primary};\n  \
-         --primary-foreground: {primary_fg};\n  --ring: {primary};\n}}\n.dark \
-         {{\n  --radius: {radius};\n  --background: {d_bg};\n  --foreground: \
-         {d_fg};\n  --muted-foreground: {d_muted};\n  --border: {d_border};\n  \
-         --input: {d_border};\n  --primary: {primary};\n  \
-         --primary-foreground: {primary_fg};\n  --ring: {primary};\n}}\n"
-    )
+    let palette = if dark { GRAY_OPTIONS } else { LIGHT_GRAY_OPTIONS };
+    let (_, bg, fg, muted_fg, border) = palette[cfg.gray];
+    let (_, radius) = RADIUS_OPTIONS[cfg.radius];
+    vec![
+        ("--background", bg.to_string()),
+        ("--foreground", fg.to_string()),
+        ("--card", bg.to_string()),
+        ("--card-foreground", fg.to_string()),
+        ("--popover", bg.to_string()),
+        ("--popover-foreground", fg.to_string()),
+        ("--primary", primary.to_string()),
+        ("--primary-foreground", primary_fg.to_string()),
+        ("--secondary", border.to_string()),
+        ("--secondary-foreground", fg.to_string()),
+        ("--muted", border.to_string()),
+        ("--muted-foreground", muted_fg.to_string()),
+        ("--accent", border.to_string()),
+        ("--accent-foreground", fg.to_string()),
+        ("--border", border.to_string()),
+        ("--input", border.to_string()),
+        ("--ring", primary.to_string()),
+        ("--radius", radius.to_string()),
+        ("--chart-1", primary.to_string()),
+        ("--chart-2", rotate_hue(primary, 55.0)),
+        ("--chart-3", rotate_hue(primary, 130.0)),
+        ("--chart-4", rotate_hue(primary, 200.0)),
+        ("--chart-5", rotate_hue(primary, 280.0)),
+    ]
+}
+
+fn copy_css(cfg: ThemeCfg) -> String {
+    let mut out = String::from(":root {\n");
+    for (key, value) in tokens_for(cfg, false) {
+        out.push_str(&format!("  {key}: {value};\n"));
+    }
+    out.push_str("}\n\n.dark {\n");
+    for (key, value) in tokens_for(cfg, true) {
+        out.push_str(&format!("  {key}: {value};\n"));
+    }
+    out.push_str("}\n");
+    out
 }
 
 #[component]
 pub fn ThemeCustomizer() -> impl IntoView {
-    let cfg = RwSignal::new(load_cfg());
+    let query = use_query_map();
+    let navigate = use_navigate();
+
+    // Read a shared preset from `?t=primary,gray,radius` so theme links work.
+    let from_url = query.get().get("t").and_then(|raw| {
+        let mut it = raw.split(',');
+        let p = it.next()?.parse::<usize>().ok()?;
+        let g = it.next()?.parse::<usize>().ok()?;
+        let r = it.next()?.parse::<usize>().ok()?;
+        Some(ThemeCfg {
+            primary: p.min(PRIMARY_OPTIONS.len() - 1),
+            gray: g.min(GRAY_OPTIONS.len() - 1),
+            radius: r.min(RADIUS_OPTIONS.len() - 1),
+        })
+    });
+
+    let cfg = RwSignal::new(from_url.unwrap_or_else(load_cfg));
     let copied = RwSignal::new(false);
     let theme = use_theme();
+
+    let sync_url = {
+        let navigate = navigate.clone();
+        move |c: ThemeCfg| {
+            let opts = leptos_router::NavigateOptions {
+                replace: true,
+                ..Default::default()
+            };
+            navigate(
+                &format!("/ui/themes?t={},{},{}", c.primary, c.gray, c.radius),
+                opts,
+            );
+        }
+    };
 
     Effect::new(move |_| {
         let c = cfg.get();
         let dark = theme.get().is_dark();
         apply_cfg(c, dark);
         save_cfg(c);
+        sync_url(c);
     });
+
+    let flash_copied = move || {
+        copied.set(true);
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            let cb = wasm_bindgen::prelude::Closure::once_into_js(move || {
+                copied.set(false)
+            });
+            if let Some(window) = web_sys::window() {
+                let _ = window
+                    .set_timeout_with_callback_and_timeout_and_arguments_0(
+                        cb.unchecked_ref(),
+                        1500,
+                    );
+            }
+        }
+    };
 
     let reset = move |_| {
         cfg.set(ThemeCfg {
@@ -242,18 +329,15 @@ pub fn ThemeCustomizer() -> impl IntoView {
                 && let Some(html) = doc_el.dyn_ref::<web_sys::HtmlElement>()
             {
                 let s = html.style();
-                for prop in [
-                    "--primary",
-                    "--primary-foreground",
-                    "--ring",
-                    "--background",
-                    "--foreground",
-                    "--muted-foreground",
-                    "--border",
-                    "--input",
-                    "--radius",
-                ] {
-                    let _ = s.remove_property(prop);
+                for (key, _) in tokens_for(
+                    ThemeCfg {
+                        primary: 0,
+                        gray: 0,
+                        radius: 2,
+                    },
+                    true,
+                ) {
+                    let _ = s.remove_property(key);
                 }
             }
         }
@@ -356,6 +440,24 @@ pub fn ThemeCustomizer() -> impl IntoView {
                 </div>
             </div>
 
+            <div>
+                <p class="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                    "Quick presets"
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    {PRESETS.iter().map(|(label, p, g, r)| {
+                        let (p, g, r) = (*p, *g, *r);
+                        view! {
+                            <button
+                                type="button"
+                                class="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=move |_| cfg.set(ThemeCfg { primary: p, gray: g, radius: r })
+                            >{*label}</button>
+                        }
+                    }).collect::<Vec<_>>()}
+                </div>
+            </div>
+
             <div class="flex flex-wrap items-center gap-2 border-t border-border pt-4">
                 <button
                     type="button"
@@ -369,25 +471,40 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     }
                     on:click=move |_| {
                         crate::copy::copy_text(&copy_css(cfg.get()));
-                        copied.set(true);
-                        #[cfg(target_arch = "wasm32")]
-                        {
-                            use wasm_bindgen::prelude::*;
-                            let c2 = copied;
-                            let cb = wasm_bindgen::prelude::Closure::wrap(Box::new(
-                                move || c2.set(false),
-                            ) as Box<dyn FnMut()>);
-                            if let Some(window) = web_sys::window() {
-                                let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                                    cb.as_ref().unchecked_ref(),
-                                    1500,
-                                );
-                            }
-                            cb.forget();
-                        }
+                        flash_copied();
                     }
                 >
                     {move || if copied.get() { "Copied".to_string() } else { "Copy theme CSS".to_string() }}
+                </button>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    on:click=move |_| {
+                        #[cfg(target_arch = "wasm32")]
+                        let url = {
+                            let c = cfg.get();
+                            web_sys::window()
+                                .map(|w| {
+                                    let loc = w.location();
+                                    format!(
+                                        "{}{}?t={},{},{}",
+                                        loc.origin().unwrap_or_default(),
+                                        loc.pathname().unwrap_or_default(),
+                                        c.primary,
+                                        c.gray,
+                                        c.radius
+                                    )
+                                })
+                                .unwrap_or_default()
+                        };
+                        #[cfg(not(target_arch = "wasm32"))]
+                        let url = String::new();
+                        crate::copy::copy_text(&url);
+                        flash_copied();
+                    }
+                >
+                    <Icon glyph=Glyph::Link class="h-3.5 w-3.5" />
+                    "Copy link"
                 </button>
                 <button
                     type="button"

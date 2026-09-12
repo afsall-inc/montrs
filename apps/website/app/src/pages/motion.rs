@@ -36,6 +36,7 @@ use montrs_ui::{components::slider::Slider, prelude::*};
 #[component]
 pub fn Motion() -> impl IntoView {
     let demos = [
+        ("icons", "Animated Icons"),
         ("spring", "Spring Physics"),
         ("tween", "Tween Easing"),
         ("path", "SVG Path Draw"),
@@ -85,7 +86,10 @@ pub fn Motion() -> impl IntoView {
                 </nav>
 
                 <div class="min-w-0">
-                    <section id="spring" class="scroll-mt-24">
+                    <section id="icons" class="scroll-mt-24">
+                        <AnimatedIconsDemo />
+                    </section>
+                    <section id="spring" class="mt-10 scroll-mt-24">
                         <SpringDemo />
                     </section>
                     <section id="tween" class="mt-10 scroll-mt-24">
@@ -386,7 +390,7 @@ fn PathDemo() -> impl IntoView {
             </div>
 
             <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
-                <svg viewBox="0 0 200 120" class="h-40 w-64">
+                <svg viewBox="0 0 200 120" class="h-40 w-full max-w-64">
                     {move || {
                         let length = 280.0;
                         let offset = length * (1.0 - progress.get());
@@ -585,7 +589,7 @@ fn MorphDemo() -> impl IntoView {
             </div>
 
             <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
-                <svg viewBox="0 0 200 200" class="h-48 w-48">
+                <svg viewBox="0 0 200 200" class="h-48 w-full max-w-48">
                     <polygon
                         points=pts
                         fill="hsl(var(--primary) / 0.12)"
@@ -697,6 +701,94 @@ fn GestureDemo() -> impl IntoView {
                 <p>{move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}</p>
                 <p>{move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}</p>
                 <p>{move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}</p>
+            </div>
+        </div>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Animated icons
+// ---------------------------------------------------------------------------
+
+const ANIMATED_ICON_SAMPLE: &[Glyph] = &[
+    Glyph::Heart,
+    Glyph::Bell,
+    Glyph::Loader,
+    Glyph::RefreshCw,
+    Glyph::ArrowRight,
+    Glyph::Search,
+    Glyph::Cog,
+    Glyph::Star,
+    Glyph::Rocket,
+    Glyph::Zap,
+    Glyph::Sun,
+    Glyph::Cloud,
+];
+
+/// Hover a tile to play its animation. The profile selector overrides the
+/// auto-detected profile for every icon at once.
+#[component]
+fn AnimatedIconsDemo() -> impl IntoView {
+    const PROFILES: &[(&str, Option<AnimationProfile>)] = &[
+        ("Auto", None),
+        ("Draw", Some(AnimationProfile::PathDraw)),
+        ("Spin", Some(AnimationProfile::Spin)),
+        ("Pulse", Some(AnimationProfile::Pulse)),
+        ("Bounce", Some(AnimationProfile::Bounce)),
+        ("Ping", Some(AnimationProfile::Ping)),
+        ("Shake", Some(AnimationProfile::Shake)),
+        ("Nod", Some(AnimationProfile::Nod)),
+        ("Off", Some(AnimationProfile::None)),
+    ];
+
+    let profile = RwSignal::new(None::<AnimationProfile>);
+
+    view! {
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight">"Animated icons"</h2>
+            <p class="mt-1 text-sm text-muted-foreground">
+                "23,000+ icons ship with hover animations — path draw for stroke sets,
+                pulse for fill sets. Pick a profile, then hover a tile."
+            </p>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+                {PROFILES.iter().map(|(label, value)| {
+                    let value = *value;
+                    view! {
+                        <button
+                            type="button"
+                            class=move || {
+                                let base = "rounded-full border px-3 py-1 text-xs font-medium transition-colors";
+                                if profile.get() == value {
+                                    format!("{base} border-primary bg-primary/10 text-primary")
+                                } else {
+                                    format!("{base} border-border text-muted-foreground hover:bg-accent hover:text-foreground")
+                                }
+                            }
+                            on:click=move |_| profile.set(value)
+                        >{*label}</button>
+                    }
+                }).collect::<Vec<_>>()}
+            </div>
+
+            <div class="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                {ANIMATED_ICON_SAMPLE.iter().copied().map(|glyph| {
+                    view! {
+                        <div
+                            class="flex flex-col items-center gap-2 rounded-lg border border-border p-4 transition-colors hover:border-ring/40 hover:bg-accent"
+                            title=glyph.name()
+                        >
+                            <AnimatedIcon
+                                glyph=glyph
+                                class="h-8 w-8"
+                                profile=move || profile.get()
+                            />
+                            <span class="w-full truncate text-center font-mono text-[10px] text-muted-foreground">
+                                {glyph.kebab_name()}
+                            </span>
+                        </div>
+                    }
+                }).collect::<Vec<_>>()}
             </div>
         </div>
     }

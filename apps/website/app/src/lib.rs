@@ -83,7 +83,7 @@ pub fn Shell() -> impl IntoView {
     let is_dev = std::env::var("LEPTOS_WATCH").is_ok();
 
     view! {
-        <html lang="en">
+        <html lang="en" class="dark">
             <head>
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -101,9 +101,11 @@ pub fn Shell() -> impl IntoView {
                 <title>"MontRS — The deterministic full-stack framework for Rust"</title>
                 // Apply the saved/system theme before first paint so the page
                 // never flashes the wrong colors, then let ThemeProvider take
-                // over after hydration. Keys must match the provider.
+                // over after hydration. The SSR markup is dark-first, so the
+                // script only has to *remove* `dark` for a light result.
+                // Keys must match the provider.
                 <script>
-                    "(function(){try{var t=localStorage.getItem('montrs-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();"
+                    "(function(){try{var t=localStorage.getItem('montrs-theme');var d=t?(t==='dark'):window.matchMedia('(prefers-color-scheme: dark)').matches;if(!d)document.documentElement.classList.remove('dark');}catch(e){}})();"
                 </script>
                 <HydrationScripts options=leptos_options />
                 {is_dev.then(|| {
@@ -134,6 +136,7 @@ pub fn App() -> impl IntoView {
         <leptos_router::components::Router>
             <ThemeProvider>
                 <RevealOnScroll />
+                <AnchorGuard />
                 <Header />
                 <ui_subnav::UiSubNav />
                 <main class="min-h-screen">

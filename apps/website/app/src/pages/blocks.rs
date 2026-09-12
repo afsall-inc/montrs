@@ -267,17 +267,48 @@ fn BlockCard(
     children: Children,
 ) -> impl IntoView {
     let show_code = RwSignal::new(false);
+    let viewport = RwSignal::new("desktop");
     // Like shadcn/ui, the copied snippet is the implementation only — the
     // SPDX license header is stripped before highlighting.
     let code_html = highlight_rust(strip_license(source));
     let block_key = name.strip_suffix(".rs").unwrap_or(name);
     let cli = format!("montrs add {block_key} --block");
 
+    const VIEWPORTS: &[(&str, &str, Glyph)] = &[
+        ("desktop", "Desktop", Glyph::Monitor),
+        ("tablet", "Tablet", Glyph::Tablet),
+        ("mobile", "Mobile", Glyph::Smartphone),
+    ];
+
     view! {
         <div class="showcase-card flex flex-col">
             <div class="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
                 <span class="font-mono text-xs text-muted-foreground">{name}</span>
                 <div class="flex items-center gap-2">
+                    <div class="hidden items-center gap-0.5 rounded-md border border-border p-0.5 sm:inline-flex">
+                        {VIEWPORTS.iter().map(|(key, label, icon)| {
+                            let key = *key;
+                            view! {
+                                <button
+                                    type="button"
+                                    title=*label
+                                    aria-label=*label
+                                    aria-pressed=move || viewport.get() == key
+                                    class=move || {
+                                        let base = "inline-flex h-6 w-6 items-center justify-center rounded transition-colors";
+                                        if viewport.get() == key {
+                                            format!("{base} bg-accent text-foreground")
+                                        } else {
+                                            format!("{base} text-muted-foreground hover:text-foreground")
+                                        }
+                                    }
+                                    on:click=move |_| viewport.set(key)
+                                >
+                                    <Icon glyph=*icon class="h-3.5 w-3.5" />
+                                </button>
+                            }
+                        }).collect::<Vec<_>>()}
+                    </div>
                     <button
                         type="button"
                         class=move || {
@@ -296,7 +327,13 @@ fn BlockCard(
                     <CopyButton text=cli label="Copy" />
                 </div>
             </div>
-            <div class="flex-1 p-4">{children()}</div>
+            <div class="flex-1 overflow-hidden p-4">
+                <div class=move || match viewport.get() {
+                    "tablet" => "mx-auto w-full max-w-2xl rounded-lg border border-border p-2",
+                    "mobile" => "mx-auto w-full max-w-sm rounded-lg border border-border p-2",
+                    _ => "w-full",
+                }>{children()}</div>
+            </div>
             <pre
                 class=move || {
                     let base = "max-h-96 overflow-auto border-t border-border bg-background p-4 font-mono text-xs leading-6";

@@ -31,10 +31,12 @@
 pub mod footer;
 pub mod header;
 pub mod layout;
+pub mod nav;
 pub mod reveal;
 pub mod theme_customizer;
 pub mod ui_subnav;
 
 pub use layout::*;
+pub use nav::{AnchorGuard, NavLink};
 pub use reveal::RevealOnScroll;
 pub use theme_customizer::ThemeCustomizer;

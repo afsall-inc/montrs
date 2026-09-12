@@ -324,8 +324,16 @@ html {
     }
   }
 
-  /* Scroll-triggered reveal (JS adds `.is-visible`) */
+  /* Scroll-triggered reveal.
+     Content is visible by default; the animation is only armed once
+     hydration marks <html> with `montrs-hydrated`, so a failed/absent WASM
+     bundle can never leave the page invisible. */
   .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  html.montrs-hydrated .reveal {
     opacity: 0;
     transform: translateY(16px);
     transition:
@@ -333,9 +341,17 @@ html {
       transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .reveal.is-visible {
+  html.montrs-hydrated .reveal.is-visible {
     opacity: 1;
     transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.montrs-hydrated .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
   }
 
   /* Code snippet token colors */
@@ -456,6 +472,14 @@ html {
 
   .montrs-ping {
     animation: montrs-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .montrs-pulse,
+    .montrs-bounce,
+    .montrs-ping {
+      animation: none !important;
+    }
   }
 
   /* Icons page: sidebar, sliders, drawer, MRU */

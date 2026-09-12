@@ -35,7 +35,7 @@ use montrs_ui::components::{
     accordion::{Accordion, AccordionContent, AccordionItem, AccordionTrigger},
     alert::{Alert, AlertVariant},
     badge::{Badge, BadgeSize, BadgeVariant},
-    button::{Button, ButtonSize, ButtonVariant},
+    button::{Button, ButtonClass, ButtonSize, ButtonVariant},
     card::{Card, CardContent, CardDescription, CardHeader, CardTitle},
     checkbox::Checkbox,
     collapsible::{Collapsible, CollapsibleContent, CollapsibleTrigger},
@@ -272,8 +272,47 @@ fn scroll_to(id: &'static str) -> impl Fn(leptos::ev::MouseEvent) {
     }
 }
 
+/// Styling for trigger components that render their own `<button>`:
+/// nesting a `Button` inside them produces invalid `<button><button>` HTML,
+/// which browsers restructure and which breaks hydration.
+fn trigger_button_class(variant: ButtonVariant) -> String {
+    ButtonClass {
+        variant,
+        size: ButtonSize::Default,
+    }
+    .with_class(String::new())
+}
+
 #[component]
 pub fn Components() -> impl IntoView {
+    // Active section for the sidebar, updated on scroll (shadcn-style TOC).
+    let active = RwSignal::new(SECTIONS[0].0.to_string());
+
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        use wasm_bindgen::{JsCast, prelude::Closure};
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let Some(document) = window.document() else {
+            return;
+        };
+        let cb = Closure::<dyn FnMut()>::wrap(Box::new(move || {
+            let mut current = SECTIONS[0].0.to_string();
+            for (id, _) in SECTIONS {
+                if let Some(el) = document.get_element_by_id(id)
+                    && el.get_bounding_client_rect().top() <= 140.0
+                {
+                    current = (*id).to_string();
+                }
+            }
+            active.set(current);
+        }));
+        let _ = window
+            .add_event_listener_with_callback("scroll", cb.as_ref().unchecked_ref());
+        cb.forget();
+    });
+
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
@@ -296,7 +335,7 @@ pub fn Components() -> impl IntoView {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_1fr]">
+            <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_160px]">
                 <nav class="hidden lg:block">
                     <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
                         {SECTIONS.iter().map(|(id, label)| {
@@ -304,7 +343,14 @@ pub fn Components() -> impl IntoView {
                             view! {
                                 <a
                                     href="#"
-                                    class="block rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    class=move || {
+                                        let base = "block rounded-md px-3 py-1.5 transition-colors";
+                                        if active.get() == *id {
+                                            format!("{base} bg-accent font-medium text-foreground")
+                                        } else {
+                                            format!("{base} text-muted-foreground hover:bg-accent hover:text-foreground")
+                                        }
+                                    }
                                     on:click=on_click
                                 >{*label}</a>
                             }
@@ -495,7 +541,7 @@ pub fn Components() -> impl IntoView {
                         snippet=DIALOG_SNIPPET
                     >
                         <Dialog>
-                            <DialogTrigger><Button>"Open dialog"</Button></DialogTrigger>
+                            <DialogTrigger class=trigger_button_class(ButtonVariant::Default)>"Open dialog"</DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>"Confirm"</DialogTitle></DialogHeader>
                                 "Delete the deployed service?"
@@ -511,7 +557,7 @@ pub fn Components() -> impl IntoView {
                         snippet=DROPDOWN_SNIPPET
                     >
                         <DropdownMenu>
-                            <DropdownMenuTrigger><Button variant=ButtonVariant::Outline>"Menu"</Button></DropdownMenuTrigger>
+                            <DropdownMenuTrigger class=trigger_button_class(ButtonVariant::Outline)>"Menu"</DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuItem>"Profile"</DropdownMenuItem>
                                 <DropdownMenuItem>"Settings"</DropdownMenuItem>
@@ -628,6 +674,34 @@ pub fn Components() -> impl IntoView {
                         </Tooltip>
                     </ComponentSection>
                 </div>
+
+                <aside class="hidden xl:block">
+                    <div class="sticky top-20 text-xs">
+                        <p class="mb-3 font-mono uppercase tracking-wide text-muted-foreground">
+                            "On this page"
+                        </p>
+                        <ul class="space-y-1.5">
+                            {SECTIONS.iter().map(|(id, label)| {
+                                view! {
+                                    <li>
+                                        <a
+                                            href="#"
+                                            class=move || {
+                                                let base = "block transition-colors";
+                                                if active.get() == *id {
+                                                    format!("{base} text-foreground")
+                                                } else {
+                                                    format!("{base} text-muted-foreground hover:text-foreground")
+                                                }
+                                            }
+                                            on:click=scroll_to(id)
+                                        >{*label}</a>
+                                    </li>
+                                }
+                            }).collect::<Vec<_>>()}
+                        </ul>
+                    </div>
+                </aside>
             </div>
         </div>
     }
@@ -642,14 +716,43 @@ fn ComponentSection(
     children: Children,
 ) -> impl IntoView {
     let snippet_html = highlight_rust(snippet);
+    let tab = RwSignal::new("preview");
+    let tab_btn = move |selected: bool| {
+        let base = "rounded px-2.5 py-1 font-medium transition-colors";
+        if selected {
+            format!("{base} bg-accent text-foreground")
+        } else {
+            format!("{base} text-muted-foreground hover:text-foreground")
+        }
+    };
     view! {
         <section id=id class="scroll-mt-24">
-            <h2 class="text-2xl font-bold tracking-tight">{title}</h2>
-            <p class="mt-1 text-sm text-muted-foreground">{description}</p>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">{title}</h2>
+                    <p class="mt-1 text-sm text-muted-foreground">{description}</p>
+                </div>
+                <div class="inline-flex gap-0.5 rounded-md border border-border bg-background p-0.5 text-xs">
+                    <button
+                        type="button"
+                        class=move || tab_btn(tab.get() == "preview")
+                        on:click=move |_| tab.set("preview")
+                    >"Preview"</button>
+                    <button
+                        type="button"
+                        class=move || tab_btn(tab.get() == "code")
+                        on:click=move |_| tab.set("code")
+                    >"Code"</button>
+                </div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
-                <div class="showcase-card p-6">{children()}</div>
-                <div class="code-window">
+            <div class="mt-4">
+                <div class=move || {
+                    if tab.get() == "preview" { "showcase-card p-6" } else { "hidden" }
+                }>{children()}</div>
+                <div class=move || {
+                    if tab.get() == "code" { "code-window" } else { "hidden" }
+                }>
                     <div class="code-window-bar">
                         <span class="traffic-light traffic-light-red"></span>
                         <span class="traffic-light traffic-light-yellow"></span>

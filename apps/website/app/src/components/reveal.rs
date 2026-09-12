@@ -57,6 +57,13 @@ pub fn RevealOnScroll() -> impl IntoView {
                 return;
             };
 
+            // Arm the reveal animation only once the WASM client is alive.
+            // Without this class `.reveal` stays visible, so a missing/failed
+            // hydration bundle never leaves the page blank.
+            if let Some(html) = document.document_element() {
+                let _ = html.class_list().add_1("montrs-hydrated");
+            }
+
             // After the very first paint, scroll to the top on navigation so
             // the next page is seen from its header (matches SPA behavior).
             if first_run.get_untracked() {
@@ -107,6 +114,24 @@ pub fn RevealOnScroll() -> impl IntoView {
                     }) {
                         observer.observe(&el);
                     }
+                }
+            }
+
+            // Safety net: if the observer never fires (headless browsers,
+            // print/PDF, exotic engines) the armed animation must not leave
+            // content permanently transparent.
+            {
+                let document = document.clone();
+                let reveal_timeout =
+                    wasm_bindgen::prelude::Closure::once_into_js(move || {
+                        reveal_all(&document)
+                    });
+                if let Some(window) = web_sys::window() {
+                    let _ = window
+                        .set_timeout_with_callback_and_timeout_and_arguments_0(
+                            reveal_timeout.unchecked_ref(),
+                            2500,
+                        );
                 }
             }
 

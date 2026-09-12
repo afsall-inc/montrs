@@ -28,76 +28,119 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//! Site header: sticky nav, ⌘K command palette, GitHub stars, theme cycle
+//! button, and a mobile sheet. All navigation goes through [`NavLink`] so the
+//! address bar updates immediately under the custom MontRS `RouterOutlet`.
+
 use leptos::prelude::*;
-use montrs_core::nav::*;
+use leptos_router::hooks::use_navigate;
 use montrs_icons::*;
 use montrs_ui::prelude::*;
 
-// NOTE: nav links use plain anchors with a `use_navigate` click handler.
-// `use_navigate` (RouterContext::navigate) updates the internal location AND
-// completes the browser-history navigation immediately — unlike `<A>`, whose
-// global anchor interception defers the URL update until the leptos
-// `<Routes>` tree resolves. Our custom RouterOutlet never resolves routes,
-// so `<A>` would stop updating the address bar entirely.
+use crate::components::NavLink;
+
+/// `(label, href, icon)` — main navigation. The UI section (Components,
+/// Blocks, Icons, Motion, Themes, Backgrounds) lives in its own sub-nav, so
+/// the top bar only carries the framework-level destinations.
+const NAV: &[(&str, &str, Glyph)] = &[
+    ("UI", "/ui", Glyph::Component),
+    ("Auth", "/auth", Glyph::ShieldCheck),
+    ("Runtime", "/runtime", Glyph::Cpu),
+    ("AI Kit", "/ai", Glyph::Bot),
+    ("Foundations", "/foundations", Glyph::Blocks),
+    ("Templates", "/templates", Glyph::LayoutTemplate),
+    ("Packages", "/packages", Glyph::Package),
+];
+
+/// `(label, href, group)` — consumed by the command palette.
+const COMMANDS: &[(&str, &str, &str)] = &[
+    ("Home", "/", "Pages"),
+    ("MontRS UI", "/ui", "Pages"),
+    ("Components", "/ui/components", "Pages"),
+    ("Blocks", "/ui/blocks", "Pages"),
+    ("Icons", "/ui/icons", "Pages"),
+    ("Motion", "/ui/motion", "Pages"),
+    ("Themes", "/ui/themes", "Pages"),
+    ("Backgrounds", "/ui/backgrounds", "Pages"),
+    ("Packages", "/packages", "Pages"),
+    ("Templates", "/templates", "Pages"),
+    ("Auth", "/auth", "Framework"),
+    ("Runtime", "/runtime", "Framework"),
+    ("AI Kit", "/ai", "Framework"),
+    ("Foundations", "/foundations", "Framework"),
+    ("GitHub repository", "https://github.com/afsall-inc/montrs", "External"),
+];
 
 #[component]
 pub fn Header() -> impl IntoView {
     let theme = use_theme();
-    let mobile_open = RwSignal::new(false);
     let navigate = use_navigate();
+    let mobile_open = RwSignal::new(false);
+    let palette_open = RwSignal::new(false);
+    let query = RwSignal::new(String::new());
+    let selected = RwSignal::new(0usize);
+    let input_ref: NodeRef<leptos::html::Input> = NodeRef::new();
 
-    let nav_links = [
-        ("/auth", "Auth"),
-        ("/runtime", "Runtime"),
-        ("/ai", "AI Kit"),
-        ("/foundations", "Foundations"),
-        ("/templates", "Templates"),
-        ("/packages", "Packages"),
-    ];
-
-    let ui_links = [
-        ("/ui", "MontRS UI"),
-        ("/ui/components", "Components"),
-        ("/ui/blocks", "Blocks"),
-        ("/ui/icons", "Icons"),
-        ("/ui/motion", "Motion"),
-        ("/ui/themes", "Themes"),
-        ("/ui/backgrounds", "Backgrounds"),
-    ];
-
-    let ui_open = RwSignal::new(false);
-    let nav_for_ui = navigate.clone();
-    let search_q = RwSignal::new(String::new());
-    let search_open = RwSignal::new(false);
-    let search_ref: NodeRef<leptos::html::Input> = NodeRef::new();
-    let search_nav = navigate.clone();
-
-    let on_search_keydown = move |ev: leptos::ev::KeyboardEvent| {
-        if ev.key() == "Enter" {
-            ev.prevent_default();
-            let q = search_q.get().trim().to_string();
-            if !q.is_empty() {
-                search_nav(
-                    &format!("/ui/icons?q={}", url_enc(&q)),
-                    Default::default(),
-                );
-                search_q.set(String::new());
-                search_open.set(false);
+    // Single cycle button: System → Light → Dark (system is the default).
+    let theme_label = move || match theme.get() {
+        ThemeMode::Light => "Light",
+        ThemeMode::Dark => "Dark",
+        ThemeMode::System => "System",
+    };
+    let theme_icon = move || match theme.get() {
+        ThemeMode::Light => Glyph::Sun,
+        ThemeMode::Dark => Glyph::Moon,
+        ThemeMode::System => Glyph::Monitor,
+    };
+    let cycle_theme = move |_| {
+        theme.update(|t| {
+            *t = match t {
+                ThemeMode::System => ThemeMode::Light,
+                ThemeMode::Light => ThemeMode::Dark,
+                ThemeMode::Dark => ThemeMode::System,
             }
-        }
+        });
     };
 
-    // Focus the search input whenever the overlay opens (`/` shortcut).
-    #[cfg(target_arch = "wasm32")]
-    Effect::new(move |_| {
-        if search_open.get() {
-            if let Some(input) = search_ref.get() {
-                let _ = input.focus();
+    let filtered = Memo::new(move |_| {
+        let q = query.get().trim().to_lowercase();
+        COMMANDS
+            .iter()
+            .copied()
+            .filter(|(label, _, _)| {
+                q.is_empty() || label.to_lowercase().contains(&q)
+            })
+            .collect::<Vec<_>>()
+    });
+
+    let activate = Callback::new({
+        let navigate = navigate.clone();
+        move |href: String| {
+            palette_open.set(false);
+            mobile_open.set(false);
+            query.set(String::new());
+            selected.set(0);
+            if href.starts_with("http") {
+                if let Some(window) = web_sys::window() {
+                    let _ = window.open_with_url_and_target(&href, "_blank");
+                }
+            } else {
+                navigate(&href, Default::default());
             }
         }
     });
 
-    // "C" opens/closes the theme customizer (shark-ui style).
+    // Focus the palette input whenever it opens.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        if palette_open.get()
+            && let Some(input) = input_ref.get()
+        {
+            let _ = input.focus();
+        }
+    });
+
+    // Global shortcuts: ⌘K / Ctrl+K opens the palette, `/` opens it too.
     #[cfg(target_arch = "wasm32")]
     Effect::new(move |_| {
         use wasm_bindgen::{JsCast, prelude::Closure};
@@ -114,15 +157,22 @@ pub fn Header() -> impl IntoView {
                         el.tag_name() == "INPUT" || el.tag_name() == "TEXTAREA"
                     });
                 if key == "Escape" {
-                    ui_open.set(false);
+                    palette_open.set(false);
                     mobile_open.set(false);
-                    search_open.set(false);
+                    return;
+                }
+                if key == "k" && (ev.meta_key() || ev.ctrl_key()) {
+                    ev.prevent_default();
+                    palette_open.update(|o| *o = !*o);
+                    query.set(String::new());
+                    selected.set(0);
                     return;
                 }
                 if key == "/" && !ev.meta_key() && !ev.ctrl_key() && !in_field {
                     ev.prevent_default();
-                    search_open.set(true);
-                    return;
+                    palette_open.set(true);
+                    query.set(String::new());
+                    selected.set(0);
                 }
             },
         ));
@@ -133,236 +183,230 @@ pub fn Header() -> impl IntoView {
         cb.forget();
     });
 
-    // Segmented toggle order: Light · Device · Dark (device = system default).
-    let theme_modes = [
-        ("Light", ThemeMode::Light, Glyph::Sun),
-        ("Device", ThemeMode::System, Glyph::Monitor),
-        ("Dark", ThemeMode::Dark, Glyph::Moon),
-    ];
+    // Lock body scroll while the palette or mobile sheet is open.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        let locked = palette_open.get() || mobile_open.get();
+        if let Some(document) = web_sys::window().and_then(|w| w.document())
+            && let Some(body) = document.body()
+        {
+            let _ = body
+                .style()
+                .set_property("overflow", if locked { "hidden" } else { "" });
+        }
+    });
 
     view! {
-            <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div class="page-container flex h-16 items-center justify-between">
-                    <div class="flex items-center gap-6">
-    <a
-                            href="/"
-                            class="flex items-center gap-2 text-lg font-bold"
-                            on:click={
-                                let nav = navigate.clone();
-                                move |ev| {
-                                    ev.prevent_default();
-                                    nav("/", Default::default());
-                                }
-                            }
-                        >
-                            <img src="/logo-64.png" alt="MontRS logo" class="h-7 w-7 rounded" />
-                            "MontRS"
-                        </a>
-                        <nav class="hidden items-center gap-1 text-sm md:flex">
-                            <a
-                                href="/"
-                                class="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                on:click={
-                                    let nav = navigate.clone();
-                                    move |ev| {
+        <header class="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div class="page-container flex h-14 items-center gap-3">
+                <NavLink
+                    href="/"
+                    class="flex shrink-0 items-center gap-2 text-base font-bold"
+                >
+                    <img src="/logo-64.png" alt="MontRS logo" class="h-6 w-6 rounded" />
+                    "MontRS"
+                </NavLink>
+
+                <nav class="hidden items-center gap-0.5 text-sm lg:flex" aria-label="Main">
+                    {NAV.iter().map(|(label, href, icon)| {
+                        view! {
+                            <NavLink
+                                href=*href
+                                class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                                <Icon glyph=*icon class="h-3.5 w-3.5" />
+                                {*label}
+                            </NavLink>
+                        }
+                    }).collect::<Vec<_>>()}
+                </nav>
+
+                <div class="ml-auto flex items-center gap-2">
+                    <button
+                        type="button"
+                        class="hidden h-8 items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
+                        on:click=move |_| {
+                            palette_open.set(true);
+                            query.set(String::new());
+                            selected.set(0);
+                        }
+                        aria-label="Search"
+                    >
+                        <Icon glyph=Glyph::Search class="h-3.5 w-3.5" />
+                        "Search"
+                        <kbd class="rounded border border-border bg-background px-1 font-mono text-[10px] text-muted-foreground">
+                            "⌘K"
+                        </kbd>
+                    </button>
+
+                    <GithubStars />
+
+                    <button
+                        type="button"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        on:click=cycle_theme
+                        aria-label=move || format!("Theme: {}", theme_label())
+                        title=move || format!("Theme: {}", theme_label())
+                    >
+                        <Icon glyph=theme_icon class="h-4 w-4" />
+                    </button>
+
+                    <NavLink
+                        href="/ui/components"
+                        class="hidden h-8 items-center rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:inline-flex"
+                    >"Get Started"</NavLink>
+
+                    <button
+                        type="button"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                        on:click=move |_| mobile_open.update(|o| *o = !*o)
+                        aria-label="Open menu"
+                        aria-expanded=move || mobile_open.get()
+                    >
+                        <Icon glyph=Glyph::Menu class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            // Mobile sheet
+            <Show when=move || mobile_open.get()>
+                <div class="fixed inset-0 top-14 z-50 lg:hidden">
+                    <div
+                        class="fixed inset-0 bg-background/70 backdrop-blur-sm"
+                        on:click=move |_| mobile_open.set(false)
+                    ></div>
+                    <nav
+                        class="relative mx-4 mt-2 rounded-xl border border-border bg-popover p-2 shadow-xl"
+                        aria-label="Mobile"
+                    >
+                        {NAV.iter().map(|(label, href, icon)| {
+                            view! {
+                                <a
+                                    href=*href
+                                    class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=move |ev| {
                                         ev.prevent_default();
-                                        nav("/", Default::default());
+                                        activate.run(href.to_string());
                                     }
+                                >
+                                    <Icon glyph=*icon class="h-4 w-4" />
+                                    {*label}
+                                </a>
+                            }
+                        }).collect::<Vec<_>>()}
+                        <div class="mt-1 flex items-center gap-2 border-t border-border px-2 pt-2">
+                            <button
+                                type="button"
+                                class="inline-flex h-8 items-center gap-2 rounded-md border border-border px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                on:click=cycle_theme
+                            >
+                                <Icon glyph=theme_icon class="h-3.5 w-3.5" />
+                                {theme_label}
+                            </button>
+                            <NavLink
+                                href="/ui/components"
+                                class="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
+                            >"Get Started"</NavLink>
+                        </div>
+                    </nav>
+                </div>
+            </Show>
+
+            // Command palette
+            <Show when=move || palette_open.get()>
+                <div
+                    class="fixed inset-0 z-[70] flex items-start justify-center p-4 pt-[10vh]"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Command palette"
+                >
+                    <div
+                        class="fixed inset-0 bg-background/70 backdrop-blur-sm"
+                        on:click=move |_| palette_open.set(false)
+                    ></div>
+                    <div class="relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-popover shadow-2xl">
+                        <div class="flex items-center gap-2 border-b border-border px-3">
+                            <Icon
+                                glyph=Glyph::Search
+                                class="h-4 w-4 shrink-0 text-muted-foreground"
+                            />
+                            <input
+                                type="text"
+                                class="h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                                placeholder="Search pages and commands…"
+                                node_ref=input_ref
+                                prop:value=query
+                                on:input=move |ev| {
+                                    query.set(event_target_value(&ev));
+                                    selected.set(0);
                                 }
-                            >"Home"</a>
-                            <div class="relative">
-                                <button
-                                    type="button"
-                                    class="flex items-center gap-1 rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                    on:click=move |_| ui_open.update(|o| *o = !*o)
-                                    aria-haspopup="menu"
-                                    aria-expanded=move || ui_open.get()
-                                >
-                                    "UI"
-                                    <Icon glyph=Glyph::ChevronDown class=move || {
-                                        if ui_open.get() { "h-3 w-3 transition-transform rotate-180" } else { "h-3 w-3 transition-transform" }
-                                    } />
-                                </button>
-                                <Show when=move || ui_open.get()>
-                                <div
-                                    class="fixed inset-0 z-40"
-                                    on:click=move |_| ui_open.set(false)
-                                ></div>
-                            </Show>
-                            <Show when=move || ui_open.get()>
-                                <div
-                                    class="absolute left-0 z-50 mt-1 w-40 rounded-md border border-border bg-popover p-1 shadow-lg"
-                                    role="menu"
-                                    aria-label="UI"
-                                >
-                                    {ui_links.into_iter().map(|(href, label)| {
-                                        let nav = nav_for_ui.clone();
-                                        let close = ui_open;
-                                        view! {
-                                            <a
-                                                href=href
-                                                class="block rounded-sm px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                                on:click=move |ev| {
-                                                    ev.prevent_default();
-                                                    nav(href, Default::default());
-                                                    close.set(false);
+                                on:keydown={
+                                    move |ev: leptos::ev::KeyboardEvent| {
+                                        let items = filtered.get_untracked();
+                                        match ev.key().as_str() {
+                                            "ArrowDown" => {
+                                                ev.prevent_default();
+                                                if !items.is_empty() {
+                                                    selected.update(|s| {
+                                                        *s = (*s + 1).min(items.len() - 1);
+                                                    });
                                                 }
-                                            >{label}</a>
-                                        }
-                                    }).collect::<Vec<_>>()}
-                                </div>
-                            </Show>
-                            </div>
-                            {nav_links.into_iter().map(|(href, label)| {
-                                let nav = navigate.clone();
-                                view! {
-                                    <a
-                                        href=href
-                                        class="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                        on:click=move |ev| {
-                                            ev.prevent_default();
-                                            nav(href, Default::default());
-                                        }
-                                    >{label}</a>
-                                }
-                            }).collect::<Vec<_>>()}
-                        </nav>
-                    </div>
-
-                    <div class="relative hidden md:block">
-                        <button
-                            type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                            on:click=move |_| search_open.update(|o| *o = !*o)
-                            aria-label="Search icons"
-                            aria-expanded=move || search_open.get()
-                            title="Search (/)"
-                        >
-                            <Icon glyph=Glyph::Search class="h-4 w-4" />
-                        </button>
-                        <Show when=move || search_open.get()>
-                            <div
-                                class="fixed inset-0 z-40"
-                                on:click=move |_| search_open.set(false)
-                            ></div>
-                        </Show>
-                        <div
-                            class="fixed inset-x-0 top-16 z-50 flex justify-center px-4"
-                            hidden=move || !search_open.get()
-                        >
-                            <div class="w-full max-w-xl rounded-lg border border-border bg-background p-2 shadow-xl">
-                                <div class="relative">
-                                    <Icon
-                                        glyph=Glyph::Search
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                    />
-                                    <input
-                                        type="search"
-                                        placeholder="Search 22,000+ icons…  (Enter)"
-                                        class="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                        node_ref=search_ref
-                                        prop:value=search_q
-                                        on:keydown=on_search_keydown
-                                        aria-label="Search icons"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="relative flex items-center gap-2">
-                        <GithubStars />
-
-                        // Theme toggle: Light / System / Dark segmented pill
-                        // (shark-ui style), defaults to System.
-                        <div class="theme-toggle" role="group" aria-label="Theme">
-                            <span
-                                class="theme-toggle-indicator"
-                                style=move || format!(
-                                    "--theme-pos: {};",
-                                    match theme.get() {
-                                        ThemeMode::Light => 0,
-                                        ThemeMode::System => 1,
-                                        ThemeMode::Dark => 2,
-                                    }
-                                )
-                            ></span>
-                            {theme_modes.into_iter().map(|(label, mode, icon)| {
-                                let mode2 = mode;
-                                let is_active = move || theme.get() == mode2;
-                                let select = move |_| theme.set(mode2);
-                                view! {
-                                    <button
-                                        type="button"
-                                        aria-label=label
-                                        aria-pressed=is_active
-                                        title=label
-                                        on:click=select
-                                    >
-                                        <Icon glyph=icon class="h-4 w-4" />
-                                    </button>
-                                }
-                            }).collect::<Vec<_>>()}
-                        </div>
-
-                        // Mobile menu toggle
-                        <button
-                            type="button"
-                            class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden"
-                            on:click=move |_| mobile_open.update(|o| *o = !*o)
-                            aria-label="Open menu"
-                            aria-expanded=move || mobile_open.get()
-                        >
-                            <Icon glyph=Glyph::Menu class="h-4 w-4" />
-                        </button>
-
-                        <Show when=move || mobile_open.get()>
-                            <div
-                                class="fixed inset-0 z-40"
-                                on:click=move |_| mobile_open.set(false)
-                            ></div>
-                            <div class="absolute right-0 top-12 z-50 w-52 rounded-md border border-border bg-popover p-1 shadow-lg md:hidden">
-                                {core::iter::once(("/", "Home"))
-                                    .chain(nav_links.iter().copied())
-                                    .map(|(href, label)| {
-                                    let nav = navigate.clone();
-                                    let close_menu = mobile_open;
-                                    view! {
-                                        <a
-                                            href=href
-                                            class="block rounded-sm px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                            on:click=move |ev| {
-                                                ev.prevent_default();
-                                                nav(href, Default::default());
-                                                close_menu.set(false);
                                             }
-                                        >{label}</a>
-                                    }
-                                }).collect::<Vec<_>>()}
-                                <p class="mt-1 border-t border-border px-3 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                    "UI"
-                                </p>
-                                {ui_links.iter().copied().map(|(href, label)| {
-                                    let nav = navigate.clone();
-                                    let close_menu = mobile_open;
-                                    view! {
-                                        <a
-                                            href=href
-                                            class="block rounded-sm px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                            on:click=move |ev| {
+                                            "ArrowUp" => {
                                                 ev.prevent_default();
-                                                nav(href, Default::default());
-                                                close_menu.set(false);
+                                                selected.update(|s| {
+                                                    *s = s.saturating_sub(1);
+                                                });
                                             }
-                                        >{label}</a>
+                                            "Enter" => {
+                                                ev.prevent_default();
+                                                if let Some((_, href, _)) =
+                                                    items.get(selected.get_untracked())
+                                                {
+                                                    activate.run(href.to_string());
+                                                }
+                                            }
+                                            _ => {}
+                                        }
                                     }
-                                }).collect::<Vec<_>>()}
-                            </div>
-                        </Show>
+                                }
+                            />
+                            <kbd class="shrink-0 rounded border border-border bg-background px-1 font-mono text-[10px] text-muted-foreground">
+                                "esc"
+                            </kbd>
+                        </div>
+                        <ul class="max-h-80 overflow-y-auto p-1">
+                            {move || {
+                                filtered
+                                    .get()
+                                    .into_iter()
+                                    .enumerate()
+                                    .map(|(i, (label, href, group))| {
+                                        let is_selected = move || selected.get() == i;
+                                        view! {
+                                            <li>
+                                                <button
+                                                    type="button"
+                                                    class=move || cn!(
+                                                        "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors",
+                                                        if is_selected() { "bg-accent text-accent-foreground" } else { "text-muted-foreground hover:bg-accent/60 hover:text-foreground" }
+                                                    )
+                                                    on:click=move |_| activate.run(href.to_string())
+                                                >
+                                                    <span>{label}</span>
+                                                    <span class="text-[10px] uppercase tracking-wide text-muted-foreground">{group}</span>
+                                                </button>
+                                            </li>
+                                        }
+                                    })
+                                    .collect::<Vec<_>>()
+                            }}
+                        </ul>
                     </div>
                 </div>
-            </header>
-        }
+            </Show>
+        </header>
+    }
 }
 
 /// GitHub Star badge with a live star count fetched from the GitHub API
@@ -465,12 +509,4 @@ fn format_count(n: u32) -> String {
     } else {
         n.to_string()
     }
-}
-
-/// Minimal query-string encoding (spaces → `+`, others left as-is).
-fn url_enc(s: &str) -> String {
-    s.replace(' ', "+")
-        .replace('#', "%23")
-        .replace('&', "%26")
-        .replace('=', "%3D")
 }
