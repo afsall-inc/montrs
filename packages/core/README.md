@@ -13,7 +13,7 @@ The architectural engine of the MontRS framework.
 - **Agent Discoverability**: Implements the base metadata hooks that allow agents to understand the codebase.
 
 ## 3. What it intentionally does NOT do
-- **Rendering**: It does not handle UI rendering (that's handled by Leptos/UI packages).
+- **Rendering**: It does not handle UI rendering (that's handled by Leptos/UI/renderer packages).
 - **IO Operations**: It defines interfaces for DBs and Files but does not implement the drivers (see `montrs-orm`).
 - **Build Logic**: It has no knowledge of how the app is compiled (see `montrs-cli`).
 
