@@ -282,6 +282,7 @@ impl Collection {
     }
 }
 
+#[allow(dead_code)] // used only when a `col-*` feature is enabled
 fn table(src: &'static [CollectedGlyph]) -> Vec<CollectedGlyph> {
     src.to_vec()
 }
