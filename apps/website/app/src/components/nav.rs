@@ -41,7 +41,7 @@
 //! treatment to every internal anchor and neutralises placeholder hash links.
 
 use leptos::prelude::*;
-use leptos_router::hooks::use_navigate;
+use leptos_router::hooks::{use_location, use_navigate};
 
 /// An internal link that performs SPA navigation via `use_navigate`.
 #[component]
@@ -51,12 +51,21 @@ pub fn NavLink(
     children: Children,
 ) -> impl IntoView {
     let navigate = use_navigate();
+    let location = use_location();
     let href_attr = href.clone();
     let href_nav = href;
+    let active_href = href_attr.clone();
+    let is_active = move || {
+        let current = location.pathname.get();
+        current == active_href
+            || (active_href != "/"
+                && current.starts_with(&format!("{}/", active_href)))
+    };
     view! {
         <a
             href=href_attr
             class=class
+            aria-current=move || is_active().then_some("page")
             on:click=move |ev| {
                 ev.prevent_default();
                 navigate(&href_nav, Default::default());
