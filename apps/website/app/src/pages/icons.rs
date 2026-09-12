@@ -502,7 +502,12 @@ pub fn Icons() -> impl IntoView {
                 for c in Collection::ALL {
                     for g in c.icons() {
                         if matches(g.name) {
-                            out.push((format!("{}:{}", c.key(), g.name), g));
+                            // Index in the key guarantees uniqueness even when
+                            // an upstream set repeats a file name.
+                            out.push((
+                                format!("{}:{}:{}", c.key(), g.name, out.len()),
+                                g,
+                            ));
                         }
                     }
                 }
@@ -540,7 +545,8 @@ pub fn Icons() -> impl IntoView {
                 .icons()
                 .into_iter()
                 .filter(|g| matches(g.name))
-                .map(|g| (format!("{}:{}", c.key(), g.name), g))
+                .enumerate()
+                .map(|(i, g)| (format!("{}:{}:{}", c.key(), g.name, i), g))
                 .collect::<Vec<_>>(),
         }
     });
