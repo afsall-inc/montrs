@@ -4571,7 +4571,9 @@ name = "montrs-icons"
 version = "0.1.0"
 dependencies = [
  "convert_case 0.11.0",
+ "flate2",
  "leptos",
+ "miniz_oxide",
  "montrs-motion",
  "strum",
  "strum_macros",

@@ -199,30 +199,32 @@ impl Collection {
                 })
                 .collect(),
             #[cfg(feature = "col-radix")]
-            Collection::Radix => table(crate::collections::data::RADIX_ICONS),
+            Collection::Radix => table(crate::collections::data::radix_icons()),
             #[cfg(feature = "col-tabler")]
-            Collection::Tabler => table(crate::collections::data::TABLER_ICONS),
+            Collection::Tabler => {
+                table(crate::collections::data::tabler_icons())
+            }
             #[cfg(feature = "col-iconoir")]
             Collection::Iconoir => {
-                table(crate::collections::data::ICONOIR_ICONS)
+                table(crate::collections::data::iconoir_icons())
             }
             #[cfg(feature = "col-phosphor")]
             Collection::Phosphor => {
-                table(crate::collections::data::PHOSPHOR_ICONS)
+                table(crate::collections::data::phosphor_icons())
             }
             #[cfg(feature = "col-mdi")]
-            Collection::Mdi => table(crate::collections::data::MDI_ICONS),
+            Collection::Mdi => table(crate::collections::data::mdi_icons()),
             #[cfg(feature = "col-bootstrap")]
             Collection::Bootstrap => {
-                table(crate::collections::data::BOOTSTRAP_ICONS)
+                table(crate::collections::data::bootstrap_icons())
             }
             #[cfg(feature = "col-simple-icons")]
             Collection::SimpleIcons => {
-                table(crate::collections::data::SIMPLE_ICONS_ICONS)
+                table(crate::collections::data::simple_icons_icons())
             }
             #[cfg(feature = "col-cryptocurrency")]
             Collection::Cryptocurrency => {
-                table(crate::collections::data::CRYPTOCURRENCY_ICONS)
+                table(crate::collections::data::cryptocurrency_icons())
             }
             _ => Vec::new(),
         }
@@ -234,30 +236,34 @@ impl Collection {
         match self {
             Collection::Lucide => Glyph::count(),
             #[cfg(feature = "col-radix")]
-            Collection::Radix => crate::collections::data::RADIX_ICONS.len(),
+            Collection::Radix => {
+                crate::collections::data::radix_icons().len()
+            }
             #[cfg(feature = "col-tabler")]
-            Collection::Tabler => crate::collections::data::TABLER_ICONS.len(),
+            Collection::Tabler => {
+                crate::collections::data::tabler_icons().len()
+            }
             #[cfg(feature = "col-iconoir")]
             Collection::Iconoir => {
-                crate::collections::data::ICONOIR_ICONS.len()
+                crate::collections::data::iconoir_icons().len()
             }
             #[cfg(feature = "col-phosphor")]
             Collection::Phosphor => {
-                crate::collections::data::PHOSPHOR_ICONS.len()
+                crate::collections::data::phosphor_icons().len()
             }
             #[cfg(feature = "col-mdi")]
-            Collection::Mdi => crate::collections::data::MDI_ICONS.len(),
+            Collection::Mdi => crate::collections::data::mdi_icons().len(),
             #[cfg(feature = "col-bootstrap")]
             Collection::Bootstrap => {
-                crate::collections::data::BOOTSTRAP_ICONS.len()
+                crate::collections::data::bootstrap_icons().len()
             }
             #[cfg(feature = "col-simple-icons")]
             Collection::SimpleIcons => {
-                crate::collections::data::SIMPLE_ICONS_ICONS.len()
+                crate::collections::data::simple_icons_icons().len()
             }
             #[cfg(feature = "col-cryptocurrency")]
             Collection::Cryptocurrency => {
-                crate::collections::data::CRYPTOCURRENCY_ICONS.len()
+                crate::collections::data::cryptocurrency_icons().len()
             }
             _ => 0,
         }
@@ -286,7 +292,17 @@ pub mod catalog {
     include!("catalog.rs");
 }
 
+#[cfg(any(
+    feature = "col-radix",
+    feature = "col-tabler",
+    feature = "col-iconoir",
+    feature = "col-phosphor",
+    feature = "col-mdi",
+    feature = "col-bootstrap",
+    feature = "col-simple-icons",
+    feature = "col-cryptocurrency",
+))]
 pub mod data {
-    //! Generated static glyph tables.
+    //! Generated, lazily-decoded glyph tables (compressed blobs).
     include!("data.rs");
 }
