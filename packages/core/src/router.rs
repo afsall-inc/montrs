@@ -465,10 +465,12 @@ pub fn RouterOutlet<C: AppConfig + 'static>() -> impl IntoView {
 
 /// A client-side navigation link.
 ///
-/// Wraps Leptos Router's [`leptos_router::components::A`] component internally
-/// so navigation happens without a full page reload (pushState), and the link
-/// is automatically marked active for the current route. Users never import
-/// Leptos Router directly.
+/// Navigates with `use_navigate` on a plain `<a>` so the URL bar updates
+/// immediately. Leptos Router's `<A>`/anchor interception defers
+/// `history.pushState` until its `<Routes>` tree resolves, which never
+/// happens when the app renders through [`RouterOutlet`] — so `<A>` cannot
+/// be used here. The link is automatically marked active for the current
+/// route. Users never import Leptos Router directly.
 #[allow(non_snake_case)]
 pub fn RouteLink<C: AppConfig + 'static>(
     to: &'static str,
@@ -477,6 +479,7 @@ pub fn RouteLink<C: AppConfig + 'static>(
 ) -> impl IntoView {
     let class_val = class.unwrap_or_else(|| Signal::from(String::new()));
     let _router = use_montrs_router::<C>();
+    let navigate = leptos_router::hooks::use_navigate();
     let to_owned = to.to_string();
 
     // Active detection mirrors `<A>`'s default: exact match or nested under
@@ -500,13 +503,17 @@ pub fn RouteLink<C: AppConfig + 'static>(
     };
 
     view! {
-        <leptos_router::components::A
+        <a
             href=to_owned
-            attr:class=a_class
-            attr:data-montrs-route=to
+            class=a_class
+            data-montrs-route=to
+            on:click=move |ev| {
+                ev.prevent_default();
+                navigate(to, Default::default());
+            }
         >
             {children()}
-        </leptos_router::components::A>
+        </a>
     }
 }
 

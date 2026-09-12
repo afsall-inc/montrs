@@ -66,10 +66,52 @@ impl ThemeMode {
 ///
 /// Wraps the application and applies the `.dark` class to `<html>`.
 /// Supports `localStorage` persistence for user preference.
+///
+/// The initial signal is always [`ThemeMode::System`] so SSR and hydration
+/// render identical markup; the saved preference is applied in a
+/// client-only effect. For a flash-free first paint the app should render
+/// `<html class="dark">` and use a small pre-paint script that removes the
+/// class when the resolved preference is light.
 #[component]
 pub fn ThemeProvider(children: Children) -> impl IntoView {
-    let theme = RwSignal::new(load_theme_preference());
+    let theme = RwSignal::new(ThemeMode::System);
 
+    #[cfg(target_arch = "wasm32")]
+    let system_dark = RwSignal::new(system_prefers_dark());
+
+    // Apply the persisted preference and follow live OS theme changes.
+    #[cfg(target_arch = "wasm32")]
+    Effect::new(move |_| {
+        use web_sys::wasm_bindgen::{JsCast, prelude::Closure};
+
+        if let Some(saved) = load_theme_preference() {
+            theme.set(saved);
+        }
+
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let Ok(Some(query)) = window.match_media("(prefers-color-scheme: dark)")
+        else {
+            return;
+        };
+        let cb = Closure::<dyn FnMut(web_sys::Event)>::wrap(Box::new(
+            move |_ev: web_sys::Event| {
+                system_dark.set(system_prefers_dark());
+            },
+        ));
+        let _ = query.set_onchange(Some(cb.as_ref().unchecked_ref()));
+        cb.forget();
+    });
+
+    #[cfg(target_arch = "wasm32")]
+    let is_dark = Memo::new(move |_| match theme.get() {
+        ThemeMode::Dark => true,
+        ThemeMode::Light => false,
+        ThemeMode::System => system_dark.get(),
+    });
+
+    #[cfg(not(target_arch = "wasm32"))]
     let is_dark = Memo::new(move |_| theme.get().is_dark());
 
     Effect::new(move |_| {
@@ -112,22 +154,26 @@ pub fn toggle_theme() {
     });
 }
 
-fn load_theme_preference() -> ThemeMode {
-    #[cfg(target_arch = "wasm32")]
-    {
-        if let Some(storage) =
-            web_sys::window().and_then(|w| w.local_storage().ok()?)
-        {
-            if let Ok(Some(value)) = storage.get_item("montrs-theme") {
-                match value.as_str() {
-                    "light" => return ThemeMode::Light,
-                    "dark" => return ThemeMode::Dark,
-                    _ => {}
-                }
-            }
-        }
+/// Returns the saved theme preference, if the user has explicitly chosen one.
+#[cfg(target_arch = "wasm32")]
+fn load_theme_preference() -> Option<ThemeMode> {
+    let storage = web_sys::window().and_then(|w| w.local_storage().ok()?)?;
+    let value = storage.get_item("montrs-theme").ok()??;
+    match value.as_str() {
+        "light" => Some(ThemeMode::Light),
+        "dark" => Some(ThemeMode::Dark),
+        "system" => Some(ThemeMode::System),
+        _ => None,
     }
-    ThemeMode::System
+}
+
+/// Whether the operating system currently prefers a dark color scheme.
+#[cfg(target_arch = "wasm32")]
+fn system_prefers_dark() -> bool {
+    web_sys::window()
+        .and_then(|w| w.match_media("(prefers-color-scheme: dark)").ok()?)
+        .map(|m| m.matches())
+        .unwrap_or(false)
 }
 
 #[allow(unused_variables)]

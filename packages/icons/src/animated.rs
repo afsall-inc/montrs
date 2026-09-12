@@ -162,7 +162,23 @@ pub fn AnimatedSvg(
     // CSS keyframe class applied on hover (pulse / bounce / ping).
     let css_class = RwSignal::new("");
 
-    let on_enter = move |ev: leptos::ev::MouseEvent| match profile.get() {
+    let on_enter = move |ev: leptos::ev::MouseEvent| {
+        // Respect the user's reduced-motion preference: no animation at all.
+        #[cfg(target_arch = "wasm32")]
+        {
+            let reduced = web_sys::window()
+                .and_then(|w| {
+                    w.match_media("(prefers-reduced-motion: reduce)")
+                        .ok()
+                        .flatten()
+                })
+                .map(|m| m.matches())
+                .unwrap_or(false);
+            if reduced {
+                return;
+            }
+        }
+        match profile.get() {
         AnimationProfile::Pulse => css_class.set("montrs-pulse"),
         AnimationProfile::Bounce => css_class.set("montrs-bounce"),
         AnimationProfile::Ping => css_class.set("montrs-ping"),
@@ -205,6 +221,7 @@ pub fn AnimatedSvg(
             }
         }
         AnimationProfile::None => {}
+        }
     };
 
     let on_leave = move |ev: leptos::ev::MouseEvent| {

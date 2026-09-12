@@ -152,7 +152,7 @@ impl Pipeline {
             Some(path) => Command::new(path),
             None => Command::new("wasm-bindgen"),
         };
-        let status = cmd
+        let output = cmd
             .arg("--target")
             .arg("web")
             .arg("--no-typescript")
@@ -161,52 +161,52 @@ impl Pipeline {
             .arg("--out-name")
             .arg("front")
             .arg(&wasm_file)
-            .status();
+            .output();
+
+        // Streaming `wasm-bindgen` is mandatory: without the JS bindings shim
+        // (`front.js`) the hydration bootstrap 404s and the app silently stays
+        // static SSR — no clicks, no hover, no theme toggle. Never fall back to
+        // copying the raw `.wasm`; fail loudly with an actionable message.
+        match output {
+            Ok(o) if o.status.success() => {
+                println!(" wasm-bindgen completed successfully");
+            }
+            Ok(o) => {
+                let stderr = String::from_utf8_lossy(&o.stderr);
+                return Err(anyhow!(
+                    "wasm-bindgen failed to process the WASM bundle.\n{}\n\
+                     Hint: run `montrs install` to install a wasm-bindgen CLI \
+                     that matches the `wasm-bindgen` crate version used by the \
+                     app (a version mismatch produces exactly this error).",
+                    stderr.trim()
+                ));
+            }
+            Err(e) => {
+                return Err(anyhow!(
+                    "could not run wasm-bindgen: {e}.\n\
+                     Hint: run `montrs install` to install wasm-bindgen."
+                ));
+            }
+        }
+
+        for artifact in ["front.js", "front_bg.wasm"] {
+            let path = self.pkg_dir.join(artifact);
+            if !path.exists() {
+                return Err(anyhow!(
+                    "wasm-bindgen reported success but did not produce {}",
+                    path.display()
+                ));
+            }
+        }
 
         // `--out-name front` produces `front.js` + `front_bg.wasm`. Remove any
-        // stale `front.wasm` (a leftover from the raw fallback copy) so the
+        // stale `front.wasm` (a leftover from older raw-copy fallbacks) so the
         // browser never downloads the giant unprocessed build.
         let stale = self.pkg_dir.join("front.wasm");
         if stale.exists() {
             let _ = std::fs::remove_file(&stale);
         }
 
-        match status {
-            Ok(s) if s.success() => {
-                println!(" wasm-bindgen completed successfully");
-            }
-            Ok(_) => {
-                println!(" wasm-bindgen failed — falling back to manual copy");
-                self.fallback_copy_wasm(&wasm_file, &lib_name)?;
-            }
-            Err(_e) => {
-                println!(
-                    " wasm-bindgen not found — falling back to manual copy"
-                );
-                self.fallback_copy_wasm(&wasm_file, &lib_name)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    fn fallback_copy_wasm(
-        &self,
-        wasm_file: &Path,
-        lib_name: &str,
-    ) -> Result<()> {
-        // Match the name wasm-bindgen would produce (`front_bg.wasm`) so the
-        // generated index.html points at the same file either way.
-        std::fs::copy(wasm_file, self.pkg_dir.join("front_bg.wasm"))?;
-        let wasm_target_dir = self
-            .workspace_target_dir
-            .join("wasm32-unknown-unknown")
-            // Frontend always builds with --release.
-            .join("release");
-        let js_bindings = wasm_target_dir.join(format!("{}.js", lib_name));
-        if js_bindings.exists() {
-            std::fs::copy(&js_bindings, self.pkg_dir.join("front.js"))?;
-        }
         Ok(())
     }
 }

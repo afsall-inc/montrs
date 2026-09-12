@@ -155,9 +155,42 @@ pub fn reinsert_comments(formatted: &str, comments: Vec<Comment>) -> String {
         }
     }
 
+    // 2b. Preserve a leading contiguous comment block verbatim (license
+    // headers). `prettyplease` drops comments and the line-number-based
+    // reinsertion below cannot map them back once the file is reformatted, so
+    // without this the header gets scattered through the code.
+    let mut comments = other_comments;
+    comments.sort_by_key(|c| c.start.line);
+
+    let mut header_len = 0;
+    if let Some(first) = comments.first()
+        && first.start.line <= 1
+    {
+        header_len = 1;
+        let mut last_line = first.end.line;
+        while header_len < comments.len()
+            && comments[header_len].start.line <= last_line
+        {
+            last_line = comments[header_len].end.line;
+            header_len += 1;
+        }
+    }
+
+    let header: Vec<Comment> = comments.drain(0..header_len).collect();
+    for comment in &header {
+        if !formatted.contains(&comment.text) {
+            result.push_str(&comment.text);
+            if !comment.text.ends_with('\n') {
+                result.push('\n');
+            }
+        }
+    }
+    if !header.is_empty() {
+        result.push('\n');
+    }
+
     let formatted_lines: Vec<&str> = formatted.lines().collect();
     let mut current_comment_idx = 0;
-    let comments = other_comments;
 
     // 3. Re-insert remaining comments based on relative line numbers
     for (i, line) in formatted_lines.iter().enumerate() {
@@ -285,5 +318,28 @@ mod tests {
         let result = reinsert_comments(formatted, comments);
         assert!(result.contains("// comment"));
         assert!(result.contains("let x = 1;"));
+    }
+
+    #[test]
+    fn test_leading_header_preserved() {
+        // A license header is a contiguous leading comment block. Because
+        // `prettyplease` drops comments, reinsertion must keep the block
+        // together at the top instead of scattering it by line number.
+        let source = "// line one\n// line two\n// line three\n\n\
+                      use std::path::Path;\n\nfn main() {}\n";
+        let (_, comments) = extract_comments(source);
+        let formatted = "use std::path::Path;\n\nfn main() {}\n";
+        let result = reinsert_comments(formatted, comments);
+
+        assert!(
+            result.starts_with("// line one\n// line two\n// line three\n"),
+            "header was not preserved at the top:\n{result}"
+        );
+        let header_pos = result.find("// line three").unwrap();
+        let code_pos = result.find("use std::path::Path;").unwrap();
+        assert!(
+            header_pos < code_pos,
+            "header was interleaved with code:\n{result}"
+        );
     }
 }
