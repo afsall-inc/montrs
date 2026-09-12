@@ -139,7 +139,7 @@ pub fn App() -> impl IntoView {
                 <AnchorGuard />
                 <Header />
                 <ui_subnav::UiSubNav />
-                <main class="min-h-screen">
+                <main id="main-content" class="min-h-screen">
                     {RouterOutlet::<MyConfig>()}
                 </main>
                 <Footer />

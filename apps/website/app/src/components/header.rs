@@ -198,6 +198,10 @@ pub fn Header() -> impl IntoView {
 
     view! {
         <header class="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <a
+                href="#main-content"
+                class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[80] focus:rounded-md focus:border focus:border-border focus:bg-background focus:px-3 focus:py-1.5 focus:text-sm"
+            >"Skip to content"</a>
             <div class="page-container flex h-14 items-center gap-3">
                 <NavLink
                     href="/"
@@ -207,7 +211,7 @@ pub fn Header() -> impl IntoView {
                     "MontRS"
                 </NavLink>
 
-                <nav class="hidden items-center gap-0.5 text-sm lg:flex" aria-label="Main">
+                <nav class="hidden items-center gap-0.5 text-sm xl:flex" aria-label="Main">
                     {NAV.iter().map(|(label, href, icon)| {
                         view! {
                             <NavLink
@@ -258,7 +262,7 @@ pub fn Header() -> impl IntoView {
 
                     <button
                         type="button"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground lg:hidden"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground xl:hidden"
                         on:click=move |_| mobile_open.update(|o| *o = !*o)
                         aria-label="Open menu"
                         aria-expanded=move || mobile_open.get()
@@ -270,7 +274,7 @@ pub fn Header() -> impl IntoView {
 
             // Mobile sheet
             <Show when=move || mobile_open.get()>
-                <div class="fixed inset-0 top-14 z-50 lg:hidden">
+                <div class="fixed inset-0 top-14 z-50 xl:hidden">
                     <div
                         class="fixed inset-0 bg-background/70 backdrop-blur-sm"
                         on:click=move |_| mobile_open.set(false)

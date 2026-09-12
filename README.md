@@ -4,9 +4,9 @@
   <img src="assets/logo.png" alt="MontRS logo" width="220" />
 </p>
 
-<h1 align="center">MontRS: The Most Comprehensive Full-Stack Rust Framework</h1>
+<h1 align="center">MontRS: The Most Comprehensive Full-Stack Framework</h1>
 
-MontRS is a Rust-native, trait-driven framework for building cross-platform applications. It provides a unified, deterministic environment for web, desktop, and mobile, powered by the performance of Leptos and the type safety of Rust.
+MontRS is a Rust-native, trait-driven framework for building cross-platform applications. It provides a unified, deterministic environment for web, desktop, and mobile, powered by the performance of Leptos and the type safety of Rust. **MontRS is The Leptos Framework**
 
 ![Alt](https://repobeats.axiom.co/api/embed/497fd703ff6f27a6b42d61563685c49c1c06e301.svg "Repobeats analytics image")
 
