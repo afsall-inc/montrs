@@ -198,6 +198,10 @@ pub fn Header() -> impl IntoView {
 
     view! {
         <header class="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <a
+                href="#main-content"
+                class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[80] focus:rounded-md focus:border focus:border-border focus:bg-background focus:px-3 focus:py-1.5 focus:text-sm"
+            >"Skip to content"</a>
             <div class="page-container flex h-14 items-center gap-3">
                 <NavLink
                     href="/"

@@ -26,7 +26,7 @@ leptos.workspace = true
 leptos_router.workspace = true
 leptos_axum = { workspace = true, optional = true }
 axum = { version = "0.8", optional = true }
-tower-http = { version = "0.6", features = ["fs", "set-header"], optional = true }
+tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip"], optional = true }
 
 # Rate limiting
 governor = "0.6"

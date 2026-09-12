@@ -111,7 +111,9 @@ pub fn AnchorGuard() -> impl IntoView {
                 };
                 let href = anchor.get_attribute("href").unwrap_or_default();
 
-                if href.is_empty() || href == "#" || href.starts_with('#') {
+                // Only bare `#` placeholders are neutralised; real fragment
+                // links (e.g. the skip link) must keep working.
+                if href.is_empty() || href == "#" {
                     ev.prevent_default();
                     return;
                 }

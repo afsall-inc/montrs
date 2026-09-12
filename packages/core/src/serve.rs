@@ -158,6 +158,9 @@ where
             axum::http::header::CACHE_CONTROL,
             axum::http::header::HeaderValue::from_static("no-cache"),
         ))
+        // Compress static assets (notably the multi-megabyte WASM bundle)
+        // on the fly when the client advertises `Accept-Encoding: gzip`.
+        .layer(tower_http::compression::CompressionLayer::new())
         .with_state(conf.leptos_options);
 
     let (host, port_str) = addr.rsplit_once(':').unwrap_or((&addr, "3000"));
