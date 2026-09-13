@@ -446,16 +446,113 @@ pub fn use_montrs_router<C: AppConfig + 'static>() -> Router<C> {
     )
 }
 
+/// Document-level click guard that keeps navigation sane under
+/// [`RouterOutlet`].
+///
+/// Leptos Router's anchor interception defers `history.pushState` until its
+/// `<Routes>` tree resolves — which never happens when the app renders through
+/// [`RouterOutlet`]. This guard:
+///
+/// * neutralises placeholder `href="#"` anchors (the router would otherwise
+///   treat them as a navigation to `/`), and
+/// * drives internal `href="/..."` anchors through `use_navigate`, so the URL
+///   bar updates immediately.
+///
+/// It is registered in the capture phase and deliberately does **not** stop
+/// propagation, so component-level `on:click` handlers still run. It is
+/// auto-installed by [`RouterOutlet`]; apps never need to add it themselves.
+#[allow(non_snake_case)]
+#[component]
+pub fn RouterAnchorGuard() -> impl IntoView {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let navigate = leptos_router::hooks::use_navigate();
+
+        Effect::new(move |_| {
+            use leptos::wasm_bindgen::{JsCast, prelude::Closure};
+
+            let navigate = navigate.clone();
+            let Some(window) = leptos::web_sys::window() else {
+                return;
+            };
+            let Some(document) = window.document() else {
+                return;
+            };
+
+            let cb =
+                Closure::<dyn FnMut(leptos::web_sys::MouseEvent)>::wrap(
+                    Box::new(move |ev: leptos::web_sys::MouseEvent| {
+                        if ev.default_prevented() {
+                            return;
+                        }
+                        let Some(target) = ev
+                            .target()
+                            .and_then(|t| {
+                                t.dyn_into::<leptos::web_sys::Element>().ok()
+                            })
+                        else {
+                            return;
+                        };
+                        let Ok(Some(anchor)) = target.closest("a") else {
+                            return;
+                        };
+                        let href =
+                            anchor.get_attribute("href").unwrap_or_default();
+
+                        // Only bare `#` placeholders are neutralised; real
+                        // fragment links (e.g. the skip link) must keep working.
+                        if href.is_empty() || href == "#" {
+                            ev.prevent_default();
+                            return;
+                        }
+                        if !href.starts_with('/') || href.starts_with("//") {
+                            return;
+                        }
+                        if ev.meta_key()
+                            || ev.ctrl_key()
+                            || ev.shift_key()
+                            || ev.alt_key()
+                        {
+                            return;
+                        }
+                        if anchor.get_attribute("target").is_some()
+                            || anchor.get_attribute("download").is_some()
+                        {
+                            return;
+                        }
+
+                        ev.prevent_default();
+                        navigate(&href, Default::default());
+                    }),
+                );
+
+            let _ = document.add_event_listener_with_callback_and_bool(
+                "click",
+                cb.as_ref().unchecked_ref(),
+                true,
+            );
+            cb.forget();
+        });
+    }
+
+    view! {
+        <span class="hidden" aria-hidden="true"></span>
+    }
+}
+
 /// Renders the matched route's view. Place inside your layout.
 ///
 /// Watches the current URL path via Leptos Router's `use_location` and
-/// renders the corresponding `RouteView` from the MontRS `Router<C>`.
+/// renders the corresponding `RouteView` from the MontRS `Router<C>`. It also
+/// installs [`RouterAnchorGuard`] so plain `<a href="/...">` links navigate
+/// correctly under the custom outlet.
 #[allow(non_snake_case)]
 pub fn RouterOutlet<C: AppConfig + 'static>() -> impl IntoView {
     let router = use_montrs_router::<C>();
     let location = leptos_router::hooks::use_location();
 
     view! {
+        <RouterAnchorGuard />
         {move || {
             let path = location.pathname.get();
             router.render_view(&path)
@@ -483,19 +580,17 @@ pub fn RouteLink<C: AppConfig + 'static>(
     let to_owned = to.to_string();
 
     // Active detection mirrors `<A>`'s default: exact match or nested under
-    // `to/`. Evaluated reactively so the class updates as the route changes.
-    let is_active = {
-        let to = to.to_string();
-        let location = leptos_router::hooks::use_location();
-        move || {
-            let current = location.pathname.get();
-            current == to || current.starts_with(&format!("{}/", to))
-        }
-    };
+    // `to/`. Exposed as a `Signal` so both the class and `aria-current` can
+    // read it reactively as the route changes.
+    let location = leptos_router::hooks::use_location();
+    let active = Signal::derive(move || {
+        let current = location.pathname.get();
+        current == to || (to != "/" && current.starts_with(&format!("{to}/")))
+    });
 
     let a_class = move || {
         let base = class_val.get();
-        if is_active() {
+        if active.get() {
             format!("{} active", base)
         } else {
             base
@@ -507,6 +602,7 @@ pub fn RouteLink<C: AppConfig + 'static>(
             href=to_owned
             class=a_class
             data-montrs-route=to
+            aria-current=move || active.get().then_some("page")
             on:click=move |ev| {
                 ev.prevent_default();
                 navigate(to, Default::default());

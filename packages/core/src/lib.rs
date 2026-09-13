@@ -51,7 +51,7 @@ pub use limiter::{GovernorLimiter, Limiter};
 pub use router::{
     ActionResponse, LoaderResponse, NoParams, NoopAction, NoopLoader, Route,
     RouteAction, RouteContext, RouteError, RouteLink, RouteLoader, RouteParams,
-    RouteView, Router, RouterOutlet, use_montrs_router,
+    RouteView, Router, RouterAnchorGuard, RouterOutlet, use_montrs_router,
 };
 
 /// Re-exported Leptos Router hooks for convenience.

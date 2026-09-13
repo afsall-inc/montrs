@@ -36,9 +36,10 @@
 //! `<a href>` therefore leaves the address bar stale, and placeholder
 //! `href="#"` links can even swap the page content.
 //!
-//! `NavLink` prevents the default and drives `use_navigate` directly.
-//! `AnchorGuard` is a document-level capture listener that applies the same
-//! treatment to every internal anchor and neutralises placeholder hash links.
+//! `NavLink` prevents the default and drives `use_navigate` directly. The
+//! framework-wide companion — `montrs_core::RouterAnchorGuard`, which applies
+//! the same treatment to every internal anchor and neutralises placeholder
+//! hash links — is auto-installed by `RouterOutlet`, so apps don't add it.
 
 use leptos::prelude::*;
 use leptos_router::hooks::{use_location, use_navigate};
@@ -73,86 +74,5 @@ pub fn NavLink(
         >
             {children()}
         </a>
-    }
-}
-
-/// Keeps navigation sane under the custom MontRS `RouterOutlet`:
-///
-/// * placeholder `href="#"` anchors are neutralised (the router would
-///   otherwise treat them as a navigation to `/`);
-/// * internal `href="/..."` anchors are intercepted and driven through
-///   `use_navigate` so the address bar updates immediately instead of
-///   waiting for a `<Routes>` tree that never resolves.
-///
-/// Registered as a capture-phase listener so it runs before the router's own
-/// bubble-phase anchor interceptor. It deliberately does *not* stop
-/// propagation: local `on:click` handlers (scroll-to, analytics, …) still run.
-#[component]
-pub fn AnchorGuard() -> impl IntoView {
-    #[cfg(target_arch = "wasm32")]
-    let navigate = use_navigate();
-
-    #[cfg(target_arch = "wasm32")]
-    Effect::new(move |_| {
-        use wasm_bindgen::{JsCast, prelude::Closure};
-
-        let navigate = navigate.clone();
-        let Some(window) = web_sys::window() else {
-            return;
-        };
-        let Some(document) = window.document() else {
-            return;
-        };
-
-        let cb = Closure::<dyn FnMut(web_sys::MouseEvent)>::wrap(Box::new(
-            move |ev: web_sys::MouseEvent| {
-                if ev.default_prevented() {
-                    return;
-                }
-                let Some(target) = ev
-                    .target()
-                    .and_then(|t| t.dyn_into::<web_sys::Element>().ok())
-                else {
-                    return;
-                };
-                let Ok(Some(anchor)) = target.closest("a") else {
-                    return;
-                };
-                let href = anchor.get_attribute("href").unwrap_or_default();
-
-                // Only bare `#` placeholders are neutralised; real fragment
-                // links (e.g. the skip link) must keep working.
-                if href.is_empty() || href == "#" {
-                    ev.prevent_default();
-                    return;
-                }
-                if !href.starts_with('/') || href.starts_with("//") {
-                    return;
-                }
-                if ev.meta_key() || ev.ctrl_key() || ev.shift_key() || ev.alt_key()
-                {
-                    return;
-                }
-                if anchor.get_attribute("target").is_some()
-                    || anchor.get_attribute("download").is_some()
-                {
-                    return;
-                }
-
-                ev.prevent_default();
-                navigate(&href, Default::default());
-            },
-        ));
-
-        let _ = document.add_event_listener_with_callback_and_bool(
-            "click",
-            cb.as_ref().unchecked_ref(),
-            true,
-        );
-        cb.forget();
-    });
-
-    view! {
-        <span class="hidden" aria-hidden="true"></span>
     }
 }

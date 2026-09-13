@@ -136,7 +136,6 @@ pub fn App() -> impl IntoView {
         <leptos_router::components::Router>
             <ThemeProvider>
                 <RevealOnScroll />
-                <AnchorGuard />
                 <Header />
                 <ui_subnav::UiSubNav />
                 <main id="main-content" class="min-h-screen">
