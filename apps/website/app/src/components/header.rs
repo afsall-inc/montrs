@@ -228,6 +228,19 @@ pub fn Header() -> impl IntoView {
                 <div class="ml-auto flex items-center gap-2">
                     <button
                         type="button"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:hidden"
+                        on:click=move |_| {
+                            palette_open.set(true);
+                            query.set(String::new());
+                            selected.set(0);
+                        }
+                        aria-label="Search"
+                    >
+                        <Icon glyph=Glyph::Search class="h-4 w-4" />
+                    </button>
+
+                    <button
+                        type="button"
                         class="hidden h-8 items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
                         on:click=move |_| {
                             palette_open.set(true);
@@ -283,6 +296,22 @@ pub fn Header() -> impl IntoView {
                         class="relative mx-4 mt-2 rounded-xl border border-border bg-popover p-2 shadow-xl"
                         aria-label="Mobile"
                     >
+                        <button
+                            type="button"
+                            class="mb-1 flex w-full items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |_| {
+                                mobile_open.set(false);
+                                palette_open.set(true);
+                                query.set(String::new());
+                                selected.set(0);
+                            }
+                        >
+                            <Icon glyph=Glyph::Search class="h-4 w-4" />
+                            "Search…"
+                            <kbd class="ml-auto rounded border border-border bg-background px-1 font-mono text-[10px] text-muted-foreground">
+                                "⌘K"
+                            </kbd>
+                        </button>
                         {NAV.iter().map(|(label, href, icon)| {
                             view! {
                                 <a
@@ -298,7 +327,7 @@ pub fn Header() -> impl IntoView {
                                 </a>
                             }
                         }).collect::<Vec<_>>()}
-                        <div class="mt-1 flex items-center gap-2 border-t border-border px-2 pt-2">
+                        <div class="mt-1 flex flex-wrap items-center gap-2 border-t border-border px-2 pt-2">
                             <button
                                 type="button"
                                 class="inline-flex h-8 items-center gap-2 rounded-md border border-border px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -307,6 +336,15 @@ pub fn Header() -> impl IntoView {
                                 <Icon glyph=theme_icon class="h-3.5 w-3.5" />
                                 {theme_label}
                             </button>
+                            <a
+                                href="https://github.com/afsall-inc/montrs"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                                <Icon glyph=Glyph::Star class="h-3.5 w-3.5" />
+                                "GitHub"
+                            </a>
                             <NavLink
                                 href="/ui/components"
                                 class="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground"
