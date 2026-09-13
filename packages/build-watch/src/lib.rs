@@ -39,15 +39,25 @@ use montrs_build_core::BuildPipeline;
 use notify::{
     Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
-use std::{path::Path, sync::mpsc, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc,
+    time::Duration,
+};
 
 pub mod reload;
 
 /// Path components that must never trigger a rebuild — build outputs, git
 /// internals, and node_modules cause infinite rebuild loops otherwise.
 fn is_ignored(path: &Path) -> bool {
-    const IGNORED: &[&str] =
-        &["target", ".git", "node_modules", ".agent", ".opencode"];
+    const IGNORED: &[&str] = &[
+        "target",
+        ".git",
+        "node_modules",
+        ".agent",
+        ".opencode",
+        ".references",
+    ];
     path.components().any(|c| {
         IGNORED
             .iter()
@@ -55,12 +65,58 @@ fn is_ignored(path: &Path) -> bool {
     })
 }
 
-/// Watch a directory for changes, triggering a rebuild via the pipeline.
+/// File extensions that can affect a build. Filtering to source-like files
+/// keeps a workspace-wide watch from rebuilding on incidental churn (lock
+/// files, editor temp files, logs) while still catching every real edit.
+fn has_watched_extension(path: &Path) -> bool {
+    match path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(str::to_ascii_lowercase)
+    {
+        Some(ext) => matches!(
+            ext.as_str(),
+            "rs" | "css"
+                | "scss"
+                | "sass"
+                | "toml"
+                | "html"
+                | "htm"
+                | "svg"
+                | "json"
+                | "png"
+                | "jpg"
+                | "jpeg"
+                | "gif"
+                | "webp"
+                | "avif"
+                | "ico"
+                | "woff"
+                | "woff2"
+                | "ttf"
+                | "otf"
+                | "js"
+                | "mjs"
+                | "ts"
+                | "txt"
+                | "md"
+        ),
+        None => false,
+    }
+}
+
+/// Whether a filesystem path should trigger a rebuild.
+fn is_watched(path: &Path) -> bool {
+    !is_ignored(path) && has_watched_extension(path)
+}
+
+/// Watch one or more directory trees for changes, triggering a rebuild via
+/// the pipeline.
 ///
-/// Uses debouncing: after the first change event, waits 300ms for more
+/// Uses debouncing: after the first change event, waits 200ms for more
 /// events before triggering the rebuild callback.
-pub fn watch_directory(
-    path: &Path,
+pub fn watch_paths(
+    paths: &[PathBuf],
     on_change: impl Fn() + Send + 'static,
 ) -> Result<()> {
     let (tx, rx) = mpsc::channel();
@@ -70,9 +126,11 @@ pub fn watch_directory(
             if let Ok(event) = res
                 && matches!(
                     event.kind,
-                    EventKind::Modify(_) | EventKind::Create(_)
+                    EventKind::Modify(_)
+                        | EventKind::Create(_)
+                        | EventKind::Remove(_)
                 )
-                && !event.paths.iter().all(|p| is_ignored(p))
+                && event.paths.iter().any(|p| is_watched(p))
             {
                 let _ = tx.send(());
             }
@@ -80,15 +138,27 @@ pub fn watch_directory(
         Config::default().with_poll_interval(Duration::from_millis(500)),
     )?;
 
-    watcher.watch(path, RecursiveMode::Recursive)?;
+    for path in paths {
+        if path.exists() {
+            watcher.watch(path, RecursiveMode::Recursive)?;
+        }
+    }
 
-    let debounce = Duration::from_millis(300);
+    let debounce = Duration::from_millis(200);
     loop {
         if rx.recv().is_ok() {
             while rx.recv_timeout(debounce).is_ok() {}
             on_change();
         }
     }
+}
+
+/// Watch a single directory tree. Convenience wrapper around [`watch_paths`].
+pub fn watch_directory(
+    path: &Path,
+    on_change: impl Fn() + Send + 'static,
+) -> Result<()> {
+    watch_paths(&[path.to_path_buf()], on_change)
 }
 
 /// Watch a directory and rebuild the entire pipeline on changes.

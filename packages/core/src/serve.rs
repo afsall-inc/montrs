@@ -151,12 +151,24 @@ where
     }
 
     let app = app
-        // Dev servers must never serve stale bundles: the hydration entry
+        // Dev servers must never serve stale bundles. The hydration entry
         // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
-        // URLs, so force the browser to revalidate on every request.
+        // URLs, so Chrome's WASM/JS code caches keep serving old bytes unless
+        // we forbid storing entirely. `no-store` (unlike `no-cache`) also
+        // defeats the back/forward and disk caches.
         .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
             axum::http::header::CACHE_CONTROL,
+            axum::http::header::HeaderValue::from_static(
+                "no-store, no-cache, must-revalidate",
+            ),
+        ))
+        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
+            axum::http::header::PRAGMA,
             axum::http::header::HeaderValue::from_static("no-cache"),
+        ))
+        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
+            axum::http::header::EXPIRES,
+            axum::http::header::HeaderValue::from_static("0"),
         ))
         // Compress static assets (notably the multi-megabyte WASM bundle)
         // on the fly when the client advertises `Accept-Encoding: gzip`.
@@ -188,6 +200,9 @@ const DEV_OVERLAY_SCRIPT: &str = concat!(
     "<script>",
     r###"(function(){
 if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
+// One-time dev cleanup: stale service workers / Cache Storage from earlier
+// iterations pin old bundles in Chrome even across a hard refresh.
+try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) { navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }); } if (window.caches && caches.keys) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }); } } catch (_) {}
 var E = [];
 function push(k, m, f) { E.push([k, m, f || '']); if (E.length > 60) E.shift(); }
 window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
@@ -206,7 +221,7 @@ function css() {
     copy: 'position:absolute;top:6px;right:6px;padding:2px 8px;font-size:10px;background:#2a2a2a;color:#e5e5e5;border:1px solid #3a3a3a;border-radius:4px;cursor:pointer;'
   };
 }
-var live = '○', busy = false;
+var live = 'connecting', busy = false;
 var btn = document.createElement('button');
 btn.title = 'MontRS dev console';
 btn.style.cssText = css().btn;
@@ -226,7 +241,9 @@ function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/
 function render() {
   if (!panel) return;
   var sep = dark() ? '#333' : '#eee';
-  var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span style="opacity:0.8">' + (busy ? 'compiling…' : (live === '●' ? 'live' : 'disconnected')) + '</span></div>';
+  var status = busy ? 'compiling…' : (live === 'live' ? 'live' : (live === 'connecting' ? 'connecting…' : 'disconnected'));
+  var dot = live === 'live' ? '#3fb950' : (live === 'connecting' ? '#d29922' : '#e5484d');
+  var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span style="opacity:0.9;display:inline-flex;align-items:center;gap:6px"><span style="color:' + dot + '">●</span>' + status + '</span></div>';
   if (E.length === 0) {
     out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
   } else {
@@ -258,18 +275,37 @@ btn.onclick = function () {
 document.body.appendChild(btn);
 var port = '3001';
 try { var m = document.querySelector('meta[name="montrs:reload-port"]'); if (m && m.content) port = m.content; } catch (_) {}
-try {
-  var ws = new WebSocket('ws://' + (location.hostname || 'localhost') + ':' + port);
-  ws.onopen = function () { live = '●'; if (open) render(); };
-  ws.onclose = function () { live = '○'; if (open) render(); };
+// Reload once the restarted SSR server answers again (it is briefly offline
+// while the child is swapped after a successful build).
+function reloadWhenReady(n) {
+  fetch(location.href, { cache: 'no-store' }).then(function () { location.reload(); })
+    .catch(function () { if (n > 0) setTimeout(function () { reloadWhenReady(n - 1); }, 400); else location.reload(); });
+}
+function connect() {
+  var ws;
+  try { ws = new WebSocket('ws://' + (location.hostname || 'localhost') + ':' + port); }
+  catch (_) { setTimeout(connect, 1000); return; }
+  ws.onopen = function () {
+    live = 'live'; if (open) render();
+    // Identifies this socket as the overlay so the server routes dev events
+    // (building/build-ok/build-error) here instead of reload frames.
+    try { ws.send('{"hello":"montrs-overlay"}'); } catch (_) {}
+  };
+  ws.onclose = function () { live = 'off'; if (open) render(); setTimeout(connect, 1000); };
+  ws.onerror = function () { try { ws.close(); } catch (_) {} };
   ws.onmessage = function (e) {
     var data; try { data = JSON.parse(e.data); } catch (_) { return; }
     if (data.type === 'building') { busy = true; if (open) render(); }
-    else if (data.type === 'build-ok') { busy = false; live = '●'; if (open) render(); }
+    else if (data.type === 'build-ok') {
+      busy = false; live = 'live';
+      if (open) render();
+      reloadWhenReady(25);
+    }
     else if (data.type === 'build-error') { busy = false; push('build', data.message || 'Build error', data.frame || ''); if (open) render(); }
     else if (data.type === 'server-error') { busy = false; push('server', data.message || 'Server error'); if (open) render(); }
   };
-} catch (_) {}
+}
+connect();
 })();
 "###,
     "</script>"

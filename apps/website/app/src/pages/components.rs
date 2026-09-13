@@ -58,6 +58,7 @@ use montrs_ui::components::{
     spinner::Spinner,
     switch::Switch,
     tabs::{Tabs, TabsContent, TabsList, TabsTrigger},
+    floating_tab_bar::FloatingTabBar,
     textarea::Textarea,
     tooltip::Tooltip,
 };
@@ -221,6 +222,19 @@ const TEXTAREA_SNIPPET: &str = r#"use montrs_ui::components::textarea::Textarea;
 
 <Textarea placeholder="Describe your plate…" rows=4 />"#;
 
+const FLOATING_TAB_BAR_SNIPPET: &str = r#"use montrs_ui::components::floating_tab_bar::FloatingTabBar;
+
+let active = RwSignal::new("overview".to_string());
+
+<FloatingTabBar
+    items=vec![
+        ("Overview".to_string(), "overview".to_string()),
+        ("Details".to_string(), "details".to_string()),
+    ]
+    active
+    on_select=Callback::new(move |id: String| active.set(id))
+/>"#;
+
 const TOOLTIP_SNIPPET: &str = r#"use montrs_ui::components::tooltip::Tooltip;
 
 <Tooltip text="Copied to clipboard">
@@ -248,6 +262,7 @@ const SECTIONS: &[(&str, &str)] = &[
     ("skeleton", "Skeleton"),
     ("spinner", "Spinner"),
     ("textarea", "Textarea"),
+    ("floating_tab_bar", "Floating Tab Bar"),
     ("tooltip", "Tooltip"),
 ];
 
@@ -272,6 +287,30 @@ fn scroll_to(id: &'static str) -> impl Fn(leptos::ev::MouseEvent) {
     }
 }
 
+/// Smooth-scroll to an element id from a String callback (used by the
+/// FloatingTabBar component).
+fn scroll_to_str(id: String) -> impl Fn() {
+    move || {
+        #[cfg(target_arch = "wasm32")]
+        {
+            use wasm_bindgen::JsCast;
+            if let Some(doc) = web_sys::window().and_then(|w| w.document())
+                && let Some(el) = doc.get_element_by_id(&id)
+            {
+                if let Some(html) = el.dyn_ref::<web_sys::HtmlElement>() {
+                    let _ = html.scroll_into_view();
+                }
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // Keep the id alive (and used) so the closure captures it on
+            // non-wasm targets as well.
+            let _ = id.len();
+        }
+    }
+}
+
 /// Styling for trigger components that render their own `<button>`:
 /// nesting a `Button` inside them produces invalid `<button><button>` HTML,
 /// which browsers restructure and which breaks hydration.
@@ -287,6 +326,8 @@ fn trigger_button_class(variant: ButtonVariant) -> String {
 pub fn Components() -> impl IntoView {
     // Active section for the sidebar, updated on scroll (shadcn-style TOC).
     let active = RwSignal::new(SECTIONS[0].0.to_string());
+    // Local state for the interactive Floating Tab Bar demo.
+    let demo_tab = RwSignal::new("overview".to_string());
 
     #[cfg(target_arch = "wasm32")]
     Effect::new(move |_| {
@@ -321,18 +362,18 @@ pub fn Components() -> impl IntoView {
                     "91 shadcn-inspired components built on montrs-ui and Tailwind CSS.
                     Copy the source, own every pixel."
                 </p>
-                <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
-                    {SECTIONS.iter().map(|(id, label)| {
-                        let on_click = scroll_to(id);
-                        view! {
-                            <a
-                                href="#"
-                                class="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                on:click=on_click
-                            >{*label}</a>
-                        }
-                    }).collect::<Vec<_>>()}
-                </div>
+                <FloatingTabBar
+                    items=SECTIONS
+                        .iter()
+                        .map(|(id, label)| ((*label).to_string(), (*id).to_string()))
+                        .collect()
+                    active
+                    on_select=Callback::new(move |id: String| {
+                        active.set(id.clone());
+                        let scroll_fn = scroll_to_str(id);
+                        scroll_fn();
+                    })
+                />
             </div>
 
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_160px]">
@@ -672,6 +713,29 @@ pub fn Components() -> impl IntoView {
                         <Tooltip text="Copied to clipboard">
                             <Button variant=ButtonVariant::Outline>"Copy"</Button>
                         </Tooltip>
+                    </ComponentSection>
+
+                    <ComponentSection
+                        id="floating_tab_bar"
+                        title="Floating Tab Bar"
+                        description="Sticky centered tab bar with page offset for documentation-style navigation."
+                        snippet=FLOATING_TAB_BAR_SNIPPET
+                    >
+                        <div class="flex flex-col gap-4">
+                            <FloatingTabBar
+                                items=vec![
+                                    ("Overview".to_string(), "overview".to_string()),
+                                    ("Details".to_string(), "details".to_string()),
+                                    ("Usage".to_string(), "usage".to_string()),
+                                ]
+                                sticky=false
+                                active=demo_tab
+                                on_select=Callback::new(move |id: String| demo_tab.set(id))
+                            />
+                            <p class="text-sm text-muted-foreground">
+                                {move || format!("Selected: {}", demo_tab.get())}
+                            </p>
+                        </div>
                     </ComponentSection>
                 </div>
 

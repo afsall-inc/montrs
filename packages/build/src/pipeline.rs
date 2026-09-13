@@ -290,11 +290,17 @@ impl BuildPipeline for Pipeline {
         std::fs::create_dir_all(&self.site_root)?;
         std::fs::create_dir_all(&self.pkg_dir)?;
 
-        self.build_server()?;
+        // Build the WASM frontend first. It never touches the native server
+        // binary, so a server link failure (e.g. the running `*-ssr.exe` is
+        // locked on Windows) can no longer discard a freshly built client
+        // bundle. The dev supervisor also stops the server before rebuilding,
+        // but keeping the cheap, lock-free artifacts first makes the pipeline
+        // resilient when called directly (e.g. `montrs build`).
         self.build_frontend()?;
         self.process_tailwind()?;
         self.copy_assets()?;
         self.generate_index_html()?;
+        self.build_server()?;
 
         println!(" Build complete");
         Ok(())

@@ -37,6 +37,7 @@
 use anyhow::Result;
 use axum::Router;
 use std::path::PathBuf;
+use std::time::Duration;
 use tower_http::services::ServeDir;
 use tracing::info;
 
@@ -169,7 +170,23 @@ where
         )
         .fallback_service(ServeDir::new(&config.site_root));
 
-    let listener = tokio::net::TcpListener::bind(&config.addr).await?;
+    // The address was just released by the SSR child we killed for the
+    // rebuild; on Windows the socket can take a moment to free up. Retry
+    // binding instead of failing the whole fallback.
+    let mut listener = None;
+    for _ in 0..50 {
+        match tokio::net::TcpListener::bind(&config.addr).await {
+            Ok(l) => {
+                listener = Some(l);
+                break;
+            }
+            Err(_) => tokio::time::sleep(Duration::from_millis(100)).await,
+        }
+    }
+    let listener = listener.ok_or_else(|| {
+        anyhow::anyhow!("could not bind fallback address {}", config.addr)
+    })?;
+
     info!("Dev fallback server listening on {}", config.addr);
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown)

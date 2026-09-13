@@ -75,6 +75,7 @@ pub mod empty;
 pub mod expandable;
 pub mod faq_transition;
 pub mod field;
+pub mod floating_tab_bar;
 pub mod footer;
 pub mod form;
 pub mod header;

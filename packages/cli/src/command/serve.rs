@@ -37,10 +37,11 @@
 //! socket stay reachable.
 
 use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::process::Command as TokioCommand;
+use tokio::task::JoinHandle;
 
 pub async fn run() -> anyhow::Result<()> {
     let mut pipeline = match Pipeline::from_root(Path::new(".")) {
@@ -74,6 +75,33 @@ pub async fn run() -> anyhow::Result<()> {
     let reload_port = pipeline.meta.serve.reload_port;
     let bin = pipeline.server_bin_path();
 
+    // Watch the app's source trees plus the workspace `packages/` tree (when
+    // present) so edits to framework crates — not just the app — trigger a
+    // rebuild. Watching the app root directly would drag in its `target/site`
+    // output and flood the watcher during every build, so watch only sources.
+    let mut watch_roots: Vec<PathBuf> = Vec::new();
+    for candidate in ["app", "src", "style", "assets"] {
+        let dir = pipeline.project_root.join(candidate);
+        if dir.exists() {
+            watch_roots.push(dir);
+        }
+    }
+    for manifest in ["Cargo.toml", "montrs.toml"] {
+        let file = pipeline.project_root.join(manifest);
+        if file.exists() {
+            watch_roots.push(file);
+        }
+    }
+    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
+        let packages = ws_root.join("packages");
+        if packages.exists() {
+            watch_roots.push(packages);
+        }
+    }
+    if watch_roots.is_empty() {
+        watch_roots.push(pipeline.project_root.clone());
+    }
+
     println!("Serving on http://{addr}");
     println!("Site root: {site_root}");
     println!("PKG dir: {pkg_dir}");
@@ -98,14 +126,15 @@ pub async fn run() -> anyhow::Result<()> {
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
         move || {
-            let _ = montrs_build::watch_directory(Path::new("."), move || {
+            let _ = montrs_build::watch_paths(&watch_roots, move || {
                 let _ = tx.blocking_send(());
             });
         }
     });
 
-    // Initial build (non-fatal). A failure should not kill the dev loop.
-    let mut have_server = match pipeline_arc.build_all() {
+    // Initial build (non-fatal, off the async worker). A failure should not
+    // kill the dev loop.
+    let mut have_server = match build_blocking(pipeline_arc.clone()).await {
         Ok(()) => {
             println!("Initial build complete.");
             true
@@ -120,26 +149,14 @@ pub async fn run() -> anyhow::Result<()> {
     };
 
     // If no SSR binary exists yet, serve the fallback page on the site address.
-    let mut fallback: Option<tokio::task::JoinHandle<()>> = None;
+    // The same page takes over the address while each later rebuild runs.
+    let mut fallback: Option<JoinHandle<()>> = None;
     let mut fallback_shutdown: Option<tokio::sync::oneshot::Sender<()>> = None;
     if !have_server {
-        let (s, r) = tokio::sync::oneshot::channel::<()>();
+        let (h, s) =
+            spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
+        fallback = Some(h);
         fallback_shutdown = Some(s);
-        let cfg = montrs_build_serve::ServeConfig {
-            addr: addr.clone(),
-            site_root: site_root.clone().into(),
-            pkg_dir: pkg_dir.clone().into(),
-        };
-        fallback = Some(tokio::spawn(async move {
-            let shutdown = async move { let _ = r.await; };
-            if let Err(e) = montrs_build_serve::serve_fallback_with_shutdown(
-                cfg, reload_port, shutdown,
-            )
-            .await
-            {
-                eprintln!("Fallback server error: {e}");
-            }
-        }));
         println!("Initial build failed — serving the dev fallback page.");
     }
 
@@ -149,17 +166,9 @@ pub async fn run() -> anyhow::Result<()> {
     let mut backoff = Duration::from_millis(250);
 
     loop {
-        // Ensure the SSR server is running.
-        if have_server && child.is_none() {
-            // Hand the site address back to the real server: stop the fallback
-            // first, wait for the socket to be released, then spawn the SSR
-            // child.
-            if let Some(sh) = fallback_shutdown.take() {
-                let _ = sh.send(());
-                if let Some(h) = fallback.take() {
-                    let _ = tokio::time::timeout(Duration::from_secs(3), h).await;
-                }
-            }
+        // Ensure the SSR server is running — but never while the fallback page
+        // owns the socket (i.e. during a rebuild or after a failed build).
+        if have_server && child.is_none() && fallback.is_none() {
             match spawn_server(
                 &bin,
                 &addr,
@@ -171,6 +180,7 @@ pub async fn run() -> anyhow::Result<()> {
                 Ok(c) => {
                     child = Some(c);
                     println!("SSR server started.");
+                    backoff = Duration::from_millis(250);
                 }
                 Err(e) => {
                     if let Some(r) = &reload {
@@ -182,7 +192,6 @@ pub async fn run() -> anyhow::Result<()> {
                     continue;
                 }
             }
-            backoff = Duration::from_millis(250);
         }
 
         tokio::select! {
@@ -191,17 +200,39 @@ pub async fn run() -> anyhow::Result<()> {
                 if let Some(r) = &reload {
                     r.building();
                 }
-                match pipeline_arc.build_all() {
+
+                // Stop the SSR child *before* building: cargo cannot replace a
+                // running executable on Windows, and doing so would otherwise
+                // abort the whole build before the WASM/CSS steps ran.
+                if let Some(mut c) = child.take() {
+                    let _ = c.kill().await;
+                    let _ = c.wait().await;
+                }
+
+                // Serve the "compiling…" fallback on the site address while we
+                // build, so navigating to the app keeps working (and reports
+                // any build error). It auto-reloads on `build-ok`.
+                if fallback.is_none() {
+                    let (h, s) = spawn_fallback(
+                        &addr, &site_root, &pkg_dir, reload_port,
+                    );
+                    fallback = Some(h);
+                    fallback_shutdown = Some(s);
+                }
+
+                match build_blocking(pipeline_arc.clone()).await {
                     Ok(()) => {
                         println!("Rebuild complete.");
+                        // Hand the address back to the real server on the next
+                        // loop iteration, then tell every tab to reload.
+                        stop_fallback(&mut fallback, &mut fallback_shutdown).await;
+                        have_server = true;
+                        backoff = Duration::from_millis(250);
                         if let Some(r) = &reload {
                             r.build_ok();
-                        }
-                        have_server = true;
-                        // Restart the SSR child so it picks up the new code.
-                        if let Some(mut c) = child.take() {
-                            let _ = c.kill().await;
-                            let _ = c.wait().await;
+                            // Leptos-compatible reload frame (harmless if no
+                            // Leptos reload client is connected).
+                            r.notify();
                         }
                     }
                     Err(e) => {
@@ -209,7 +240,8 @@ pub async fn run() -> anyhow::Result<()> {
                         if let Some(r) = &reload {
                             report_build_error(r, &e);
                         }
-                        // Keep the last-good server running.
+                        // Keep showing the fallback page (it renders the error)
+                        // and keep the last-good WASM on disk for the retry.
                     }
                 }
             }
@@ -225,6 +257,58 @@ pub async fn run() -> anyhow::Result<()> {
                 }
             }
         }
+    }
+}
+
+/// Run the (blocking) build pipeline off the async worker threads so the
+/// live-reload socket keeps accepting connections while cargo runs.
+async fn build_blocking(
+    pipeline: Arc<Pipeline>,
+) -> anyhow::Result<()> {
+    tokio::task::spawn_blocking(move || pipeline.build_all())
+        .await
+        .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
+}
+
+/// Spawn the fallback ("compiling…") server on the site address. Returns its
+/// task handle and a shutdown signal.
+fn spawn_fallback(
+    addr: &str,
+    site_root: &str,
+    pkg_dir: &str,
+    reload_port: u16,
+) -> (JoinHandle<()>, tokio::sync::oneshot::Sender<()>) {
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel::<()>();
+    let cfg = montrs_build_serve::ServeConfig {
+        addr: addr.to_string(),
+        site_root: site_root.into(),
+        pkg_dir: pkg_dir.into(),
+    };
+    let handle = tokio::spawn(async move {
+        let shutdown = async move {
+            let _ = shutdown_rx.await;
+        };
+        if let Err(e) =
+            montrs_build_serve::serve_fallback_with_shutdown(cfg, reload_port, shutdown)
+                .await
+        {
+            eprintln!("Fallback server error: {e}");
+        }
+    });
+    (handle, shutdown_tx)
+}
+
+/// Stop the fallback server and wait (briefly) for the socket to be released
+/// so the SSR child can bind the same address.
+async fn stop_fallback(
+    fallback: &mut Option<JoinHandle<()>>,
+    shutdown: &mut Option<tokio::sync::oneshot::Sender<()>>,
+) {
+    if let Some(s) = shutdown.take() {
+        let _ = s.send(());
+    }
+    if let Some(h) = fallback.take() {
+        let _ = tokio::time::timeout(Duration::from_secs(3), h).await;
     }
 }
 

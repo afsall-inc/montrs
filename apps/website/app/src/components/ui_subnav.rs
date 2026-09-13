@@ -33,6 +33,7 @@
 
 use leptos::prelude::*;
 use leptos_router::hooks::{use_location, use_navigate};
+use montrs_ui::components::floating_tab_bar::FloatingTabBar;
 
 const LINKS: &[(&str, &str)] = &[
     ("/ui", "MontRS UI"),
@@ -53,37 +54,22 @@ pub fn UiSubNav() -> impl IntoView {
     // Only render inside the /ui section.
     let visible = move || path.get().starts_with("/ui");
 
+    let items = LINKS
+        .iter()
+        .map(|(href, label)| (label.to_string(), href.to_string()))
+        .collect::<Vec<_>>();
+
+    let on_select = Callback::new({
+        let nav = navigate.clone();
+        move |href: String| {
+            nav(&href, Default::default());
+        }
+    });
+
     view! {
         <Show when=move || visible()>
-            <nav
-                class="sticky top-16 z-30 border-b border-border bg-background/80 backdrop-blur"
-                aria-label="UI sections"
-            >
-                <div class="page-container flex flex-col gap-2 py-2">
-                    <div class="flex flex-wrap items-center gap-1">
-                        {LINKS.iter().copied().map(|(href, label)| {
-                            let nav = navigate.clone();
-                            let is_active = move || path.get() == href;
-                            view! {
-                                <a
-                                    href=href
-                                    class=move || {
-                                        let base = "rounded-md px-2.5 py-1.5 text-sm transition-colors";
-                                        if is_active() {
-                                            format!("{base} bg-accent font-medium text-foreground")
-                                        } else {
-                                            format!("{base} text-muted-foreground hover:bg-accent/60 hover:text-foreground")
-                                        }
-                                    }
-                                    on:click=move |ev| {
-                                        ev.prevent_default();
-                                        nav(href, Default::default());
-                                    }
-                                >{label}</a>
-                            }
-                        }).collect::<Vec<_>>()}
-                    </div>
-                </div>
+            <nav class="page-container" aria-label="UI sections">
+                <FloatingTabBar items=items.clone() active=path on_select=on_select />
             </nav>
         </Show>
     }

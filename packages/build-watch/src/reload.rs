@@ -46,13 +46,19 @@ use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::{net::TcpListener, sync::broadcast};
 
 /// A tiny WS server that fans out dev events to every connected browser tab.
+///
+/// It also remembers the last *pending* dev event (`building` / `build-error`
+/// / `server-error`) so a client that connects mid-build or after a failure is
+/// immediately told the real state instead of showing a stale "live".
 #[derive(Clone)]
 pub struct LiveReload {
     tx: broadcast::Sender<String>,
+    last_event: Arc<Mutex<Option<String>>>,
 }
 
 impl LiveReload {
@@ -62,18 +68,21 @@ impl LiveReload {
     /// server is running) so the dev loop can keep going.
     pub async fn start(port: u16) -> Result<Self> {
         let (tx, _rx) = broadcast::channel::<String>(64);
+        let last_event: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
         let addr = SocketAddr::from(([0, 0, 0, 0], port));
         let listener = TcpListener::bind(addr).await.with_context(|| {
             format!("could not bind live-reload port {port}")
         })?;
 
         let tx2 = tx.clone();
+        let last2 = last_event.clone();
         tokio::spawn(async move {
             loop {
                 let Ok((stream, _peer)) = listener.accept().await else {
                     continue;
                 };
                 let tx = tx2.clone();
+                let last = last2.clone();
                 tokio::spawn(async move {
                     let Ok(mut ws) = tokio_tungstenite::accept_async(stream).await
                     else {
@@ -93,6 +102,19 @@ impl LiveReload {
                     .unwrap_or_default();
                     let is_overlay = hello.contains("montrs-overlay");
 
+                    // Overlay clients joining mid-build (or after a failure)
+                    // get the current pending state right away. `build-ok` is
+                    // deliberately never replayed — it would reload-loop.
+                    if is_overlay {
+                        use tokio_tungstenite::tungstenite::Message;
+                        let pending = last.lock().ok().and_then(|g| g.clone());
+                        if let Some(msg) = pending
+                            && ws.send(Message::Text(msg.into())).await.is_err()
+                        {
+                            return;
+                        }
+                    }
+
                     let mut rx = tx.subscribe();
                     while let Ok(msg) = rx.recv().await {
                         use tokio_tungstenite::tungstenite::Message;
@@ -109,11 +131,18 @@ impl LiveReload {
             }
         });
 
-        Ok(Self { tx })
+        Ok(Self { tx, last_event })
     }
 
     fn send_text(&self, text: String) {
         let _ = self.tx.send(text);
+    }
+
+    /// Remember the last pending state; `None` clears it (build finished).
+    fn set_pending(&self, text: Option<String>) {
+        if let Ok(mut last) = self.last_event.lock() {
+            *last = text;
+        }
     }
 
     /// Ask every connected browser tab to reload — the Leptos reload script
@@ -129,11 +158,16 @@ impl LiveReload {
 
     /// A rebuild started.
     pub fn building(&self) {
-        self.send_text(json!({ "type": "building" }).to_string());
+        let msg = json!({ "type": "building" }).to_string();
+        self.set_pending(Some(msg.clone()));
+        self.send_text(msg);
     }
 
     /// A rebuild succeeded with no errors.
     pub fn build_ok(&self) {
+        // Nothing is pending once the build succeeds; clearing prevents a
+        // replayed `build-ok` from reload-looping a fresh tab.
+        self.set_pending(None);
         self.send_text(json!({ "type": "build-ok" }).to_string());
     }
 
@@ -154,12 +188,16 @@ impl LiveReload {
             "column": column,
             "frame": frame,
         });
-        self.send_text(value.to_string());
+        let text = value.to_string();
+        self.set_pending(Some(text.clone()));
+        self.send_text(text);
     }
 
     /// The SSR server process failed to start or crashed.
     pub fn server_error(&self, message: &str) {
         let value = json!({ "type": "server-error", "message": message });
-        self.send_text(value.to_string());
+        let text = value.to_string();
+        self.set_pending(Some(text.clone()));
+        self.send_text(text);
     }
 }
