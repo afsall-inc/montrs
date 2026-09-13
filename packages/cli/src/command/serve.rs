@@ -72,7 +72,7 @@ pub async fn run() -> anyhow::Result<()> {
         .as_deref()
         .unwrap_or("website")
         .to_string();
-    let reload_port = pipeline.meta.serve.reload_port;
+    let mut reload_port = pipeline.meta.serve.reload_port;
     let bin = pipeline.server_bin_path();
 
     // Watch the app's source trees plus the workspace `packages/` tree (when
@@ -107,9 +107,17 @@ pub async fn run() -> anyhow::Result<()> {
     println!("PKG dir: {pkg_dir}");
 
     // Live-reload first, so even a failed first build can report to the browser.
+    // If the configured port is taken, the server binds another and we adopt the
+    // actual port everywhere below (SSR child env + injected meta tag).
     let reload = match LiveReload::start(reload_port).await {
-        Ok(r) => {
-            println!("Live reload listening on ws://0.0.0.0:{reload_port}");
+        Ok((r, port)) => {
+            if port != reload_port {
+                println!(
+                    "Live reload port {reload_port} was busy — using {port}."
+                );
+            }
+            reload_port = port;
+            println!("Live reload listening on ws://0.0.0.0:{port}");
             Some(r)
         }
         Err(e) => {

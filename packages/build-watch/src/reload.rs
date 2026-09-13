@@ -42,7 +42,7 @@
 //! dev-tools event (which it would treat as a reload) and the overlay never
 //! receives a reload frame.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use std::net::SocketAddr;
@@ -62,16 +62,40 @@ pub struct LiveReload {
 }
 
 impl LiveReload {
-    /// Bind `0.0.0.0:{port}` and start accepting connections.
+    /// Bind a live-reload port and start accepting connections, returning the
+    /// bound port alongside the server.
     ///
-    /// Fails gracefully if the port is already in use (e.g. another dev
-    /// server is running) so the dev loop can keep going.
-    pub async fn start(port: u16) -> Result<Self> {
+    /// The configured (`preferred`) port is used when free; otherwise the next
+    /// two ports are tried, then an ephemeral one. A leftover dev server still
+    /// holding the port must not leave the browser overlay silently
+    /// "disconnected" — the caller forwards the returned port to the SSR child
+    /// (and into the injected meta tag) so the browser connects to the right
+    /// place.
+    pub async fn start(preferred: u16) -> Result<(Self, u16)> {
         let (tx, _rx) = broadcast::channel::<String>(64);
         let last_event: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
-        let addr = SocketAddr::from(([0, 0, 0, 0], port));
-        let listener = TcpListener::bind(addr).await.with_context(|| {
-            format!("could not bind live-reload port {port}")
+
+        let mut listener = None;
+        let mut actual_port = preferred;
+        for candidate in [
+            preferred,
+            preferred.saturating_add(1),
+            preferred.saturating_add(2),
+            0,
+        ] {
+            let addr = SocketAddr::from(([0, 0, 0, 0], candidate));
+            match TcpListener::bind(addr).await {
+                Ok(l) => {
+                    actual_port =
+                        l.local_addr().map(|a| a.port()).unwrap_or(candidate);
+                    listener = Some(l);
+                    break;
+                }
+                Err(_) => continue,
+            }
+        }
+        let listener = listener.ok_or_else(|| {
+            anyhow::anyhow!("could not bind any live-reload port")
         })?;
 
         let tx2 = tx.clone();
@@ -131,7 +155,7 @@ impl LiveReload {
             }
         });
 
-        Ok(Self { tx, last_event })
+        Ok((Self { tx, last_event }, actual_port))
     }
 
     fn send_text(&self, text: String) {
@@ -199,5 +223,80 @@ impl LiveReload {
         let text = value.to_string();
         self.set_pending(Some(text.clone()));
         self.send_text(text);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio_tungstenite::tungstenite::Message;
+
+    type Ws = tokio_tungstenite::WebSocketStream<
+        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+    >;
+
+    /// Read text frames until one contains `needle` (or fail loudly).
+    async fn next_containing(ws: &mut Ws, needle: &str) -> String {
+        for _ in 0..10 {
+            match ws.next().await {
+                Some(Ok(Message::Text(t))) => {
+                    let s = t.to_string();
+                    if s.contains(needle) {
+                        return s;
+                    }
+                }
+                Some(Ok(_)) => continue,
+                other => panic!("unexpected ws message: {other:?}"),
+            }
+        }
+        panic!("did not receive a message containing {needle}");
+    }
+
+    #[tokio::test]
+    async fn overlay_receives_live_events_and_replayed_state() {
+        let (reload, port) =
+            LiveReload::start(0).await.expect("start reload server");
+        let url = format!("ws://127.0.0.1:{port}/");
+
+        // A build is already in progress before the overlay connects: it must
+        // be told the pending state on connect.
+        reload.building();
+
+        let (mut ws, _) =
+            tokio_tungstenite::connect_async(&url).await.expect("connect");
+        ws.send(Message::Text("{\"hello\":\"montrs-overlay\"}".into()))
+            .await
+            .expect("send hello");
+
+        let msg = next_containing(&mut ws, "building").await;
+        assert!(msg.contains("\"type\":\"building\""), "{msg}");
+
+        // ...and it must still receive live events afterwards.
+        reload.build_ok();
+        let msg = next_containing(&mut ws, "build-ok").await;
+        assert!(msg.contains("build-ok"), "{msg}");
+    }
+
+    #[tokio::test]
+    async fn non_overlay_client_only_receives_reload_frames() {
+        let (reload, port) =
+            LiveReload::start(0).await.expect("start reload server");
+        let url = format!("ws://127.0.0.1:{port}/");
+
+        // No hello => tagged as a Leptos reload client.
+        let (mut ws, _) =
+            tokio_tungstenite::connect_async(&url).await.expect("connect");
+        // The server waits up to 750ms for a hello before subscribing.
+        tokio::time::sleep(Duration::from_millis(900)).await;
+
+        reload.building();
+        reload.notify();
+
+        let msg = next_containing(&mut ws, "\"all\":true").await;
+        assert!(msg.contains("\"all\":true"), "{msg}");
+        assert!(
+            !msg.contains("\"type\""),
+            "reload client received a dev event: {msg}"
+        );
     }
 }

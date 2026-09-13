@@ -242,6 +242,8 @@ function render() {
   if (!panel) return;
   var sep = dark() ? '#333' : '#eee';
   var status = busy ? 'compiling…' : (live === 'live' ? 'live' : (live === 'connecting' ? 'connecting…' : 'disconnected'));
+  // Surface the reload port while not connected so a mismatch is obvious.
+  if (live !== 'live') status += ' (:' + port + ')';
   var dot = live === 'live' ? '#3fb950' : (live === 'connecting' ? '#d29922' : '#e5484d');
   var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span style="opacity:0.9;display:inline-flex;align-items:center;gap:6px"><span style="color:' + dot + '">●</span>' + status + '</span></div>';
   if (E.length === 0) {
@@ -281,17 +283,24 @@ function reloadWhenReady(n) {
   fetch(location.href, { cache: 'no-store' }).then(function () { location.reload(); })
     .catch(function () { if (n > 0) setTimeout(function () { reloadWhenReady(n - 1); }, 400); else location.reload(); });
 }
+// Try the page host first, then loopback in case the hostname does not
+// resolve to the interface the reload server is bound to.
+var hosts = [location.hostname || 'localhost'];
+if (hosts.indexOf('127.0.0.1') === -1) hosts.push('127.0.0.1');
+var hostIdx = 0;
 function connect() {
+  var host = hosts[hostIdx % hosts.length];
   var ws;
-  try { ws = new WebSocket('ws://' + (location.hostname || 'localhost') + ':' + port); }
-  catch (_) { setTimeout(connect, 1000); return; }
+  try { ws = new WebSocket('ws://' + host + ':' + port); }
+  catch (_) { hostIdx++; setTimeout(connect, 1000); return; }
   ws.onopen = function () {
+    hostIdx = 0;
     live = 'live'; if (open) render();
     // Identifies this socket as the overlay so the server routes dev events
     // (building/build-ok/build-error) here instead of reload frames.
     try { ws.send('{"hello":"montrs-overlay"}'); } catch (_) {}
   };
-  ws.onclose = function () { live = 'off'; if (open) render(); setTimeout(connect, 1000); };
+  ws.onclose = function () { live = 'off'; if (open) render(); hostIdx++; setTimeout(connect, 1000); };
   ws.onerror = function () { try { ws.close(); } catch (_) {} };
   ws.onmessage = function (e) {
     var data; try { data = JSON.parse(e.data); } catch (_) { return; }
