@@ -1,0 +1,21 @@
+[package]
+name = "montrs-hot-reload"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Leptos view hot-reload patch generation for the MontRS dev server"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
+[dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+camino = "1"
+leptos_hot_reload = "0.8"
+proc-macro2 = { version = "1", features = ["span-locations"] }
+syn = { version = "2", features = ["full", "visit"] }
+walkdir = "2"

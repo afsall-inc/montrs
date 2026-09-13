@@ -165,7 +165,15 @@ where
             "/",
             axum::routing::get(move || {
                 let page = page.clone();
-                async move { axum::response::Html(page) }
+                // 503 so a waiting client (the dev overlay's readiness probe)
+                // does not mistake this "compiling…" page for the real app and
+                // reload onto it.
+                async move {
+                    (
+                        axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                        axum::response::Html(page),
+                    )
+                }
             }),
         )
         .fallback_service(ServeDir::new(&config.site_root));

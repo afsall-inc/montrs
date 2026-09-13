@@ -328,8 +328,12 @@ try { var m = document.querySelector('meta[name="montrs:reload-port"]'); if (m &
 // Reload once the restarted SSR server answers again (it is briefly offline
 // while the child is swapped after a successful build).
 function reloadWhenReady(n) {
-  fetch(location.href, { cache: 'no-store' }).then(function () { location.reload(); })
-    .catch(function () { if (n > 0) setTimeout(function () { reloadWhenReady(n - 1); }, 400); else location.reload(); });
+  // Only reload once the real server answers. The "compiling…" fallback
+  // responds 503, so an `ok` check prevents getting stuck on it.
+  fetch(location.href, { cache: 'no-store' }).then(function (r) {
+    if (r.ok) location.reload();
+    else if (n > 0) setTimeout(function () { reloadWhenReady(n - 1); }, 400);
+  }).catch(function () { if (n > 0) setTimeout(function () { reloadWhenReady(n - 1); }, 400); else location.reload(); });
 }
 // Try the page host first, then loopback in case the hostname does not
 // resolve to the interface the reload server is bound to.
@@ -352,6 +356,20 @@ function connect() {
   ws.onerror = function () { try { ws.close(); } catch (_) {} };
   ws.onmessage = function (e) {
     var data; try { data = JSON.parse(e.data); } catch (_) { return; }
+    // Leptos view! patch: apply markup changes to the live DOM in place.
+    if (data.view) { try { patch(data.view); } catch (_) {} return; }
+    // CSS swap: bust the stylesheet URL without a reload.
+    if (data.css) {
+      try {
+        document.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
+          var href = l.getAttribute('href') || '';
+          if (href.indexOf(data.css) !== -1) {
+            l.setAttribute('href', '/' + data.css + '?v=' + Date.now());
+          }
+        });
+      } catch (_) {}
+      return;
+    }
     if (data.type === 'building') { busy = true; if (open) render(); }
     else if (data.type === 'build-ok') {
       busy = false; live = 'live';
@@ -394,8 +412,12 @@ async fn inject_dev_overlay(
         "<meta name=\"montrs:reload-port\" content=\"{}\">",
         port
     );
-    let script = DEV_OVERLAY_SCRIPT;
-    let injection = format!("{meta_tag}\n{script}");
+    // `HOT_RELOAD_JS` defines the global `patch(json)` that applies Leptos
+    // `view!` patches to the live DOM. Injected here so every MontRS app gets
+    // view hot-reload with no app changes.
+    let hot_reload =
+        format!("<script>{}</script>", leptos_hot_reload::HOT_RELOAD_JS);
+    let injection = format!("{meta_tag}\n{hot_reload}\n{DEV_OVERLAY_SCRIPT}");
 
     let headers = res.headers().clone();
     let body = res.into_body();

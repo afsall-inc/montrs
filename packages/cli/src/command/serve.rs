@@ -55,6 +55,12 @@ pub async fn run() -> anyhow::Result<()> {
     };
     pipeline.release |= crate::config::current_release();
 
+    // The dev server always builds in the dev profile. This keeps
+    // `debug_assertions` on so the SSR HTML carries the Leptos hot-reload
+    // markers, and makes incremental rebuilds far faster. The WASM client is
+    // still built optimized (see `frontend_build_args`).
+    pipeline.release = false;
+
     crate::command::resolve_pipeline_bins(&mut pipeline);
 
     let addr = pipeline.meta.serve.site_addr.clone();
@@ -102,6 +108,26 @@ pub async fn run() -> anyhow::Result<()> {
         watch_roots.push(pipeline.project_root.clone());
     }
 
+    // Source roots scanned for `view!` macros so markup edits can be patched
+    // into the browser without a rebuild. The app plus the UI component crate
+    // are where view macros live.
+    let mut view_roots: Vec<PathBuf> = Vec::new();
+    for candidate in ["app", "src"] {
+        let dir = pipeline.project_root.join(candidate);
+        if dir.exists() {
+            view_roots.push(dir);
+        }
+    }
+    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
+        let ui = ws_root.join("packages").join("ui");
+        if ui.exists() {
+            view_roots.push(ui);
+        }
+    }
+    // cargo derives the `view!` stable ids from workspace-relative paths.
+    let workspace_root =
+        pipeline.workspace_target_dir.parent().map(|p| p.to_path_buf());
+
     println!("Serving on http://{addr}");
     println!("Site root: {site_root}");
     println!("PKG dir: {pkg_dir}");
@@ -128,15 +154,57 @@ pub async fn run() -> anyhow::Result<()> {
         }
     };
 
-    // Watch channel: the blocking file watcher sends a signal here.
+    // Watch channel: the blocking file watcher signals a rebuild here. View
+    // and CSS edits are handled entirely inside the watcher thread (instant
+    // patches, no cargo) and never reach this channel.
     let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(1);
     let pipeline_arc = Arc::new(pipeline);
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
+        let reload = reload.clone();
+        let pipeline_for_watch = pipeline_arc.clone();
         move || {
-            let _ = montrs_build::watch_paths(&watch_roots, move || {
-                let _ = tx.blocking_send(());
-            });
+            // Baseline of every `view!` macro in the app, used to diff edits.
+            let mut patcher = montrs_hot_reload::ViewPatcher::new(
+                &view_roots,
+                workspace_root,
+            );
+            let _ = montrs_build::watch_paths(
+                &watch_roots,
+                move |changed: &[PathBuf]| {
+                    let mut rebuild = false;
+                    let mut css_changed = false;
+                    for path in changed {
+                        match path.extension().and_then(|e| e.to_str()) {
+                            Some("rs") => {
+                                if let Some(patches) = patcher.patch(path)
+                                    && let Ok(json) =
+                                        serde_json::to_string(&patches)
+                                    && let Some(r) = &reload
+                                {
+                                    r.view(json);
+                                }
+                                if !patcher.is_view_only(path) {
+                                    rebuild = true;
+                                }
+                            }
+                            Some("css") => css_changed = true,
+                            _ => rebuild = true,
+                        }
+                    }
+                    if css_changed {
+                        if let Err(e) = pipeline_for_watch.process_tailwind() {
+                            eprintln!("Tailwind error: {e}");
+                        }
+                        if let Some(r) = &reload {
+                            r.notify_css("main.css");
+                        }
+                    }
+                    if rebuild {
+                        let _ = tx.blocking_send(());
+                    }
+                },
+            );
         }
     });
 
@@ -172,6 +240,9 @@ pub async fn run() -> anyhow::Result<()> {
     // bail on build errors.
     let mut child: Option<tokio::process::Child> = None;
     let mut backoff = Duration::from_millis(250);
+    // Set after a successful rebuild; the "reload" is emitted only once the
+    // restarted SSR child is actually listening (never before).
+    let mut pending_reload = false;
 
     loop {
         // Ensure the SSR server is running — but never while the fallback page
@@ -189,6 +260,15 @@ pub async fn run() -> anyhow::Result<()> {
                     child = Some(c);
                     println!("SSR server started.");
                     backoff = Duration::from_millis(250);
+                    // Now that the new server is up, tell every tab to reload.
+                    if pending_reload {
+                        pending_reload = false;
+                        if let Some(r) = &reload {
+                            r.build_ok();
+                            // Leptos-compatible reload frame.
+                            r.notify();
+                        }
+                    }
                 }
                 Err(e) => {
                     if let Some(r) = &reload {
@@ -232,16 +312,12 @@ pub async fn run() -> anyhow::Result<()> {
                     Ok(()) => {
                         println!("Rebuild complete.");
                         // Hand the address back to the real server on the next
-                        // loop iteration, then tell every tab to reload.
+                        // loop iteration. The reload is deferred until the new
+                        // child is listening (see the spawn branch above).
                         stop_fallback(&mut fallback, &mut fallback_shutdown).await;
                         have_server = true;
                         backoff = Duration::from_millis(250);
-                        if let Some(r) = &reload {
-                            r.build_ok();
-                            // Leptos-compatible reload frame (harmless if no
-                            // Leptos reload client is connected).
-                            r.notify();
-                        }
+                        pending_reload = true;
                     }
                     Err(e) => {
                         eprintln!("Build error: {e}");

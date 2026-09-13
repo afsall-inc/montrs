@@ -142,10 +142,12 @@ impl LiveReload {
                     let mut rx = tx.subscribe();
                     while let Ok(msg) = rx.recv().await {
                         use tokio_tungstenite::tungstenite::Message;
-                        // Dev-tools frames always carry a `"type"` field; reload
-                        // frames never do. Route them to the right client.
+                        // Dev-tools frames always carry a `"type"` field and go
+                        // only to the overlay. Reload frames (`all` / `view` /
+                        // `css`) go to every client, so the overlay can apply
+                        // view patches and CSS swaps itself.
                         let is_event = msg.contains("\"type\"");
-                        if is_event == is_overlay
+                        if (!is_event || is_overlay)
                             && ws.send(Message::Text(msg.into())).await.is_err()
                         {
                             break;
@@ -178,6 +180,12 @@ impl LiveReload {
     /// Hot-swap a stylesheet without a full reload (`{"css":"main.css"}`).
     pub fn notify_css(&self, css: &str) {
         self.send_text(format!(r#"{{"css":"{css}"}}"#));
+    }
+
+    /// Send Leptos `view!` patches (`{"view":"<Patches json>"}`) so the browser
+    /// can apply markup changes without a recompile or reload.
+    pub fn view(&self, payload: String) {
+        self.send_text(json!({ "view": payload }).to_string());
     }
 
     /// A rebuild started.

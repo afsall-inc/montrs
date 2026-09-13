@@ -110,16 +110,16 @@ fn is_watched(path: &Path) -> bool {
     !is_ignored(path) && has_watched_extension(path)
 }
 
-/// Watch one or more directory trees for changes, triggering a rebuild via
-/// the pipeline.
+/// Watch one or more directory trees for changes, invoking `on_change` with
+/// the set of changed, build-relevant paths.
 ///
-/// Uses debouncing: after the first change event, waits 200ms for more
-/// events before triggering the rebuild callback.
+/// Uses debouncing: after the first change event, waits 200ms for more events
+/// and coalesces their paths before calling the callback once.
 pub fn watch_paths(
     paths: &[PathBuf],
-    on_change: impl Fn() + Send + 'static,
+    mut on_change: impl FnMut(&[PathBuf]) + Send + 'static,
 ) -> Result<()> {
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::channel::<Vec<PathBuf>>();
 
     let mut watcher = RecommendedWatcher::new(
         move |res: Result<Event, notify::Error>| {
@@ -130,9 +130,15 @@ pub fn watch_paths(
                         | EventKind::Create(_)
                         | EventKind::Remove(_)
                 )
-                && event.paths.iter().any(|p| is_watched(p))
             {
-                let _ = tx.send(());
+                let changed: Vec<PathBuf> = event
+                    .paths
+                    .into_iter()
+                    .filter(|p| is_watched(p))
+                    .collect();
+                if !changed.is_empty() {
+                    let _ = tx.send(changed);
+                }
             }
         },
         Config::default().with_poll_interval(Duration::from_millis(500)),
@@ -146,9 +152,13 @@ pub fn watch_paths(
 
     let debounce = Duration::from_millis(200);
     loop {
-        if rx.recv().is_ok() {
-            while rx.recv_timeout(debounce).is_ok() {}
-            on_change();
+        if let Ok(mut changed) = rx.recv() {
+            while let Ok(more) = rx.recv_timeout(debounce) {
+                changed.extend(more);
+            }
+            changed.sort();
+            changed.dedup();
+            on_change(&changed);
         }
     }
 }
@@ -156,7 +166,7 @@ pub fn watch_paths(
 /// Watch a single directory tree. Convenience wrapper around [`watch_paths`].
 pub fn watch_directory(
     path: &Path,
-    on_change: impl Fn() + Send + 'static,
+    on_change: impl FnMut(&[PathBuf]) + Send + 'static,
 ) -> Result<()> {
     watch_paths(&[path.to_path_buf()], on_change)
 }
@@ -169,7 +179,7 @@ pub fn watch_and_rebuild(
     path: &Path,
     pipeline: &'static impl BuildPipeline,
 ) -> Result<()> {
-    watch_directory(path, move || {
+    watch_directory(path, move |_changed| {
         println!("Change detected — rebuilding...");
         if let Err(e) = pipeline.build_all() {
             eprintln!("Build error: {e}");

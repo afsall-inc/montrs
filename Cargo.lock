@@ -4391,6 +4391,7 @@ dependencies = [
  "montrs-core",
  "montrs-env",
  "montrs-fmt",
+ "montrs-hot-reload",
  "montrs-lockfile",
  "montrs-log",
  "montrs-metadata",
@@ -4443,6 +4444,7 @@ dependencies = [
  "governor",
  "leptos",
  "leptos_axum",
+ "leptos_hot_reload",
  "leptos_router",
  "montrs-platform",
  "nonzero_ext",
@@ -4535,6 +4537,19 @@ dependencies = [
  "serde_json",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "montrs-hot-reload"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "camino",
+ "leptos_hot_reload",
+ "proc-macro2",
+ "serde_json",
+ "syn 2.0.119",
+ "walkdir",
 ]
 
 [[package]]

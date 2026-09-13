@@ -24,6 +24,7 @@ regex.workspace = true
 
 leptos.workspace = true
 leptos_router.workspace = true
+leptos_hot_reload = { version = "0.8", optional = true }
 leptos_axum = { workspace = true, optional = true }
 axum = { version = "0.8", optional = true }
 tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip"], optional = true }
@@ -41,4 +42,5 @@ ssr = [
     "dep:leptos_axum",
     "dep:axum",
     "dep:tower-http",
+    "dep:leptos_hot_reload",
 ]
