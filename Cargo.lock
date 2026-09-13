@@ -4389,6 +4389,7 @@ dependencies = [
  "montrs-build",
  "montrs-build-serve",
  "montrs-core",
+ "montrs-dev-hotpatch",
  "montrs-env",
  "montrs-fmt",
  "montrs-hot-reload",
@@ -4484,6 +4485,16 @@ dependencies = [
  "thiserror 2.0.20",
  "winit",
  "wry",
+]
+
+[[package]]
+name = "montrs-dev-hotpatch"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "subsecond-types",
 ]
 
 [[package]]
@@ -8021,6 +8032,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "subsecond-types"
+version = "0.7.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcf32d66269b5fbb8558334e8d22b657b2f7af0dd2ef56c231541099a862e464"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

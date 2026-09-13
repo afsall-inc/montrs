@@ -128,6 +128,37 @@ pub async fn run() -> anyhow::Result<()> {
     let workspace_root =
         pipeline.workspace_target_dir.parent().map(|p| p.to_path_buf());
 
+    // Experimental (Stage 1 foundation): capture each workspace crate's rustc
+    // invocation so a later hot-patch pass can replay only changed crates.
+    // Enabled with `MONTRS_HOTPATCH=1`.
+    let hotpatch_enabled = std::env::var_os("MONTRS_HOTPATCH").is_some();
+    let hotpatch_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
+    if hotpatch_enabled {
+        match resolve_rustc_wrapper() {
+            Some(wrapper) => {
+                // SAFETY: set once, before any build starts; the cargo child
+                // processes inherit this environment.
+                unsafe {
+                    std::env::set_var("RUSTC_WORKSPACE_WRAPPER", &wrapper);
+                    std::env::set_var("MONTRS_HOTPATCH_DIR", &hotpatch_dir);
+                }
+                let _ = std::fs::remove_dir_all(&hotpatch_dir);
+                println!(
+                    "Hot-patch capture enabled (wrapper: {}).",
+                    wrapper.display()
+                );
+                println!("  capture dir: {}", hotpatch_dir.display());
+            }
+            None => {
+                eprintln!(
+                    "MONTRS_HOTPATCH is set but montrs-rustc-wrapper was not \
+                     found. Install it with:\n  cargo install --path \
+                     packages/dev-hotpatch --bin montrs-rustc-wrapper"
+                );
+            }
+        }
+    }
+
     println!("Serving on http://{addr}");
     println!("Site root: {site_root}");
     println!("PKG dir: {pkg_dir}");
@@ -224,6 +255,10 @@ pub async fn run() -> anyhow::Result<()> {
         }
     };
 
+    if hotpatch_enabled {
+        log_capture(&hotpatch_dir);
+    }
+
     // If no SSR binary exists yet, serve the fallback page on the site address.
     // The same page takes over the address while each later rebuild runs.
     let mut fallback: Option<JoinHandle<()>> = None;
@@ -311,6 +346,9 @@ pub async fn run() -> anyhow::Result<()> {
                 match build_blocking(pipeline_arc.clone()).await {
                     Ok(()) => {
                         println!("Rebuild complete.");
+                        if hotpatch_enabled {
+                            log_capture(&hotpatch_dir);
+                        }
                         // Hand the address back to the real server on the next
                         // loop iteration. The reload is deferred until the new
                         // child is listening (see the spawn branch above).
@@ -394,6 +432,45 @@ async fn stop_fallback(
     if let Some(h) = fallback.take() {
         let _ = tokio::time::timeout(Duration::from_secs(3), h).await;
     }
+}
+
+/// Log how many rustc invocations the hot-patch wrapper captured.
+fn log_capture(dir: &Path) {
+    let count = montrs_dev_hotpatch::read_rustc_invocations().len();
+    println!(
+        "Hot-patch capture: {count} rustc invocations recorded ({}).",
+        dir.display()
+    );
+}
+
+/// Locate the `montrs-rustc-wrapper` binary: explicit override, then `PATH`,
+/// then next to the running executable.
+fn resolve_rustc_wrapper() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("MONTRS_RUSTC_WRAPPER") {
+        return Some(PathBuf::from(p));
+    }
+    let bin = if cfg!(windows) {
+        "montrs-rustc-wrapper.exe"
+    } else {
+        "montrs-rustc-wrapper"
+    };
+    if let Some(paths) = std::env::var_os("PATH") {
+        for dir in std::env::split_paths(&paths) {
+            let candidate = dir.join(bin);
+            if candidate.is_file() {
+                return Some(candidate);
+            }
+        }
+    }
+    if let Ok(exe) = std::env::current_exe()
+        && let Some(dir) = exe.parent()
+    {
+        let candidate = dir.join(bin);
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+    None
 }
 
 fn spawn_server(
