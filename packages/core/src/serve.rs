@@ -208,33 +208,55 @@ function push(k, m, f) { E.push([k, m, f || '']); if (E.length > 60) E.shift(); 
 window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
 window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; push('rejection', r ? String(r) : 'Promise rejected'); });
 try { (function (ce) { console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); }; })(console.error); } catch (_) {}
+// User preferences: which side the button floats on, and how opaque it is.
+// Never fully transparent, so it can always be found and reopened.
+var MIN_OPACITY = 0.2;
+var settings = { pos: 'right', opacity: 1 };
+try {
+  var stored = localStorage.getItem('montrs-dev-overlay');
+  if (stored) {
+    var sp = JSON.parse(stored);
+    if (sp && (sp.pos === 'left' || sp.pos === 'right')) settings.pos = sp.pos;
+    if (sp && typeof sp.opacity === 'number' && isFinite(sp.opacity)) {
+      settings.opacity = Math.min(1, Math.max(MIN_OPACITY, sp.opacity));
+    }
+  }
+} catch (_) {}
+function saveSettings() { try { localStorage.setItem('montrs-dev-overlay', JSON.stringify(settings)); } catch (_) {} }
 function dark() { return document.documentElement.classList.contains('dark'); }
+function sideCss() { return settings.pos === 'left' ? 'left:16px;' : 'right:16px;'; }
 function css() {
   var d = dark();
   var bg = d ? '#1a1a1a' : '#ffffff';
   var fg = d ? '#e5e5e5' : '#111111';
   var bd = d ? '#3a3a3a' : 'rgba(0,0,0,0.12)';
+  var op = settings.opacity;
   return {
-    btn: 'position:fixed;bottom:16px;right:16px;z-index:2147483000;width:40px;height:40px;border-radius:9999px;border:1px solid ' + bd + ';background:' + bg + ';box-shadow:0 8px 24px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;',
-    panel: 'position:fixed;bottom:64px;right:16px;z-index:2147483000;width:380px;max-height:70vh;overflow:auto;background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);font:11px/1.5 ui-monospace,Menlo,monospace;color:' + fg + ';',
+    btn: 'position:fixed;bottom:16px;' + sideCss() + 'z-index:2147483000;width:40px;height:40px;border-radius:9999px;border:1px solid ' + bd + ';background:' + bg + ';box-shadow:0 8px 24px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:' + op + ';transition:opacity .15s ease;',
+    panel: 'position:fixed;bottom:64px;' + sideCss() + 'z-index:2147483000;width:380px;max-width:calc(100vw - 32px);max-height:70vh;overflow:auto;background:' + bg + ';border:1px solid ' + bd + ';border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.3);font:11px/1.5 ui-monospace,Menlo,monospace;color:' + fg + ';opacity:' + op + ';',
     frame: 'display:block;margin:8px 0 12px;padding:10px;background:#0c0c0c;border:1px solid #2a2a2a;border-radius:6px;white-space:pre-wrap;word-break:break-word;color:#fca5a5;max-height:220px;overflow:auto;',
-    copy: 'position:absolute;top:6px;right:6px;padding:2px 8px;font-size:10px;background:#2a2a2a;color:#e5e5e5;border:1px solid #3a3a3a;border-radius:4px;cursor:pointer;'
+    copy: 'position:absolute;top:6px;right:6px;padding:2px 8px;font-size:10px;background:#2a2a2a;color:#e5e5e5;border:1px solid #3a3a3a;border-radius:4px;cursor:pointer;',
+    ctrl: 'padding:3px 8px;font-size:10px;background:transparent;color:' + fg + ';border:1px solid ' + bd + ';border-radius:4px;cursor:pointer;'
   };
 }
 var live = 'connecting', busy = false;
 var btn = document.createElement('button');
-btn.title = 'MontRS dev console';
-btn.style.cssText = css().btn;
+btn.title = 'MontRS dev console — open to move it or change opacity';
 var logo = null;
 try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo = l.href; } catch (_) {}
-if (logo) {
-  btn.style.backgroundImage = 'url(' + logo + ')';
-  btn.style.backgroundSize = '64%';
-  btn.style.backgroundRepeat = 'no-repeat';
-  btn.style.backgroundPosition = 'center';
-} else {
+if (!logo) {
   btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
+function styleBtn() {
+  btn.style.cssText = css().btn;
+  if (logo) {
+    btn.style.backgroundImage = 'url(' + logo + ')';
+    btn.style.backgroundSize = '64%';
+    btn.style.backgroundRepeat = 'no-repeat';
+    btn.style.backgroundPosition = 'center';
+  }
+}
+styleBtn();
 var panel = null, open = false;
 function badge(k){ return k==='error' ? '#e5484d' : k==='rejection' ? '#b7791f' : '#60a5fa'; }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -246,6 +268,13 @@ function render() {
   if (live !== 'live') status += ' (:' + port + ')';
   var dot = live === 'live' ? '#3fb950' : (live === 'connecting' ? '#d29922' : '#e5484d');
   var out = '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid ' + sep + '"><b>MontRS dev</b><span style="opacity:0.9;display:inline-flex;align-items:center;gap:6px"><span style="color:' + dot + '">●</span>' + status + '</span></div>';
+  // Appearance controls: which side it floats on, and how see-through it is.
+  out += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid ' + sep + '">'
+    + '<button class="pos-toggle" title="Move the console to the other side" style="' + css().ctrl + '">'
+    + (settings.pos === 'left' ? 'Right ▸' : '◂ Left') + '</button>'
+    + '<span style="opacity:0.7;white-space:nowrap">Opacity</span>'
+    + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">'
+    + '</div>';
   if (E.length === 0) {
     out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
   } else {
@@ -265,6 +294,25 @@ function render() {
       try { navigator.clipboard.writeText(t); b.textContent = 'copied'; } catch (_) { b.textContent = 'fail'; }
     };
   });
+  var op = panel.querySelector('.op');
+  if (op) {
+    op.oninput = function () {
+      settings.opacity = Math.min(1, Math.max(MIN_OPACITY, parseFloat(op.value) || 1));
+      saveSettings();
+      btn.style.opacity = settings.opacity;
+      panel.style.opacity = settings.opacity;
+    };
+  }
+  var posBtn = panel.querySelector('.pos-toggle');
+  if (posBtn) {
+    posBtn.onclick = function () {
+      settings.pos = settings.pos === 'left' ? 'right' : 'left';
+      saveSettings();
+      styleBtn();
+      panel.style.cssText = css().panel;
+      render();
+    };
+  }
 }
 btn.onclick = function () {
   open = !open;
