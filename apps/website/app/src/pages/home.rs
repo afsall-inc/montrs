@@ -792,21 +792,57 @@ fn TaskRunnerAndSponsors() -> impl IntoView {
                             "MontRS is free and MIT/Apache-2.0 licensed. Sponsors keep
                             the framework growing and the builds fast."
                         </p>
-                        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+                        // Legendary tier — the title sponsor.
+                        <div class="relative mt-6 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/12 via-card/60 to-card/60 p-5 shadow-lg">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                                    <Icon glyph=Glyph::Crown class="h-3 w-3" />
+                                    "Legendary"
+                                </span>
+                                <Icon glyph=Glyph::Flame class="h-6 w-6 text-primary/80" />
+                            </div>
+                            <div class="mt-3 flex items-center gap-3">
+                                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                                    <Icon glyph=Glyph::Building2 class="h-6 w-6" />
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-lg font-semibold">"Afsall Inc."</p>
+                                    <p class="text-sm text-muted-foreground">
+                                        "Title sponsor — building MontRS end to end."
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        // Partners tier.
+                        <p class="mt-6 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            <Icon glyph=Glyph::Gem class="h-3 w-3" />
+                            "Partners"
+                        </p>
+                        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                             {[
-                                ("Afsall Inc.", Glyph::Flame),
-                                ("OpenCode", Glyph::Terminal),
                                 ("Leptos", Glyph::Atom),
                                 ("Tailwind", Glyph::Wind),
                                 ("shadcn", Glyph::Blocks),
-                                ("Your org here", Glyph::Sparkles),
+                                ("OpenCode", Glyph::Terminal),
                             ].into_iter().map(|(s, g)| view! {
-                                <div class="sponsor-card flex h-24 items-center justify-center gap-2 rounded-2xl border border-border/60 bg-card/60 px-4 text-center font-mono text-sm text-muted-foreground shadow-lg backdrop-blur-sm">
+                                <div class="sponsor-card flex h-20 items-center justify-center gap-2 rounded-xl border border-border/60 bg-card/60 px-3 text-center font-mono text-xs text-muted-foreground shadow-md backdrop-blur-sm">
                                     <Icon glyph=g class="h-4 w-4 text-primary/70" />
                                     {s}
                                 </div>
                             }).collect::<Vec<_>>()}
+                            <a
+                                href="https://github.com/sponsors/afsall-inc"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="sponsor-card flex h-20 items-center justify-center gap-2 rounded-xl border border-dashed border-border px-3 text-center font-mono text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+                            >
+                                <Icon glyph=Glyph::Sparkles class="h-4 w-4 text-primary/70" />
+                                "Your org"
+                            </a>
                         </div>
+
                         <a
                             href="https://github.com/sponsors/afsall-inc"
                             target="_blank"
