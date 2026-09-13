@@ -33,3 +33,17 @@ target
 
 # Environment variables (local overrides)
 .env
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Standalone codegen crate's own cargo target (outside the workspace target)
+packages/icons/codegen/target

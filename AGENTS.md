@@ -211,3 +211,4 @@ MCP tools: `get_project_snapshot`, `agent_list_errors`, `agent_diff`, `agent_che
 - Build in `--release` for deployment; artifacts at `target/release/`
 - Always implement `description()` on traits — it feeds agent.json
 - This is **not** a user app — `montrs new`, `generate`, `serve` target framework dev, not app building
+- **Cleaning**: `montrs clean` (or `cargo clean`) removes the workspace `target/`. The website's generated output lives separately at `apps/website/target/site` (WASM bundle + CSS); delete `apps/website/target` to force a cold site rebuild. `packages/icons/codegen/target` is a standalone codegen crate's own target and is safe to delete.

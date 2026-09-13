@@ -7,6 +7,7 @@ RUST_BACKTRACE = "1"
 MONTRS_LOG = "info"
 
 [tasks]
+clean = "cargo clean"
 build = "cargo build --workspace"
 fmt = "cargo fmt --all"
 clippy = "cargo clippy --workspace -- -D warnings"

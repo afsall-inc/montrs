@@ -128,6 +128,12 @@ open = "5"
 # Pinned to <2.0.4 because 2.0.4+ requires rustc 1.96.0, but our toolchain is 1.95.0-nightly
 kstring = "=2.0.2"
 
+# Line-tables-only debuginfo everywhere in dev: full DWARF makes the workspace
+# `target/` many gigabytes and slows linking without adding stack-frame data
+# that the dev loop needs (compiler error frames come from rustc, not DWARF).
+[profile.dev]
+debug = 1
+
 # The website crate (a Leptos SSR app that monomorphizes 1600+ icons and the
 # full ui/motion stack) produces a >7 GB rlib at opt-level 0 in dev builds.
 # MSVC link.exe cannot consume archives above ~4 GB and reports
