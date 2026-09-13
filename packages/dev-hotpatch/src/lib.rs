@@ -135,33 +135,59 @@ fn write_json<T: Serialize>(dir: &Path, name: &str, value: &T) -> std::io::Resul
     std::fs::write(path, data)
 }
 
-/// Record one rustc invocation under `<capture_dir>/rustc/`.
-pub fn capture_rustc(invocation: &RustcInvocation) -> std::io::Result<PathBuf> {
-    let dir = capture_dir().join("rustc");
+/// Record one rustc invocation under `<base>/rustc/`.
+pub fn capture_rustc_in(
+    base: &Path,
+    invocation: &RustcInvocation,
+) -> std::io::Result<PathBuf> {
+    let dir = base.join("rustc");
     std::fs::create_dir_all(&dir)?;
     let name = unique_name("rustc");
     write_json(&dir, &name, invocation)?;
     Ok(dir.join(name))
 }
 
-/// Read every captured rustc invocation.
-pub fn read_rustc_invocations() -> Vec<RustcInvocation> {
-    read_all(&capture_dir().join("rustc"))
+/// Read every captured rustc invocation under `<base>/rustc/`.
+pub fn read_rustc_invocations_in(base: &Path) -> Vec<RustcInvocation> {
+    read_all(&base.join("rustc"))
 }
 
-/// Record the tip link invocation under `<capture_dir>/link/`.
-pub fn capture_link(invocation: &LinkInvocation) -> std::io::Result<PathBuf> {
-    let dir = capture_dir().join("link");
+/// Record the tip link invocation under `<base>/link/`.
+pub fn capture_link_in(
+    base: &Path,
+    invocation: &LinkInvocation,
+) -> std::io::Result<PathBuf> {
+    let dir = base.join("link");
     std::fs::create_dir_all(&dir)?;
     let name = unique_name("link");
     write_json(&dir, &name, invocation)?;
     Ok(dir.join(name))
 }
 
-/// Read the most recent captured link invocation, if any.
-pub fn read_latest_link() -> Option<LinkInvocation> {
-    let mut all = read_all(&capture_dir().join("link"));
+/// Read the most recent captured link invocation under `<base>/link/`.
+pub fn read_latest_link_in(base: &Path) -> Option<LinkInvocation> {
+    let mut all = read_all(&base.join("link"));
     all.pop()
+}
+
+/// Record one rustc invocation into the ambient capture dir.
+pub fn capture_rustc(invocation: &RustcInvocation) -> std::io::Result<PathBuf> {
+    capture_rustc_in(&capture_dir(), invocation)
+}
+
+/// Read every captured rustc invocation from the ambient capture dir.
+pub fn read_rustc_invocations() -> Vec<RustcInvocation> {
+    read_rustc_invocations_in(&capture_dir())
+}
+
+/// Record the tip link invocation into the ambient capture dir.
+pub fn capture_link(invocation: &LinkInvocation) -> std::io::Result<PathBuf> {
+    capture_link_in(&capture_dir(), invocation)
+}
+
+/// Read the most recent captured link invocation from the ambient capture dir.
+pub fn read_latest_link() -> Option<LinkInvocation> {
+    read_latest_link_in(&capture_dir())
 }
 
 fn read_all<T: for<'de> Deserialize<'de>>(dir: &Path) -> Vec<T> {
@@ -182,6 +208,18 @@ fn read_all<T: for<'de> Deserialize<'de>>(dir: &Path) -> Vec<T> {
                 .and_then(|s| serde_json::from_str(&s).ok())
         })
         .collect()
+}
+
+/// Extract the real linker path from `rustc --print=link-args` output.
+///
+/// The first token of that output is the linker binary, quoted so paths with
+/// spaces survive. Used to point `MONTRS_REAL_LINKER` at the linker the
+/// wrapper must forward to.
+pub fn parse_linker_from_link_args(output: &str) -> Option<PathBuf> {
+    let first = output.trim_start();
+    let rest = first.strip_prefix('"')?;
+    let end = rest.find('"')?;
+    Some(PathBuf::from(&rest[..end]))
 }
 
 /// Environment variables worth replaying a rustc invocation with.
@@ -212,56 +250,55 @@ pub fn capture_env_allowlist() -> Vec<(String, String)> {
 mod tests {
     use super::*;
 
-    fn with_capture_dir<F: FnOnce()>(dir: &Path, f: F) {
-        // SAFETY: tests in this module are serialized by the shared env var.
-        unsafe { std::env::set_var("MONTRS_HOTPATCH_DIR", dir) };
-        f();
-        unsafe { std::env::remove_var("MONTRS_HOTPATCH_DIR") };
-    }
-
-    #[test]
-    fn rustc_capture_round_trips() {
-        let dir = std::env::temp_dir().join(format!(
-            "montrs-hp-{}-{}",
+    fn temp_dir(tag: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "montrs-{tag}-{}-{}",
             std::process::id(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ));
-        with_capture_dir(&dir, || {
-            let inv = RustcInvocation {
-                args: vec!["rustc".into(), "--crate-name".into(), "app".into()],
-                cwd: PathBuf::from("/tmp/app"),
-                envs: vec![("RUSTFLAGS".into(), "--cfg erase_components".into())],
-            };
-            capture_rustc(&inv).unwrap();
-            let read = read_rustc_invocations();
-            assert_eq!(read.len(), 1);
-            assert_eq!(read[0], inv);
-        });
+        ))
+    }
+
+    #[test]
+    fn rustc_capture_round_trips() {
+        let dir = temp_dir("hp-rustc");
+        let inv = RustcInvocation {
+            args: vec!["rustc".into(), "--crate-name".into(), "app".into()],
+            cwd: PathBuf::from("/tmp/app"),
+            envs: vec![("RUSTFLAGS".into(), "--cfg erase_components".into())],
+        };
+        capture_rustc_in(&dir, &inv).unwrap();
+        let read = read_rustc_invocations_in(&dir);
+        assert_eq!(read.len(), 1);
+        assert_eq!(read[0], inv);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn link_capture_round_trips() {
-        let dir = std::env::temp_dir().join(format!(
-            "montrs-hp-link-{}-{}",
-            std::process::id(),
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        with_capture_dir(&dir, || {
-            let inv = LinkInvocation {
-                args: vec!["-o".into(), "app.exe".into()],
-                cwd: PathBuf::from("/tmp/app"),
-            };
-            capture_link(&inv).unwrap();
-            assert_eq!(read_latest_link(), Some(inv));
-        });
+        let dir = temp_dir("hp-link");
+        let inv = LinkInvocation {
+            args: vec!["-o".into(), "app.exe".into()],
+            cwd: PathBuf::from("/tmp/app"),
+        };
+        capture_link_in(&dir, &inv).unwrap();
+        assert_eq!(read_latest_link_in(&dir), Some(inv));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn parses_linker_from_print_link_args() {
+        let sample = "\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\VC\\\\Tools\\\\MSVC\\\\14.44.35207\\\\bin\\\\HostX64\\\\x64\\\\link.exe\" \"/NOLOGO\" \"/OUT:probe.exe\"";
+        let linker = parse_linker_from_link_args(sample).expect("linker");
+        assert_eq!(
+            linker,
+            PathBuf::from(
+                "C:\\Program Files\\Microsoft Visual Studio\\2022\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe"
+            )
+        );
+        assert!(parse_linker_from_link_args("not quoted").is_none());
     }
 
     #[test]

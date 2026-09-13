@@ -23,3 +23,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "montrs-rustc-wrapper"
 path = "src/bin/montrs-rustc-wrapper.rs"
+
+[[bin]]
+name = "montrs-link-wrapper"
+path = "src/bin/montrs-link-wrapper.rs"

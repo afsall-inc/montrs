@@ -134,26 +134,57 @@ pub async fn run() -> anyhow::Result<()> {
     let hotpatch_enabled = std::env::var_os("MONTRS_HOTPATCH").is_some();
     let hotpatch_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
     if hotpatch_enabled {
-        match resolve_rustc_wrapper() {
+        match resolve_wrapper("rustc-wrapper") {
             Some(wrapper) => {
+                let _ = std::fs::remove_dir_all(&hotpatch_dir);
                 // SAFETY: set once, before any build starts; the cargo child
                 // processes inherit this environment.
                 unsafe {
                     std::env::set_var("RUSTC_WORKSPACE_WRAPPER", &wrapper);
                     std::env::set_var("MONTRS_HOTPATCH_DIR", &hotpatch_dir);
                 }
-                let _ = std::fs::remove_dir_all(&hotpatch_dir);
                 println!(
-                    "Hot-patch capture enabled (wrapper: {}).",
+                    "Hot-patch capture enabled (rustc wrapper: {}).",
                     wrapper.display()
                 );
                 println!("  capture dir: {}", hotpatch_dir.display());
+
+                if let Some(link_wrapper) = resolve_wrapper("link-wrapper") {
+                    match (discover_real_linker(), host_triple()) {
+                        (Some(real), Some(host)) => {
+                            let key = format!(
+                                "CARGO_TARGET_{}_LINKER",
+                                host.replace('-', "_").to_uppercase()
+                            );
+                            unsafe {
+                                std::env::set_var(
+                                    "MONTRS_REAL_LINKER",
+                                    &real,
+                                );
+                                std::env::set_var(key, &link_wrapper);
+                            }
+                            println!(
+                                "  link capture enabled (real linker: {}).",
+                                real.display()
+                            );
+                        }
+                        _ => eprintln!(
+                            "  link capture skipped: could not determine the \
+                             host triple or real linker."
+                        ),
+                    }
+                } else {
+                    eprintln!(
+                        "  link capture skipped: montrs-link-wrapper not found."
+                    );
+                }
             }
             None => {
                 eprintln!(
                     "MONTRS_HOTPATCH is set but montrs-rustc-wrapper was not \
                      found. Install it with:\n  cargo install --path \
-                     packages/dev-hotpatch --bin montrs-rustc-wrapper"
+                     packages/dev-hotpatch --bin montrs-rustc-wrapper --bin \
+                     montrs-link-wrapper"
                 );
             }
         }
@@ -443,20 +474,24 @@ fn log_capture(dir: &Path) {
     );
 }
 
-/// Locate the `montrs-rustc-wrapper` binary: explicit override, then `PATH`,
+/// Locate a wrapper binary by stem: `MONTRS_<STEM>_PATH` override, then `PATH`,
 /// then next to the running executable.
-fn resolve_rustc_wrapper() -> Option<PathBuf> {
-    if let Some(p) = std::env::var_os("MONTRS_RUSTC_WRAPPER") {
+fn resolve_wrapper(stem: &str) -> Option<PathBuf> {
+    let override_key = format!(
+        "MONTRS_{}_PATH",
+        stem.to_uppercase().replace('-', "_")
+    );
+    if let Some(p) = std::env::var_os(&override_key) {
         return Some(PathBuf::from(p));
     }
     let bin = if cfg!(windows) {
-        "montrs-rustc-wrapper.exe"
+        format!("montrs-{stem}.exe")
     } else {
-        "montrs-rustc-wrapper"
+        format!("montrs-{stem}")
     };
     if let Some(paths) = std::env::var_os("PATH") {
         for dir in std::env::split_paths(&paths) {
-            let candidate = dir.join(bin);
+            let candidate = dir.join(&bin);
             if candidate.is_file() {
                 return Some(candidate);
             }
@@ -465,12 +500,45 @@ fn resolve_rustc_wrapper() -> Option<PathBuf> {
     if let Ok(exe) = std::env::current_exe()
         && let Some(dir) = exe.parent()
     {
-        let candidate = dir.join(bin);
+        let candidate = dir.join(&bin);
         if candidate.is_file() {
             return Some(candidate);
         }
     }
     None
+}
+
+/// Ask rustc which linker it would use, so the link wrapper can forward to it.
+fn discover_real_linker() -> Option<PathBuf> {
+    let probe = std::env::temp_dir().join(format!(
+        "montrs-linker-probe-{}.rs",
+        std::process::id()
+    ));
+    std::fs::write(&probe, "fn main() {}").ok()?;
+    let output = std::process::Command::new("rustc")
+        .arg("--print=link-args")
+        .arg(&probe)
+        .output()
+        .ok();
+    let _ = std::fs::remove_file(&probe);
+    let output = output?;
+    if !output.status.success() {
+        return None;
+    }
+    montrs_dev_hotpatch::parse_linker_from_link_args(
+        &String::from_utf8_lossy(&output.stdout),
+    )
+}
+
+/// The host target triple cargo builds for (e.g. `x86_64-pc-windows-msvc`).
+fn host_triple() -> Option<String> {
+    let output = std::process::Command::new("rustc")
+        .arg("-vV")
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    text.lines()
+        .find_map(|l| l.strip_prefix("host: ").map(|s| s.trim().to_string()))
 }
 
 fn spawn_server(
