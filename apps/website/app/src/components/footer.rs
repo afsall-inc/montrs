@@ -123,7 +123,7 @@ pub fn Footer() -> impl IntoView {
                 <div class="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-8 text-sm text-muted-foreground sm:flex-row">
                     <p>"© 2026 MontRS — Apache-2.0 / MIT"</p>
                     <p class="font-mono text-xs">
-                        "Built with " <strong>"MontRS"</strong> · "powered by " <strong>"MontRS"</strong>
+                        "Built with " <strong>"MontRS"</strong> " · powered by " <strong>"MontRS"</strong>
                     </p>
                 </div>
             </div>
