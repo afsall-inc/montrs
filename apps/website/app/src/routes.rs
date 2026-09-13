@@ -135,6 +135,27 @@ impl RouteView for TemplatesView {
     }
 }
 
+pub struct RouterView;
+impl RouteView for RouterView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::RouterDocs /> }
+    }
+}
+
+pub struct CliView;
+impl RouteView for CliView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Cli /> }
+    }
+}
+
+pub struct DocsView;
+impl RouteView for DocsView {
+    fn render(&self) -> impl IntoView {
+        view! { <crate::pages::Docs /> }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // MontRS Routes
 // ---------------------------------------------------------------------------
@@ -159,6 +180,11 @@ view_route! { FoundationsRoute, "/foundations", FoundationsView }
 view_route! { ThemesRoute, "/ui/themes", ThemesView }
 view_route! { BackgroundsRoute, "/ui/backgrounds", BackgroundsView }
 view_route! { TemplatesRoute, "/templates", TemplatesView }
+
+// Framework docs
+view_route! { RouterRoute, "/router", RouterView }
+view_route! { CliRoute, "/cli", CliView }
+view_route! { DocsRoute, "/docs", DocsView }
 
 // ---------------------------------------------------------------------------
 // Website Plate
@@ -197,6 +223,9 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(ThemesRoute);
         router.register(BackgroundsRoute);
         router.register(TemplatesRoute);
+        router.register(RouterRoute);
+        router.register(CliRoute);
+        router.register(DocsRoute);
         router.register(PackagesRoute);
         router.register(AuthRoute);
         router.register(RuntimeRoute);

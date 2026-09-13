@@ -39,22 +39,43 @@ use montrs_ui::prelude::*;
 
 use crate::components::NavLink;
 
-/// `(label, href, icon)` — main navigation. The UI section (Components,
-/// Blocks, Icons, Motion, Themes, Backgrounds) lives in its own sub-nav, so
-/// the top bar only carries the framework-level destinations.
+/// `(label, href, icon)` — top-level navigation. Framework destinations live
+/// in the dedicated "Framework" dropdown; the UI section has its own sub-nav.
 const NAV: &[(&str, &str, Glyph)] = &[
-    ("UI", "/ui", Glyph::Component),
-    ("Auth", "/auth", Glyph::ShieldCheck),
-    ("Runtime", "/runtime", Glyph::Cpu),
-    ("AI Kit", "/ai", Glyph::Bot),
-    ("Foundations", "/foundations", Glyph::Blocks),
     ("Templates", "/templates", Glyph::LayoutTemplate),
     ("Packages", "/packages", Glyph::Package),
+    ("Docs", "/docs", Glyph::BookOpen),
+];
+
+/// `(label, href, icon, description)` — the Framework dropdown.
+const FRAMEWORK: &[(&str, &str, Glyph, &str)] = &[
+    ("Router", "/router", Glyph::Route, "Typed routes, layouts, and outlets."),
+    ("CLI", "/cli", Glyph::Terminal, "Every command, from scaffold to agent."),
+    (
+        "Runtime",
+        "/runtime",
+        Glyph::Cpu,
+        "Native Rust runtime with ops and permissions.",
+    ),
+    (
+        "Auth",
+        "/auth",
+        Glyph::ShieldCheck,
+        "Sessions, OAuth, 2FA, and RBAC.",
+    ),
+    ("AI Kit", "/ai", Glyph::Bot, "Agent sidecar, tools, and MCP."),
+    (
+        "Foundations",
+        "/foundations",
+        Glyph::Blocks,
+        "Plates, routes, signals, and the core model.",
+    ),
 ];
 
 /// `(label, href, group)` — consumed by the command palette.
 const COMMANDS: &[(&str, &str, &str)] = &[
     ("Home", "/", "Pages"),
+    ("Docs", "/docs", "Pages"),
     ("MontRS UI", "/ui", "Pages"),
     ("Components", "/ui/components", "Pages"),
     ("Blocks", "/ui/blocks", "Pages"),
@@ -64,6 +85,8 @@ const COMMANDS: &[(&str, &str, &str)] = &[
     ("Backgrounds", "/ui/backgrounds", "Pages"),
     ("Packages", "/packages", "Pages"),
     ("Templates", "/templates", "Pages"),
+    ("Router", "/router", "Framework"),
+    ("CLI", "/cli", "Framework"),
     ("Auth", "/auth", "Framework"),
     ("Runtime", "/runtime", "Framework"),
     ("AI Kit", "/ai", "Framework"),
@@ -77,6 +100,7 @@ pub fn Header() -> impl IntoView {
     let navigate = use_navigate();
     let mobile_open = RwSignal::new(false);
     let palette_open = RwSignal::new(false);
+    let framework_open = RwSignal::new(false);
     let query = RwSignal::new(String::new());
     let selected = RwSignal::new(0usize);
     let input_ref: NodeRef<leptos::html::Input> = NodeRef::new();
@@ -159,6 +183,7 @@ pub fn Header() -> impl IntoView {
                 if key == "Escape" {
                     palette_open.set(false);
                     mobile_open.set(false);
+                    framework_open.set(false);
                     return;
                 }
                 if key == "k" && (ev.meta_key() || ev.ctrl_key()) {
@@ -212,6 +237,54 @@ pub fn Header() -> impl IntoView {
                 </NavLink>
 
                 <nav class="hidden items-center gap-0.5 text-sm xl:flex" aria-label="Main">
+                    <NavLink
+                        href="/ui"
+                        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                        <Icon glyph=Glyph::Component class="h-3.5 w-3.5" />
+                        "UI"
+                    </NavLink>
+
+                    // Framework dropdown
+                    <div
+                        class="relative"
+                        on:mouseenter=move |_| framework_open.set(true)
+                        on:mouseleave=move |_| framework_open.set(false)
+                    >
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            aria-haspopup="true"
+                            aria-expanded=move || framework_open.get()
+                            on:click=move |_| framework_open.update(|o| *o = !*o)
+                        >
+                            <Icon glyph=Glyph::Boxes class="h-3.5 w-3.5" />
+                            "Framework"
+                            <Icon glyph=Glyph::ChevronDown class="h-3 w-3 opacity-70" />
+                        </button>
+                        <Show when=move || framework_open.get()>
+                            <div class="absolute left-0 top-full z-50 w-72 pt-2">
+                                <div class="grid gap-0.5 rounded-xl border border-border bg-popover p-2 shadow-xl">
+                                    {FRAMEWORK.iter().map(|(label, href, icon, desc)| {
+                                        view! {
+                                            <a
+                                                href=*href
+                                                class="flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
+                                                on:click=move |_| framework_open.set(false)
+                                            >
+                                                <Icon glyph=*icon class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-medium text-foreground">{*label}</span>
+                                                    <span class="block text-xs text-muted-foreground">{*desc}</span>
+                                                </span>
+                                            </a>
+                                        }
+                                    }).collect::<Vec<_>>()}
+                                </div>
+                            </div>
+                        </Show>
+                    </div>
+
                     {NAV.iter().map(|(label, href, icon)| {
                         view! {
                             <NavLink
@@ -312,7 +385,36 @@ pub fn Header() -> impl IntoView {
                                 "⌘K"
                             </kbd>
                         </button>
+                        <a
+                            href="/ui"
+                            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |ev| {
+                                ev.prevent_default();
+                                activate.run("/ui".to_string());
+                            }
+                        >
+                            <Icon glyph=Glyph::Component class="h-4 w-4" />
+                            "UI"
+                        </a>
                         {NAV.iter().map(|(label, href, icon)| {
+                            view! {
+                                <a
+                                    href=*href
+                                    class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=move |ev| {
+                                        ev.prevent_default();
+                                        activate.run(href.to_string());
+                                    }
+                                >
+                                    <Icon glyph=*icon class="h-4 w-4" />
+                                    {*label}
+                                </a>
+                            }
+                        }).collect::<Vec<_>>()}
+                        <p class="mt-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            "Framework"
+                        </p>
+                        {FRAMEWORK.iter().map(|(label, href, icon, _desc)| {
                             view! {
                                 <a
                                     href=*href
