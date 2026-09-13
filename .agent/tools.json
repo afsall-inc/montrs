@@ -273,6 +273,14 @@
       }
     },
     {
+      "description": "Capability provided by package hot-reload. Refer to its README for details.",
+      "name": "montrs_pkg_hot-reload",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package hotkeys-core. MUST follow invariants defined in agent.json under packages['hotkeys-core'].invariants",
       "name": "montrs_pkg_hotkeys-core",
       "parameters": {
