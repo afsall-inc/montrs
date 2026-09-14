@@ -247,6 +247,72 @@ pub fn capture_env_allowlist() -> Vec<(String, String)> {
 }
 
 // ---------------------------------------------------------------------------
+// Fat link planning
+// ---------------------------------------------------------------------------
+
+/// Linker dialect, derived from the target triple.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LinkerFlavor {
+    /// Windows MSVC (`link.exe` / `lld-link`): `/OUT:`, `/EXPORT:`.
+    Msvc,
+    /// GNU-style (`cc`, `ld.lld`): `-o`, `-Wl,…`.
+    Gnu,
+    /// Anything else — no fat-link adjustments are known.
+    Other,
+}
+
+/// Parse the output path from a link command (`-o <p>` or `/OUT:<p>`).
+pub fn link_output(link_args: &[String]) -> Option<PathBuf> {
+    let mut iter = link_args.iter();
+    while let Some(arg) = iter.next() {
+        if arg == "-o" {
+            return iter.next().map(PathBuf::from);
+        }
+        if let Some(rest) = arg.strip_prefix("/OUT:") {
+            return Some(PathBuf::from(rest));
+        }
+    }
+    None
+}
+
+/// The `.rlib` paths in a link command (the workspace + sysroot libraries).
+pub fn link_rlibs(link_args: &[String]) -> Vec<PathBuf> {
+    link_args
+        .iter()
+        .filter(|a| a.ends_with(".rlib"))
+        .map(PathBuf::from)
+        .collect()
+}
+
+/// Produce the hot-patchable ("fat") link arguments from a normal link.
+///
+/// The fat binary must contain all workspace object code, export `main` so a
+/// patch can reference the image base, and (on MSVC) disable high-entropy VA
+/// so symbol addresses are stable run to run.
+pub fn fat_link_args(
+    original: &[String],
+    fat_archive: &Path,
+    flavor: LinkerFlavor,
+) -> Vec<String> {
+    let mut args = original.to_vec();
+    match flavor {
+        LinkerFlavor::Msvc => {
+            args.push(format!("/WHOLEARCHIVE:{}", fat_archive.display()));
+            args.push("/EXPORT:main".to_string());
+            args.push("/HIGHENTROPYVA:NO".to_string());
+        }
+        LinkerFlavor::Gnu => {
+            args.push("-Wl,--whole-archive".to_string());
+            args.push(fat_archive.display().to_string());
+            args.push("-Wl,--no-whole-archive".to_string());
+            args.push("-Wl,--export-dynamic-symbol,main".to_string());
+        }
+        LinkerFlavor::Other => {}
+    }
+    args
+}
+
+// ---------------------------------------------------------------------------
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
 
@@ -421,6 +487,53 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn fat_link_args_msvc_adds_required_metadata() {
+        let original =
+            vec!["/NOLOGO".to_string(), "/OUT:app.exe".to_string()];
+        let args =
+            fat_link_args(&original, Path::new("deps.a"), LinkerFlavor::Msvc);
+        assert!(args.iter().any(|a| a == "/EXPORT:main"));
+        assert!(args.iter().any(|a| a == "/HIGHENTROPYVA:NO"));
+        assert!(args.iter().any(|a| a.starts_with("/WHOLEARCHIVE:")));
+        assert_eq!(link_output(&args), Some(PathBuf::from("app.exe")));
+    }
+
+    #[test]
+    fn fat_link_args_gnu_adds_whole_archive_and_export() {
+        let original = vec!["-o".to_string(), "app".to_string()];
+        let args =
+            fat_link_args(&original, Path::new("libdeps.a"), LinkerFlavor::Gnu);
+        assert!(args.contains(&"-Wl,--whole-archive".to_string()));
+        assert!(
+            args.contains(&"-Wl,--export-dynamic-symbol,main".to_string())
+        );
+        assert_eq!(link_output(&args), Some(PathBuf::from("app")));
+    }
+
+    #[test]
+    fn link_output_and_rlibs_parse() {
+        let msvc = vec![
+            "/NOLOGO".to_string(),
+            "/OUT:x.exe".to_string(),
+            "a.rlib".to_string(),
+            "b.rlib".to_string(),
+        ];
+        assert_eq!(link_output(&msvc), Some(PathBuf::from("x.exe")));
+        assert_eq!(
+            link_rlibs(&msvc),
+            vec![PathBuf::from("a.rlib"), PathBuf::from("b.rlib")]
+        );
+
+        let gnu = vec![
+            "-o".to_string(),
+            "out.bin".to_string(),
+            "a.rlib".to_string(),
+        ];
+        assert_eq!(link_output(&gnu), Some(PathBuf::from("out.bin")));
+        assert_eq!(link_rlibs(&gnu), vec![PathBuf::from("a.rlib")]);
     }
 
     #[test]
