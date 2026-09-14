@@ -96,14 +96,13 @@ impl HotPatchServer {
                                             pid,
                                             aslr_reference,
                                         }) = serde_json::from_str::<ClientMsg>(&text)
+                                            && let Ok(mut slot) = aslr.lock()
                                         {
-                                            if let Ok(mut slot) = aslr.lock() {
-                                                *slot = Some(AslrReport {
-                                                    build_id,
-                                                    pid,
-                                                    aslr_reference,
-                                                });
-                                            }
+                                            *slot = Some(AslrReport {
+                                                build_id,
+                                                pid,
+                                                aslr_reference,
+                                            });
                                         }
                                     }
                                     Some(Ok(_)) => {}
