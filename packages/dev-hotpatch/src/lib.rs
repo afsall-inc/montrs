@@ -1038,6 +1038,57 @@ pub fn undefined_symbols(objects: &[PathBuf]) -> anyhow::Result<Vec<String>> {
 }
 
 // ---------------------------------------------------------------------------
+// Wasm symbols
+// ---------------------------------------------------------------------------
+
+/// Exported function symbols of a wasm module: `name -> function id`.
+///
+/// This is the foundation of the wasm jump table: a patch maps the running
+/// (fat) module's function ids to the freshly linked patch's ids by name. The
+/// full wasm patcher additionally prepares the base module (promoting every
+/// function into the indirect-function table) and resolves `GOT.func`/
+/// `GOT.mem`/`__wbindgen_placeholder__` imports.
+pub fn wasm_function_symbols(
+    bytes: &[u8],
+) -> anyhow::Result<std::collections::HashMap<String, u32>> {
+    let module = walrus::Module::from_buffer(bytes)?;
+    let mut map = std::collections::HashMap::new();
+    for export in module.exports.iter() {
+        if let walrus::ExportItem::Function(id) = export.item {
+            map.insert(export.name.clone(), id.index() as u32);
+        }
+    }
+    Ok(map)
+}
+
+/// Build a wasm [`JumpTable`] mapping the fat module's function ids to the
+/// patch module's, keyed by exported name.
+pub fn build_wasm_jump_table(
+    lib: PathBuf,
+    fat_wasm: &[u8],
+    patch_wasm: &[u8],
+) -> anyhow::Result<JumpTable> {
+    let fat = wasm_function_symbols(fat_wasm)?;
+    let patch = wasm_function_symbols(patch_wasm)?;
+
+    let mut map = subsecond_types::AddressMap::default();
+    for (name, new_id) in &patch {
+        if let Some(old_id) = fat.get(name) {
+            map.insert(u64::from(*old_id), u64::from(*new_id));
+        }
+    }
+    let ifunc_count = patch.len() as u64;
+
+    Ok(JumpTable {
+        lib,
+        map,
+        aslr_reference: 0,
+        new_base_address: 0,
+        ifunc_count,
+    })
+}
+
+// ---------------------------------------------------------------------------
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
 
@@ -1490,6 +1541,33 @@ mod tests {
         let mut gnu = vec!["-o".to_string(), "a".to_string()];
         set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
         assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
+    }
+
+    #[test]
+    fn wasm_jump_table_maps_functions_by_name() {
+        fn module_with(exports: &[&str]) -> Vec<u8> {
+            let mut module = walrus::Module::default();
+            for name in exports {
+                let mut builder =
+                    walrus::FunctionBuilder::new(&mut module.types, &[], &[]);
+                let fid = builder.finish(vec![], &mut module.funcs);
+                module.exports.add(name, fid);
+            }
+            module.emit_wasm()
+        }
+
+        let fat = module_with(&["a", "b", "c"]);
+        let patch = module_with(&["a", "c", "d"]);
+        assert_eq!(wasm_function_symbols(&fat).unwrap().len(), 3);
+
+        let table = build_wasm_jump_table(
+            PathBuf::from("patch.wasm"),
+            &fat,
+            &patch,
+        )
+        .unwrap();
+        assert_eq!(table.map.len(), 2, "only names in both modules map");
+        assert_eq!(table.ifunc_count, 3);
     }
 
     #[test]

@@ -23,6 +23,7 @@ futures-util = "0.3"
 # Object files are read (symbols) and written (undefined-symbol stubs) on every
 # platform, so this is a normal dependency rather than target-gated.
 object = { version = "0.36", default-features = false, features = ["read", "write", "std"] }
+walrus = "0.23"
 
 # MSVC keeps a binary's symbols in a sibling .pdb.
 [target.'cfg(windows)'.dependencies]
