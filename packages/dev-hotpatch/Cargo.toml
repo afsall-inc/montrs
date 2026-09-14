@@ -16,6 +16,7 @@ anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 subsecond-types = "0.7"
+ar = "0.9"
 
 # Symbol extraction from the fat (running) binary: MSVC keeps symbols in a
 # sibling .pdb; other platforms keep them in the object file.

@@ -312,6 +312,42 @@ pub fn fat_link_args(
     args
 }
 
+/// Build a "fat archive" from the workspace's `.rlib`s.
+///
+/// Rust's `.rlib`s are `ar` archives of `.rcgu.o` objects (plus `.rmeta`
+/// metadata we must drop). Concatenating every object into one archive lets the
+/// hot-patch link pull in all workspace code with a single whole-archive
+/// directive. Returns the number of objects written.
+pub fn build_fat_archive(
+    rlibs: &[PathBuf],
+    out: &Path,
+) -> anyhow::Result<usize> {
+    let file = std::fs::File::create(out)?;
+    let mut writer = ar::Builder::new(file);
+    let mut written = 0usize;
+
+    for rlib in rlibs {
+        let bytes = std::fs::read(rlib)?;
+        let mut archive = ar::Archive::new(std::io::Cursor::new(bytes));
+        while let Some(entry) = archive.next_entry() {
+            let Ok(entry) = entry else { continue };
+            let name =
+                String::from_utf8_lossy(entry.header().identifier()).to_string();
+            if name.ends_with(".rmeta") || entry.header().size() == 0 {
+                continue;
+            }
+            if !(name.ends_with(".rcgu.o") || name.ends_with(".obj")) {
+                continue;
+            }
+            writer.append(&entry.header().clone(), entry)?;
+            written += 1;
+        }
+    }
+
+    writer.into_inner()?;
+    Ok(written)
+}
+
 // ---------------------------------------------------------------------------
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
@@ -487,6 +523,43 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn fat_archive_keeps_objects_and_drops_metadata() {
+        let dir = temp_dir("hp-fat");
+        std::fs::create_dir_all(&dir).unwrap();
+        let rlib = dir.join("libfoo.rlib");
+        {
+            let file = std::fs::File::create(&rlib).unwrap();
+            let mut builder = ar::Builder::new(file);
+            let object = b"OBJECTDATA";
+            let header =
+                ar::Header::new(b"foo.rcgu.o".to_vec(), object.len() as u64);
+            builder.append(&header, &object[..]).unwrap();
+            let meta = b"META";
+            let header =
+                ar::Header::new(b"foo.rmeta".to_vec(), meta.len() as u64);
+            builder.append(&header, &meta[..]).unwrap();
+        }
+
+        let out = dir.join("fat.a");
+        let written = build_fat_archive(&[rlib], &out).unwrap();
+        assert_eq!(written, 1);
+
+        let data = std::fs::read(&out).unwrap();
+        let mut archive = ar::Archive::new(std::io::Cursor::new(data));
+        let mut names = Vec::new();
+        while let Some(entry) = archive.next_entry() {
+            let entry = entry.unwrap();
+            names.push(
+                String::from_utf8_lossy(entry.header().identifier())
+                    .to_string(),
+            );
+        }
+        assert_eq!(names, vec!["foo.rcgu.o".to_string()]);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
