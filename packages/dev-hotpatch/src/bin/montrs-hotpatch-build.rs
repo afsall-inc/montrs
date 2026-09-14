@@ -9,10 +9,31 @@
 
 use std::{path::Path, process::ExitCode};
 
-use montrs_dev_hotpatch::{LinkerFlavor, PatchRequest};
+use montrs_dev_hotpatch::{LinkerFlavor, PatchRequest, SymbolIndex};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
+
+    // Debug aid: `--find <exe> <symbol>` prints whether the fat index has it.
+    if args.len() >= 4 && args[1] == "--find" {
+        let exe = Path::new(&args[2]);
+        let name = &args[3];
+        match SymbolIndex::from_exe(exe) {
+            Ok(index) => {
+                println!("symbols indexed: {}", index.len());
+                match index.symbol(name) {
+                    Some(s) => println!(
+                        "{name}: addr={:#x} kind={:?} undefined={}",
+                        s.address, s.kind, s.is_undefined
+                    ),
+                    None => println!("{name}: MISSING"),
+                }
+            }
+            Err(e) => eprintln!("error: {e}"),
+        }
+        return ExitCode::SUCCESS;
+    }
+
     if args.len() < 5 {
         eprintln!(
             "usage: montrs-hotpatch-build <exe> <capture-base> \
