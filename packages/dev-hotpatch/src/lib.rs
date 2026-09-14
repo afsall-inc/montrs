@@ -365,6 +365,83 @@ pub fn build_fat_archive(
     Ok(written)
 }
 
+/// Assemble the linker arguments for the patch shared library.
+///
+/// The patch is a DLL/shared object built from just the changed crates' fresh
+/// objects plus the undefined-symbol stubs. It deliberately does not link the
+/// dependency rlibs — those symbols resolve out of the running binary (via the
+/// stubs) when the patch is loaded.
+pub fn patch_link_args(
+    flavor: LinkerFlavor,
+    objects: &[PathBuf],
+    original: &[String],
+    out: &Path,
+) -> Vec<String> {
+    let mut args: Vec<String> = Vec::new();
+    match flavor {
+        LinkerFlavor::Msvc => {
+            args.extend(
+                [
+                    "shlwapi.lib",
+                    "kernel32.lib",
+                    "advapi32.lib",
+                    "ntdll.lib",
+                    "userenv.lib",
+                    "ws2_32.lib",
+                    "dbghelp.lib",
+                    "/defaultlib:msvcrt",
+                    "/DLL",
+                    "/DEBUG",
+                    "/PDBALTPATH:%_PDB%",
+                    "/EXPORT:main",
+                    "/HIGHENTROPYVA:NO",
+                ]
+                .iter()
+                .map(|s| s.to_string()),
+            );
+            args.extend(objects.iter().map(|p| p.display().to_string()));
+            args.push(format!("/OUT:{}", out.display()));
+        }
+        LinkerFlavor::Gnu => {
+            args.extend(
+                [
+                    "-shared",
+                    "-Wl,--eh-frame-hdr",
+                    "-Wl,-z,noexecstack",
+                    "-Wl,-z,relro,-z,now",
+                    "-nodefaultlibs",
+                    "-Wl,-Bdynamic",
+                ]
+                .iter()
+                .map(|s| s.to_string()),
+            );
+            // Preserve library search paths and libs from the fat link.
+            let mut i = 0;
+            while i < original.len() {
+                let arg = &original[i];
+                if arg == "-L" && i + 1 < original.len() {
+                    args.push(arg.clone());
+                    args.push(original[i + 1].clone());
+                    i += 2;
+                    continue;
+                }
+                if arg.starts_with("-l")
+                    || arg.starts_with("-m")
+                    || arg.starts_with("-B")
+                {
+                    args.push(arg.clone());
+                }
+                i += 1;
+            }
+            args.extend(objects.iter().map(|p| p.display().to_string()));
+            args.push("-o".to_string());
+            args.push(out.display().to_string());
+        }
+        LinkerFlavor::Other => {}
+    }
+    args
+}
+
 // ---------------------------------------------------------------------------
 // Patch object symbols
 // ---------------------------------------------------------------------------
@@ -786,6 +863,47 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn patch_link_args_msvc_is_a_dll_with_export_and_output() {
+        let objects =
+            vec![PathBuf::from("a.obj"), PathBuf::from("stub.obj")];
+        let args = patch_link_args(
+            LinkerFlavor::Msvc,
+            &objects,
+            &[],
+            Path::new("libpatch.dll"),
+        );
+        assert!(args.contains(&"/DLL".to_string()));
+        assert!(args.contains(&"/EXPORT:main".to_string()));
+        assert!(args.contains(&"a.obj".to_string()));
+        assert!(args.contains(&"stub.obj".to_string()));
+        assert!(args.contains(&"/OUT:libpatch.dll".to_string()));
+    }
+
+    #[test]
+    fn patch_link_args_gnu_is_shared_and_preserves_libs() {
+        let objects = vec![PathBuf::from("a.o")];
+        let original = vec![
+            "-L".to_string(),
+            "/opt/lib".to_string(),
+            "-lfoo".to_string(),
+            "kernel32.lib".to_string(),
+        ];
+        let args = patch_link_args(
+            LinkerFlavor::Gnu,
+            &objects,
+            &original,
+            Path::new("libpatch.so"),
+        );
+        assert!(args.contains(&"-shared".to_string()));
+        assert!(args.contains(&"-L".to_string()));
+        assert!(args.contains(&"/opt/lib".to_string()));
+        assert!(args.contains(&"-lfoo".to_string()));
+        assert!(args.contains(&"a.o".to_string()));
+        let n = args.len();
+        assert_eq!(&args[n - 2..], &["-o".to_string(), "libpatch.so".to_string()]);
     }
 
     #[test]
