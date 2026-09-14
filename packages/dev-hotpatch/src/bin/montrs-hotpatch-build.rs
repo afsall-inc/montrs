@@ -5,7 +5,7 @@
 
 //! Development helper: build a patch from captured tip objects.
 //!
-//! Usage: `montrs-hotpatch-build <exe> <capture-base> <real-linker> <msvc|gnu> [aslr-hex]`
+//! Usage: `montrs-hotpatch-build <exe> <capture-base> <real-linker> <msvc|gnu> <workspace-target> [aslr-hex]`
 
 use std::{path::Path, process::ExitCode};
 
@@ -34,10 +34,10 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    if args.len() < 5 {
+    if args.len() < 6 {
         eprintln!(
             "usage: montrs-hotpatch-build <exe> <capture-base> \
-             <real-linker> <msvc|gnu> [aslr-hex]"
+             <real-linker> <msvc|gnu> <workspace-target> [aslr-hex]"
         );
         return ExitCode::from(2);
     }
@@ -49,14 +49,16 @@ fn main() -> ExitCode {
         "gnu" => LinkerFlavor::Gnu,
         _ => LinkerFlavor::Other,
     };
+    let workspace_target_dir = Path::new(&args[5]);
     let aslr_reference = args
-        .get(5)
+        .get(6)
         .and_then(|s| u64::from_str_radix(s.trim_start_matches("0x"), 16).ok())
         .unwrap_or(0);
 
     let request = PatchRequest {
         capture_base: capture,
         exe,
+        workspace_target_dir,
         real_linker: linker,
         flavor,
         aslr_reference,

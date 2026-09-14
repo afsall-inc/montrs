@@ -481,6 +481,10 @@ pub fn fat_link_args(
             }
             args.push("/EXPORT:main".to_string());
             args.push("/HIGHENTROPYVA:NO".to_string());
+            // Keep every function the linked objects define — the running
+            // binary is the symbol source for patches, so pruning (e.g. std
+            // allocator shims) must not remove them.
+            args.push("/OPT:NOREF".to_string());
         }
         LinkerFlavor::Gnu => {
             if let Some(archive) = fat_archive {
@@ -861,6 +865,9 @@ pub struct PatchRequest<'a> {
     pub capture_base: &'a Path,
     /// The running ("fat") binary.
     pub exe: &'a Path,
+    /// The workspace target directory, used to tell workspace crates from
+    /// sysroot ones when choosing patch-link fallback libraries.
+    pub workspace_target_dir: &'a Path,
     /// The linker that will link the patch DLL.
     pub real_linker: &'a Path,
     pub flavor: LinkerFlavor,
@@ -898,9 +905,6 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     let stub_path = base.join("patch-stubs.obj");
     std::fs::write(&stub_path, stub_bytes)?;
 
-    let mut link_objects = objects;
-    link_objects.push(stub_path);
-
     let patch_lib = base.join(if cfg!(windows) {
         "libpatch.dll"
     } else {
@@ -909,6 +913,10 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     let latest = read_latest_link();
     let original = latest.as_ref().map(|l| l.args.clone()).unwrap_or_default();
     let envs = latest.as_ref().map(|l| l.envs.clone()).unwrap_or_default();
+
+    let mut link_objects = objects;
+    link_objects.push(stub_path);
+
     let args =
         patch_link_args(request.flavor, &link_objects, &original, &patch_lib);
     run_linker(request.real_linker, &args, &envs)?;
@@ -1832,6 +1840,8 @@ mod tests {
         let args = fat_link_args(&original, None, LinkerFlavor::Msvc);
         assert!(args.iter().any(|a| a == "/EXPORT:main"));
         assert!(args.iter().any(|a| a == "/HIGHENTROPYVA:NO"));
+        // Must not prune: the running binary is the patch's symbol source.
+        assert!(args.iter().any(|a| a == "/OPT:NOREF"));
         assert_eq!(link_output(&args), Some(PathBuf::from("app.exe")));
 
         // Opt-in whole-archive.

@@ -417,7 +417,11 @@ pub async fn run() -> anyhow::Result<()> {
                             if std::env::var_os("MONTRS_HOTPATCH_PATCH")
                                 .is_some()
                             {
-                                try_build_patch(&bin, &hotpatch_dir);
+                                try_build_patch(
+                                    &bin,
+                                    &hotpatch_workspace_target,
+                                    &hotpatch_dir,
+                                );
                             }
                         }
                         // Hand the address back to the real server on the next
@@ -519,7 +523,11 @@ fn log_capture(dir: &Path) {
 /// Opt-in via `MONTRS_HOTPATCH_PATCH=1` because it needs the client's runtime
 /// base address (`MONTRS_HOTPATCH_ASLR`, hex) to address the stubs; without a
 /// connected client this just proves the pipeline produces a jump table.
-fn try_build_patch(bin: &Path, hotpatch_dir: &Path) {
+fn try_build_patch(
+    bin: &Path,
+    workspace_target_dir: &Path,
+    hotpatch_dir: &Path,
+) {
     let Ok(linker) = std::env::var("MONTRS_REAL_LINKER") else {
         eprintln!("Hot-patch: real linker unknown; skipping patch build.");
         return;
@@ -539,6 +547,7 @@ fn try_build_patch(bin: &Path, hotpatch_dir: &Path) {
     let request = montrs_dev_hotpatch::PatchRequest {
         capture_base: hotpatch_dir,
         exe: bin,
+        workspace_target_dir,
         real_linker: Path::new(&linker),
         flavor,
         aslr_reference,
