@@ -198,6 +198,10 @@ pub struct LinkInvocation {
     pub args: Vec<String>,
     /// The working directory.
     pub cwd: PathBuf,
+    /// Environment the linker ran with (needed so a later patch link finds the
+    /// same MSVC/SDK libraries).
+    #[serde(default)]
+    pub envs: Vec<(String, String)>,
 }
 
 /// The directory the wrapper writes capture output to.
@@ -337,6 +341,10 @@ pub const REPLAY_ENV_ALLOWLIST: &[&str] = &[
     "DEBUG",
     "RUSTFLAGS",
     "LEPTOS_WATCH",
+    // The linker needs these to locate MSVC/SDK libraries.
+    "LIB",
+    "LIBPATH",
+    "INCLUDE",
 ];
 
 /// Collect the allow-listed env vars from the current process.
@@ -501,7 +509,9 @@ pub fn save_tip_objects(
     std::fs::create_dir_all(&dir)?;
     let mut saved = Vec::new();
     for arg in link_args {
-        if !(arg.ends_with(".o") || arg.ends_with(".obj")) {
+        // Only codegen objects; rustc's `symbols.o` runtime glue is tied to the
+        // fat binary and must not be relinked into a patch.
+        if !arg.ends_with(".rcgu.o") {
             continue;
         }
         let src = PathBuf::from(arg);
@@ -851,28 +861,38 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     } else {
         "libpatch.so"
     });
-    let original = read_latest_link().map(|l| l.args).unwrap_or_default();
+    let latest = read_latest_link();
+    let original = latest.as_ref().map(|l| l.args.clone()).unwrap_or_default();
+    let envs = latest.as_ref().map(|l| l.envs.clone()).unwrap_or_default();
     let args =
         patch_link_args(request.flavor, &link_objects, &original, &patch_lib);
-    run_linker(request.real_linker, &args)?;
+    run_linker(request.real_linker, &args, &envs)?;
 
     let patch_symbols = SymbolIndex::from_exe(&patch_lib)?;
     build_jump_table(patch_lib, &fat, &patch_symbols)
 }
 
 /// Run a linker to completion, surfacing stdout+stderr on failure.
-fn run_linker(linker: &Path, args: &[String]) -> anyhow::Result<()> {
+fn run_linker(
+    linker: &Path,
+    args: &[String],
+    envs: &[(String, String)],
+) -> anyhow::Result<()> {
     let result = if cfg!(windows) {
         let cmd = std::env::temp_dir()
             .join(format!("montrs-patch-{}.txt", std::process::id()));
         write_command_file(&cmd, args)?;
         let output = std::process::Command::new(linker)
             .arg(format!("@{}", cmd.display()))
+            .envs(envs.iter().cloned())
             .output()?;
         let _ = std::fs::remove_file(&cmd);
         output
     } else {
-        std::process::Command::new(linker).args(args).output()?
+        std::process::Command::new(linker)
+            .args(args)
+            .envs(envs.iter().cloned())
+            .output()?
     };
 
     if !result.status.success() {
@@ -1294,6 +1314,7 @@ mod tests {
         let inv = LinkInvocation {
             args: vec!["-o".into(), "app.exe".into()],
             cwd: PathBuf::from("/tmp/app"),
+            envs: vec![("LIB".into(), "C:\\sdk\\lib".into())],
         };
         capture_link_in(&dir, &inv).unwrap();
         assert_eq!(read_latest_link_in(&dir), Some(inv));
@@ -1409,9 +1430,9 @@ mod tests {
             src.join("skip.rlib").to_string_lossy().into_owned(),
         ];
         let saved = save_tip_objects(&base, &args).unwrap();
-        assert_eq!(saved.len(), 2);
+        assert_eq!(saved.len(), 1, "only .rcgu.o is saved");
         let read = read_tip_objects(&base);
-        assert_eq!(read.len(), 2);
+        assert_eq!(read.len(), 1);
         assert!(
             read.iter()
                 .all(|p| p.parent().unwrap().ends_with("tip-objects"))

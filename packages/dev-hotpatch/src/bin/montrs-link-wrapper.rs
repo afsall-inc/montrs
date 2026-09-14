@@ -86,8 +86,16 @@ fn main() -> ExitCode {
             std::env::var_os("MONTRS_HOTPATCH_WORKSPACE")
     {
         let capture = montrs_dev_hotpatch::capture_dir();
-        // Save the tip's fresh objects before rustc removes them.
+        // Save the tip's fresh objects before rustc removes them, and record
+        // the link (its /LIBPATH entries are reused when linking the patch).
         let _ = montrs_dev_hotpatch::save_tip_objects(&capture, &resolved);
+        let _ = montrs_dev_hotpatch::capture_link(
+            &montrs_dev_hotpatch::LinkInvocation {
+                args: resolved.clone(),
+                cwd: std::env::current_dir().unwrap_or_default(),
+                envs: montrs_dev_hotpatch::capture_env_allowlist(),
+            },
+        );
         let archive = capture.join("fat.a");
         match montrs_dev_hotpatch::fat_link_in_place(
             &real,
@@ -114,6 +122,7 @@ fn main() -> ExitCode {
         let invocation = montrs_dev_hotpatch::LinkInvocation {
             args: resolved.clone(),
             cwd: std::env::current_dir().unwrap_or_default(),
+            envs: montrs_dev_hotpatch::capture_env_allowlist(),
         };
         let _ = montrs_dev_hotpatch::capture_link(&invocation);
     }

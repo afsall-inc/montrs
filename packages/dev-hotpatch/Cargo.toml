@@ -39,3 +39,7 @@ path = "src/bin/montrs-link-wrapper.rs"
 [[bin]]
 name = "montrs-hotpatch-relink"
 path = "src/bin/montrs-hotpatch-relink.rs"
+
+[[bin]]
+name = "montrs-hotpatch-build"
+path = "src/bin/montrs-hotpatch-build.rs"
