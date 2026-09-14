@@ -414,6 +414,11 @@ pub async fn run() -> anyhow::Result<()> {
                         println!("Rebuild complete.");
                         if hotpatch_enabled {
                             log_capture(&hotpatch_dir);
+                            if std::env::var_os("MONTRS_HOTPATCH_PATCH")
+                                .is_some()
+                            {
+                                try_build_patch(&bin, &hotpatch_dir);
+                            }
                         }
                         // Hand the address back to the real server on the next
                         // loop iteration. The reload is deferred until the new
@@ -507,6 +512,47 @@ fn log_capture(dir: &Path) {
         "Hot-patch capture: {count} rustc invocations recorded ({}).",
         dir.display()
     );
+}
+
+/// Attempt to build a patch from the freshly captured tip objects.
+///
+/// Opt-in via `MONTRS_HOTPATCH_PATCH=1` because it needs the client's runtime
+/// base address (`MONTRS_HOTPATCH_ASLR`, hex) to address the stubs; without a
+/// connected client this just proves the pipeline produces a jump table.
+fn try_build_patch(bin: &Path, hotpatch_dir: &Path) {
+    let Ok(linker) = std::env::var("MONTRS_REAL_LINKER") else {
+        eprintln!("Hot-patch: real linker unknown; skipping patch build.");
+        return;
+    };
+    let flavor = match std::env::var("MONTRS_HOTPATCH_FLAVOR").as_deref() {
+        Ok("msvc") => montrs_dev_hotpatch::LinkerFlavor::Msvc,
+        Ok("gnu") => montrs_dev_hotpatch::LinkerFlavor::Gnu,
+        _ => montrs_dev_hotpatch::LinkerFlavor::Other,
+    };
+    let aslr_reference = std::env::var("MONTRS_HOTPATCH_ASLR")
+        .ok()
+        .and_then(|s| {
+            u64::from_str_radix(s.trim_start_matches("0x"), 16).ok()
+        })
+        .unwrap_or(0);
+
+    let request = montrs_dev_hotpatch::PatchRequest {
+        capture_base: hotpatch_dir,
+        exe: bin,
+        real_linker: Path::new(&linker),
+        flavor,
+        aslr_reference,
+        build_id: 0,
+        pid: Some(std::process::id()),
+    };
+    match montrs_dev_hotpatch::build_patch(&request) {
+        Ok(table) => println!(
+            "Hot-patch: built patch {} with {} jump-table entries.",
+            table.lib.display(),
+            table.map.len()
+        ),
+        Err(e) => eprintln!("Hot-patch: patch build failed: {e}"),
+    }
 }
 
 /// Locate a wrapper binary by stem: `MONTRS_<STEM>_PATH` override, then `PATH`,

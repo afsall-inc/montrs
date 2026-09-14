@@ -608,6 +608,22 @@ pub fn patch_link_args(
                 .iter()
                 .map(|s| s.to_string()),
             );
+            // Preserve library search paths so the Windows SDK / MSVC libs
+            // resolve when linking the patch directly.
+            let mut i = 0;
+            while i < original.len() {
+                let arg = &original[i];
+                if arg.starts_with("/LIBPATH:") {
+                    args.push(arg.clone());
+                }
+                if arg == "-L" && i + 1 < original.len() {
+                    args.push(arg.clone());
+                    args.push(original[i + 1].clone());
+                    i += 2;
+                    continue;
+                }
+                i += 1;
+            }
             args.extend(objects.iter().map(|p| p.display().to_string()));
             args.push(format!("/OUT:{}", out.display()));
         }
@@ -782,6 +798,96 @@ pub fn fat_link_in_place(
         anyhow::bail!("fat link failed ({}): {msg}", result.status);
     }
     Ok(0)
+}
+
+/// Everything needed to build one patch.
+pub struct PatchRequest<'a> {
+    /// The capture directory (`MONTRS_HOTPATCH_DIR`).
+    pub capture_base: &'a Path,
+    /// The running ("fat") binary.
+    pub exe: &'a Path,
+    /// The linker that will link the patch DLL.
+    pub real_linker: &'a Path,
+    pub flavor: LinkerFlavor,
+    /// The running process's runtime base address.
+    pub aslr_reference: u64,
+    /// The client's build id (wasm reports `0`).
+    pub build_id: u64,
+    /// The target process id, if native.
+    pub pid: Option<u32>,
+}
+
+/// Build a patch from the saved tip objects and the running binary's symbols.
+///
+/// Emits undefined-symbol stubs addressed at the running process, links them
+/// with the tip objects into a patch shared library, and returns the jump table
+/// the client applies.
+pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
+    let base = request.capture_base;
+
+    let fat = SymbolIndex::from_exe(request.exe)?;
+    let aslr_ref_address = fat
+        .get("main")
+        .ok_or_else(|| anyhow::anyhow!("fat binary has no `main` symbol"))?;
+    let aslr_offset = request.aslr_reference.wrapping_sub(aslr_ref_address);
+
+    let objects = read_tip_objects(base);
+    if objects.is_empty() {
+        anyhow::bail!(
+            "no tip objects captured; run a build with MONTRS_HOTPATCH=1 first"
+        );
+    }
+
+    let undefined = undefined_symbols(&objects)?;
+    let stub_bytes = emit_undefined_symbol_stubs(&undefined, &fat, aslr_offset)?;
+    let stub_path = base.join("patch-stubs.obj");
+    std::fs::write(&stub_path, stub_bytes)?;
+
+    let mut link_objects = objects;
+    link_objects.push(stub_path);
+
+    let patch_lib = base.join(if cfg!(windows) {
+        "libpatch.dll"
+    } else {
+        "libpatch.so"
+    });
+    let original = read_latest_link().map(|l| l.args).unwrap_or_default();
+    let args =
+        patch_link_args(request.flavor, &link_objects, &original, &patch_lib);
+    run_linker(request.real_linker, &args)?;
+
+    let patch_symbols = SymbolIndex::from_exe(&patch_lib)?;
+    build_jump_table(patch_lib, &fat, &patch_symbols)
+}
+
+/// Run a linker to completion, surfacing stdout+stderr on failure.
+fn run_linker(linker: &Path, args: &[String]) -> anyhow::Result<()> {
+    let result = if cfg!(windows) {
+        let cmd = std::env::temp_dir()
+            .join(format!("montrs-patch-{}.txt", std::process::id()));
+        write_command_file(&cmd, args)?;
+        let output = std::process::Command::new(linker)
+            .arg(format!("@{}", cmd.display()))
+            .output()?;
+        let _ = std::fs::remove_file(&cmd);
+        output
+    } else {
+        std::process::Command::new(linker).args(args).output()?
+    };
+
+    if !result.status.success() {
+        let mut msg =
+            String::from_utf8_lossy(&result.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&result.stdout);
+        if !stdout.trim().is_empty() {
+            if !msg.is_empty() {
+                msg.push('\n');
+            }
+            msg.push_str(stdout.trim());
+        }
+        anyhow::bail!("patch link failed ({}): {msg}", result.status);
+    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -1381,10 +1487,11 @@ mod tests {
     fn patch_link_args_msvc_is_a_dll_with_export_and_output() {
         let objects =
             vec![PathBuf::from("a.obj"), PathBuf::from("stub.obj")];
+        let original = vec!["/LIBPATH:C:\\sdk\\lib".to_string()];
         let args = patch_link_args(
             LinkerFlavor::Msvc,
             &objects,
-            &[],
+            &original,
             Path::new("libpatch.dll"),
         );
         assert!(args.contains(&"/DLL".to_string()));
@@ -1392,6 +1499,7 @@ mod tests {
         assert!(args.contains(&"a.obj".to_string()));
         assert!(args.contains(&"stub.obj".to_string()));
         assert!(args.contains(&"/OUT:libpatch.dll".to_string()));
+        assert!(args.contains(&"/LIBPATH:C:\\sdk\\lib".to_string()));
     }
 
     #[test]
