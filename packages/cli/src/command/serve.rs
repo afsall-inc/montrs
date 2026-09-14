@@ -260,6 +260,13 @@ pub async fn run() -> anyhow::Result<()> {
         .await
         {
             Ok((server, port)) => {
+                // The SSR child bridges `/_dioxus` to this address.
+                unsafe {
+                    std::env::set_var(
+                        "MONTRS_HOTPATCH_ADDR",
+                        format!("127.0.0.1:{port}"),
+                    );
+                }
                 println!("Hot-patch socket on ws://0.0.0.0:{port}");
                 Some(server)
             }
