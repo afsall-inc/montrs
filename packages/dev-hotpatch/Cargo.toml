@@ -17,14 +17,13 @@ serde.workspace = true
 serde_json.workspace = true
 subsecond-types = "0.7"
 ar = "0.9"
+# Object files are read (symbols) and written (undefined-symbol stubs) on every
+# platform, so this is a normal dependency rather than target-gated.
+object = { version = "0.36", default-features = false, features = ["read", "write", "std"] }
 
-# Symbol extraction from the fat (running) binary: MSVC keeps symbols in a
-# sibling .pdb; other platforms keep them in the object file.
+# MSVC keeps a binary's symbols in a sibling .pdb.
 [target.'cfg(windows)'.dependencies]
 pdb = "0.8"
-
-[target.'cfg(not(windows))'.dependencies]
-object = { version = "0.36", default-features = false, features = ["read"] }
 
 [lib]
 path = "src/lib.rs"

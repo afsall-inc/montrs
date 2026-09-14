@@ -349,6 +349,57 @@ pub fn build_fat_archive(
 }
 
 // ---------------------------------------------------------------------------
+// Patch object symbols
+// ---------------------------------------------------------------------------
+
+/// Collect the `(defined, undefined)` symbol names from an object file.
+pub fn object_symbols(
+    path: &Path,
+) -> anyhow::Result<(
+    std::collections::HashSet<String>,
+    std::collections::HashSet<String>,
+)> {
+    use object::{Object, ObjectSymbol};
+
+    let data = std::fs::read(path)?;
+    let file = object::File::parse(&*data)?;
+    let mut defined = std::collections::HashSet::new();
+    let mut undefined = std::collections::HashSet::new();
+    for symbol in file.symbols() {
+        let Ok(name) = symbol.name() else {
+            continue;
+        };
+        if name.is_empty() {
+            continue;
+        }
+        if symbol.is_undefined() {
+            undefined.insert(name.to_string());
+        } else {
+            defined.insert(name.to_string());
+        }
+    }
+    Ok((defined, undefined))
+}
+
+/// The symbols a set of patch objects reference but do not define.
+///
+/// These are exactly the symbols undefined-symbol stubs must satisfy by
+/// jumping into the running binary's known addresses.
+pub fn undefined_symbols(objects: &[PathBuf]) -> anyhow::Result<Vec<String>> {
+    let mut defined = std::collections::HashSet::new();
+    let mut undefined = std::collections::HashSet::new();
+    for path in objects {
+        let (d, u) = object_symbols(path)?;
+        defined.extend(d);
+        undefined.extend(u);
+    }
+    let mut out: Vec<String> =
+        undefined.difference(&defined).cloned().collect();
+    out.sort();
+    Ok(out)
+}
+
+// ---------------------------------------------------------------------------
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
 
@@ -570,6 +621,55 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn collects_undefined_symbols_from_objects() {
+        use object::write::{Object, StandardSection, Symbol, SymbolSection};
+        use object::{
+            Architecture, BinaryFormat, Endianness, SymbolFlags, SymbolKind,
+            SymbolScope,
+        };
+
+        let dir = temp_dir("hp-obj");
+        std::fs::create_dir_all(&dir).unwrap();
+        let obj_path = dir.join("patch.obj");
+        {
+            let mut obj = Object::new(
+                BinaryFormat::Coff,
+                Architecture::X86_64,
+                Endianness::Little,
+            );
+            let text = obj.section_id(StandardSection::Text);
+            obj.add_symbol(Symbol {
+                name: b"defined_fn".to_vec(),
+                value: 0,
+                size: 0,
+                kind: SymbolKind::Text,
+                scope: SymbolScope::Linkage,
+                weak: false,
+                flags: SymbolFlags::None,
+                section: SymbolSection::Section(text),
+            });
+            obj.add_symbol(Symbol {
+                name: b"undefined_fn".to_vec(),
+                value: 0,
+                size: 0,
+                kind: SymbolKind::Text,
+                scope: SymbolScope::Linkage,
+                weak: false,
+                flags: SymbolFlags::None,
+                section: SymbolSection::Undefined,
+            });
+            obj.append_section_data(text, &[0xC3], 1);
+            std::fs::write(&obj_path, obj.write().unwrap()).unwrap();
+        }
+
+        let undefined = undefined_symbols(&[obj_path]).unwrap();
+        assert!(undefined.contains(&"undefined_fn".to_string()));
+        assert!(!undefined.contains(&"defined_fn".to_string()));
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
