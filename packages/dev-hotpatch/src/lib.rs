@@ -345,6 +345,62 @@ pub fn flavor_from_triple(triple: &str) -> LinkerFlavor {
     }
 }
 
+/// Split a linker response file into arguments (MSVC/`CommandLineToArgvW`
+/// style: whitespace-separated, double quotes group).
+pub fn tokenize_response(content: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    for ch in content.chars() {
+        match ch {
+            '"' => in_quotes = !in_quotes,
+            c if c.is_whitespace() && !in_quotes => {
+                if !current.is_empty() {
+                    out.push(std::mem::take(&mut current));
+                }
+            }
+            c => current.push(c),
+        }
+    }
+    if !current.is_empty() {
+        out.push(current);
+    }
+    out
+}
+
+/// Expand any `@response-file` arguments in place with the file's tokens.
+///
+/// On Windows rustc passes long link commands via a response file, so the
+/// output path and rlibs are only visible after expansion.
+pub fn expand_response_args(args: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    for arg in args {
+        if let Some(path) = arg.strip_prefix('@')
+            && let Ok(content) = std::fs::read_to_string(path)
+        {
+            out.extend(tokenize_response(&content));
+            continue;
+        }
+        out.push(arg.clone());
+    }
+    out
+}
+
+/// Write a linker command file containing `args` (each quoted) and return its
+/// path, for passing to the linker as `@file` on Windows.
+pub fn write_command_file(path: &Path, args: &[String]) -> anyhow::Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let body = args
+        .iter()
+        .map(|a| format!("\"{a}\""))
+        .collect::<Vec<_>>()
+        .join(" ");
+    std::fs::write(path, body)?;
+    Ok(())
+}
+
 /// Parse the output path from a link command (`-o <p>` or `/OUT:<p>`).
 pub fn link_output(link_args: &[String]) -> Option<PathBuf> {
     let mut iter = link_args.iter();
@@ -406,6 +462,9 @@ pub fn build_fat_archive(
     rlibs: &[PathBuf],
     out: &Path,
 ) -> anyhow::Result<usize> {
+    if let Some(parent) = out.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
     let file = std::fs::File::create(out)?;
     let mut writer = ar::Builder::new(file);
     let mut written = 0usize;
@@ -584,12 +643,67 @@ pub fn relink_fat(
         .output()?;
     if !result.status.success() {
         let _ = std::fs::remove_file(&temp);
+        // MSVC's link.exe tends to write diagnostics to stdout, not stderr.
+        let mut msg =
+            String::from_utf8_lossy(&result.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&result.stdout);
+        if !stdout.trim().is_empty() {
+            if !msg.is_empty() {
+                msg.push('\n');
+            }
+            msg.push_str(stdout.trim());
+        }
         anyhow::bail!(
-            "fat relink failed: {}",
-            String::from_utf8_lossy(&result.stderr).trim()
+            "fat relink failed ({}): {msg}",
+            result.status
         );
     }
     std::fs::rename(&temp, output)?;
+    Ok(written)
+}
+
+/// Fat-link in place: archive the workspace rlibs, drop them from the command,
+/// add the hot-patch flags, and run the real linker to the output named in
+/// `link_args`.
+///
+/// This is meant to run *inside* the linker shim during the tip link, where
+/// rustc's temporary object files still exist (a post-build relink cannot work
+/// because rustc removes them).
+pub fn fat_link_in_place(
+    real_linker: &Path,
+    flavor: LinkerFlavor,
+    link_args: &[String],
+    workspace_target_dir: &Path,
+    fat_archive: &Path,
+) -> anyhow::Result<usize> {
+    let rlibs = workspace_rlibs(link_args, workspace_target_dir);
+    let written = build_fat_archive(&rlibs, fat_archive)?;
+    let base = without_paths(link_args, &rlibs);
+    let args = fat_link_args(&base, fat_archive, flavor);
+
+    // Windows link commands routinely exceed the command-line limit, so the
+    // extended argument set goes through a command file.
+    let result = if cfg!(windows) {
+        let cmd_file = fat_archive.with_file_name("fat-link-args.txt");
+        write_command_file(&cmd_file, &args)?;
+        std::process::Command::new(real_linker)
+            .arg(format!("@{}", cmd_file.display()))
+            .output()?
+    } else {
+        std::process::Command::new(real_linker).args(&args).output()?
+    };
+    if !result.status.success() {
+        let mut msg =
+            String::from_utf8_lossy(&result.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&result.stdout);
+        if !stdout.trim().is_empty() {
+            if !msg.is_empty() {
+                msg.push('\n');
+            }
+            msg.push_str(stdout.trim());
+        }
+        anyhow::bail!("fat link failed ({}): {msg}", result.status);
+    }
     Ok(written)
 }
 
@@ -1014,6 +1128,34 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn expands_response_files() {
+        let dir = temp_dir("hp-resp");
+        std::fs::create_dir_all(&dir).unwrap();
+        let rf = dir.join("args.txt");
+        std::fs::write(
+            &rf,
+            "\"/NOLOGO\" \"/OUT:C:\\a b\\x.exe\" \"libfoo.rlib\"",
+        )
+        .unwrap();
+        let args = vec![
+            format!("@{}", rf.display()),
+            "/DEBUG".to_string(),
+        ];
+        let out = expand_response_args(&args);
+        assert_eq!(
+            out,
+            vec![
+                "/NOLOGO".to_string(),
+                "/OUT:C:\\a b\\x.exe".to_string(),
+                "libfoo.rlib".to_string(),
+                "/DEBUG".to_string(),
+            ]
+        );
+        assert_eq!(link_output(&out), Some(PathBuf::from("C:\\a b\\x.exe")));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
