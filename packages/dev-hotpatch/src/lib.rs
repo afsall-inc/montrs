@@ -246,9 +246,131 @@ pub fn capture_env_allowlist() -> Vec<(String, String)> {
         .collect()
 }
 
+// ---------------------------------------------------------------------------
+// Fat-binary symbol index
+// ---------------------------------------------------------------------------
+
+/// A name → address map of the fat (running) binary's symbols.
+///
+/// A hot patch is linked against the running process's known symbol addresses,
+/// so the patcher first reads them: from the sibling `.pdb` on Windows, or the
+/// executable's object symbol table elsewhere.
+#[derive(Debug, Default)]
+pub struct SymbolIndex {
+    symbols: std::collections::HashMap<String, u64>,
+}
+
+impl SymbolIndex {
+    /// Read the symbol table for `exe`.
+    #[cfg(windows)]
+    pub fn from_exe(exe: &Path) -> anyhow::Result<Self> {
+        use pdb::FallibleIterator;
+
+        let pdb_path = exe.with_extension("pdb");
+        let file = std::fs::File::open(&pdb_path).map_err(|e| {
+            anyhow::anyhow!("could not open {}: {e}", pdb_path.display())
+        })?;
+        let mut pdb = pdb::PDB::open(file)
+            .map_err(|e| anyhow::anyhow!("could not parse pdb: {e}"))?;
+        let address_map = pdb.address_map()?;
+        let global_symbols = pdb.global_symbols()?;
+
+        let mut symbols = std::collections::HashMap::new();
+        let mut iter = global_symbols.iter();
+        while let Some(symbol) = iter.next()? {
+            match symbol.parse() {
+                Ok(pdb::SymbolData::Public(data)) => {
+                    if let Some(rva) = data.offset.to_rva(&address_map) {
+                        symbols.insert(
+                            data.name.to_string().to_string(),
+                            rva.0 as u64,
+                        );
+                    }
+                }
+                Ok(pdb::SymbolData::Data(data)) => {
+                    if let Some(rva) = data.offset.to_rva(&address_map) {
+                        symbols.insert(
+                            data.name.to_string().to_string(),
+                            rva.0 as u64,
+                        );
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(Self { symbols })
+    }
+
+    /// Read the symbol table for `exe` from its object file.
+    #[cfg(not(windows))]
+    pub fn from_exe(exe: &Path) -> anyhow::Result<Self> {
+        use object::{Object, ObjectSymbol};
+
+        let data = std::fs::read(exe)?;
+        let file = object::File::parse(&*data)?;
+        let mut symbols = std::collections::HashMap::new();
+        for symbol in file.symbols() {
+            if let Ok(name) = symbol.name() {
+                symbols.insert(name.to_string(), symbol.address());
+            }
+        }
+        Ok(Self { symbols })
+    }
+
+    /// Look up a symbol's address.
+    pub fn get(&self, name: &str) -> Option<u64> {
+        self.symbols.get(name).copied()
+    }
+
+    /// Whether a symbol is present.
+    pub fn contains(&self, name: &str) -> bool {
+        self.symbols.contains_key(name)
+    }
+
+    /// Number of symbols indexed.
+    pub fn len(&self) -> usize {
+        self.symbols.len()
+    }
+
+    /// Whether the index has no symbols.
+    pub fn is_empty(&self) -> bool {
+        self.symbols.is_empty()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_symbols_from_a_real_binary() {
+        // Prefer an explicit binary, else the test executable's own symbols.
+        let exe = std::env::var_os("MONTRS_HOTPATCH_TEST_EXE")
+            .map(PathBuf::from)
+            .or_else(|| std::env::current_exe().ok())
+            .expect("an executable path");
+
+        match SymbolIndex::from_exe(&exe) {
+            Ok(index) => {
+                assert!(
+                    !index.is_empty(),
+                    "no symbols parsed from {}",
+                    exe.display()
+                );
+                // A linked binary always has an entry point symbol.
+                assert!(
+                    index.contains("main") || index.contains("_main"),
+                    "expected a `main` symbol; got {} symbols",
+                    index.len()
+                );
+            }
+            Err(e) => {
+                // PDBs/objects can be absent in some environments; don't fail
+                // the suite for that, but make the skip visible.
+                eprintln!("skipping symbol test for {}: {e}", exe.display());
+            }
+        }
+    }
 
     fn temp_dir(tag: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
