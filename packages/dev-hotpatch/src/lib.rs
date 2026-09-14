@@ -117,6 +117,51 @@ pub struct RustcInvocation {
     pub envs: Vec<(String, String)>,
 }
 
+impl RustcInvocation {
+    /// The `--crate-name` value, if present.
+    pub fn crate_name(&self) -> Option<&str> {
+        let mut iter = self.args.iter();
+        while let Some(arg) = iter.next() {
+            if arg == "--crate-name" {
+                return iter.next().map(String::as_str);
+            }
+            if let Some(rest) = arg.strip_prefix("--crate-name=") {
+                return Some(rest);
+            }
+        }
+        None
+    }
+}
+
+/// The crates whose captured `rustc` invocation mentions any changed file.
+///
+/// A captured invocation lists its crate's source files; intersecting those
+/// with the files that just changed tells us which crates must be replayed for
+/// a patch.
+pub fn changed_crates(
+    invocations: &[RustcInvocation],
+    changed_files: &[PathBuf],
+) -> std::collections::HashSet<String> {
+    let changed: std::collections::HashSet<String> = changed_files
+        .iter()
+        .map(|p| p.to_string_lossy().replace('\\', "/"))
+        .collect();
+
+    let mut crates = std::collections::HashSet::new();
+    for invocation in invocations {
+        let Some(name) = invocation.crate_name() else {
+            continue;
+        };
+        let mentions = invocation.args.iter().any(|arg| {
+            changed.contains(&arg.replace('\\', "/"))
+        });
+        if mentions {
+            crates.insert(name.to_string());
+        }
+    }
+    crates
+}
+
 /// The link step for the tip binary, captured from the linker wrapper.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LinkInvocation {
@@ -863,6 +908,45 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn changed_files_map_to_their_crates() {
+        let invocations = vec![
+            RustcInvocation {
+                args: vec![
+                    "rustc".into(),
+                    "--crate-name".into(),
+                    "app".into(),
+                    "app/src/main.rs".into(),
+                ],
+                cwd: PathBuf::from("/w"),
+                envs: vec![],
+            },
+            RustcInvocation {
+                args: vec![
+                    "rustc".into(),
+                    "--crate-name".into(),
+                    "montrs_ui".into(),
+                    "packages/ui/src/lib.rs".into(),
+                ],
+                cwd: PathBuf::from("/w"),
+                envs: vec![],
+            },
+        ];
+        assert_eq!(invocations[0].crate_name(), Some("app"));
+
+        let changed = vec![
+            PathBuf::from("app/src/main.rs"),
+            PathBuf::from("packages\\ui\\src\\lib.rs"),
+        ];
+        let crates = changed_crates(&invocations, &changed);
+        assert!(crates.contains("app"));
+        assert!(crates.contains("montrs_ui"));
+        assert_eq!(crates.len(), 2);
+
+        let none = changed_crates(&invocations, &[PathBuf::from("other.rs")]);
+        assert!(none.is_empty());
     }
 
     #[test]
