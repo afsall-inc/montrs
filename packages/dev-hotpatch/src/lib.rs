@@ -487,6 +487,76 @@ pub fn patch_link_args(
     args
 }
 
+/// The `.rlib` paths in `link_args` that live under the workspace target dir
+/// (i.e. workspace crates), excluding sysroot/toolchain rlibs.
+pub fn workspace_rlibs(
+    link_args: &[String],
+    workspace_target_dir: &Path,
+) -> Vec<PathBuf> {
+    link_rlibs(link_args)
+        .into_iter()
+        .filter(|p| p.starts_with(workspace_target_dir))
+        .collect()
+}
+
+/// Replace (or add) the output path in link args for the given flavor.
+pub fn set_link_output(
+    flavor: LinkerFlavor,
+    args: &mut [String],
+    out: &Path,
+) {
+    match flavor {
+        LinkerFlavor::Msvc | LinkerFlavor::Other => {
+            if let Some(pos) =
+                args.iter().position(|a| a.starts_with("/OUT:"))
+            {
+                args[pos] = format!("/OUT:{}", out.display());
+            }
+        }
+        LinkerFlavor::Gnu => {
+            if let Some(pos) = args.iter().position(|a| a == "-o")
+                && pos + 1 < args.len()
+            {
+                args[pos + 1] = out.display().to_string();
+            }
+        }
+    }
+}
+
+/// Re-link a fat binary in place with the hot-patch metadata.
+///
+/// Builds a fat archive from the workspace rlibs in `link_args`, links to a
+/// temporary path, and only then swaps it over `output` — so a failed relink
+/// never corrupts the working binary. Returns the number of objects archived.
+pub fn relink_fat(
+    real_linker: &Path,
+    flavor: LinkerFlavor,
+    original_link_args: &[String],
+    workspace_target_dir: &Path,
+    fat_archive: &Path,
+    output: &Path,
+) -> anyhow::Result<usize> {
+    let rlibs = workspace_rlibs(original_link_args, workspace_target_dir);
+    let written = build_fat_archive(&rlibs, fat_archive)?;
+
+    let temp = output.with_extension("fatlinking");
+    let mut args = fat_link_args(original_link_args, fat_archive, flavor);
+    set_link_output(flavor, &mut args, &temp);
+
+    let result = std::process::Command::new(real_linker)
+        .args(&args)
+        .output()?;
+    if !result.status.success() {
+        let _ = std::fs::remove_file(&temp);
+        anyhow::bail!(
+            "fat relink failed: {}",
+            String::from_utf8_lossy(&result.stderr).trim()
+        );
+    }
+    std::fs::rename(&temp, output)?;
+    Ok(written)
+}
+
 // ---------------------------------------------------------------------------
 // Patch object symbols
 // ---------------------------------------------------------------------------
@@ -908,6 +978,32 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn workspace_rlibs_filter_by_prefix() {
+        let ws = PathBuf::from("C:\\proj\\target");
+        let args = vec![
+            "C:\\proj\\target\\debug\\deps\\libapp-1.rlib".to_string(),
+            "C:\\rust\\lib\\rustlib\\...\\libstd.rlib".to_string(),
+            "C:\\proj\\target\\debug\\deps\\libui-2.rlib".to_string(),
+            "-o".to_string(),
+            "app.exe".to_string(),
+        ];
+        let rlibs = workspace_rlibs(&args, &ws);
+        assert_eq!(rlibs.len(), 2);
+        assert!(rlibs.iter().all(|p| p.starts_with(&ws)));
+    }
+
+    #[test]
+    fn set_link_output_replaces_msvc_and_gnu_outputs() {
+        let mut msvc = vec!["/NOLOGO".to_string(), "/OUT:a.exe".to_string()];
+        set_link_output(LinkerFlavor::Msvc, &mut msvc, Path::new("b.exe"));
+        assert_eq!(link_output(&msvc), Some(PathBuf::from("b.exe")));
+
+        let mut gnu = vec!["-o".to_string(), "a".to_string()];
+        set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
+        assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
     }
 
     #[test]
