@@ -407,15 +407,36 @@ pub fn tokenize_response(content: &str) -> Vec<String> {
     out
 }
 
+/// Read a response file, tolerating UTF-16 (which MSVC's linker writes) as
+/// well as UTF-8.
+pub fn read_response_file(path: &str) -> Option<String> {
+    let bytes = std::fs::read(path).ok()?;
+    if bytes.starts_with(&[0xFF, 0xFE]) {
+        let units: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        Some(String::from_utf16_lossy(&units))
+    } else if bytes.starts_with(&[0xFE, 0xFF]) {
+        let units: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|c| u16::from_be_bytes([c[0], c[1]]))
+            .collect();
+        Some(String::from_utf16_lossy(&units))
+    } else {
+        Some(String::from_utf8_lossy(&bytes).into_owned())
+    }
+}
+
 /// Expand any `@response-file` arguments in place with the file's tokens.
 ///
-/// On Windows rustc passes long link commands via a response file, so the
-/// output path and rlibs are only visible after expansion.
+/// On Windows rustc passes long link commands via a response file (often
+/// UTF-16), so the output path and rlibs are only visible after expansion.
 pub fn expand_response_args(args: &[String]) -> Vec<String> {
     let mut out = Vec::new();
     for arg in args {
         if let Some(path) = arg.strip_prefix('@')
-            && let Ok(content) = std::fs::read_to_string(path)
+            && let Some(content) = read_response_file(path)
         {
             out.extend(tokenize_response(&content));
             continue;
@@ -912,7 +933,7 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     } else {
         "libpatch.so"
     });
-    let latest = read_latest_link();
+    let latest = read_latest_link_in(base);
     let original = latest.as_ref().map(|l| l.args.clone()).unwrap_or_default();
     let envs = latest.as_ref().map(|l| l.envs.clone()).unwrap_or_default();
 
@@ -1469,6 +1490,24 @@ mod tests {
         let mut gnu = vec!["-o".to_string(), "a".to_string()];
         set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
         assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
+    }
+
+    #[test]
+    fn expands_utf16_response_files() {
+        let dir = temp_dir("hp-resp16");
+        std::fs::create_dir_all(&dir).unwrap();
+        let rf = dir.join("args.txt");
+        let text = "\"/OUT:x.exe\" \"a.obj\"";
+        let mut bytes = vec![0xFFu8, 0xFE];
+        for unit in text.encode_utf16() {
+            bytes.extend_from_slice(&unit.to_le_bytes());
+        }
+        std::fs::write(&rf, bytes).unwrap();
+        let args = vec![format!("@{}", rf.display())];
+        let out = expand_response_args(&args);
+        assert_eq!(link_output(&out), Some(PathBuf::from("x.exe")));
+        assert!(out.contains(&"a.obj".to_string()));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
