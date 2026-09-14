@@ -487,6 +487,54 @@ pub fn fat_link_args(
     args
 }
 
+/// Copy the tip link's object files into `<base>/tip-objects/`.
+///
+/// rustc deletes its temporary `.rcgu.o`/`symbols.o` files once the link
+/// finishes, so the linker shim saves them here at link time; a later patch
+/// links those fresh objects (plus undefined-symbol stubs) into the patch.
+/// Returns the saved paths.
+pub fn save_tip_objects(
+    base: &Path,
+    link_args: &[String],
+) -> anyhow::Result<Vec<PathBuf>> {
+    let dir = base.join("tip-objects");
+    std::fs::create_dir_all(&dir)?;
+    let mut saved = Vec::new();
+    for arg in link_args {
+        if !(arg.ends_with(".o") || arg.ends_with(".obj")) {
+            continue;
+        }
+        let src = PathBuf::from(arg);
+        if !src.is_file() {
+            continue;
+        }
+        let Some(name) = src.file_name() else {
+            continue;
+        };
+        let dst = dir.join(name);
+        std::fs::copy(&src, &dst)?;
+        saved.push(dst);
+    }
+    saved.sort();
+    saved.dedup();
+    Ok(saved)
+}
+
+/// The tip objects saved by [`save_tip_objects`].
+pub fn read_tip_objects(base: &Path) -> Vec<PathBuf> {
+    let dir = base.join("tip-objects");
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return Vec::new();
+    };
+    let mut out: Vec<PathBuf> = entries
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.is_file())
+        .collect();
+    out.sort();
+    out
+}
+
 /// Build a "fat archive" from the workspace's `.rlib`s.
 ///
 /// Rust's `.rlib`s are `ar` archives of `.rcgu.o` objects (plus `.rmeta`
@@ -1239,6 +1287,30 @@ mod tests {
         let mut gnu = vec!["-o".to_string(), "a".to_string()];
         set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
         assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
+    }
+
+    #[test]
+    fn saves_and_reads_tip_objects() {
+        let base = temp_dir("hp-tipobj");
+        let src = base.join("src");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("a.rcgu.o"), b"a").unwrap();
+        std::fs::write(src.join("symbols.o"), b"s").unwrap();
+        std::fs::write(src.join("skip.rlib"), b"r").unwrap();
+        let args = vec![
+            src.join("a.rcgu.o").to_string_lossy().into_owned(),
+            src.join("symbols.o").to_string_lossy().into_owned(),
+            src.join("skip.rlib").to_string_lossy().into_owned(),
+        ];
+        let saved = save_tip_objects(&base, &args).unwrap();
+        assert_eq!(saved.len(), 2);
+        let read = read_tip_objects(&base);
+        assert_eq!(read.len(), 2);
+        assert!(
+            read.iter()
+                .all(|p| p.parent().unwrap().ends_with("tip-objects"))
+        );
+        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]

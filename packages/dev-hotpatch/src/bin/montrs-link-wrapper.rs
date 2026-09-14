@@ -85,7 +85,10 @@ fn main() -> ExitCode {
         && let Some(workspace) =
             std::env::var_os("MONTRS_HOTPATCH_WORKSPACE")
     {
-        let archive = montrs_dev_hotpatch::capture_dir().join("fat.a");
+        let capture = montrs_dev_hotpatch::capture_dir();
+        // Save the tip's fresh objects before rustc removes them.
+        let _ = montrs_dev_hotpatch::save_tip_objects(&capture, &resolved);
+        let archive = capture.join("fat.a");
         match montrs_dev_hotpatch::fat_link_in_place(
             &real,
             flavor(),
