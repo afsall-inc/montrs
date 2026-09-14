@@ -4499,11 +4499,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ar",
+ "futures-util",
  "object",
  "pdb",
  "serde",
  "serde_json",
  "subsecond-types",
+ "tokio",
+ "tokio-tungstenite",
 ]
 
 [[package]]

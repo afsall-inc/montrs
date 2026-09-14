@@ -56,6 +56,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+pub mod server;
+
 pub use subsecond_types::JumpTable;
 
 /// A message the hot-patch dev server sends to a connected application.

@@ -17,6 +17,9 @@ serde.workspace = true
 serde_json.workspace = true
 subsecond-types = "0.7"
 ar = "0.9"
+tokio.workspace = true
+tokio-tungstenite = "0.29"
+futures-util = "0.3"
 # Object files are read (symbols) and written (undefined-symbol stubs) on every
 # platform, so this is a normal dependency rather than target-gated.
 object = { version = "0.36", default-features = false, features = ["read", "write", "std"] }
