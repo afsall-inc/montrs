@@ -419,6 +419,18 @@ impl SymbolIndex {
         Ok(Self { symbols })
     }
 
+    /// Build an index directly from `name → address` pairs.
+    pub fn from_pairs<I: IntoIterator<Item = (String, u64)>>(pairs: I) -> Self {
+        Self {
+            symbols: pairs.into_iter().collect(),
+        }
+    }
+
+    /// Iterate over `(name, address)` pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &u64)> {
+        self.symbols.iter()
+    }
+
     /// Look up a symbol's address.
     pub fn get(&self, name: &str) -> Option<u64> {
         self.symbols.get(name).copied()
@@ -438,6 +450,41 @@ impl SymbolIndex {
     pub fn is_empty(&self) -> bool {
         self.symbols.is_empty()
     }
+}
+
+/// Build a subsecond [`JumpTable`] from the fat binary's symbols and the
+/// freshly linked patch's symbols.
+///
+/// Every symbol the patch defines that also exists in the running binary maps
+/// that binary's address → the patch's address; `main` anchors the ASLR
+/// reference (running binary) and the patch's base address, exactly as the
+/// Windows/native Dioxus jump-table builders do.
+pub fn build_jump_table(
+    lib: PathBuf,
+    fat: &SymbolIndex,
+    patch: &SymbolIndex,
+) -> anyhow::Result<JumpTable> {
+    let mut map = subsecond_types::AddressMap::default();
+    for (name, new_addr) in patch.iter() {
+        if let Some(old_addr) = fat.get(name) {
+            map.insert(old_addr, *new_addr);
+        }
+    }
+
+    let new_base_address = patch
+        .get("main")
+        .ok_or_else(|| anyhow::anyhow!("patch has no `main` symbol"))?;
+    let aslr_reference = fat
+        .get("main")
+        .ok_or_else(|| anyhow::anyhow!("fat binary has no `main` symbol"))?;
+
+    Ok(JumpTable {
+        lib,
+        map,
+        aslr_reference,
+        new_base_address,
+        ifunc_count: 0,
+    })
 }
 
 #[cfg(test)]
@@ -523,6 +570,36 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn jump_table_maps_matching_symbols() {
+        let fat = SymbolIndex::from_pairs([
+            ("main".to_string(), 0x1000),
+            ("foo".to_string(), 0x2000),
+            ("only_old".to_string(), 0x3000),
+        ]);
+        let patch = SymbolIndex::from_pairs([
+            ("main".to_string(), 0x10),
+            ("foo".to_string(), 0x20),
+            ("only_new".to_string(), 0x30),
+        ]);
+
+        let table =
+            build_jump_table(PathBuf::from("libpatch.dll"), &fat, &patch)
+                .expect("jump table");
+        assert_eq!(table.aslr_reference, 0x1000);
+        assert_eq!(table.new_base_address, 0x10);
+        assert_eq!(table.map.len(), 2, "only symbols in both must map");
+        assert_eq!(table.map.get(&0x2000), Some(&0x20));
+        assert_eq!(table.map.get(&0x3000), None);
+    }
+
+    #[test]
+    fn jump_table_requires_main() {
+        let fat = SymbolIndex::from_pairs([("foo".to_string(), 1)]);
+        let patch = SymbolIndex::from_pairs([("foo".to_string(), 2)]);
+        assert!(build_jump_table(PathBuf::from("x"), &fat, &patch).is_err());
     }
 
     #[test]
