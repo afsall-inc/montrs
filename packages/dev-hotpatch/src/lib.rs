@@ -226,6 +226,16 @@ pub fn capture_link_in(
     Ok(dir.join(name))
 }
 
+/// Read every captured link invocation under `<base>/link/`.
+pub fn read_link_invocations_in(base: &Path) -> Vec<LinkInvocation> {
+    read_all(&base.join("link"))
+}
+
+/// Read every captured link invocation from the ambient capture dir.
+pub fn read_link_invocations() -> Vec<LinkInvocation> {
+    read_link_invocations_in(&capture_dir())
+}
+
 /// Read the most recent captured link invocation under `<base>/link/`.
 pub fn read_latest_link_in(base: &Path) -> Option<LinkInvocation> {
     let mut all = read_all(&base.join("link"));
@@ -321,6 +331,18 @@ pub enum LinkerFlavor {
     Gnu,
     /// Anything else — no fat-link adjustments are known.
     Other,
+}
+
+/// Choose the linker dialect from a target triple.
+pub fn flavor_from_triple(triple: &str) -> LinkerFlavor {
+    let t = triple.to_ascii_lowercase();
+    if t.contains("msvc") || t.contains("windows") {
+        LinkerFlavor::Msvc
+    } else if t.contains("gnu") || t.contains("linux") || t.contains("musl") {
+        LinkerFlavor::Gnu
+    } else {
+        LinkerFlavor::Other
+    }
 }
 
 /// Parse the output path from a link command (`-o <p>` or `/OUT:<p>`).
@@ -523,9 +545,22 @@ pub fn set_link_output(
     }
 }
 
+/// Remove the given paths from a link command.
+pub fn without_paths(args: &[String], paths: &[PathBuf]) -> Vec<String> {
+    let remove: std::collections::HashSet<String> = paths
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    args.iter()
+        .filter(|a| !remove.contains(a.as_str()))
+        .cloned()
+        .collect()
+}
+
 /// Re-link a fat binary in place with the hot-patch metadata.
 ///
-/// Builds a fat archive from the workspace rlibs in `link_args`, links to a
+/// Builds a fat archive from the workspace rlibs in `link_args` (removing those
+/// rlibs from the command, since the archive replaces them), links to a
 /// temporary path, and only then swaps it over `output` — so a failed relink
 /// never corrupts the working binary. Returns the number of objects archived.
 pub fn relink_fat(
@@ -539,8 +574,9 @@ pub fn relink_fat(
     let rlibs = workspace_rlibs(original_link_args, workspace_target_dir);
     let written = build_fat_archive(&rlibs, fat_archive)?;
 
+    let base = without_paths(original_link_args, &rlibs);
     let temp = output.with_extension("fatlinking");
-    let mut args = fat_link_args(original_link_args, fat_archive, flavor);
+    let mut args = fat_link_args(&base, fat_archive, flavor);
     set_link_output(flavor, &mut args, &temp);
 
     let result = std::process::Command::new(real_linker)
@@ -978,6 +1014,34 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn without_paths_drops_archive_members() {
+        let args = vec![
+            "/NOLOGO".to_string(),
+            "libapp.rlib".to_string(),
+            "libui.rlib".to_string(),
+            "C:\\rust\\libstd.rlib".to_string(),
+        ];
+        let out = without_paths(
+            &args,
+            &[PathBuf::from("libapp.rlib"), PathBuf::from("libui.rlib")],
+        );
+        assert_eq!(out, vec!["/NOLOGO".to_string(), "C:\\rust\\libstd.rlib".to_string()]);
+    }
+
+    #[test]
+    fn flavor_from_triple_maps_known_targets() {
+        assert_eq!(
+            flavor_from_triple("x86_64-pc-windows-msvc"),
+            LinkerFlavor::Msvc
+        );
+        assert_eq!(
+            flavor_from_triple("x86_64-unknown-linux-gnu"),
+            LinkerFlavor::Gnu
+        );
+        assert_eq!(flavor_from_triple("aarch64-apple-darwin"), LinkerFlavor::Other);
     }
 
     #[test]

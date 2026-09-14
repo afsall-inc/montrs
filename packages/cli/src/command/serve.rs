@@ -133,6 +133,9 @@ pub async fn run() -> anyhow::Result<()> {
     // Enabled with `MONTRS_HOTPATCH=1`.
     let hotpatch_enabled = std::env::var_os("MONTRS_HOTPATCH").is_some();
     let hotpatch_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
+    let hotpatch_workspace_target = pipeline.workspace_target_dir.clone();
+    let mut hotpatch_real_linker: Option<PathBuf> = None;
+    let mut hotpatch_flavor = montrs_dev_hotpatch::LinkerFlavor::Other;
     if hotpatch_enabled {
         match resolve_wrapper("rustc-wrapper") {
             Some(wrapper) => {
@@ -163,6 +166,9 @@ pub async fn run() -> anyhow::Result<()> {
                                 );
                                 std::env::set_var(key, &link_wrapper);
                             }
+                            hotpatch_flavor =
+                                montrs_dev_hotpatch::flavor_from_triple(&host);
+                            hotpatch_real_linker = Some(real.clone());
                             println!(
                                 "  link capture enabled (real linker: {}).",
                                 real.display()
@@ -288,6 +294,13 @@ pub async fn run() -> anyhow::Result<()> {
 
     if hotpatch_enabled {
         log_capture(&hotpatch_dir);
+        try_fat_relink(
+            hotpatch_real_linker.as_deref(),
+            hotpatch_flavor,
+            &hotpatch_workspace_target,
+            &bin,
+            &hotpatch_dir,
+        );
     }
 
     // If no SSR binary exists yet, serve the fallback page on the site address.
@@ -379,6 +392,13 @@ pub async fn run() -> anyhow::Result<()> {
                         println!("Rebuild complete.");
                         if hotpatch_enabled {
                             log_capture(&hotpatch_dir);
+                            try_fat_relink(
+                                hotpatch_real_linker.as_deref(),
+                                hotpatch_flavor,
+                                &hotpatch_workspace_target,
+                                &bin,
+                                &hotpatch_dir,
+                            );
                         }
                         // Hand the address back to the real server on the next
                         // loop iteration. The reload is deferred until the new
@@ -472,6 +492,38 @@ fn log_capture(dir: &Path) {
         "Hot-patch capture: {count} rustc invocations recorded ({}).",
         dir.display()
     );
+}
+
+/// Re-link the freshly built server as a hot-patchable ("fat") binary.
+fn try_fat_relink(
+    real_linker: Option<&Path>,
+    flavor: montrs_dev_hotpatch::LinkerFlavor,
+    workspace_target_dir: &Path,
+    bin: &Path,
+    hotpatch_dir: &Path,
+) {
+    let Some(real_linker) = real_linker else {
+        println!("Hot-patch: real linker unknown; skipping fat relink.");
+        return;
+    };
+    let Some(link) = montrs_dev_hotpatch::read_latest_link() else {
+        println!("Hot-patch: no link capture; skipping fat relink.");
+        return;
+    };
+    let fat_archive = hotpatch_dir.join("fat.a");
+    match montrs_dev_hotpatch::relink_fat(
+        real_linker,
+        flavor,
+        &link.args,
+        workspace_target_dir,
+        &fat_archive,
+        bin,
+    ) {
+        Ok(count) => println!(
+            "Hot-patch: fat relink complete ({count} workspace objects archived)."
+        ),
+        Err(e) => eprintln!("Hot-patch: fat relink failed: {e}"),
+    }
 }
 
 /// Locate a wrapper binary by stem: `MONTRS_<STEM>_PATH` override, then `PATH`,
