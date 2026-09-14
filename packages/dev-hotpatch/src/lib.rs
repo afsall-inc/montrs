@@ -426,25 +426,31 @@ pub fn link_rlibs(link_args: &[String]) -> Vec<PathBuf> {
 
 /// Produce the hot-patchable ("fat") link arguments from a normal link.
 ///
-/// The fat binary must contain all workspace object code, export `main` so a
-/// patch can reference the image base, and (on MSVC) disable high-entropy VA
-/// so symbol addresses are stable run to run.
+/// The fat binary exports `main` so a patch can reference the image base, and
+/// (on MSVC) disables high-entropy VA so symbol addresses are stable run to
+/// run. An optional archive of workspace objects can be force-linked with
+/// whole-archive — needed when monomorphized code would otherwise be absent —
+/// but plain `link.exe` rejects the GNU-style archive, so it is opt-in.
 pub fn fat_link_args(
     original: &[String],
-    fat_archive: &Path,
+    fat_archive: Option<&Path>,
     flavor: LinkerFlavor,
 ) -> Vec<String> {
     let mut args = original.to_vec();
     match flavor {
         LinkerFlavor::Msvc => {
-            args.push(format!("/WHOLEARCHIVE:{}", fat_archive.display()));
+            if let Some(archive) = fat_archive {
+                args.push(format!("/WHOLEARCHIVE:{}", archive.display()));
+            }
             args.push("/EXPORT:main".to_string());
             args.push("/HIGHENTROPYVA:NO".to_string());
         }
         LinkerFlavor::Gnu => {
-            args.push("-Wl,--whole-archive".to_string());
-            args.push(fat_archive.display().to_string());
-            args.push("-Wl,--no-whole-archive".to_string());
+            if let Some(archive) = fat_archive {
+                args.push("-Wl,--whole-archive".to_string());
+                args.push(archive.display().to_string());
+                args.push("-Wl,--no-whole-archive".to_string());
+            }
             args.push("-Wl,--export-dynamic-symbol,main".to_string());
         }
         LinkerFlavor::Other => {}
@@ -626,16 +632,13 @@ pub fn relink_fat(
     real_linker: &Path,
     flavor: LinkerFlavor,
     original_link_args: &[String],
-    workspace_target_dir: &Path,
-    fat_archive: &Path,
+    _workspace_target_dir: &Path,
+    _fat_archive: &Path,
     output: &Path,
 ) -> anyhow::Result<usize> {
-    let rlibs = workspace_rlibs(original_link_args, workspace_target_dir);
-    let written = build_fat_archive(&rlibs, fat_archive)?;
-
-    let base = without_paths(original_link_args, &rlibs);
+    let written = 0;
     let temp = output.with_extension("fatlinking");
-    let mut args = fat_link_args(&base, fat_archive, flavor);
+    let mut args = fat_link_args(original_link_args, None, flavor);
     set_link_output(flavor, &mut args, &temp);
 
     let result = std::process::Command::new(real_linker)
@@ -673,13 +676,10 @@ pub fn fat_link_in_place(
     real_linker: &Path,
     flavor: LinkerFlavor,
     link_args: &[String],
-    workspace_target_dir: &Path,
+    _workspace_target_dir: &Path,
     fat_archive: &Path,
 ) -> anyhow::Result<usize> {
-    let rlibs = workspace_rlibs(link_args, workspace_target_dir);
-    let written = build_fat_archive(&rlibs, fat_archive)?;
-    let base = without_paths(link_args, &rlibs);
-    let args = fat_link_args(&base, fat_archive, flavor);
+    let args = fat_link_args(link_args, None, flavor);
 
     // Windows link commands routinely exceed the command-line limit, so the
     // extended argument set goes through a command file.
@@ -704,7 +704,7 @@ pub fn fat_link_in_place(
         }
         anyhow::bail!("fat link failed ({}): {msg}", result.status);
     }
-    Ok(written)
+    Ok(0)
 }
 
 // ---------------------------------------------------------------------------
@@ -1493,23 +1493,37 @@ mod tests {
     fn fat_link_args_msvc_adds_required_metadata() {
         let original =
             vec!["/NOLOGO".to_string(), "/OUT:app.exe".to_string()];
-        let args =
-            fat_link_args(&original, Path::new("deps.a"), LinkerFlavor::Msvc);
+        let args = fat_link_args(&original, None, LinkerFlavor::Msvc);
         assert!(args.iter().any(|a| a == "/EXPORT:main"));
         assert!(args.iter().any(|a| a == "/HIGHENTROPYVA:NO"));
-        assert!(args.iter().any(|a| a.starts_with("/WHOLEARCHIVE:")));
         assert_eq!(link_output(&args), Some(PathBuf::from("app.exe")));
+
+        // Opt-in whole-archive.
+        let with_archive = fat_link_args(
+            &original,
+            Some(Path::new("deps.a")),
+            LinkerFlavor::Msvc,
+        );
+        assert!(
+            with_archive
+                .iter()
+                .any(|a| a.starts_with("/WHOLEARCHIVE:"))
+        );
     }
 
     #[test]
-    fn fat_link_args_gnu_adds_whole_archive_and_export() {
+    fn fat_link_args_gnu_adds_export_and_optional_archive() {
         let original = vec!["-o".to_string(), "app".to_string()];
-        let args =
-            fat_link_args(&original, Path::new("libdeps.a"), LinkerFlavor::Gnu);
-        assert!(args.contains(&"-Wl,--whole-archive".to_string()));
+        let args = fat_link_args(&original, None, LinkerFlavor::Gnu);
         assert!(
             args.contains(&"-Wl,--export-dynamic-symbol,main".to_string())
         );
+        let with_archive = fat_link_args(
+            &original,
+            Some(Path::new("libdeps.a")),
+            LinkerFlavor::Gnu,
+        );
+        assert!(with_archive.contains(&"-Wl,--whole-archive".to_string()));
         assert_eq!(link_output(&args), Some(PathBuf::from("app")));
     }
 

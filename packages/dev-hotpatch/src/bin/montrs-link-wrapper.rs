@@ -41,29 +41,33 @@ fn flavor() -> montrs_dev_hotpatch::LinkerFlavor {
     }
 }
 
-/// Normalize a path for comparison: drop the Windows verbatim prefix, unify
-/// separators, and fold case on Windows.
-fn normalize(path: &Path) -> String {
-    let raw = path.to_string_lossy();
-    let stripped = raw.strip_prefix(r"\\?\").unwrap_or(&raw);
-    if cfg!(windows) {
-        stripped.replace('/', "\\").to_ascii_lowercase()
-    } else {
-        stripped.to_string()
-    }
+/// Normalize a file stem for comparison: fold case and treat `-`/`_` as the
+/// same separator, so `website-ssr` matches `website_ssr`.
+fn normalize_stem(path: &Path) -> String {
+    path.file_stem()
+        .map(|s| s.to_string_lossy().to_ascii_lowercase().replace('-', "_"))
+        .unwrap_or_default()
 }
 
 /// Whether this invocation produces the tip binary the hot-patch target cares
 /// about.
+///
+/// Cargo links the binary to `deps/<crate_name>.exe` (underscored, sometimes
+/// hashed) and then hardlinks the dash-named path, so we compare file names,
+/// not full paths.
 fn is_tip(args: &[String]) -> bool {
     let Some(expected) = std::env::var_os("MONTRS_HOTPATCH_TIP_OUT") else {
         return false;
     };
-    let expected = normalize(Path::new(&expected));
-    match montrs_dev_hotpatch::link_output(args) {
-        Some(out) => normalize(&out) == expected,
-        None => false,
-    }
+    let expected = normalize_stem(Path::new(&expected));
+    let Some(out) = montrs_dev_hotpatch::link_output(args) else {
+        return false;
+    };
+    let actual = normalize_stem(&out);
+    actual == expected
+        || actual
+            .strip_prefix(&expected)
+            .is_some_and(|rest| rest.starts_with('_'))
 }
 
 fn main() -> ExitCode {
