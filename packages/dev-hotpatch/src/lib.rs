@@ -545,6 +545,42 @@ pub fn read_tip_objects(base: &Path) -> Vec<PathBuf> {
     out
 }
 
+/// Extract the `.rcgu.o` objects from a set of `.rlib`s into `dir`.
+///
+/// Passing these objects directly to the linker force-includes them (the
+/// whole-archive equivalent) without an archive the MSVC linker would reject.
+/// Member names are prefixed with the rlib stem to avoid collisions.
+pub fn extract_rlib_objects(
+    rlibs: &[PathBuf],
+    dir: &Path,
+) -> anyhow::Result<Vec<PathBuf>> {
+    std::fs::create_dir_all(dir)?;
+    let mut out = Vec::new();
+    for rlib in rlibs {
+        let stem = rlib
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "rlib".to_string());
+        let bytes = std::fs::read(rlib)?;
+        let mut archive = ar::Archive::new(std::io::Cursor::new(bytes));
+        while let Some(entry) = archive.next_entry() {
+            let Ok(mut entry) = entry else { continue };
+            let name =
+                String::from_utf8_lossy(entry.header().identifier()).to_string();
+            if !name.ends_with(".rcgu.o") {
+                continue;
+            }
+            let out_path = dir.join(format!("{stem}-{name}"));
+            let mut data = Vec::new();
+            std::io::copy(&mut entry, &mut data)?;
+            std::fs::write(&out_path, &data)?;
+            out.push(out_path);
+        }
+    }
+    out.sort();
+    Ok(out)
+}
+
 /// Build a "fat archive" from the workspace's `.rlib`s.
 ///
 /// Rust's `.rlib`s are `ar` archives of `.rcgu.o` objects (plus `.rmeta`
@@ -779,10 +815,19 @@ pub fn fat_link_in_place(
     real_linker: &Path,
     flavor: LinkerFlavor,
     link_args: &[String],
-    _workspace_target_dir: &Path,
+    workspace_target_dir: &Path,
     fat_archive: &Path,
 ) -> anyhow::Result<usize> {
-    let args = fat_link_args(link_args, None, flavor);
+    // Force-include the workspace objects so symbols that `link.exe`'s
+    // `/OPT:REF` would otherwise prune (e.g. std alloc shims) stay in the fat
+    // binary's symbol table.
+    let rlibs = workspace_rlibs(link_args, workspace_target_dir);
+    let obj_dir = fat_archive.with_extension("objects");
+    let objects = extract_rlib_objects(&rlibs, &obj_dir)?;
+    let mut base = without_paths(link_args, &rlibs);
+    base.extend(objects.iter().map(|p| p.display().to_string()));
+
+    let args = fat_link_args(&base, None, flavor);
 
     // Windows link commands routinely exceed the command-line limit, so the
     // extended argument set goes through a command file.
@@ -807,7 +852,7 @@ pub fn fat_link_in_place(
         }
         anyhow::bail!("fat link failed ({}): {msg}", result.status);
     }
-    Ok(0)
+    Ok(objects.len())
 }
 
 /// Everything needed to build one patch.
@@ -1414,6 +1459,42 @@ mod tests {
         let mut gnu = vec!["-o".to_string(), "a".to_string()];
         set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
         assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
+    }
+
+    #[test]
+    fn extracts_rcgu_objects_from_rlibs() {
+        let dir = temp_dir("hp-extract");
+        std::fs::create_dir_all(&dir).unwrap();
+        let rlib = dir.join("libfoo.rlib");
+        {
+            let file = std::fs::File::create(&rlib).unwrap();
+            let mut builder = ar::Builder::new(file);
+            let obj = b"OBJ";
+            builder
+                .append(
+                    &ar::Header::new(b"foo.rcgu.o".to_vec(), obj.len() as u64),
+                    &obj[..],
+                )
+                .unwrap();
+            let meta = b"M";
+            builder
+                .append(
+                    &ar::Header::new(b"foo.rmeta".to_vec(), meta.len() as u64),
+                    &meta[..],
+                )
+                .unwrap();
+        }
+        let objects =
+            extract_rlib_objects(&[rlib], &dir.join("objects")).unwrap();
+        assert_eq!(objects.len(), 1);
+        assert!(
+            objects[0]
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .contains("foo.rcgu.o")
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
