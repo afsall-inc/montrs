@@ -545,17 +545,25 @@ fn resolve_wrapper(stem: &str) -> Option<PathBuf> {
 
 /// Ask rustc which linker it would use, so the link wrapper can forward to it.
 fn discover_real_linker() -> Option<PathBuf> {
-    let probe = std::env::temp_dir().join(format!(
-        "montrs-linker-probe-{}.rs",
+    // Run the probe in its own temp dir: `rustc --print=link-args` still
+    // emits an executable next to the probe, which must not land in the project.
+    let dir = std::env::temp_dir().join(format!(
+        "montrs-linker-probe-{}",
         std::process::id()
     ));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).ok()?;
+    let probe = dir.join("probe.rs");
     std::fs::write(&probe, "fn main() {}").ok()?;
+
     let output = std::process::Command::new("rustc")
+        .current_dir(&dir)
         .arg("--print=link-args")
-        .arg(&probe)
+        .arg("probe.rs")
         .output()
         .ok();
-    let _ = std::fs::remove_file(&probe);
+    let _ = std::fs::remove_dir_all(&dir);
+
     let output = output?;
     if !output.status.success() {
         return None;
