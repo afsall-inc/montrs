@@ -131,6 +131,35 @@ impl RustcInvocation {
         }
         None
     }
+
+    /// The argv to replay this invocation directly with `rustc`.
+    ///
+    /// Skips `argv[0]` (the rustc path) and strips any `-C linker=` override, so
+    /// replayed crates produce real outputs instead of re-entering the linker
+    /// shim during a patch build.
+    pub fn replay_args(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut i = 1;
+        while i < self.args.len() {
+            let arg = &self.args[i];
+            if arg == "-C"
+                && self
+                    .args
+                    .get(i + 1)
+                    .is_some_and(|next| next.starts_with("linker="))
+            {
+                i += 2;
+                continue;
+            }
+            if arg.starts_with("-Clinker=") || arg.starts_with("--linker=") {
+                i += 1;
+                continue;
+            }
+            out.push(arg.clone());
+            i += 1;
+        }
+        out
+    }
 }
 
 /// The crates whose captured `rustc` invocation mentions any changed file.
@@ -1210,6 +1239,31 @@ mod tests {
         let mut gnu = vec!["-o".to_string(), "a".to_string()];
         set_link_output(LinkerFlavor::Gnu, &mut gnu, Path::new("b"));
         assert_eq!(link_output(&gnu), Some(PathBuf::from("b")));
+    }
+
+    #[test]
+    fn replay_args_strip_linker_overrides() {
+        let invocation = RustcInvocation {
+            args: vec![
+                "rustc".into(),
+                "-C".into(),
+                "linker=C:\\w\\shim.exe".into(),
+                "-Clinker=other".into(),
+                "--crate-name".into(),
+                "app".into(),
+                "--emit=metadata".into(),
+            ],
+            cwd: PathBuf::from("/w"),
+            envs: vec![],
+        };
+        assert_eq!(
+            invocation.replay_args(),
+            vec![
+                "--crate-name".to_string(),
+                "app".to_string(),
+                "--emit=metadata".to_string()
+            ]
+        );
     }
 
     #[test]
