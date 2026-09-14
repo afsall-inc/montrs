@@ -251,6 +251,27 @@ pub async fn run() -> anyhow::Result<()> {
         }
     };
 
+    // Hot-patch socket: clients report their runtime base address and receive
+    // jump tables to apply. Started alongside capture.
+    let hotpatch_server = if hotpatch_enabled {
+        match montrs_dev_hotpatch::server::HotPatchServer::start(
+            reload_port.saturating_add(1),
+        )
+        .await
+        {
+            Ok((server, port)) => {
+                println!("Hot-patch socket on ws://0.0.0.0:{port}");
+                Some(server)
+            }
+            Err(e) => {
+                eprintln!("Hot-patch socket unavailable ({e}).");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     // Watch channel: the blocking file watcher signals a rebuild here. View
     // and CSS edits are handled entirely inside the watcher thread (instant
     // patches, no cargo) and never reach this channel.
@@ -421,6 +442,7 @@ pub async fn run() -> anyhow::Result<()> {
                                     &bin,
                                     &hotpatch_workspace_target,
                                     &hotpatch_dir,
+                                    hotpatch_server.as_ref(),
                                 );
                             }
                         }
@@ -520,13 +542,15 @@ fn log_capture(dir: &Path) {
 
 /// Attempt to build a patch from the freshly captured tip objects.
 ///
-/// Opt-in via `MONTRS_HOTPATCH_PATCH=1` because it needs the client's runtime
-/// base address (`MONTRS_HOTPATCH_ASLR`, hex) to address the stubs; without a
-/// connected client this just proves the pipeline produces a jump table.
+/// Opt-in via `MONTRS_HOTPATCH_PATCH=1`. The client's runtime base address
+/// comes from a connected client (`ClientMsg::AslrReference`), falling back to
+/// `MONTRS_HOTPATCH_ASLR` (hex); the built table is broadcast on the hot-patch
+/// socket.
 fn try_build_patch(
     bin: &Path,
     workspace_target_dir: &Path,
     hotpatch_dir: &Path,
+    server: Option<&montrs_dev_hotpatch::server::HotPatchServer>,
 ) {
     let Ok(linker) = std::env::var("MONTRS_REAL_LINKER") else {
         eprintln!("Hot-patch: real linker unknown; skipping patch build.");
@@ -537,12 +561,18 @@ fn try_build_patch(
         Ok("gnu") => montrs_dev_hotpatch::LinkerFlavor::Gnu,
         _ => montrs_dev_hotpatch::LinkerFlavor::Other,
     };
-    let aslr_reference = std::env::var("MONTRS_HOTPATCH_ASLR")
-        .ok()
-        .and_then(|s| {
-            u64::from_str_radix(s.trim_start_matches("0x"), 16).ok()
+
+    let report = server.and_then(|s| s.latest_aslr());
+    let aslr_reference = report
+        .map(|r| r.aslr_reference)
+        .or_else(|| {
+            std::env::var("MONTRS_HOTPATCH_ASLR").ok().and_then(|s| {
+                u64::from_str_radix(s.trim_start_matches("0x"), 16).ok()
+            })
         })
         .unwrap_or(0);
+    let build_id = report.map(|r| r.build_id).unwrap_or(0);
+    let pid = report.and_then(|r| r.pid);
 
     let request = montrs_dev_hotpatch::PatchRequest {
         capture_base: hotpatch_dir,
@@ -551,15 +581,20 @@ fn try_build_patch(
         real_linker: Path::new(&linker),
         flavor,
         aslr_reference,
-        build_id: 0,
-        pid: Some(std::process::id()),
+        build_id,
+        pid,
     };
     match montrs_dev_hotpatch::build_patch(&request) {
-        Ok(table) => println!(
-            "Hot-patch: built patch {} with {} jump-table entries.",
-            table.lib.display(),
-            table.map.len()
-        ),
+        Ok(table) => {
+            let entries = table.map.len();
+            let lib = table.lib.display().to_string();
+            if let Some(server) = server {
+                server.hot_reload(table, build_id, pid);
+            }
+            println!(
+                "Hot-patch: built patch {lib} with {entries} jump-table entries."
+            );
+        }
         Err(e) => eprintln!("Hot-patch: patch build failed: {e}"),
     }
 }
