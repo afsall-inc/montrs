@@ -76,6 +76,23 @@ pub enum DevserverMsg {
     Shutdown,
 }
 
+/// A message a connected application sends back to the hot-patch dev server.
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ClientMsg {
+    /// The running process's runtime base address (ASLR slide reference).
+    ///
+    /// Stub emission needs this so undefined symbols in the patch jump to the
+    /// correct runtime addresses. Native sends its pid; wasm omits it.
+    AslrReference {
+        build_id: u64,
+        pid: Option<u32>,
+        aslr_reference: u64,
+    },
+    /// Structured log lines forwarded from the client.
+    Log { level: String, messages: Vec<String> },
+}
+
 /// The payload for [`DevserverMsg::HotReload`].
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct HotReloadMsg {
@@ -403,14 +420,33 @@ pub fn undefined_symbols(objects: &[PathBuf]) -> anyhow::Result<Vec<String>> {
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
 
-/// A name → address map of the fat (running) binary's symbols.
+/// A symbol's kind, enough to choose a stub shape (jump vs. data word).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SymbolKind {
+    /// Executable code.
+    Text,
+    /// Data.
+    Data,
+    /// Unknown / not important.
+    Unknown,
+}
+
+/// One indexed symbol.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct IndexedSymbol {
+    pub address: u64,
+    pub kind: SymbolKind,
+    pub is_undefined: bool,
+}
+
+/// A `name → symbol` map of a binary's symbols.
 ///
 /// A hot patch is linked against the running process's known symbol addresses,
 /// so the patcher first reads them: from the sibling `.pdb` on Windows, or the
 /// executable's object symbol table elsewhere.
 #[derive(Debug, Default)]
 pub struct SymbolIndex {
-    symbols: std::collections::HashMap<String, u64>,
+    symbols: std::collections::HashMap<String, IndexedSymbol>,
 }
 
 impl SymbolIndex {
@@ -436,7 +472,15 @@ impl SymbolIndex {
                     if let Some(rva) = data.offset.to_rva(&address_map) {
                         symbols.insert(
                             data.name.to_string().to_string(),
-                            rva.0 as u64,
+                            IndexedSymbol {
+                                address: rva.0 as u64,
+                                kind: if data.function {
+                                    SymbolKind::Text
+                                } else {
+                                    SymbolKind::Data
+                                },
+                                is_undefined: false,
+                            },
                         );
                     }
                 }
@@ -444,7 +488,11 @@ impl SymbolIndex {
                     if let Some(rva) = data.offset.to_rva(&address_map) {
                         symbols.insert(
                             data.name.to_string().to_string(),
-                            rva.0 as u64,
+                            IndexedSymbol {
+                                address: rva.0 as u64,
+                                kind: SymbolKind::Data,
+                                is_undefined: false,
+                            },
                         );
                     }
                 }
@@ -464,27 +512,64 @@ impl SymbolIndex {
         let mut symbols = std::collections::HashMap::new();
         for symbol in file.symbols() {
             if let Ok(name) = symbol.name() {
-                symbols.insert(name.to_string(), symbol.address());
+                symbols.insert(
+                    name.to_string(),
+                    IndexedSymbol {
+                        address: symbol.address(),
+                        kind: match symbol.kind() {
+                            object::SymbolKind::Text => SymbolKind::Text,
+                            object::SymbolKind::Data => SymbolKind::Data,
+                            _ => SymbolKind::Unknown,
+                        },
+                        is_undefined: symbol.is_undefined(),
+                    },
+                );
             }
         }
         Ok(Self { symbols })
     }
 
-    /// Build an index directly from `name → address` pairs.
+    /// Build an index directly from `name → address` pairs (kind `Text`).
     pub fn from_pairs<I: IntoIterator<Item = (String, u64)>>(pairs: I) -> Self {
+        Self {
+            symbols: pairs
+                .into_iter()
+                .map(|(name, address)| {
+                    (
+                        name,
+                        IndexedSymbol {
+                            address,
+                            kind: SymbolKind::Text,
+                            is_undefined: false,
+                        },
+                    )
+                })
+                .collect(),
+        }
+    }
+
+    /// Build an index from fully-described symbols.
+    pub fn from_indexed<I: IntoIterator<Item = (String, IndexedSymbol)>>(
+        pairs: I,
+    ) -> Self {
         Self {
             symbols: pairs.into_iter().collect(),
         }
     }
 
-    /// Iterate over `(name, address)` pairs.
-    pub fn iter(&self) -> impl Iterator<Item = (&String, &u64)> {
+    /// Iterate over `(name, symbol)` pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&String, &IndexedSymbol)> {
         self.symbols.iter()
     }
 
     /// Look up a symbol's address.
     pub fn get(&self, name: &str) -> Option<u64> {
-        self.symbols.get(name).copied()
+        self.symbols.get(name).map(|s| s.address)
+    }
+
+    /// Look up a symbol's full record.
+    pub fn symbol(&self, name: &str) -> Option<&IndexedSymbol> {
+        self.symbols.get(name)
     }
 
     /// Whether a symbol is present.
@@ -516,9 +601,9 @@ pub fn build_jump_table(
     patch: &SymbolIndex,
 ) -> anyhow::Result<JumpTable> {
     let mut map = subsecond_types::AddressMap::default();
-    for (name, new_addr) in patch.iter() {
+    for (name, new_sym) in patch.iter() {
         if let Some(old_addr) = fat.get(name) {
-            map.insert(old_addr, *new_addr);
+            map.insert(old_addr, new_sym.address);
         }
     }
 
@@ -536,6 +621,86 @@ pub fn build_jump_table(
         new_base_address,
         ifunc_count: 0,
     })
+}
+
+/// Emit an object file that satisfies patch `undefined` symbols by jumping to
+/// (text) or pointing at (data) their addresses in the running binary.
+///
+/// `aslr_offset` is `runtime_base - fat_main_rva`, which turns the fat binary's
+/// relative symbol addresses into the runtime absolute addresses the patch must
+/// call. x86_64 text symbols get a `mov rax, imm64; jmp rax` trampoline; data
+/// symbols (and Windows `__imp_` pointers) get an 8-byte absolute word.
+pub fn emit_undefined_symbol_stubs(
+    undefined: &[String],
+    fat: &SymbolIndex,
+    aslr_offset: u64,
+) -> anyhow::Result<Vec<u8>> {
+    use object::write::{Object, StandardSection, Symbol, SymbolSection};
+    use object::{
+        Architecture, BinaryFormat, Endianness, SymbolFlags,
+        SymbolKind as ObjKind, SymbolScope,
+    };
+
+    let mut obj = Object::new(
+        BinaryFormat::Coff,
+        Architecture::X86_64,
+        Endianness::Little,
+    );
+    let text = obj.section_id(StandardSection::Text);
+    let data = obj.section_id(StandardSection::Data);
+    let mut text_bytes: Vec<u8> = Vec::new();
+    let mut data_bytes: Vec<u8> = Vec::new();
+
+    for name in undefined {
+        // `__imp_x` is a pointer to `x`; resolve through it.
+        let lookup = name.strip_prefix("__imp_").unwrap_or(name);
+        let Some(sym) = fat.symbol(lookup) else {
+            continue;
+        };
+        if sym.is_undefined {
+            continue;
+        }
+        let absolute = sym.address.wrapping_add(aslr_offset);
+
+        if name.starts_with("__imp_") || sym.kind == SymbolKind::Data {
+            let offset = data_bytes.len() as u64;
+            data_bytes.extend_from_slice(&absolute.to_le_bytes());
+            obj.add_symbol(Symbol {
+                name: name.as_bytes().to_vec(),
+                value: offset,
+                size: 8,
+                kind: ObjKind::Data,
+                scope: SymbolScope::Linkage,
+                weak: false,
+                flags: SymbolFlags::None,
+                section: SymbolSection::Section(data),
+            });
+        } else if sym.kind == SymbolKind::Text {
+            let offset = text_bytes.len() as u64;
+            // mov rax, imm64 ; jmp rax
+            text_bytes.extend_from_slice(&[0x48, 0xB8]);
+            text_bytes.extend_from_slice(&absolute.to_le_bytes());
+            text_bytes.extend_from_slice(&[0xFF, 0xE0]);
+            obj.add_symbol(Symbol {
+                name: name.as_bytes().to_vec(),
+                value: offset,
+                size: 12,
+                kind: ObjKind::Text,
+                scope: SymbolScope::Linkage,
+                weak: false,
+                flags: SymbolFlags::None,
+                section: SymbolSection::Section(text),
+            });
+        }
+    }
+
+    if !text_bytes.is_empty() {
+        obj.append_section_data(text, &text_bytes, 1);
+    }
+    if !data_bytes.is_empty() {
+        obj.append_section_data(data, &data_bytes, 8);
+    }
+    Ok(obj.write()?)
 }
 
 #[cfg(test)]
@@ -621,6 +786,87 @@ mod tests {
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    fn emits_text_and_data_stubs() {
+        use object::{Object, ObjectSection, ObjectSymbol};
+
+        let fat = SymbolIndex::from_indexed([
+            (
+                "some_fn".to_string(),
+                IndexedSymbol {
+                    address: 0x1000,
+                    kind: SymbolKind::Text,
+                    is_undefined: false,
+                },
+            ),
+            (
+                "some_data".to_string(),
+                IndexedSymbol {
+                    address: 0x2000,
+                    kind: SymbolKind::Data,
+                    is_undefined: false,
+                },
+            ),
+            (
+                "stat".to_string(),
+                IndexedSymbol {
+                    address: 0x3000,
+                    kind: SymbolKind::Data,
+                    is_undefined: false,
+                },
+            ),
+        ]);
+        let undefined = vec![
+            "some_fn".to_string(),
+            "some_data".to_string(),
+            "__imp_stat".to_string(),
+        ];
+
+        let bytes =
+            emit_undefined_symbol_stubs(&undefined, &fat, 0x4000).unwrap();
+        let file = object::File::parse(&*bytes).unwrap();
+
+        let mut names = std::collections::HashSet::new();
+        for symbol in file.symbols() {
+            if let Ok(name) = symbol.name() {
+                names.insert(name.to_string());
+            }
+        }
+        assert!(names.contains("some_fn"));
+        assert!(names.contains("some_data"));
+        assert!(names.contains("__imp_stat"));
+
+        // Text stub: mov rax, 0x5000 ; jmp rax
+        let text = file.section_by_name(".text").unwrap().data().unwrap();
+        assert_eq!(&text[0..2], &[0x48, 0xB8]);
+        assert_eq!(
+            u64::from_le_bytes(text[2..10].try_into().unwrap()),
+            0x5000
+        );
+        assert_eq!(&text[10..12], &[0xFF, 0xE0]);
+
+        // Data stubs: absolute words for some_data and __imp_stat.
+        let data = file.section_by_name(".data").unwrap().data().unwrap();
+        assert_eq!(u64::from_le_bytes(data[0..8].try_into().unwrap()), 0x6000);
+        assert_eq!(
+            u64::from_le_bytes(data[8..16].try_into().unwrap()),
+            0x7000
+        );
+    }
+
+    #[test]
+    fn client_aslr_message_round_trips() {
+        let msg = ClientMsg::AslrReference {
+            build_id: 0,
+            pid: Some(42),
+            aslr_reference: 0x1_4000_0000,
+        };
+        let json = serde_json::to_string(&msg).unwrap();
+        assert!(json.contains("\"type\":\"aslr_reference\""), "{json}");
+        let back: ClientMsg = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, msg);
     }
 
     #[test]
