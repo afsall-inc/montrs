@@ -7,10 +7,19 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace.dependencies]
-montrs-core = { path = "../../../packages/core" }
-montrs-ui = { path = "../../../packages/ui" }
-montrs-icons = { path = "../../../packages/icons" }
+montrs-core = { path = "../../packages/core" }
+montrs-ui = { path = "../../packages/ui" }
+montrs-icons = { path = "../../packages/icons" }
 leptos = { version = "0.8", features = ["hydrate", "ssr"] }
 tw_merge = "0.1"
 paste = "1"
 serde = { version = "1", features = ["derive"] }
+
+# Dev hot-reload profile: optimized like `release`, but with debug assertions so
+# the WASM client emits the same hot-reload markers as the dev SSR server.
+# `montrs serve` builds the frontend with this profile.
+[profile.hot]
+inherits = "release"
+debug-assertions = true
+debug = false
+incremental = true

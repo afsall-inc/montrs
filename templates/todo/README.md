@@ -47,3 +47,10 @@ content = ["src/**/*.rs", "*.html"]
 prefix = "tw-"
 separator = ":"
 ```
+
+## Hot Reload
+
+`montrs serve` hot-reloads `view!` and CSS changes. The `[profile.hot]` profile
+in `Cargo.toml` (release optimization plus `debug-assertions`) and the pinned
+`LEPTOS_WATCH` in `.cargo/config.toml` keep the SSR server and WASM client
+emitting matching hot-reload markers — keep both files intact.

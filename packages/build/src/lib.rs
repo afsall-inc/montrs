@@ -49,21 +49,29 @@ pub use pipeline::Pipeline;
 /// reduced type-depth and faster compiles. On failure the full compiler
 /// output is returned as the error message so the dev server can forward it
 /// to the browser error overlay.
-pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
+pub fn run_cargo(
+    args: &[String],
+    leptos_watch: bool,
+) -> anyhow::Result<()> {
     use std::io::{BufRead, BufReader};
     use std::process::{Command, Stdio};
 
-    let mut child = Command::new("cargo")
+    let mut command = Command::new("cargo");
+    command
         .env("RUSTFLAGS", "--cfg erase_components")
-        // Compile-time switch the Leptos `view!` macro uses to emit
-        // `<!--hot-reload|id|-->` DOM markers (paired with `debug_assertions`,
-        // so release/production builds never emit them). Without this the
-        // browser can't locate view instances to patch.
-        .env("LEPTOS_WATCH", "1")
         .args(args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
+        .stderr(Stdio::piped());
+    // Enable Leptos hot-reload markers only when BOTH sides agree: the SSR
+    // server (dev profile) and the WASM client (`hot` profile) are both built
+    // with `debug_assertions`, so both emit the `<!--hot-reload|id|-->` markers
+    // and hydration stays consistent. Setting this for only one side makes
+    // `tachys` hydration panic (`failed_to_cast_*`).
+    if leptos_watch {
+        command.env("LEPTOS_WATCH", "1");
+    }
+
+    let mut child = command.spawn()?;
 
     let stdout = child.stdout.take().expect("piped stdout");
     let stderr = child.stderr.take().expect("piped stderr");

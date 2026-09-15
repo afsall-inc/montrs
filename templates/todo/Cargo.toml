@@ -6,6 +6,15 @@ edition = "2024"
 [workspace]
 members = ["e2e"]
 
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+anyhow = "1"
+thiserror = "1"
+leptos = { version = "0.8", features = ["hydrate", "ssr"] }
+
 [dependencies]
 montrs-core = { path = "../../packages/core" }
 montrs-validator = { path = "../../packages/validator" }
@@ -23,3 +32,12 @@ thiserror = { workspace = true }
 tokio-postgres = "0.7"
 leptos = { workspace = true }
 tw_merge = "0.1"
+
+# Dev hot-reload profile: optimized like `release`, but with debug assertions so
+# the WASM client emits the same hot-reload markers as the dev SSR server.
+# `montrs serve` builds the frontend with this profile.
+[profile.hot]
+inherits = "release"
+debug-assertions = true
+debug = false
+incremental = true

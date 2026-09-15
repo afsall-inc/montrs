@@ -130,6 +130,24 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Depends on `montrs-build-core` for configuration types. Uses `axum` + `tower-http` for serving.
 - **When to modify**: When adding server features (live reload, proxy, HTTPS).
 
+## 📦 `montrs-hot-reload`
+- **Responsibility**: `view!` hot reload — diff macro source and produce markup patches for the browser.
+- **Key Components**: `ViewPatcher`, `ViewMacros`, view-only skeleton classification.
+- **Boundary**: Source parsing and diffing only. No DOM, no build orchestration.
+- **When to modify**: When changing how `view!` edits are detected or patched.
+
+## 📦 `montrs-dev-hotpatch`
+- **Responsibility**: Rust hot-patching dev tooling: capture, fat link, patch link, jump tables, the dev hub, and the native client.
+- **Key Components**: `build_patch`, `fat_link_in_place`, `SymbolIndex`, `emit_undefined_symbol_stubs`, `build_jump_table`, `server::HotPatchServer`, `client::connect`, and the `montrs-rustc-wrapper`/`montrs-link-wrapper` shims.
+- **Boundary**: Layer 2, dev-only. Never shipped in an app; the app-facing surface is `montrs-hotpatch`.
+- **When to modify**: When changing hot-patch capture, linking, or the wire protocol.
+
+## 📦 `montrs-hotpatch`
+- **Responsibility**: Runtime facade so apps need zero hot-patch code: the `serve!` macro, the render cutover, and the client bootstrap.
+- **Key Components**: `serve!`, `cutover`, `install_client_from_env`.
+- **Boundary**: Layer 2. Depends on `montrs-core` and `montrs-dev-hotpatch`. A no-op in release builds.
+- **When to modify**: When changing the app-facing hot-patch entrypoint.
+
 ## 📦 `montrs-env`
 - **Responsibility**: Environment variable management — parse `[env]` from `montrs.toml`, Tera rendering, `.env` loading, apply to process.
 - **Key Components**: `EnvDirective`, `Environment`, `EnvDiff`, `parse_env_section`, `resolve_environment`, `apply_environment`.

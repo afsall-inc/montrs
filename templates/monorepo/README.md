@@ -62,3 +62,15 @@ This structure is **not prescriptive**. You can:
 - Add more apps (mobile, CLI, etc.)
 - Create any shared packages you need
 - Organize however fits your project
+
+## Hot Reload
+
+`montrs watch` runs a hot-reloading dev loop: editing a `view! { ... }` block or
+`style/main.css` updates the page in place. This needs two things that ship with
+the template:
+
+- `[profile.hot]` in the workspace `Cargo.toml` — the dev client profile
+  (release optimization plus `debug-assertions`).
+- `.cargo/config.toml`, which pins `LEPTOS_WATCH` so the SSR server and WASM
+  client always emit matching hot-reload markers (cargo does not track that env
+  var, so keeping it constant avoids mismatched builds and hydration failures).

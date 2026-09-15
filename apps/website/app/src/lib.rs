@@ -62,6 +62,10 @@ pub fn build_spec() -> AppSpec<MyConfig> {
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
     console_error_panic_hook::set_once();
+    // Connect to the dev server's hot-patch socket so Rust logic can be
+    // hot-patched without a reload (opt-in via the `hotpatch` feature).
+    #[cfg(feature = "hotpatch")]
+    leptos::subsecond::connect_to_hot_patch_messages();
     let spec = build_spec();
     leptos::mount::hydrate_body(move || {
         provide_context(spec.router);

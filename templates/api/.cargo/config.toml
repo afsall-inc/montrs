@@ -1,0 +1,6 @@
+[env]
+# Leptos compiles hot-reload markers into the `leptos` crate from this env var,
+# which cargo does not track. Pinning it here keeps the dev SSR server and the
+# `hot` WASM client in agreement (debug builds emit markers; release does not),
+# so `montrs serve` changes nothing about how you invoke cargo directly.
+LEPTOS_WATCH = "1"

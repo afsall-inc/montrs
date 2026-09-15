@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-playwright = { path = "../../../../playwright-rust/crates/playwright" }
+montrs-test = { path = "../../../packages/test", features = ["e2e"] }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"

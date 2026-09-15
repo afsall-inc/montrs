@@ -75,12 +75,27 @@ lint = { command = "cargo clippy --workspace -- -D warnings", category = "Qualit
 test = { command = "cargo test --workspace", category = "Testing", depends = ["fmt", "lint"] }
 ship = { command = "montrs build", category = "Release", depends = ["test"] }"#;
 
+const HOTRELOAD_SNIPPET: &str = r#"// montrs.toml
+//   [serve]
+//   hotpatch = true
+
+// app/src/main.rs
+fn main() {
+    let spec = app::build_spec();
+    montrs_hotpatch::serve!(
+        spec.router,
+        || leptos::prelude::view! { <Shell /> },
+    )
+    .unwrap();
+}"#;
+
 #[component]
 pub fn Home() -> impl IntoView {
     view! {
         <Hero />
         <StatsRow />
         <BentoGrid />
+        <HotReload />
         <GoldenPath />
         <Philosophy />
         <AgentFirst />
@@ -89,6 +104,66 @@ pub fn Home() -> impl IntoView {
         <Faq />
         <TaskRunnerAndSponsors />
         <FinalCta />
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Live development loop
+// ---------------------------------------------------------------------------
+
+#[component]
+fn HotReload() -> impl IntoView {
+    view! {
+        <section class="border-t border-border py-20">
+            <div class="page-container">
+                <div class="mx-auto max-w-2xl text-center">
+                    <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+                        "A live loop that keeps up with you"
+                    </h2>
+                    <p class="mt-4 text-muted-foreground">
+                        "Three levels of live updates while you work: styles, markup, and — experimentally — the Rust itself."
+                    </p>
+                </div>
+
+                <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="showcase-card p-6">
+                        <span class="pill"><span class="pill-accent">"Instant"</span></span>
+                        <h3 class="mt-4 font-semibold">"CSS & assets"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Stylesheet and asset edits apply immediately — no recompile, no reload."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill"><span class="pill-accent">"Hot reload"</span></span>
+                        <h3 class="mt-4 font-semibold">"view! markup"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Edit structure, text, or classes and the browser DOM is patched in place, preserving state."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill"><span class="pill-accent">"Hot patch"</span></span>
+                        <h3 class="mt-4 font-semibold">"Rust logic"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Change real Rust code and the running server applies a thin-linked patch without restarting — same PID, state kept."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mx-auto mt-14 max-w-3xl">
+                    <CodeWindow
+                        tab="main.rs"
+                        body=move || highlight_rust(HOTRELOAD_SNIPPET)
+                    />
+                </div>
+
+                <div class="mt-8 flex justify-center">
+                    <a
+                        href="/docs"
+                        class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                    >"Read the live-loop guide"</a>
+                </div>
+            </div>
+        </section>
     }
 }
 

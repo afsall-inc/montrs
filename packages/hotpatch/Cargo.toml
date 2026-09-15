@@ -1,0 +1,17 @@
+[package]
+name = "montrs-hotpatch"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Dev hot-patch runtime for MontRS: a hidden cutover plus the native patch client"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = ["montrs-core", "montrs-dev-hotpatch"]
+
+[dependencies]
+montrs-core = { path = "../core" }
+montrs-dev-hotpatch = { path = "../dev-hotpatch" }
+subsecond = "0.7"

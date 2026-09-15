@@ -43,3 +43,15 @@ You can configure Tailwind in two ways:
 ```bash
 montrs watch
 ```
+
+## Hot Reload
+
+`montrs serve` / `montrs watch` run a hot-reloading dev loop:
+
+- Editing a `view! { ... }` block or `style/main.css` updates the page in place.
+- The dev client is built with the `[profile.hot]` profile in `Cargo.toml`
+  (release optimization plus `debug-assertions`), so it stays fast while still
+  emitting the same hot-reload markers as the dev SSR server.
+- `.cargo/config.toml` pins `LEPTOS_WATCH`, which `leptos` reads at compile time
+  to decide whether to emit those markers. Keep both `[profile.hot]` and that
+  file: without them the SSR and WASM builds disagree and hydration fails.

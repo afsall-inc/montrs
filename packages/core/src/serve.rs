@@ -146,11 +146,19 @@ where
 
     // Next.js-style dev overlay, injected by the framework itself (not the
     // app) so it appears in every MontRS app during `montrs serve`/`watch`.
+    // `/_dioxus` bridges to the CLI's hot-patch socket so a Leptos
+    // `connect_to_hot_patch_messages` client (which targets that path) works.
     if std::env::var("LEPTOS_WATCH").is_ok() {
-        app = app.layer(axum::middleware::from_fn(inject_dev_overlay));
+        app = app
+            .route("/_dioxus", axum::routing::get(devtools_bridge))
+            .layer(axum::middleware::from_fn(inject_dev_overlay));
     }
 
     let app = app
+        // SSR renders once and needs no reactivity, so signal reads during
+        // rendering are the intended false positives the non-reactive zone
+        // covers; this silences Leptos's debug-mode untracked-read warnings.
+        .layer(axum::middleware::from_fn(non_reactive_zone))
         // Dev servers must never serve stale bundles. The hydration entry
         // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
         // URLs, so Chrome's WASM/JS code caches keep serving old bytes unless
@@ -385,6 +393,78 @@ connect();
 "###,
     "</script>"
 );
+
+/// Suppress Leptos's debug-mode "outside a reactive tracking context" warnings
+/// while SSR renders. The server renders once and needs no reactivity, so these
+/// reads are the false positives the non-reactive zone is meant to cover.
+#[cfg(feature = "ssr")]
+async fn non_reactive_zone(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    reactive_graph::diagnostics::SpecialNonReactiveFuture::new(next.run(req))
+        .await
+}
+
+/// Upgrade `/_dioxus` and bridge it to the CLI's hot-patch socket
+/// (`MONTRS_HOTPATCH_ADDR`), so a client targeting that path reaches the hub.
+#[cfg(feature = "ssr")]
+async fn devtools_bridge(
+    upgrade: axum::extract::WebSocketUpgrade,
+) -> impl axum::response::IntoResponse {
+    upgrade.on_upgrade(devtools_socket)
+}
+
+#[cfg(feature = "ssr")]
+async fn devtools_socket(client: axum::extract::ws::WebSocket) {
+    use futures::{SinkExt, StreamExt};
+
+    let Ok(addr) = std::env::var("MONTRS_HOTPATCH_ADDR") else {
+        return;
+    };
+    let Ok((upstream, _)) =
+        tokio_tungstenite::connect_async(format!("ws://{addr}/")).await
+    else {
+        return;
+    };
+
+    let (mut client_tx, mut client_rx) = client.split();
+    let (mut up_tx, mut up_rx) = upstream.split();
+
+    let to_upstream = tokio::spawn(async move {
+        while let Some(Ok(msg)) = client_rx.next().await {
+            let out = match msg {
+                axum::extract::ws::Message::Text(text) => {
+                    tokio_tungstenite::tungstenite::Message::Text(
+                        text.to_string().into(),
+                    )
+                }
+                axum::extract::ws::Message::Close(_) => break,
+                _ => continue,
+            };
+            if up_tx.send(out).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    let to_client = tokio::spawn(async move {
+        while let Some(Ok(msg)) = up_rx.next().await {
+            let out = match msg {
+                tokio_tungstenite::tungstenite::Message::Text(text) => {
+                    axum::extract::ws::Message::Text(text.to_string().into())
+                }
+                tokio_tungstenite::tungstenite::Message::Close(_) => break,
+                _ => continue,
+            };
+            if client_tx.send(out).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    let _ = tokio::join!(to_upstream, to_client);
+}
 
 /// Axum middleware: injects the dev overlay script + a meta tag with the
 /// actual reload port into HTML responses so every MontRS app gets it in
