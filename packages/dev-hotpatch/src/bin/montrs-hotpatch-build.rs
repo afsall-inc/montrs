@@ -34,6 +34,26 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    // Debug aid: `--list <exe> <substr>` lists symbols whose name contains it.
+    if args.len() >= 4 && args[1] == "--list" {
+        let exe = Path::new(&args[2]);
+        let needle = &args[3];
+        match SymbolIndex::from_exe(exe) {
+            Ok(index) => {
+                let mut n = 0usize;
+                for (name, s) in index.iter() {
+                    if name.contains(needle.as_str()) {
+                        println!("{:#x} {:?} {}", s.address, s.kind, name);
+                        n += 1;
+                    }
+                }
+                println!("matched {n} / {}", index.len());
+            }
+            Err(e) => eprintln!("error: {e}"),
+        }
+        return ExitCode::SUCCESS;
+    }
+
     if args.len() < 6 {
         eprintln!(
             "usage: montrs-hotpatch-build <exe> <capture-base> \

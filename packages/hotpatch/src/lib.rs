@@ -72,7 +72,7 @@ macro_rules! serve {
     ($router:expr, $root:expr) => {{
         $crate::install_client_from_env();
         ::montrs_core::serve::montrs_serve($router, move || {
-            $crate::subsecond::call(|| ($root)())
+            $crate::subsecond::call($root)
         })
     }};
 }
