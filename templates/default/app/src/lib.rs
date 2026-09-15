@@ -4,7 +4,7 @@ use montrs_core::{AppConfig, AppSpec, EnvConfig, EnvError, Plate, PlateContext, 
 use montrs_ui::prelude::*;
 use montrs_icons::*;
 use async_trait::async_trait;
-use montrs_state::Store;
+use montrs_state::SimpleStore;
 
 pub fn build_spec() -> AppSpec<MyConfig> {
     let mut spec = AppSpec::new(MyConfig, MyEnv)
@@ -57,10 +57,7 @@ pub fn Shell() -> impl IntoView {
 #[component]
 pub fn App() -> impl IntoView {
     leptos_meta::provide_meta_context();
-    let counter = Store::new(
-        0_u32,
-        |state: &u32, event: &()| Ok(state + 1),
-    );
+    let counter = SimpleStore::new(0_u32);
     provide_context(counter);
     view! {
         <leptos_router::components::Router>
