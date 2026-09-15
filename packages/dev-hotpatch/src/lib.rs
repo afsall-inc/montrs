@@ -48,21 +48,26 @@
 //! runtime type originate from the Dioxus project's subsecond work
 //! (`dioxus-devtools` / `subsecond`), MIT/Apache-2.0, adapted here for MontRS.
 
+use serde::{Deserialize, Serialize};
 use std::{
     path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use serde::{Deserialize, Serialize};
-
 pub mod server;
 
 pub use subsecond_types::JumpTable;
 
 /// A message the hot-patch dev server sends to a connected application.
+///
+/// Externally tagged (like `dioxus_debugtools::DevserverMsg`), so it serializes
+/// as `{"HotReload":{…}}`. This matters: Serde's internally-tagged
+/// representation buffers values and cannot deserialize a populated
+/// `subsecond_types::AddressMap` (its `u64` keys arrive as JSON strings),
+/// whereas the external form round-trips. Leptos's
+/// `connect_to_hot_patch_messages` parses this same shape.
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-#[serde(tag = "type", rename_all = "snake_case")]
 pub enum DevserverMsg {
     /// Apply a patch (jump table) to the running process.
     HotReload(HotReloadMsg),
@@ -92,12 +97,25 @@ pub enum ClientMsg {
         aslr_reference: u64,
     },
     /// Structured log lines forwarded from the client.
-    Log { level: String, messages: Vec<String> },
+    Log {
+        level: String,
+        messages: Vec<String>,
+    },
 }
 
 /// The payload for [`DevserverMsg::HotReload`].
+///
+/// Field names mirror Dioxus's `HotReloadMsg` so the payload is accepted by
+/// Leptos's devtools client. MontRS delivers `view!` patches over its own
+/// live-reload socket, so `templates` and `assets` stay empty here.
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct HotReloadMsg {
+    /// Changed `view!` templates (Dioxus/Leptos wire shape; empty for MontRS).
+    #[serde(default)]
+    pub templates: Vec<serde_json::Value>,
+    /// Changed static assets (Dioxus/Leptos wire shape).
+    #[serde(default)]
+    pub assets: Vec<PathBuf>,
     /// The patch jump table, if this message carries one.
     pub jump_table: Option<JumpTable>,
     /// Wall-clock time the patch took to build, for the overlay.
@@ -183,9 +201,10 @@ pub fn changed_crates(
         let Some(name) = invocation.crate_name() else {
             continue;
         };
-        let mentions = invocation.args.iter().any(|arg| {
-            changed.contains(&arg.replace('\\', "/"))
-        });
+        let mentions = invocation
+            .args
+            .iter()
+            .any(|arg| changed.contains(&arg.replace('\\', "/")));
         if mentions {
             crates.insert(name.to_string());
         }
@@ -224,7 +243,11 @@ fn unique_name(kind: &str) -> String {
     format!("{kind}-{}-{nanos}-{seq}.json", std::process::id())
 }
 
-fn write_json<T: Serialize>(dir: &Path, name: &str, value: &T) -> std::io::Result<()> {
+fn write_json<T: Serialize>(
+    dir: &Path,
+    name: &str,
+    value: &T,
+) -> std::io::Result<()> {
     std::fs::create_dir_all(dir)?;
     let path = dir.join(name);
     let data = serde_json::to_vec_pretty(value)
@@ -592,8 +615,8 @@ pub fn extract_rlib_objects(
         let mut archive = ar::Archive::new(std::io::Cursor::new(bytes));
         while let Some(entry) = archive.next_entry() {
             let Ok(mut entry) = entry else { continue };
-            let name =
-                String::from_utf8_lossy(entry.header().identifier()).to_string();
+            let name = String::from_utf8_lossy(entry.header().identifier())
+                .to_string();
             if !name.ends_with(".rcgu.o") {
                 continue;
             }
@@ -630,8 +653,8 @@ pub fn build_fat_archive(
         let mut archive = ar::Archive::new(std::io::Cursor::new(bytes));
         while let Some(entry) = archive.next_entry() {
             let Ok(entry) = entry else { continue };
-            let name =
-                String::from_utf8_lossy(entry.header().identifier()).to_string();
+            let name = String::from_utf8_lossy(entry.header().identifier())
+                .to_string();
             if name.ends_with(".rmeta") || entry.header().size() == 0 {
                 continue;
             }
@@ -753,15 +776,10 @@ pub fn workspace_rlibs(
 }
 
 /// Replace (or add) the output path in link args for the given flavor.
-pub fn set_link_output(
-    flavor: LinkerFlavor,
-    args: &mut [String],
-    out: &Path,
-) {
+pub fn set_link_output(flavor: LinkerFlavor, args: &mut [String], out: &Path) {
     match flavor {
         LinkerFlavor::Msvc | LinkerFlavor::Other => {
-            if let Some(pos) =
-                args.iter().position(|a| a.starts_with("/OUT:"))
+            if let Some(pos) = args.iter().position(|a| a.starts_with("/OUT:"))
             {
                 args[pos] = format!("/OUT:{}", out.display());
             }
@@ -822,10 +840,7 @@ pub fn relink_fat(
             }
             msg.push_str(stdout.trim());
         }
-        anyhow::bail!(
-            "fat relink failed ({}): {msg}",
-            result.status
-        );
+        anyhow::bail!("fat relink failed ({}): {msg}", result.status);
     }
     std::fs::rename(&temp, output)?;
     Ok(written)
@@ -865,7 +880,9 @@ pub fn fat_link_in_place(
             .arg(format!("@{}", cmd_file.display()))
             .output()?
     } else {
-        std::process::Command::new(real_linker).args(&args).output()?
+        std::process::Command::new(real_linker)
+            .args(&args)
+            .output()?
     };
     if !result.status.success() {
         let mut msg =
@@ -924,7 +941,8 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     }
 
     let undefined = undefined_symbols(&objects)?;
-    let stub_bytes = emit_undefined_symbol_stubs(&undefined, &fat, aslr_offset)?;
+    let stub_bytes =
+        emit_undefined_symbol_stubs(&undefined, &fat, aslr_offset)?;
     let stub_path = base.join("patch-stubs.obj");
     std::fs::write(&stub_path, stub_bytes)?;
 
@@ -1307,10 +1325,10 @@ pub fn emit_undefined_symbol_stubs(
     fat: &SymbolIndex,
     aslr_offset: u64,
 ) -> anyhow::Result<Vec<u8>> {
-    use object::write::{Object, StandardSection, Symbol, SymbolSection};
     use object::{
         Architecture, BinaryFormat, Endianness, SymbolFlags,
         SymbolKind as ObjKind, SymbolScope,
+        write::{Object, StandardSection, Symbol, SymbolSection},
     };
 
     let mut obj = Object::new(
@@ -1450,12 +1468,17 @@ mod tests {
 
     #[test]
     fn parses_linker_from_print_link_args() {
-        let sample = "\"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\VC\\\\Tools\\\\MSVC\\\\14.44.35207\\\\bin\\\\HostX64\\\\x64\\\\link.exe\" \"/NOLOGO\" \"/OUT:probe.exe\"";
+        let sample = "\"C:\\\\Program Files\\\\Microsoft Visual \
+                      Studio\\\\2022\\\\VC\\\\Tools\\\\MSVC\\\\14.44.35207\\\\\
+                      bin\\\\HostX64\\\\x64\\\\link.exe\" \"/NOLOGO\" \
+                      \"/OUT:probe.exe\"";
         let linker = parse_linker_from_link_args(sample).expect("linker");
         assert_eq!(
             linker,
             PathBuf::from(
-                "C:\\Program Files\\Microsoft Visual Studio\\2022\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\link.exe"
+                "C:\\Program Files\\Microsoft Visual \
+                 Studio\\2022\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\\
+                 x64\\link.exe"
             )
         );
         assert!(parse_linker_from_link_args("not quoted").is_none());
@@ -1471,10 +1494,7 @@ mod tests {
             "\"/NOLOGO\" \"/OUT:C:\\a b\\x.exe\" \"libfoo.rlib\"",
         )
         .unwrap();
-        let args = vec![
-            format!("@{}", rf.display()),
-            "/DEBUG".to_string(),
-        ];
+        let args = vec![format!("@{}", rf.display()), "/DEBUG".to_string()];
         let out = expand_response_args(&args);
         assert_eq!(
             out,
@@ -1501,7 +1521,10 @@ mod tests {
             &args,
             &[PathBuf::from("libapp.rlib"), PathBuf::from("libui.rlib")],
         );
-        assert_eq!(out, vec!["/NOLOGO".to_string(), "C:\\rust\\libstd.rlib".to_string()]);
+        assert_eq!(
+            out,
+            vec!["/NOLOGO".to_string(), "C:\\rust\\libstd.rlib".to_string()]
+        );
     }
 
     #[test]
@@ -1514,7 +1537,10 @@ mod tests {
             flavor_from_triple("x86_64-unknown-linux-gnu"),
             LinkerFlavor::Gnu
         );
-        assert_eq!(flavor_from_triple("aarch64-apple-darwin"), LinkerFlavor::Other);
+        assert_eq!(
+            flavor_from_triple("aarch64-apple-darwin"),
+            LinkerFlavor::Other
+        );
     }
 
     #[test]
@@ -1548,7 +1574,7 @@ mod tests {
         fn module_with(exports: &[&str]) -> Vec<u8> {
             let mut module = walrus::Module::default();
             for name in exports {
-                let mut builder =
+                let builder =
                     walrus::FunctionBuilder::new(&mut module.types, &[], &[]);
                 let fid = builder.finish(vec![], &mut module.funcs);
                 module.exports.add(name, fid);
@@ -1560,12 +1586,9 @@ mod tests {
         let patch = module_with(&["a", "c", "d"]);
         assert_eq!(wasm_function_symbols(&fat).unwrap().len(), 3);
 
-        let table = build_wasm_jump_table(
-            PathBuf::from("patch.wasm"),
-            &fat,
-            &patch,
-        )
-        .unwrap();
+        let table =
+            build_wasm_jump_table(PathBuf::from("patch.wasm"), &fat, &patch)
+                .unwrap();
         assert_eq!(table.map.len(), 2, "only names in both modules map");
         assert_eq!(table.ifunc_count, 3);
     }
@@ -1714,8 +1737,7 @@ mod tests {
 
     #[test]
     fn patch_link_args_msvc_is_a_dll_with_export_and_output() {
-        let objects =
-            vec![PathBuf::from("a.obj"), PathBuf::from("stub.obj")];
+        let objects = vec![PathBuf::from("a.obj"), PathBuf::from("stub.obj")];
         let original = vec!["/LIBPATH:C:\\sdk\\lib".to_string()];
         let args = patch_link_args(
             LinkerFlavor::Msvc,
@@ -1752,7 +1774,10 @@ mod tests {
         assert!(args.contains(&"-lfoo".to_string()));
         assert!(args.contains(&"a.o".to_string()));
         let n = args.len();
-        assert_eq!(&args[n - 2..], &["-o".to_string(), "libpatch.so".to_string()]);
+        assert_eq!(
+            &args[n - 2..],
+            &["-o".to_string(), "libpatch.so".to_string()]
+        );
     }
 
     #[test]
@@ -1808,19 +1833,13 @@ mod tests {
         // Text stub: mov rax, 0x5000 ; jmp rax
         let text = file.section_by_name(".text").unwrap().data().unwrap();
         assert_eq!(&text[0..2], &[0x48, 0xB8]);
-        assert_eq!(
-            u64::from_le_bytes(text[2..10].try_into().unwrap()),
-            0x5000
-        );
+        assert_eq!(u64::from_le_bytes(text[2..10].try_into().unwrap()), 0x5000);
         assert_eq!(&text[10..12], &[0xFF, 0xE0]);
 
         // Data stubs: absolute words for some_data and __imp_stat.
         let data = file.section_by_name(".data").unwrap().data().unwrap();
         assert_eq!(u64::from_le_bytes(data[0..8].try_into().unwrap()), 0x6000);
-        assert_eq!(
-            u64::from_le_bytes(data[8..16].try_into().unwrap()),
-            0x7000
-        );
+        assert_eq!(u64::from_le_bytes(data[8..16].try_into().unwrap()), 0x7000);
     }
 
     #[test]
@@ -1838,10 +1857,10 @@ mod tests {
 
     #[test]
     fn collects_undefined_symbols_from_objects() {
-        use object::write::{Object, StandardSection, Symbol, SymbolSection};
         use object::{
             Architecture, BinaryFormat, Endianness, SymbolFlags, SymbolKind,
             SymbolScope,
+            write::{Object, StandardSection, Symbol, SymbolSection},
         };
 
         let dir = temp_dir("hp-obj");
@@ -1954,8 +1973,7 @@ mod tests {
 
     #[test]
     fn fat_link_args_msvc_adds_required_metadata() {
-        let original =
-            vec!["/NOLOGO".to_string(), "/OUT:app.exe".to_string()];
+        let original = vec!["/NOLOGO".to_string(), "/OUT:app.exe".to_string()];
         let args = fat_link_args(&original, None, LinkerFlavor::Msvc);
         assert!(args.iter().any(|a| a == "/EXPORT:main"));
         assert!(args.iter().any(|a| a == "/HIGHENTROPYVA:NO"));
@@ -1969,20 +1987,14 @@ mod tests {
             Some(Path::new("deps.a")),
             LinkerFlavor::Msvc,
         );
-        assert!(
-            with_archive
-                .iter()
-                .any(|a| a.starts_with("/WHOLEARCHIVE:"))
-        );
+        assert!(with_archive.iter().any(|a| a.starts_with("/WHOLEARCHIVE:")));
     }
 
     #[test]
     fn fat_link_args_gnu_adds_export_and_optional_archive() {
         let original = vec!["-o".to_string(), "app".to_string()];
         let args = fat_link_args(&original, None, LinkerFlavor::Gnu);
-        assert!(
-            args.contains(&"-Wl,--export-dynamic-symbol,main".to_string())
-        );
+        assert!(args.contains(&"-Wl,--export-dynamic-symbol,main".to_string()));
         let with_archive = fat_link_args(
             &original,
             Some(Path::new("libdeps.a")),
@@ -2017,14 +2029,27 @@ mod tests {
 
     #[test]
     fn hot_reload_message_serializes() {
+        let mut map = subsecond_types::AddressMap::default();
+        map.insert(0x1000, 0x2000);
         let msg = DevserverMsg::HotReload(HotReloadMsg {
-            jump_table: None,
+            templates: Vec::new(),
+            assets: Vec::new(),
+            jump_table: Some(JumpTable {
+                lib: PathBuf::from("libpatch.dll"),
+                map,
+                aslr_reference: 0x7ff6_0000_0000,
+                new_base_address: 0x1000,
+                ifunc_count: 0,
+            }),
             ms_elapsed: 12,
             for_build_id: Some(0),
             for_pid: None,
         });
         let json = serde_json::to_string(&msg).unwrap();
-        assert!(json.contains("\"type\":\"hot_reload\""));
+        // Externally tagged, matching Dioxus/Leptos.
+        assert!(json.contains("\"HotReload\""), "{json}");
+        // A populated address map must survive the round trip; this is the case
+        // Serde's internally-tagged form silently corrupted.
         let back: DevserverMsg = serde_json::from_str(&json).unwrap();
         assert_eq!(back, msg);
     }

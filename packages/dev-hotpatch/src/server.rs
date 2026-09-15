@@ -11,14 +11,12 @@
 //! devtools protocol, so a Leptos app's `connect_to_hot_patch_messages` client
 //! (or our overlay) can consume it.
 
-use std::sync::{Arc, Mutex};
-
+use crate::{ClientMsg, DevserverMsg, HotReloadMsg, JumpTable};
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
+use std::sync::{Arc, Mutex};
 use tokio::{net::TcpListener, sync::broadcast};
 use tokio_tungstenite::tungstenite::Message;
-
-use crate::{ClientMsg, DevserverMsg, HotReloadMsg, JumpTable};
 
 /// The latest ASLR reference a client reported.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,8 +124,15 @@ impl HotPatchServer {
     }
 
     /// Broadcast a jump table to be applied by the matching client.
-    pub fn hot_reload(&self, table: JumpTable, build_id: u64, pid: Option<u32>) {
+    pub fn hot_reload(
+        &self,
+        table: JumpTable,
+        build_id: u64,
+        pid: Option<u32>,
+    ) {
         self.send(&DevserverMsg::HotReload(HotReloadMsg {
+            templates: Vec::new(),
+            assets: Vec::new(),
             jump_table: Some(table),
             ms_elapsed: 0,
             for_build_id: Some(build_id),
@@ -151,8 +156,9 @@ mod tests {
         let (server, port) =
             HotPatchServer::start(0).await.expect("start server");
         let url = format!("ws://127.0.0.1:{port}/");
-        let (mut ws, _) =
-            tokio_tungstenite::connect_async(&url).await.expect("connect");
+        let (mut ws, _) = tokio_tungstenite::connect_async(&url)
+            .await
+            .expect("connect");
 
         // Report an ASLR reference.
         let hello = serde_json::to_string(&ClientMsg::AslrReference {
@@ -195,7 +201,58 @@ mod tests {
         );
         let msg = ws.next().await.expect("message").expect("ok");
         let text = msg.into_text().unwrap();
-        assert!(text.contains("\"type\":\"hot_reload\""), "{text}");
+        assert!(text.contains("\"HotReload\""), "{text}");
         assert!(text.contains("\"for_build_id\":7"), "{text}");
+    }
+
+    #[tokio::test]
+    async fn client_receives_a_populated_jump_table() {
+        let (server, port) =
+            HotPatchServer::start(0).await.expect("start server");
+        let url = format!("ws://127.0.0.1:{port}/");
+        let (mut ws, _) = tokio_tungstenite::connect_async(&url)
+            .await
+            .expect("connect");
+
+        // A native client reports its pid and runtime base address.
+        let hello = serde_json::to_string(&ClientMsg::AslrReference {
+            build_id: 42,
+            pid: Some(99),
+            aslr_reference: 0x7ff6_0000_0000,
+        })
+        .unwrap();
+        ws.send(Message::Text(hello.into())).await.unwrap();
+
+        let mut map = subsecond_types::AddressMap::default();
+        map.insert(0x1000, 0x2000);
+        map.insert(0x1010, 0x2010);
+        server.hot_reload(
+            JumpTable {
+                lib: std::path::PathBuf::from("libpatch.dll"),
+                map,
+                aslr_reference: 0x7ff6_0000_0000,
+                new_base_address: 0x1000,
+                ifunc_count: 0,
+            },
+            42,
+            Some(99),
+        );
+
+        // The client receives and the payload round-trips intact.
+        let msg = ws.next().await.expect("message").expect("ok");
+        let text = msg.into_text().unwrap();
+        match serde_json::from_str::<DevserverMsg>(&text).expect("parse") {
+            DevserverMsg::HotReload(m) => {
+                assert_eq!(m.for_build_id, Some(42));
+                assert_eq!(m.for_pid, Some(99));
+                let table = m.jump_table.expect("jump table present");
+                assert_eq!(table.map.len(), 2);
+                assert_eq!(table.map.get(&0x1000), Some(&0x2000));
+                assert_eq!(table.map.get(&0x1010), Some(&0x2010));
+                assert_eq!(table.aslr_reference, 0x7ff6_0000_0000);
+                assert_eq!(table.new_base_address, 0x1000);
+            }
+            other => panic!("unexpected message: {other:?}"),
+        }
     }
 }
