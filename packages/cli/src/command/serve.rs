@@ -679,6 +679,28 @@ fn ensure_run_copy(bin: &Path, run_bin: &Path) -> std::io::Result<()> {
         let _ = std::fs::remove_file(run_bin);
     }
     std::fs::copy(bin, run_bin)?;
+    // MSVC keeps a binary's symbols in a sibling `.pdb`, and the patch builder
+    // indexes them; the run copy needs its own or symbol lookup fails. rustc
+    // links into `deps/<crate_underscored>.exe` (PDB beside it) and cargo then
+    // copies the exe to the dash-named path without the PDB, so fall back to
+    // the `deps` copy when the sibling is absent.
+    if cfg!(windows) {
+        let dst_pdb = run_bin.with_extension("pdb");
+        let _ = std::fs::remove_file(&dst_pdb);
+        let sibling = bin.with_extension("pdb");
+        if sibling.is_file() {
+            let _ = std::fs::copy(&sibling, &dst_pdb);
+        } else if let Some(parent) = bin.parent() {
+            let stem = bin
+                .file_stem()
+                .map(|s| s.to_string_lossy().replace('-', "_"))
+                .unwrap_or_default();
+            let deps_pdb = parent.join("deps").join(format!("{stem}.pdb"));
+            if deps_pdb.is_file() {
+                let _ = std::fs::copy(&deps_pdb, &dst_pdb);
+            }
+        }
+    }
     Ok(())
 }
 

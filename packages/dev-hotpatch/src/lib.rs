@@ -514,6 +514,21 @@ pub fn link_rlibs(link_args: &[String]) -> Vec<PathBuf> {
 /// run. An optional archive of workspace objects can be force-linked with
 /// whole-archive — needed when monomorphized code would otherwise be absent —
 /// but plain `link.exe` rejects the GNU-style archive, so it is opt-in.
+/// Force an MSVC PDB to be emitted next to the linked output.
+///
+/// The fat link must carry full symbols because the patch builder reads the
+/// running binary's address map from this `.pdb`, but the workspace's
+/// line-tables-only dev debuginfo would otherwise produce none.
+fn force_msvc_pdb(args: &mut Vec<String>) {
+    args.retain(|a| !a.starts_with("/DEBUG"));
+    args.push("/DEBUG:FULL".to_string());
+    if !args.iter().any(|a| a.starts_with("/PDB:"))
+        && let Some(out) = link_output(args)
+    {
+        args.push(format!("/PDB:{}", out.with_extension("pdb").display()));
+    }
+}
+
 pub fn fat_link_args(
     original: &[String],
     fat_archive: Option<&Path>,
@@ -869,7 +884,13 @@ pub fn fat_link_in_place(
     let mut base = without_paths(link_args, &rlibs);
     base.extend(objects.iter().map(|p| p.display().to_string()));
 
-    let args = fat_link_args(&base, None, flavor);
+    let mut args = fat_link_args(&base, None, flavor);
+    if flavor == LinkerFlavor::Msvc {
+        // The patch builder indexes the running binary's symbols from its
+        // `.pdb`, but `[profile.dev] debug = 1` (line-tables-only) makes MSVC
+        // emit none. Force a full one for the fat link.
+        force_msvc_pdb(&mut args);
+    }
 
     // Windows link commands routinely exceed the command-line limit, so the
     // extended argument set goes through a command file.
