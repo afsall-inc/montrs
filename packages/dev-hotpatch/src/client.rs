@@ -33,6 +33,7 @@ pub fn connect(addr: &str, build_id: u64) {
                 if let Ok((ws, _)) = tokio_tungstenite::connect_async(&url).await
                 {
                     let (mut sink, mut source) = ws.split();
+                    eprintln!("[montrs-hotpatch] connected to {url} (pid {our_pid})");
 
                     // Report the runtime base address so the patch's stubs can
                     // resolve against the running image.
@@ -58,12 +59,17 @@ pub fn connect(addr: &str, build_id: u64) {
                             continue;
                         };
                         if m.for_pid == Some(our_pid) {
+                            let entries =
+                                table.map.len();
                             // SAFETY: the dev server only sends well-formed
                             // tables built against this exact binary (matched
                             // by pid).
-                            unsafe {
-                                let _ = subsecond::apply_patch(table);
-                            }
+                            let result = unsafe {
+                                subsecond::apply_patch(table)
+                            };
+                            eprintln!(
+                                "[montrs-hotpatch] applied patch ({entries} entries): {result:?}"
+                            );
                         }
                     }
                 }

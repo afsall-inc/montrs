@@ -508,13 +508,6 @@ pub fn link_rlibs(link_args: &[String]) -> Vec<PathBuf> {
         .collect()
 }
 
-/// Produce the hot-patchable ("fat") link arguments from a normal link.
-///
-/// The fat binary exports `main` so a patch can reference the image base, and
-/// (on MSVC) disables high-entropy VA so symbol addresses are stable run to
-/// run. An optional archive of workspace objects can be force-linked with
-/// whole-archive — needed when monomorphized code would otherwise be absent —
-/// but plain `link.exe` rejects the GNU-style archive, so it is opt-in.
 /// Force an MSVC PDB to be emitted next to the linked output.
 ///
 /// The fat link must carry full symbols because the patch builder reads the
@@ -530,6 +523,13 @@ fn force_msvc_pdb(args: &mut Vec<String>) {
     }
 }
 
+/// Produce the hot-patchable ("fat") link arguments from a normal link.
+///
+/// The fat binary exports `main` so a patch can reference the image base, and
+/// (on MSVC) disables high-entropy VA so symbol addresses are stable run to
+/// run. An optional archive of workspace objects can be force-linked with
+/// whole-archive — needed when monomorphized code would otherwise be absent —
+/// but plain `link.exe` rejects the GNU-style archive, so it is opt-in.
 pub fn fat_link_args(
     original: &[String],
     fat_archive: Option<&Path>,
@@ -543,6 +543,10 @@ pub fn fat_link_args(
             }
             args.push("/EXPORT:main".to_string());
             args.push("/HIGHENTROPYVA:NO".to_string());
+            // Incremental linking exports `main` as an ILT thunk whose address
+            // does not match the PDB's `main` RVA, which mis-rebases every
+            // jump-table entry; the patcher needs direct symbol addresses.
+            args.push("/INCREMENTAL:NO".to_string());
             // Keep every function the linked objects define — the running
             // binary is the symbol source for patches, so pruning (e.g. std
             // allocator shims) must not remove them.
@@ -716,6 +720,9 @@ pub fn patch_link_args(
                     "/PDBALTPATH:%_PDB%",
                     "/EXPORT:main",
                     "/HIGHENTROPYVA:NO",
+                    // Direct symbol addresses: an ILT thunk for `main` would
+                    // not match the PDB RVA `apply_patch` rebases against.
+                    "/INCREMENTAL:NO",
                 ]
                 .iter()
                 .map(|s| s.to_string()),

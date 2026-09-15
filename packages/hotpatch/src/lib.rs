@@ -35,11 +35,20 @@
 //! `montrs_hotpatch::serve!(router, || view! { <Shell /> })` and gets Rust
 //! hot-patching for free when the dev server exposes it. In release builds the
 //! cutover is a no-op.
+//!
+//! The macro expands `subsecond::call` *in the calling crate* on purpose: the
+//! cutover's monomorphized code has to land in the tip crate's object files for
+//! the patch to contain it. Hiding it behind a helper function here would put
+//! that code in this crate and the jump-table lookup would never hit.
+
+pub use subsecond;
 
 /// Route a render through the `subsecond` hot-patch cutover.
 ///
 /// `subsecond::call` returns the closure result unchanged in release builds, so
-/// this is free outside the dev server.
+/// this is free outside the dev server. Prefer the [`serve!`] macro, which
+/// inlines the call into the app crate.
+#[inline(always)]
 pub fn cutover<O>(f: impl FnMut() -> O) -> O {
     subsecond::call(f)
 }
@@ -63,7 +72,7 @@ macro_rules! serve {
     ($router:expr, $root:expr) => {{
         $crate::install_client_from_env();
         ::montrs_core::serve::montrs_serve($router, move || {
-            $crate::cutover(|| ($root)())
+            $crate::subsecond::call(|| ($root)())
         })
     }};
 }
