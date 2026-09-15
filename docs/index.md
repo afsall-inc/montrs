@@ -15,6 +15,7 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [ORM Backends](orm/backends.md) - Supported databases.
 - [Testing](testing/index.md) - Writing deterministic tests.
 - [Benchmarking](testing/benchmarking.md) - Measuring performance.
+- [Hot Reload & Hot Patching](tooling/hot-reload.md) - The live dev loop.
 - [Deployment](community/deployment.md) - Shipping to production.
 
 ### For Framework Contributors

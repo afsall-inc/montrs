@@ -29,6 +29,10 @@ Start the development server with hot-reloading.
 montrs serve
 ```
 
+`view!` and CSS hot reload are always on. Experimental Rust hot-patching is
+opt-in via `[serve] hotpatch = true` in `montrs.toml` (or the `MONTRS_HOTPATCH`
+environment variable). See [Hot Reload & Hot Patching](hot-reload.md).
+
 ### `bench`
 Run performance benchmarks.
 
