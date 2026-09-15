@@ -2,11 +2,7 @@
 fn main() {
     tracing_subscriber::fmt().with_env_filter("info").init();
     let spec = web::build_spec();
-    montrs_hotpatch::serve!(
-        spec.router,
-        || leptos::prelude::view! { <web::Shell /> }
-    )
-    .unwrap();
+    montrs_hotpatch::serve!(spec.router, || leptos::prelude::view! { <web::Shell /> }).unwrap();
 }
 
 #[cfg(not(feature = "ssr"))]

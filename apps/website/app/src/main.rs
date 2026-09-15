@@ -35,10 +35,7 @@ fn main() {
     // Everything hot-patch related (the render cutover and the native patch
     // client) is handled by `serve!`; it is inert unless `montrs serve` exposes
     // a hot-patch socket, and a no-op in release builds.
-    montrs_hotpatch::serve!(
-        spec.router,
-        || leptos::prelude::view! { <website::Shell /> }
-    )
+    montrs_hotpatch::serve!(spec.router, || leptos::prelude::view! { <website::Shell /> })
     .unwrap();
 }
 
