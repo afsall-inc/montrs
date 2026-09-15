@@ -41,7 +41,14 @@
 //! the patch to contain it. Hiding it behind a helper function here would put
 //! that code in this crate and the jump-table lookup would never hit.
 
+pub use montrs_dev_hotpatch;
 pub use subsecond;
+
+/// The runtime address `subsecond` will key the cutover on. Used by the
+/// `MONTRS_HOTPATCH_PROBE` diagnostics.
+pub fn cutover_key<O>(f: impl FnMut() -> O) -> u64 {
+    subsecond::HotFn::current(f).ptr_address().0
+}
 
 /// Route a render through the `subsecond` hot-patch cutover.
 ///
@@ -72,6 +79,10 @@ macro_rules! serve {
     ($router:expr, $root:expr) => {{
         $crate::install_client_from_env();
         ::montrs_core::serve::montrs_serve($router, move || {
+            if ::std::env::var_os("MONTRS_HOTPATCH_PROBE").is_some() {
+                let key = $crate::cutover_key($root.clone());
+                $crate::montrs_dev_hotpatch::set_cutover_key(key);
+            }
             $crate::subsecond::call($root)
         })
     }};

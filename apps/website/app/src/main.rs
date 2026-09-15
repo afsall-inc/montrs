@@ -36,7 +36,8 @@ fn main() {
     // client) is handled by `serve!`; it is inert unless `montrs serve` exposes
     // a hot-patch socket, and a no-op in release builds. The root can be a
     // closure or a named function (a named `fn` gives the cutover a stable
-    // symbol, which hot-patching prefers).
+    // symbol, which hot-patching prefers). Rust hot-patching currently applies
+    // to this (tip) crate; changes in dependency crates are not patched.
     montrs_hotpatch::serve!(
         spec.router,
         || leptos::prelude::view! { <website::Shell /> }

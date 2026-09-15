@@ -59,16 +59,29 @@ pub fn connect(addr: &str, build_id: u64) {
                             continue;
                         };
                         if m.for_pid == Some(our_pid) {
-                            let entries =
-                                table.map.len();
+                            let entries = table.map.len();
+                            let table_aslr = table.aslr_reference;
+                            let key = crate::cutover_key();
+                            let aslr = subsecond::aslr_reference() as u64;
+                            let slide = aslr.wrapping_sub(table_aslr);
+                            let expected_fat = key.wrapping_sub(slide);
+                            let pre =
+                                key != 0 && table.map.contains_key(&expected_fat);
                             // SAFETY: the dev server only sends well-formed
                             // tables built against this exact binary (matched
                             // by pid).
                             let result = unsafe {
                                 subsecond::apply_patch(table)
                             };
+                            let post = unsafe { subsecond::get_jump_table() }
+                                .map(|t| key != 0 && t.map.contains_key(&key))
+                                .unwrap_or(false);
                             eprintln!(
-                                "[montrs-hotpatch] applied patch ({entries} entries): {result:?}"
+                                "[montrs-hotpatch] applied ({entries}): \
+                                 {result:?}\n  key={key:#x} aslr={aslr:#x} \
+                                 table.aslr={table_aslr:#x} slide={slide:#x}\n  \
+                                 expected_fat={expected_fat:#x} pre={pre} \
+                                 post={post}"
                             );
                         }
                     }

@@ -235,6 +235,21 @@ pub fn capture_dir() -> PathBuf {
 
 static SEQ: AtomicU64 = AtomicU64::new(0);
 
+/// Runtime address of the app's hot-patch cutover function (`call_it`), set by
+/// the `serve!` macro when `MONTRS_HOTPATCH_PROBE` is enabled. The client uses
+/// it to check whether an incoming table actually contains the cutover entry.
+static CUTOVER_KEY: AtomicU64 = AtomicU64::new(0);
+
+/// Record the cutover's runtime key (see [`cutover_key`]).
+pub fn set_cutover_key(key: u64) {
+    CUTOVER_KEY.store(key, Ordering::Relaxed);
+}
+
+/// The cutover's runtime key, or `0` if never recorded.
+pub fn cutover_key() -> u64 {
+    CUTOVER_KEY.load(Ordering::Relaxed)
+}
+
 fn unique_name(kind: &str) -> String {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
