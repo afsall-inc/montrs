@@ -19,6 +19,36 @@ MontRS exists because building complex applications requires more than just a UI
 
 ---
 
+## ⚡ Live Development Loop
+
+MontRS ships a fast dev loop with three levels of live updates:
+
+- **CSS & assets** — instant, no recompile.
+- **`view!` hot reload** — markup edits patch the live DOM in place; structure,
+  text, and styling update without a rebuild.
+- **Rust hot-patching** *(experimental)* — edit real Rust logic and see it in the
+  running app **without a restart**: the server keeps running (same PID,
+  in-flight state preserved) while a thin-linked patch is applied through a jump
+  table at a render cutover.
+
+Rust hot-patching is opt-in:
+
+```toml
+[serve]
+hotpatch = true
+```
+
+Applications need no hot-patch code — they serve through one macro:
+
+```rust
+montrs_hotpatch::serve!(spec.router, || view! { <Shell /> });
+```
+
+See the [Hot Reload & Hot Patching guide](docs/tooling/hot-reload.md) for the
+internals and the current limits (tip crate only).
+
+---
+
 ## 🎯 The Golden Path
 
 The "Golden Path" is the recommended workflow for building robust MontRS applications:
@@ -132,6 +162,7 @@ montrs fmt          # format all Rust and view! code
 montrs test         # run all tests
 montrs bench        # run performance benchmarks
 montrs serve        # start the dev server with hot-reload
+#   Rust hot-patching is opt-in: `[serve] hotpatch = true` in montrs.toml
 montrs build        # build for production
 montrs watch        # watch for changes and rebuild automatically
 montrs agent check  # run agent-level diagnostics
@@ -186,6 +217,9 @@ cargo clippy --workspace -- -D warnings
 | [build-core](packages/build-core/README.md) | Build pipeline trait and configuration. |
 | [build-serve](packages/build-serve/README.md) | Dev server (static file serving via axum). |
 | [build-watch](packages/build-watch/README.md) | File system watcher with debounced rebuild triggers. |
+| [dev-hotpatch](packages/dev-hotpatch/README.md) | Rust hot-patching dev tooling (capture, link, patch, hub, client). |
+| [hot-reload](packages/hot-reload/README.md) | `view!` hot reload via macro diffing → markup patches. |
+| [hotpatch](packages/hotpatch/README.md) | Runtime facade: `serve!` cutover + native client bootstrap. |
 | [cli](packages/cli/README.md) | Orchestration, scaffolding, and build tools. |
 | [core](packages/core/README.md) | The architectural engine (Plates, Routing, AppSpec). |
 | [deps](packages/deps/README.md) | Dependency freshness checking. |
