@@ -137,7 +137,8 @@ pub async fn run() -> anyhow::Result<()> {
     // Experimental (Stage 1 foundation): capture each workspace crate's rustc
     // invocation so a later hot-patch pass can replay only changed crates.
     // Enabled with `MONTRS_HOTPATCH=1`.
-    let hotpatch_enabled = std::env::var_os("MONTRS_HOTPATCH").is_some();
+    let hotpatch_enabled = pipeline.meta.serve.hotpatch
+        || std::env::var_os("MONTRS_HOTPATCH").is_some();
     let hotpatch_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
     let hotpatch_workspace_target = pipeline.workspace_target_dir.clone();
     if hotpatch_enabled {
@@ -228,8 +229,8 @@ pub async fn run() -> anyhow::Result<()> {
     }
 
     // Opt-in to building a patch (not just capturing) after each rebuild.
-    let hotpatch_patch_enabled =
-        std::env::var_os("MONTRS_HOTPATCH_PATCH").is_some();
+    let hotpatch_patch_enabled = pipeline.meta.serve.hotpatch
+        || std::env::var_os("MONTRS_HOTPATCH_PATCH").is_some();
     // In hot-patch mode the SSR server runs from a copy of the built binary, so
     // cargo's relink of `bin` can never hit the Windows "running executable"
     // file lock: the copy keeps serving while a patch is built against *it*.

@@ -150,6 +150,11 @@ pub struct ServeMeta {
     /// Whether to hash frontend files.
     #[serde(default)]
     pub hash_files: bool,
+    /// Enable experimental Rust hot-patching in `montrs serve`: the server is
+    /// fat-linked, a patch is built on each Rust edit, and the running app
+    /// applies it without restarting. Off by default (dev builds only).
+    #[serde(default)]
+    pub hotpatch: bool,
     /// Additional files to watch for changes.
     #[serde(default)]
     pub watch_additional_files: Vec<String>,
@@ -175,6 +180,7 @@ impl Default for ServeMeta {
             bin_default_features: true,
             release: false,
             hash_files: false,
+            hotpatch: false,
             watch_additional_files: Vec::new(),
             style_file: None,
         }

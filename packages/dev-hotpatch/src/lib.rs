@@ -55,6 +55,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+pub mod client;
 pub mod server;
 
 pub use subsecond_types::JumpTable;

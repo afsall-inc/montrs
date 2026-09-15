@@ -28,19 +28,42 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[cfg(feature = "ssr")]
-fn main() {
-    tracing_subscriber::fmt().with_env_filter("info").init();
-    let spec = website::build_spec();
-    // Everything hot-patch related (the render cutover and the native patch
-    // client) is handled by `serve!`; it is inert unless `montrs serve` exposes
-    // a hot-patch socket, and a no-op in release builds.
-    montrs_hotpatch::serve!(
-        spec.router,
-        || leptos::prelude::view! { <website::Shell /> }
-    )
-    .unwrap();
+//! Dev hot-patch runtime.
+//!
+//! Application authors never touch this crate directly: [`serve!`] wires up a
+//! hot-patch cutover and the native patch client, so an app just renders with
+//! `montrs_hotpatch::serve!(router, || view! { <Shell /> })` and gets Rust
+//! hot-patching for free when the dev server exposes it. In release builds the
+//! cutover is a no-op.
+
+/// Route a render through the `subsecond` hot-patch cutover.
+///
+/// `subsecond::call` returns the closure result unchanged in release builds, so
+/// this is free outside the dev server.
+pub fn cutover<O>(f: impl FnMut() -> O) -> O {
+    subsecond::call(f)
 }
 
-#[cfg(not(feature = "ssr"))]
-fn main() {}
+/// Connect to the dev server's hot-patch socket when one is exposed.
+///
+/// Set by `montrs serve` in hot-patch mode; a no-op otherwise.
+pub fn install_client_from_env() {
+    if let Ok(addr) = std::env::var("MONTRS_HOTPATCH_ADDR") {
+        montrs_dev_hotpatch::client::connect(&addr, 0);
+    }
+}
+
+/// Serve an app's router with the root render wrapped in a hot-patch cutover.
+///
+/// ```ignore
+/// montrs_hotpatch::serve!(website::build_spec().router, || view! { <Shell /> });
+/// ```
+#[macro_export]
+macro_rules! serve {
+    ($router:expr, $root:expr) => {{
+        $crate::install_client_from_env();
+        ::montrs_core::serve::montrs_serve($router, move || {
+            $crate::cutover(|| ($root)())
+        })
+    }};
+}

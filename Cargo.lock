@@ -4637,6 +4637,7 @@ dependencies = [
  "pdb",
  "serde",
  "serde_json",
+ "subsecond",
  "subsecond-types",
  "tokio",
  "tokio-tungstenite",
@@ -4724,6 +4725,15 @@ dependencies = [
  "montrs-hotkeys-core",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "montrs-hotpatch"
+version = "0.1.0"
+dependencies = [
+ "montrs-core",
+ "montrs-dev-hotpatch",
+ "subsecond",
 ]
 
 [[package]]
@@ -9882,6 +9892,7 @@ dependencies = [
  "montrs-core",
  "montrs-hotkeys-core",
  "montrs-hotkeys-web",
+ "montrs-hotpatch",
  "montrs-icons",
  "montrs-motion",
  "montrs-state",
