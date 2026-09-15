@@ -55,11 +55,12 @@ pub fn run_cargo(args: &[String]) -> anyhow::Result<()> {
 
     let mut child = Command::new("cargo")
         .env("RUSTFLAGS", "--cfg erase_components")
-        // Compile-time switch the Leptos `view!` macro uses to emit
-        // `<!--hot-reload|id|-->` DOM markers (paired with `debug_assertions`,
-        // so release/production builds never emit them). Without this the
-        // browser can't locate view instances to patch.
-        .env("LEPTOS_WATCH", "1")
+        // NOTE: do NOT set `LEPTOS_WATCH` at compile time. It makes the SSR
+        // build emit `<!--hot-reload|id|-->` markers that the release WASM
+        // client does not, and `tachys` hydration then panics
+        // (`failed_to_cast_element`), aborting hydration and leaving the page
+        // non-interactive. Runtime `LEPTOS_WATCH` (set by `montrs_serve`) still
+        // enables the dev overlay and live reload.
         .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
