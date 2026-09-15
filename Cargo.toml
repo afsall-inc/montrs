@@ -132,6 +132,16 @@ open = "5"
 # Pinned to <2.0.4 because 2.0.4+ requires rustc 1.96.0, but our toolchain is 1.95.0-nightly
 kstring = "=2.0.2"
 
+# Dev hot-reload profile for the WASM client: optimized like release but with
+# `debug_assertions` on, which (together with LEPTOS_WATCH at compile time) makes
+# the client emit the same `<!--hot-reload|id|-->` DOM markers the SSR build does.
+# Both sides must match or `tachys` hydration panics — see `montrs serve`.
+[profile.hot]
+inherits = "release"
+debug-assertions = true
+debug = false
+incremental = true
+
 # Line-tables-only debuginfo everywhere in dev: full DWARF makes the workspace
 # `target/` many gigabytes and slows linking without adding stack-frame data
 # that the dev loop needs (compiler error frames come from rustc, not DWARF).

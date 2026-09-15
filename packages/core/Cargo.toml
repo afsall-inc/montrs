@@ -29,6 +29,7 @@ leptos_axum = { workspace = true, optional = true }
 axum = { version = "0.8", features = ["ws"], optional = true }
 tower-http = { version = "0.6", features = ["fs", "set-header", "compression-gzip"], optional = true }
 tokio-tungstenite = { version = "0.29", optional = true }
+reactive_graph = { version = "0.2", optional = true }
 
 # Rate limiting
 governor = "0.6"
@@ -45,4 +46,5 @@ ssr = [
     "dep:tower-http",
     "dep:leptos_hot_reload",
     "dep:tokio-tungstenite",
+    "dep:reactive_graph",
 ]

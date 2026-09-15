@@ -4586,6 +4586,7 @@ dependencies = [
  "leptos_router",
  "montrs-platform",
  "nonzero_ext",
+ "reactive_graph",
  "regex",
  "serde",
  "serde_json",

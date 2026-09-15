@@ -155,6 +155,10 @@ where
     }
 
     let app = app
+        // SSR renders once and needs no reactivity, so signal reads during
+        // rendering are the intended false positives the non-reactive zone
+        // covers; this silences Leptos's debug-mode untracked-read warnings.
+        .layer(axum::middleware::from_fn(non_reactive_zone))
         // Dev servers must never serve stale bundles. The hydration entry
         // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
         // URLs, so Chrome's WASM/JS code caches keep serving old bytes unless
@@ -389,6 +393,18 @@ connect();
 "###,
     "</script>"
 );
+
+/// Suppress Leptos's debug-mode "outside a reactive tracking context" warnings
+/// while SSR renders. The server renders once and needs no reactivity, so these
+/// reads are the false positives the non-reactive zone is meant to cover.
+#[cfg(feature = "ssr")]
+async fn non_reactive_zone(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    reactive_graph::diagnostics::SpecialNonReactiveFuture::new(next.run(req))
+        .await
+}
 
 /// Upgrade `/_dioxus` and bridge it to the CLI's hot-patch socket
 /// (`MONTRS_HOTPATCH_ADDR`), so a client targeting that path reaches the hub.

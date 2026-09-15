@@ -57,9 +57,12 @@ pub async fn run() -> anyhow::Result<()> {
 
     // The dev server always builds in the dev profile. This keeps
     // `debug_assertions` on so the SSR HTML carries the Leptos hot-reload
-    // markers, and makes incremental rebuilds far faster. The WASM client is
-    // still built optimized (see `frontend_build_args`).
+    // markers, and makes incremental rebuilds far faster.
     pipeline.release = false;
+    // Build the WASM client with the matching `hot` profile too, so both sides
+    // emit the same hot-reload markers (otherwise `tachys` hydration panics and
+    // nothing is interactive).
+    pipeline.hot_reload = true;
 
     crate::command::resolve_pipeline_bins(&mut pipeline);
 
