@@ -627,17 +627,13 @@ impl AgentManager {
             for entry in fs::read_dir(&nested)?.flatten() {
                 if entry.path().extension().and_then(|s| s.to_str())
                     == Some("json")
+                    && let Ok(content) = fs::read_to_string(entry.path())
+                    && let Ok(record) =
+                        serde_json::from_str::<ErrorRecord>(&content)
+                    && record.version >= highest_version
                 {
-                    if let Ok(content) = fs::read_to_string(entry.path()) {
-                        if let Ok(record) =
-                            serde_json::from_str::<ErrorRecord>(&content)
-                        {
-                            if record.version >= highest_version {
-                                highest_version = record.version;
-                                latest = Some(record);
-                            }
-                        }
-                    }
+                    highest_version = record.version;
+                    latest = Some(record);
                 }
             }
             if let Some(record) = latest {
