@@ -129,6 +129,38 @@ stays that way until it can patch workspace crates, for two reasons:
 View/CSS hot reload is always on and needs no flag. Revisit the default once
 workspace-crate patching lands.
 
+## Native workspace reload (dylib swap)
+
+Tip-crate hot-patching covers edits in the bin crate. Native **workspace** edits
+(a library or dependency crate) use dylib swap instead:
+
+- the app library is built as a `cdylib` that exports `montrs_app_entry` (created
+  by `montrs_hotpatch::export_app!`) behind the stable `montrs-app-abi` C ABI;
+- a generic shell (`montrs-dev-shell`) owns the HTTP listener and renders each
+  request by calling into the dylib;
+- on a change the CLI rebuilds the dylib, copies it to a fresh filename, and
+  POSTs its path to the shell, which loads it and swaps the vtable atomically.
+  The listener never restarts, so the page keeps its connection.
+
+Everything crossing the boundary is plain C types, so the app and shell are
+rebuilt independently.
+
+### State resets on reload
+
+Each swapped-in dylib gets fresh globals, so in-dylib app state (caches,
+counters, open connections) is discarded on every reload. v1 treats SSR requests
+as stateless, which is fine for typical server-rendered pages.
+
+### Future: state-transfer hook
+
+A later version can preserve long-lived state across reloads: add optional
+`export_state() -> bytes` / `import_state(bytes)` hooks to the ABI, and have the
+shell carry those bytes from the outgoing dylib to the incoming one. This is
+worth doing because it keeps sessions and warm caches alive across edits,
+turning every reload into a continuation instead of a reset — the difference
+between "the server restarted" and "the code changed." It requires the app to
+declare a serializable state type, so it stays opt-in.
+
 ## Limitations
 
 - **Tip crate only.** The patch contains only the crate with `main.rs`. Edits to
