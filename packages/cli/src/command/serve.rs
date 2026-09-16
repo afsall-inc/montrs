@@ -297,7 +297,7 @@ pub async fn run() -> anyhow::Result<()> {
     // Watch channel: the blocking file watcher signals a rebuild here. View
     // and CSS edits are handled entirely inside the watcher thread (instant
     // patches, no cargo) and never reach this channel.
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(1);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<PathBuf>>(1);
     let pipeline_arc = Arc::new(pipeline);
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
@@ -341,7 +341,7 @@ pub async fn run() -> anyhow::Result<()> {
                         }
                     }
                     if rebuild {
-                        let _ = tx.blocking_send(());
+                        let _ = tx.blocking_send(changed.to_vec());
                     }
                 },
             );
@@ -430,7 +430,7 @@ pub async fn run() -> anyhow::Result<()> {
         }
 
         tokio::select! {
-            Some(()) = rx.recv() => {
+            Some(changed) = rx.recv() => {
                 println!("Change detected — rebuilding...");
                 if let Some(r) = &reload {
                     r.building();
@@ -475,6 +475,7 @@ pub async fn run() -> anyhow::Result<()> {
                                     &run_bin,
                                     &hotpatch_workspace_target,
                                     &hotpatch_dir,
+                                    &changed,
                                     hotpatch_server.as_ref(),
                                 );
                             }
@@ -601,6 +602,7 @@ fn try_build_patch(
     bin: &Path,
     workspace_target_dir: &Path,
     hotpatch_dir: &Path,
+    changed: &[PathBuf],
     server: Option<&montrs_dev_hotpatch::server::HotPatchServer>,
 ) -> bool {
     let Ok(linker) = std::env::var("MONTRS_REAL_LINKER") else {
@@ -634,6 +636,7 @@ fn try_build_patch(
         aslr_reference,
         build_id,
         pid,
+        changed_files: changed,
     };
     match montrs_dev_hotpatch::build_patch(&request) {
         Ok(table) => {

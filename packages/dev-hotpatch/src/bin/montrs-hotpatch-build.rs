@@ -84,6 +84,7 @@ fn main() -> ExitCode {
         aslr_reference,
         build_id: 0,
         pid: Some(std::process::id()),
+        changed_files: &[],
     };
     match montrs_dev_hotpatch::build_patch(&request) {
         Ok(table) => {

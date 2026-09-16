@@ -961,6 +961,11 @@ pub struct PatchRequest<'a> {
     pub build_id: u64,
     /// The target process id, if native.
     pub pid: Option<u32>,
+    /// Source files changed since the running binary was built. When non-empty,
+    /// the changed workspace crates' freshly compiled objects are added to the
+    /// patch so edits in dependency crates can be applied too, not just tip-crate
+    /// edits. Empty means tip-crate only.
+    pub changed_files: &'a [PathBuf],
 }
 
 /// Build a patch from the saved tip objects and the running binary's symbols.
@@ -977,7 +982,45 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
         .ok_or_else(|| anyhow::anyhow!("fat binary has no `main` symbol"))?;
     let aslr_offset = request.aslr_reference.wrapping_sub(aslr_ref_address);
 
-    let objects = read_tip_objects(base);
+    let latest = read_latest_link_in(base);
+    let original = latest.as_ref().map(|l| l.args.clone()).unwrap_or_default();
+    let envs = latest.as_ref().map(|l| l.envs.clone()).unwrap_or_default();
+
+    let mut objects = read_tip_objects(base);
+    // Experimental workspace support: also include the changed workspace crates'
+    // objects. Not enabled by default because call sites are often inlined into
+    // the tip, so replacing a dependency crate does not reliably redirect them;
+    // the default is the verified tip-crate-only behavior.
+    let workspace_support =
+        std::env::var_os("MONTRS_HOTPATCH_WORKSPACE").is_some();
+    if workspace_support && !request.changed_files.is_empty() {
+        let invocations = read_rustc_invocations_in(base);
+        let changed = changed_crates(&invocations, request.changed_files);
+        if !changed.is_empty() {
+            let rlibs =
+                workspace_rlibs(&original, request.workspace_target_dir);
+            let wanted: Vec<PathBuf> = rlibs
+                .into_iter()
+                .filter(|p| {
+                    let name = p
+                        .file_name()
+                        .map(|s| s.to_string_lossy().into_owned())
+                        .unwrap_or_default();
+                    changed.iter().any(|c| {
+                        name.starts_with(&format!("lib{c}-"))
+                            || name.starts_with(&format!("lib{c}."))
+                    })
+                })
+                .collect();
+            if !wanted.is_empty() {
+                let dir = base.join("changed-objects");
+                if let Ok(mut extra) = extract_rlib_objects(&wanted, &dir) {
+                    objects.append(&mut extra);
+                }
+            }
+        }
+    }
+
     if objects.is_empty() {
         anyhow::bail!(
             "no tip objects captured; run a build with MONTRS_HOTPATCH=1 first"
@@ -995,9 +1038,6 @@ pub fn build_patch(request: &PatchRequest) -> anyhow::Result<JumpTable> {
     } else {
         "libpatch.so"
     });
-    let latest = read_latest_link_in(base);
-    let original = latest.as_ref().map(|l| l.args.clone()).unwrap_or_default();
-    let envs = latest.as_ref().map(|l| l.envs.clone()).unwrap_or_default();
 
     let mut link_objects = objects;
     link_objects.push(stub_path);

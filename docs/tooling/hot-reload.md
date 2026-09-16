@@ -135,7 +135,10 @@ workspace-crate patching lands.
   a library or dependency crate (for example `lib.rs`) are *not* patched; their
   symbols resolve through the patch's stubs to the running binary, so you need a
   full rebuild. Most app logic lives in the lib, so keep the code you iterate on
-  in the bin crate, or expect a full reload for lib changes.
+  in the bin crate, or expect a full reload for lib changes. An experimental
+  `MONTRS_HOTPATCH_WORKSPACE=1` also links the changed workspace crates into the
+  patch, but it does not reliably redirect calls that were inlined into the tip,
+  so it is off by default and not yet supported.
 - **Struct layout and statics.** Subsecond does not support hot-reloading structs
   that change layout, and globals/statics/thread-locals have caveats (renames look
   like new globals; static initializers do not re-run; thread-locals in the tip
@@ -157,6 +160,7 @@ workspace-crate patching lands.
 | `MONTRS_HOTPATCH_ADDR` | Address of the hub; set on the app by `serve` |
 | `MONTRS_HOTPATCH_DIR` | Capture directory (default `target/montrs-hotpatch`) |
 | `MONTRS_HOTPATCH_PROBE` | Log the cutover key and jump-table membership |
+| `MONTRS_HOTPATCH_WORKSPACE` | Experimental: also link changed workspace crates into the patch (unreliable; off by default) |
 | `MONTRS_REAL_LINKER` / `MONTRS_HOTPATCH_FLAVOR` | Real linker + flavour used by the shims |
 | `MONTRS_HOTPATCH_TIP_OUT` / `MONTRS_HOTPATCH_WORKSPACE` | Tip binary + workspace target for the shims |
 
