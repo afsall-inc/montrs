@@ -55,3 +55,7 @@ ssr = [
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
+
+# Dev hot-patch runtime (hidden `serve!` cutover + native patch client).
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+montrs-hotpatch = { path = "../../../packages/hotpatch" }

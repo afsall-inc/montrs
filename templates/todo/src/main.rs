@@ -3,7 +3,7 @@ use montrs_core::{
     AppConfig, AppSpec, Plate, PlateContext, Route, RouteAction, RouteContext, RouteError,
     RouteLoader, RouteParams, RouteView, Router, Target,
 };
-use montrs_orm::{DbBackend, FromRow, SqliteBackend};
+use montrs_core::Validator as _;
 use montrs_validator::Validator;
 use montrs_ui::prelude::*;
 use montrs_icons::*;
@@ -174,7 +174,7 @@ async fn main() -> anyhow::Result<()> {
 
     let spec = AppSpec::new(config, env)
         .with_target(Target::Web)
-        .with_plate(Box::new(TodoPlate));
+        .with_plate(TodoPlate);
 
     println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());
 
