@@ -1,0 +1,27 @@
+[package]
+name = "montrs-dev-shell"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Generic dev shell that hosts a hot-swappable MontRS app dylib"
+
+[package.metadata.montrs]
+layer = "3"
+allowed_deps = ["montrs-app-abi"]
+
+[dependencies]
+montrs-app-abi = { path = "../app-abi" }
+anyhow.workspace = true
+libloading = "0.8"
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[bin]]
+name = "montrs-dev-shell"
+path = "src/main.rs"

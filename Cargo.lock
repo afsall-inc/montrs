@@ -4650,6 +4650,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-dev-shell"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "libloading 0.8.9",
+ "montrs-app-abi",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "montrs-env"
 version = "0.1.0"
 dependencies = [
