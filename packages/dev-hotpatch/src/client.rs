@@ -29,11 +29,16 @@ pub fn connect(addr: &str, build_id: u64) {
         };
         rt.block_on(async move {
             let our_pid = std::process::id();
+            let probe = std::env::var_os("MONTRS_HOTPATCH_PROBE").is_some();
             loop {
                 if let Ok((ws, _)) = tokio_tungstenite::connect_async(&url).await
                 {
                     let (mut sink, mut source) = ws.split();
-                    eprintln!("[montrs-hotpatch] connected to {url} (pid {our_pid})");
+                    if probe {
+                        eprintln!(
+                            "[montrs-hotpatch] connected to {url} (pid {our_pid})"
+                        );
+                    }
 
                     // Report the runtime base address so the patch's stubs can
                     // resolve against the running image.
@@ -76,13 +81,15 @@ pub fn connect(addr: &str, build_id: u64) {
                             let post = unsafe { subsecond::get_jump_table() }
                                 .map(|t| key != 0 && t.map.contains_key(&key))
                                 .unwrap_or(false);
-                            eprintln!(
-                                "[montrs-hotpatch] applied ({entries}): \
-                                 {result:?}\n  key={key:#x} aslr={aslr:#x} \
-                                 table.aslr={table_aslr:#x} slide={slide:#x}\n  \
-                                 expected_fat={expected_fat:#x} pre={pre} \
-                                 post={post}"
-                            );
+                            if probe {
+                                eprintln!(
+                                    "[montrs-hotpatch] applied ({entries}): \
+                                     {result:?}\n  key={key:#x} aslr={aslr:#x} \
+                                     table.aslr={table_aslr:#x} slide={slide:#x}\n  \
+                                     expected_fat={expected_fat:#x} pre={pre} \
+                                     post={post}"
+                                );
+                            }
                         }
                     }
                 }

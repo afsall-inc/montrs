@@ -123,9 +123,12 @@ A hot-patchable app needs three things, all shipped in the templates:
   full rebuild. Most app logic lives in the lib, so keep the code you iterate on
   in the bin crate, or expect a full reload for lib changes.
 - **Struct layout and statics.** Subsecond does not support hot-reloading structs
-  that change layout, and statics/thread-locals have caveats (renames look like
-  new globals; static initializers do not re-run). Frameworks "re-instance" state
-  to work around this; MontRS currently does not.
+  that change layout, and globals/statics/thread-locals have caveats (renames look
+  like new globals; static initializers do not re-run; thread-locals in the tip
+  crate reset). Frameworks "re-instance" state to work around this; MontRS
+  currently does not. On native, `ifunc_count` is `0` — the jump table is applied
+  by loading the patch DLL and rebasing addresses; `ifunc_count` only matters for
+  the (unimplemented) wasm path.
 - **Debug builds only.** `subsecond::call` is compiled out when `debug_assertions`
   is off, and hot-patching is a development feature. Never ship it.
 - **Cost.** Hot-patching fattens the server link, forces a large PDB (hundreds of
