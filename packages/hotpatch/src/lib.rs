@@ -41,6 +41,7 @@
 //! the patch to contain it. Hiding it behind a helper function here would put
 //! that code in this crate and the jump-table lookup would never hit.
 
+pub use montrs_app_abi;
 pub use montrs_dev_hotpatch;
 pub use subsecond;
 
@@ -86,4 +87,117 @@ macro_rules! serve {
             $crate::subsecond::call($root)
         })
     }};
+}
+
+/// Export the stable C entry the dev shell loads from an app `cdylib`.
+///
+/// Invoke once, at module scope in the app library:
+///
+/// ```ignore
+/// #[cfg(not(target_arch = "wasm32"))]
+/// montrs_hotpatch::export_app!(app::build_spec(), || view! { <app::Shell /> });
+/// ```
+///
+/// In dev, `montrs serve` builds the library as a `cdylib`; the generic shell
+/// loads it and calls this entry. The app is built lazily on first request, so
+/// reloading the library starts from a clean app (see the state caveat in the
+/// hot-reload guide).
+#[macro_export]
+macro_rules! export_app {
+    ($spec:expr, $root:expr) => {
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        static __MONTRS_APP: ::std::sync::OnceLock<::montrs_core::serve::SsrApp> =
+            ::std::sync::OnceLock::new();
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_render(
+            req: *const $crate::montrs_app_abi::MontrsRequest,
+            out: *mut $crate::montrs_app_abi::MontrsResponse,
+        ) {
+            if req.is_null() || out.is_null() {
+                return;
+            }
+            let req = unsafe { &*req };
+            let path = unsafe { ::std::ffi::CStr::from_ptr(req.path) }
+                .to_string_lossy()
+                .into_owned();
+            let method = unsafe { ::std::ffi::CStr::from_ptr(req.method) }
+                .to_string_lossy()
+                .into_owned();
+
+            let app = __MONTRS_APP.get_or_init(|| {
+                let spec = $spec;
+                ::montrs_core::serve::SsrApp::build(spec.router, $root)
+                    .expect("failed to build MontRS SSR app")
+            });
+
+            let (status, content_type, body) =
+                match app.render(&method, &path) {
+                    Ok((status, headers, body)) => {
+                        let ct = headers
+                            .iter()
+                            .find(|(k, _)| {
+                                k.eq_ignore_ascii_case("content-type")
+                            })
+                            .map(|(_, v)| v.clone())
+                            .unwrap_or_default();
+                        (status, ct, body)
+                    }
+                    Err(e) => (
+                        500,
+                        "text/plain; charset=utf-8".to_string(),
+                        format!("montrs render error: {e}").into_bytes(),
+                    ),
+                };
+
+            let body = body.into_boxed_slice();
+            let body_len = body.len();
+            let content_type = content_type.into_bytes().into_boxed_slice();
+            let ct_len = content_type.len();
+            unsafe {
+                *out = $crate::montrs_app_abi::MontrsResponse {
+                    status,
+                    content_type: $crate::montrs_app_abi::MontrsBytes {
+                        ptr: ::std::boxed::Box::into_raw(content_type) as *mut u8,
+                        len: ct_len,
+                    },
+                    body: $crate::montrs_app_abi::MontrsBytes {
+                        ptr: ::std::boxed::Box::into_raw(body) as *mut u8,
+                        len: body_len,
+                    },
+                };
+            }
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_free_response(
+            out: *mut $crate::montrs_app_abi::MontrsResponse,
+        ) {
+            if out.is_null() {
+                return;
+            }
+            let resp = unsafe { &mut *out };
+            for bytes in [resp.content_type, resp.body] {
+                if !bytes.ptr.is_null() {
+                    let slice =
+                        ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+                    drop(unsafe { ::std::boxed::Box::from_raw(slice) });
+                }
+            }
+            unsafe { *out = ::std::mem::zeroed() };
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn montrs_app_entry()
+        -> *const $crate::montrs_app_abi::MontrsAppVtable {
+            static VTABLE: $crate::montrs_app_abi::MontrsAppVtable =
+                $crate::montrs_app_abi::MontrsAppVtable {
+                    abi_version: $crate::montrs_app_abi::ABI_VERSION,
+                    render: __montrs_render,
+                    free_response: __montrs_free_response,
+                };
+            &VTABLE
+        }
+    };
 }

@@ -80,23 +80,42 @@ where
     F: Fn() -> IV + Clone + Send + Sync + 'static,
     IV: leptos::prelude::IntoView + 'static,
 {
-    use axum::Router as AxumRouter;
-    use leptos::prelude::*;
-    use leptos_axum::LeptosRoutes;
     use tokio::task::LocalSet;
-    use tower_http::services::ServeDir;
 
-    // MontRS is the single source of truth for site config. Derive Leptos
-    // runtime env vars from MONTRS_* values (set by the CLI from montrs.toml)
-    // so the runtime no longer depends on `[package.metadata.leptos]`.
     let addr = std::env::var("MONTRS_SITE_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:3000".to_string());
+    let (options, site_root) = configure_leptos_options();
+    let app = build_axum_app(router, app_fn, options, &site_root);
+
+    let (host, port_str) = addr.rsplit_once(':').unwrap_or((&addr, "3000"));
+    let mut port: u16 = port_str.parse().unwrap_or(3000);
+    for _ in 0..100 {
+        let bind_addr = format!("{host}:{port}");
+        if let Ok(listener) = tokio::net::TcpListener::bind(&bind_addr).await {
+            tracing::info!("listening on http://{host}:{port}");
+            let local = LocalSet::new();
+            let _guard = local.enter();
+            axum::serve(listener, app.clone().into_make_service()).await?;
+            return Ok(());
+        }
+        port += 1;
+    }
+    Err("Could not bind to any port in range".into())
+}
+
+/// Derive Leptos runtime configuration from `MONTRS_*` env vars.
+#[cfg(feature = "ssr")]
+fn configure_leptos_options() -> (leptos::prelude::LeptosOptions, String) {
+    use leptos::prelude::*;
+
     let site_root = std::env::var("MONTRS_SITE_ROOT")
         .unwrap_or_else(|_| "target/site".to_string());
     let pkg_dir = std::env::var("MONTRS_SITE_PKG_DIR")
         .unwrap_or_else(|_| "pkg".to_string());
     let output_name = std::env::var("MONTRS_OUTPUT_NAME")
         .unwrap_or_else(|_| "website".to_string());
+    let addr = std::env::var("MONTRS_SITE_ADDR")
+        .unwrap_or_else(|_| "0.0.0.0:3000".to_string());
     let reload_port = std::env::var("MONTRS_RELOAD_PORT")
         .unwrap_or_else(|_| "3001".to_string());
 
@@ -122,16 +141,36 @@ where
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| pkg_dir.clone());
     conf.leptos_options.site_pkg_dir = relative_pkg.into();
+    (conf.leptos_options, site_root)
+}
+
+/// Build the axum app that serves the app's routes, static files, the dev
+/// overlay, and the `/_dioxus` bridge.
+#[cfg(feature = "ssr")]
+fn build_axum_app<C, F, IV>(
+    router: Router<C>,
+    app_fn: F,
+    options: leptos::prelude::LeptosOptions,
+    site_root: &str,
+) -> axum::Router
+where
+    C: AppConfig + 'static,
+    F: Fn() -> IV + Clone + Send + Sync + 'static,
+    IV: leptos::prelude::IntoView + 'static,
+{
+    use axum::Router as AxumRouter;
+    use leptos::prelude::*;
+    use leptos_axum::LeptosRoutes;
+    use tower_http::services::ServeDir;
 
     let axum_routes = router.to_axum_route_listings();
-
     let mut app = AxumRouter::new()
         .leptos_routes_with_context(
-            &conf.leptos_options,
+            &options,
             axum_routes,
             {
                 let r = router.clone();
-                let leptos_options = conf.leptos_options.clone();
+                let leptos_options = options.clone();
                 move || {
                     provide_context(r.clone());
                     // The SSR shell reads `LeptosOptions` (output_name,
@@ -142,7 +181,7 @@ where
             },
             app_fn,
         )
-        .fallback_service(ServeDir::new(&site_root));
+        .fallback_service(ServeDir::new(site_root));
 
     // Next.js-style dev overlay, injected by the framework itself (not the
     // app) so it appears in every MontRS app during `montrs serve`/`watch`.
@@ -154,7 +193,7 @@ where
             .layer(axum::middleware::from_fn(inject_dev_overlay));
     }
 
-    let app = app
+    app
         // SSR renders once and needs no reactivity, so signal reads during
         // rendering are the intended false positives the non-reactive zone
         // covers; this silences Leptos's debug-mode untracked-read warnings.
@@ -181,22 +220,82 @@ where
         // Compress static assets (notably the multi-megabyte WASM bundle)
         // on the fly when the client advertises `Accept-Encoding: gzip`.
         .layer(tower_http::compression::CompressionLayer::new())
-        .with_state(conf.leptos_options);
+        .with_state(options)
+}
 
-    let (host, port_str) = addr.rsplit_once(':').unwrap_or((&addr, "3000"));
-    let mut port: u16 = port_str.parse().unwrap_or(3000);
-    for _ in 0..100 {
-        let bind_addr = format!("{host}:{port}");
-        if let Ok(listener) = tokio::net::TcpListener::bind(&bind_addr).await {
-            tracing::info!("listening on http://{host}:{port}");
-            let local = LocalSet::new();
-            let _guard = local.enter();
-            axum::serve(listener, app.clone().into_make_service()).await?;
-            return Ok(());
-        }
-        port += 1;
+/// An SSR app that can render individual requests **without** binding a socket.
+///
+/// Used by the dev shell's hot-swappable app dylib: the shell owns the HTTP
+/// listener and calls [`SsrApp::render`] per request, so swapping the dylib
+/// never drops the listener.
+#[cfg(feature = "ssr")]
+pub struct SsrApp {
+    /// The constructed axum app.
+    pub app: axum::Router,
+    /// The Leptos options the app was built with.
+    pub options: leptos::prelude::LeptosOptions,
+}
+
+#[cfg(feature = "ssr")]
+impl SsrApp {
+    /// Build an SSR app from an app router and root view.
+    pub fn build<C, F, IV>(
+        router: Router<C>,
+        app_fn: F,
+    ) -> Result<Self, Box<dyn std::error::Error>>
+    where
+        C: AppConfig + 'static,
+        F: Fn() -> IV + Clone + Send + Sync + 'static,
+        IV: leptos::prelude::IntoView + 'static,
+    {
+        let (options, site_root) = configure_leptos_options();
+        let app = build_axum_app(router, app_fn, options.clone(), &site_root);
+        Ok(Self { app, options })
     }
-    Err("Could not bind to any port in range".into())
+
+    /// Render a single request to `(status, headers, body)`.
+    pub fn render(
+        &self,
+        method: &str,
+        uri: &str,
+    ) -> Result<
+        (u16, Vec<(String, String)>, Vec<u8>),
+        Box<dyn std::error::Error>,
+    > {
+        use axum::body::Body;
+        use tower::ServiceExt;
+
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()?;
+        let local = tokio::task::LocalSet::new();
+        let app = self.app.clone();
+        let method = axum::http::Method::from_bytes(method.as_bytes())?;
+        let uri = uri.to_string();
+
+        rt.block_on(local.run_until(async move {
+            let req = axum::http::Request::builder()
+                .method(method)
+                .uri(uri)
+                .body(Body::empty())?;
+            let res = app.oneshot(req).await?;
+            let status = res.status().as_u16();
+            let headers = res
+                .headers()
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        k.as_str().to_string(),
+                        v.to_str().unwrap_or_default().to_string(),
+                    )
+                })
+                .collect();
+            let body = axum::body::to_bytes(res.into_body(), usize::MAX)
+                .await?
+                .to_vec();
+            Ok::<_, Box<dyn std::error::Error>>((status, headers, body))
+        }))
+    }
 }
 
 /// Next.js-style dev overlay script (framework-injected). Shows a floating

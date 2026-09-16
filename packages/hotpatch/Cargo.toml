@@ -9,9 +9,10 @@ description = "Dev hot-patch runtime for MontRS: a hidden cutover plus the nativ
 
 [package.metadata.montrs]
 layer = "2"
-allowed_deps = ["montrs-core", "montrs-dev-hotpatch"]
+allowed_deps = ["montrs-core", "montrs-dev-hotpatch", "montrs-app-abi"]
 
 [dependencies]
 montrs-core = { path = "../core" }
 montrs-dev-hotpatch = { path = "../dev-hotpatch" }
+montrs-app-abi = { path = "../app-abi" }
 subsecond = "0.7"

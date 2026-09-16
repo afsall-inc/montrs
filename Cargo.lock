@@ -4395,6 +4395,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "montrs-app-abi"
+version = "0.1.0"
+
+[[package]]
 name = "montrs-auth"
 version = "0.1.0"
 dependencies = [
@@ -4593,6 +4597,7 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tokio-tungstenite",
+ "tower",
  "tower-http",
  "tracing",
 ]
@@ -4731,6 +4736,7 @@ dependencies = [
 name = "montrs-hotpatch"
 version = "0.1.0"
 dependencies = [
+ "montrs-app-abi",
  "montrs-core",
  "montrs-dev-hotpatch",
  "subsecond",

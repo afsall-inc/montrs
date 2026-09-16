@@ -58,10 +58,13 @@ pub fn build_spec() -> AppSpec<MyConfig> {
     spec
 }
 
+// Stable C entry the dev shell loads from the app cdylib (see docs/tooling/hot-reload.md).
+#[cfg(not(target_arch = "wasm32"))]
+montrs_hotpatch::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
+
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {
-    console_error_panic_hook::set_once();
+pub fn hydrate() {    console_error_panic_hook::set_once();
     // Connect to the dev server's hot-patch socket so Rust logic can be
     // hot-patched without a reload (opt-in via the `hotpatch` feature).
     #[cfg(feature = "hotpatch")]
