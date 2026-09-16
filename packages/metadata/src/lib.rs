@@ -155,6 +155,11 @@ pub struct ServeMeta {
     /// applies it without restarting. Off by default (dev builds only).
     #[serde(default)]
     pub hotpatch: bool,
+    /// Serve the app as a hot-swappable `cdylib` hosted by the generic dev
+    /// shell (dev-only). Library/workspace edits reload in place without a
+    /// server restart. Off by default.
+    #[serde(default)]
+    pub dylib: bool,
     /// Additional files to watch for changes.
     #[serde(default)]
     pub watch_additional_files: Vec<String>,
@@ -181,6 +186,7 @@ impl Default for ServeMeta {
             release: false,
             hash_files: false,
             hotpatch: false,
+            dylib: false,
             watch_additional_files: Vec::new(),
             style_file: None,
         }

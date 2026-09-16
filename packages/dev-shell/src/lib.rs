@@ -108,10 +108,18 @@ struct ReloadRequest {
 }
 
 /// Serve the app on `addr`, exposing `POST /__montrs/reload` to swap the dylib.
+///
+/// If `MONTRS_RELOAD_FILE` is set, that file is polled and its contents are
+/// treated as the path of the dylib to load; writing a new path reloads the app.
+/// This is how the CLI triggers a swap without an HTTP client.
 pub async fn serve(addr: &str, dylib: &Path) -> Result<()> {
     let app: SharedApp = Arc::new(RwLock::new(Arc::new(
         LoadedApp::load(dylib)?,
     )));
+
+    if let Ok(reload_file) = std::env::var("MONTRS_RELOAD_FILE") {
+        spawn_file_watcher(app.clone(), PathBuf::from(reload_file));
+    }
 
     let router = axum::Router::new()
         .route(
@@ -125,6 +133,32 @@ pub async fn serve(addr: &str, dylib: &Path) -> Result<()> {
     tracing::info!("montrs-dev-shell listening on http://{addr}");
     axum::serve(listener, router.into_make_service()).await?;
     Ok(())
+}
+
+/// Poll a file whose contents name the current app dylib; reload on change.
+fn spawn_file_watcher(app: SharedApp, file: PathBuf) {
+    tokio::spawn(async move {
+        // Seed with the file's current contents so we do not reload immediately.
+        let mut last = tokio::fs::read_to_string(&file).await.unwrap_or_default();
+        loop {
+            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+            let Ok(next) = tokio::fs::read_to_string(&file).await else {
+                continue;
+            };
+            let next = next.trim().to_string();
+            if next.is_empty() || next == last {
+                continue;
+            }
+            last = next.clone();
+            match LoadedApp::load(Path::new(&next)) {
+                Ok(loaded) => {
+                    *app.write().unwrap() = Arc::new(loaded);
+                    tracing::info!("reloaded app dylib {next}");
+                }
+                Err(e) => tracing::error!("reload of {next} failed: {e}"),
+            }
+        }
+    });
 }
 
 async fn reload_handler(

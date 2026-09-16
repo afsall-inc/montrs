@@ -56,6 +56,11 @@ pub async fn run() -> anyhow::Result<()> {
     };
     pipeline.release |= crate::config::current_release();
 
+    // Dylib mode (dev-only): host the app as a hot-swappable cdylib.
+    if pipeline.meta.serve.dylib || std::env::var_os("MONTRS_DYLIB").is_some() {
+        return super::serve_dylib::run().await;
+    }
+
     // The dev server always builds in the dev profile. This keeps
     // `debug_assertions` on so the SSR HTML carries the Leptos hot-reload
     // markers, and makes incremental rebuilds far faster.
