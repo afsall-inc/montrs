@@ -132,10 +132,10 @@ workspace-crate patching lands.
 ## Limitations
 
 - **Tip crate only.** The patch contains only the crate with `main.rs`. Edits to
-  a library or dependency crate (for example `lib.rs`) are *not* patched; their
-  symbols resolve through the patch's stubs to the running binary, so you need a
-  full rebuild. Most app logic lives in the lib, so keep the code you iterate on
-  in the bin crate, or expect a full reload for lib changes. An experimental
+  a library or dependency crate (for example `lib.rs`) are *not* patched: the dev
+  server detects this from the changed crates and falls back to a full rebuild +
+  restart, so the change still appears (the server just restarts). Keep the code
+  you iterate on in the bin crate to avoid the restart. An experimental
   `MONTRS_HOTPATCH_WORKSPACE=1` also links the changed workspace crates into the
   patch, but it does not reliably redirect calls that were inlined into the tip,
   so it is off by default and not yet supported.
