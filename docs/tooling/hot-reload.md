@@ -173,6 +173,20 @@ workspace-crate patching lands.
   bootstrap. This is the only crate an app references.
 - `packages/cli` — the `serve`/`watch` supervisor that ties it together.
 
+## Roadmap
+
+- **Workspace-crate patching.** Experimental (`MONTRS_HOTPATCH_WORKSPACE=1`):
+  the changed workspace crates' objects are linked into the patch, but calls
+  inlined into the tip are not redirected, so it is off by default. Solving this
+  needs codegen-level call-site routing.
+- **WASM (browser) Rust hot-patching.** Not implemented. The jump-table
+  foundation exists (`wasm_function_symbols`, `build_wasm_jump_table`), but the
+  patch path is unfinished: it needs base-module preparation, a `wasm-ld` PIC
+  thin link, and GOT/ifunc resolution before `subsecond::apply_patch` can
+  instantiate a patch module in the browser. Until then, client-side changes are
+  covered by `view!`/CSS hot reload, and Rust patches apply on the server (tip
+  crate only).
+
 ## Troubleshooting
 
 - **Hydration panic (`failed_to_cast_element`).** The SSR and WASM builds emitted
