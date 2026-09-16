@@ -239,6 +239,9 @@ pub async fn run() -> anyhow::Result<()> {
     } else {
         bin.clone()
     };
+    // The crate whose objects the patch can contain; only edits to this crate
+    // can be applied without a restart.
+    let tip_crate = pipeline.server_bin_name.replace('-', "_");
 
     println!("Serving on http://{addr}");
     println!("Site root: {site_root}");
@@ -468,8 +471,19 @@ pub async fn run() -> anyhow::Result<()> {
                     Ok(()) => {
                         println!("Rebuild complete.");
                         let mut patched = false;
+                        // A patch only contains the tip crate's objects, so an
+                        // edit to a dependency/library crate cannot take effect
+                        // without a restart. Detect that and force a full reload
+                        // instead of silently keeping the stale server.
+                        let mut change_is_patchable = true;
                         if hotpatch_enabled {
                             log_capture(&hotpatch_dir);
+                            let crates = montrs_dev_hotpatch::changed_crates(
+                                &montrs_dev_hotpatch::read_rustc_invocations(),
+                                &changed,
+                            );
+                            change_is_patchable = !crates.is_empty()
+                                && crates.iter().all(|c| c == &tip_crate);
                             if hotpatch_patch_enabled {
                                 patched = try_build_patch(
                                     &run_bin,
@@ -481,7 +495,7 @@ pub async fn run() -> anyhow::Result<()> {
                             }
                         }
 
-                        if keep_alive && patched {
+                        if keep_alive && patched && change_is_patchable {
                             // The running server keeps serving and the patch was
                             // broadcast to connected clients, so no restart or
                             // full reload is needed. The freshly built binary is
