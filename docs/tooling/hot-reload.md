@@ -117,22 +117,31 @@ A hot-patchable app needs three things, all shipped in the templates:
 
 ## Status and rationale
 
-Rust hot-patching is **experimental and opt-in** (`[serve] hotpatch = true`) and
-stays that way until it can patch workspace crates, for two reasons:
+Rust hot reload has two opt-in native mechanisms:
 
-- **Cost.** It fat-links the server and forces a large PDB (hundreds of MB), plus
-  a relink and patch link per edit. Enabling it by default would slow every dev
-  loop even when no Rust logic changed.
-- **Surprise.** Only the tip crate is patchable, so a lib/dependency edit still
-  needs a full rebuild. Defaulting it would make behavior look inconsistent.
+- **ThinLink tip-crate patching** (`[serve] hotpatch = true`) — applies Rust
+  edits in the bin (tip) crate without a restart.
+- **Dylib swap** (`[serve] dylib = true`) — hosts the app as a hot-swappable
+  `cdylib`; library/workspace edits reload in place with the shell process
+  unchanged. Verified end-to-end.
 
-View/CSS hot reload is always on and needs no flag. Revisit the default once
-workspace-crate patching lands.
+Both stay **off by default**: they add build cost (a fat link + large PDB, or a
+`cdylib` link + large PDB) and change the run model, so the default dev loop
+keeps the fast static server. View/CSS hot reload is always on and needs no
+flag. The browser (WASM) Rust path is still being brought up.
 
 ## Native workspace reload (dylib swap)
 
 Tip-crate hot-patching covers edits in the bin crate. Native **workspace** edits
-(a library or dependency crate) use dylib swap instead:
+(a library or dependency crate) use dylib swap instead. Enable it in
+`montrs.toml`:
+
+```toml
+[serve]
+dylib = true
+```
+
+or with `MONTRS_DYLIB=1`. How it works:
 
 - the app library is built as a `cdylib` that exports `montrs_app_entry` (created
   by `montrs_hotpatch::export_app!`) behind the stable `montrs-app-abi` C ABI;
@@ -144,6 +153,9 @@ Tip-crate hot-patching covers edits in the bin crate. Native **workspace** edits
 
 Everything crossing the boundary is plain C types, so the app and shell are
 rebuilt independently.
+
+Verified end-to-end: editing a **workspace library** function reloads the app
+in place with the shell process unchanged (same PID) and the new output served.
 
 ### State resets on reload
 
@@ -163,14 +175,14 @@ declare a serializable state type, so it stays opt-in.
 
 ## Limitations
 
-- **Tip crate only.** The patch contains only the crate with `main.rs`. Edits to
-  a library or dependency crate (for example `lib.rs`) are *not* patched: the dev
-  server detects this from the changed crates and falls back to a full rebuild +
-  restart, so the change still appears (the server just restarts). Keep the code
-  you iterate on in the bin crate to avoid the restart. An experimental
-  `MONTRS_HOTPATCH_WORKSPACE=1` also links the changed workspace crates into the
-  patch, but it does not reliably redirect calls that were inlined into the tip,
-  so it is off by default and not yet supported.
+- **Tip crate only (ThinLink).** The *patch* contains only the crate with
+  `main.rs`. Edits to a library or dependency crate are not patched by ThinLink:
+  the dev server detects this from the changed crates and falls back to a full
+  rebuild + restart. For native, enable `[serve] dylib = true` to reload
+  library/workspace edits in place instead (see above); the browser path is still
+  being brought up. An experimental `MONTRS_HOTPATCH_WORKSPACE=1` also links the
+  changed workspace crates into the patch, but it does not reliably redirect
+  calls that were inlined into the tip, so it is off by default.
 - **Struct layout and statics.** Subsecond does not support hot-reloading structs
   that change layout, and globals/statics/thread-locals have caveats (renames look
   like new globals; static initializers do not re-run; thread-locals in the tip
@@ -193,6 +205,7 @@ declare a serializable state type, so it stays opt-in.
 | `MONTRS_HOTPATCH_DIR` | Capture directory (default `target/montrs-hotpatch`) |
 | `MONTRS_HOTPATCH_PROBE` | Log the cutover key and jump-table membership |
 | `MONTRS_HOTPATCH_WORKSPACE` | Experimental: also link changed workspace crates into the patch (unreliable; off by default) |
+| `MONTRS_DYLIB` | Same as `[serve] dylib = true`: serve the app as a hot-swappable cdylib |
 | `MONTRS_REAL_LINKER` / `MONTRS_HOTPATCH_FLAVOR` | Real linker + flavour used by the shims |
 | `MONTRS_HOTPATCH_TIP_OUT` / `MONTRS_HOTPATCH_WORKSPACE` | Tip binary + workspace target for the shims |
 
