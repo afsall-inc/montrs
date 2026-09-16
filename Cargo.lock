@@ -4751,7 +4751,6 @@ dependencies = [
 name = "montrs-hotpatch"
 version = "0.1.0"
 dependencies = [
- "montrs-app-abi",
  "montrs-core",
  "montrs-dev-hotpatch",
  "subsecond",
@@ -9909,6 +9908,7 @@ dependencies = [
  "leptos",
  "leptos_meta",
  "leptos_router",
+ "montrs-app-abi",
  "montrs-content",
  "montrs-core",
  "montrs-hotkeys-core",

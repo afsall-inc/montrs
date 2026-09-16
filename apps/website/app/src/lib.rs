@@ -60,7 +60,7 @@ pub fn build_spec() -> AppSpec<MyConfig> {
 
 // Stable C entry the dev shell loads from the app cdylib (see docs/tooling/hot-reload.md).
 #[cfg(not(target_arch = "wasm32"))]
-montrs_hotpatch::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
+montrs_app_abi::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
