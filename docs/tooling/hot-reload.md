@@ -115,6 +115,20 @@ A hot-patchable app needs three things, all shipped in the templates:
   compile time, and cargo does not track it, so it must be constant.
 - `montrs-hotpatch` as a native dependency — the runtime facade and `serve!`.
 
+## Status and rationale
+
+Rust hot-patching is **experimental and opt-in** (`[serve] hotpatch = true`) and
+stays that way until it can patch workspace crates, for two reasons:
+
+- **Cost.** It fat-links the server and forces a large PDB (hundreds of MB), plus
+  a relink and patch link per edit. Enabling it by default would slow every dev
+  loop even when no Rust logic changed.
+- **Surprise.** Only the tip crate is patchable, so a lib/dependency edit still
+  needs a full rebuild. Defaulting it would make behavior look inconsistent.
+
+View/CSS hot reload is always on and needs no flag. Revisit the default once
+workspace-crate patching lands.
+
 ## Limitations
 
 - **Tip crate only.** The patch contains only the crate with `main.rs`. Edits to
