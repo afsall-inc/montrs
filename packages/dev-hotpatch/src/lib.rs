@@ -1251,6 +1251,141 @@ pub fn build_wasm_jump_table(
 }
 
 // ---------------------------------------------------------------------------
+// WASM patch linking
+// ---------------------------------------------------------------------------
+
+/// Locate `rust-lld` (wasm flavour) from the active toolchain.
+pub fn find_wasm_ld() -> Option<PathBuf> {
+    let sysroot = std::process::Command::new("rustc")
+        .arg("--print")
+        .arg("sysroot")
+        .output()
+        .ok()?;
+    let sysroot = String::from_utf8_lossy(&sysroot.stdout).trim().to_string();
+
+    let host = std::process::Command::new("rustc")
+        .arg("-vV")
+        .output()
+        .ok()?;
+    let host = String::from_utf8_lossy(&host.stdout)
+        .lines()
+        .find_map(|l| l.strip_prefix("host: ").map(|s| s.trim().to_string()))?;
+
+    let exe = if cfg!(windows) {
+        "rust-lld.exe"
+    } else {
+        "rust-lld"
+    };
+    let path = Path::new(&sysroot)
+        .join("lib")
+        .join("rustlib")
+        .join(&host)
+        .join("bin")
+        .join(exe);
+    path.is_file().then_some(path)
+}
+
+/// Everything needed to link a wasm patch module.
+pub struct WasmPatchRequest<'a> {
+    /// The module running in the browser (the built client wasm).
+    pub fat_wasm: &'a Path,
+    /// Fresh object files for the changed crates.
+    pub objects: &'a [PathBuf],
+    /// Where to write the patch module.
+    pub out: &'a Path,
+    /// The linker (`rust-lld`).
+    pub wasm_ld: &'a Path,
+    /// URL the browser fetches the patch from; set on the [`JumpTable`].
+    pub url: &'a str,
+}
+
+/// Link a PIC wasm patch module from changed crates' objects and build its jump
+/// table.
+///
+/// `subsecond`'s wasm `apply_patch` instantiates this module, appends its
+/// functions to the host's indirect function table, runs the reloc/ctor
+/// exports, and commits the jump table (rebased by the appended `table_base`).
+pub fn build_wasm_patch(req: &WasmPatchRequest) -> anyhow::Result<JumpTable> {
+    if let Some(parent) = req.out.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let mut args: Vec<String> = [
+        "-flavor",
+        "wasm",
+        "--shared",
+        "--experimental-pic",
+        "--import-memory",
+        "--import-table",
+        "--no-entry",
+        "--allow-undefined",
+        "--export=__wasm_apply_data_relocs",
+        "--export=__wasm_apply_global_relocs",
+        "--export=__wasm_call_ctors",
+        "-o",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    args.push(req.out.display().to_string());
+    args.extend(req.objects.iter().map(|p| p.display().to_string()));
+
+    let output = std::process::Command::new(req.wasm_ld)
+        .args(&args)
+        .output()
+        .map_err(|e| anyhow::anyhow!("could not run {}: {e}", req.wasm_ld.display()))?;
+    if !output.status.success() {
+        anyhow::bail!(
+            "wasm patch link failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        );
+    }
+
+    let fat = std::fs::read(req.fat_wasm)?;
+    let patch = std::fs::read(req.out)?;
+    build_wasm_jump_table(PathBuf::from(req.url), &fat, &patch)
+}
+
+/// Extract object files for the workspace crates whose sources changed, from
+/// their freshly built wasm `.rlib`s.
+pub fn changed_wasm_objects(
+    invocations: &[RustcInvocation],
+    changed_files: &[PathBuf],
+    wasm_deps_dir: &Path,
+) -> anyhow::Result<Vec<PathBuf>> {
+    let changed = changed_crates(invocations, changed_files);
+    if changed.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let mut rlibs: Vec<PathBuf> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(wasm_deps_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if !name.starts_with("lib") || !name.ends_with(".rlib") {
+                continue;
+            }
+            let stem = name
+                .trim_start_matches("lib")
+                .split('-')
+                .next()
+                .unwrap_or_default()
+                .to_string();
+            if changed.contains(&stem) {
+                rlibs.push(entry.path());
+            }
+        }
+    }
+    if rlibs.is_empty() {
+        return Ok(Vec::new());
+    }
+    rlibs.sort();
+
+    let out_dir = wasm_deps_dir.join("montrs-patch-objects");
+    extract_rlib_objects(&rlibs, &out_dir)
+}
+
+// ---------------------------------------------------------------------------
 // Fat-binary symbol index
 // ---------------------------------------------------------------------------
 
