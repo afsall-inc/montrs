@@ -59,9 +59,11 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 | `core` | Foundational traits (Plate, Route, AppSpec, AgentError). **Dep on platform only.** |
 | `deps` | Dependency freshness checking. |
 | `desktop` | Native desktop (wry webview, winit+wgpu window). |
-| `dev-hotpatch` | Rust hot-patching dev tooling: capture, fat link, patch link, jump tables, hub, native client. |
+| `app-abi` | Stable C ABI + `export_app!` for the hot-swappable app dylib. |
+| `dev-hotpatch` | Rust hot-patch tooling (capture/link/jump tables); base for the wasm path. |
+| `dev-shell` | Generic dev shell hosting a hot-swappable app dylib. |
 | `hot-reload` | `view!` hot reload: macro diffing → markup patches. |
-| `hotpatch` | Runtime facade: `serve!` cutover + native client bootstrap. |
+| `hotpatch` | App-facing facade: `serve!`. |
 | `env` | Environment variable parsing + `.env` loading + Tera templates. |
 | `fmt` | Custom formatter for Rust + `view!` macros. |
 | `haptics` | Cross-platform haptic feedback. |
@@ -120,8 +122,8 @@ montrs test          # run all workspace tests (pre-warms racy proc-macro crates
 montrs test-pkgs     # run tests package-by-package (reliable on Windows)
 montrs bench         # run benchmarks
 montrs serve         # dev server with hot-reload
-#   Rust hot-patching is opt-in (`[serve] hotpatch = true` in montrs.toml) and
-#   patches the tip crate only — see docs/tooling/hot-reload.md.
+#   Rust hot reload is opt-in (`[serve] hotpatch = true` in montrs.toml): the app
+#   library is built as a cdylib and swapped in place — see docs/tooling/hot-reload.md.
 montrs build         # build for production
 montrs agent check   # agent-level diagnostics
 montrs agent doctor  # full health check

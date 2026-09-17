@@ -5,166 +5,94 @@ to turn it on, how it works internally, and what its limits are.
 
 ## Hot reload vs hot patch
 
-They are not the same thing:
-
-- **Hot reload** updates what the app *renders* or *looks like* while it runs.
-  It covers CSS/asset swaps and `view!` (markup) changes. It needs no Rust
-  recompile.
+- **Hot reload** updates what the app *renders* or *looks like* while it runs
+  (CSS/assets and `view!` markup). It needs no Rust recompile.
 - **Hot patch** replaces the app's *compiled Rust code* in the running process.
-  It recompiles only what changed, links it into a shared library, and redirects
-  function calls through a jump table at a cutover point. The process keeps
-  running — no restart, no lost state.
+  The app keeps running — no restart, no lost connection.
 
-| | Hot reload (CSS / `view!`) | Hot patch (Rust logic) |
+| | Hot reload (CSS / `view!`) | Rust hot reload |
 |---|---|---|
 | Changes | markup, attributes, text, styles | function bodies, branches, constants, logic |
-| Mechanism | diff source → patch the DOM / swap CSS | recompile → thin-link a patch DLL → load → jump table |
-| Cargo rebuild | no | yes (incremental rustc + link) |
-| Reaches | the browser DOM, across all crates | the running process, **tip crate only** |
-| State | preserved | preserved (same PID, in-flight state kept) |
+| Mechanism | diff source → patch the DOM / swap CSS | rebuild the app library → swap it into the running shell |
+| Cargo rebuild | no | yes (incremental) |
+| Reaches | the browser DOM, across all crates | the app + its workspace crates |
+| State | preserved | process preserved; in-app state resets (see below) |
 | Latency | instant (ms) | ~seconds |
-| Status | **on by default with `montrs serve`** | **experimental, opt-in** |
+| Status | **on by default with `montrs serve`** | **opt-in** |
 
-## Turning it on
+## Turning on Rust hot reload
 
 `view!` and CSS hot reload are always active during `montrs serve`/`montrs watch`.
 Nothing to configure.
 
-Native Rust hot reload is opt-in and uses **dylib swap**. Enable it in
-`montrs.toml`:
+Rust hot reload is opt-in. Enable it in `montrs.toml`:
 
 ```toml
 [serve]
-dylib = true
+hotpatch = true
 ```
 
-or per session with `MONTRS_DYLIB=1 montrs serve`. (`[serve] hotpatch` and
-`MONTRS_HOTPATCH` are accepted as legacy aliases.) The app is built as a
-`cdylib` and hosted by the generic dev shell; on each Rust edit the library is
-rebuilt and swapped in place.
+or per session with:
+
+```bash
+MONTRS_HOTPATCH=1 montrs serve
+```
+
+## How it works (dylib swap)
+
+The app library is the hot-reload boundary:
+
+1. **Build as a dylib.** With hot reload on, the app library is built as a
+   `cdylib` that exports `montrs_app_entry` (created by
+   `montrs_app_abi::export_app!`) behind a stable `repr(C)` vtable. Only plain C
+   types cross the boundary.
+2. **Host it.** A generic shell (`montrs-dev-shell`) owns the HTTP listener and
+   renders each request by calling into the dylib.
+3. **Swap on change.** On an edit the CLI rebuilds the library, copies it to a
+   fresh filename, and points the shell's reload file at it. The shell loads the
+   new library and swaps the vtable atomically — the listener, and the browser
+   connection, never restart. Old libraries are leaked (Windows cannot safely
+   unload a loaded DLL), bounded by reloads in a session.
+
+This covers edits in the app crate and its **workspace library crates**
+(`lib.rs`, `packages/*`), because the whole library is rebuilt and swapped.
 
 ## How to write the app
 
-No hot-patch code belongs in an application. Serve the app through the
-`montrs_hotpatch::serve!` macro (the templates and website already do). The
-macro installs the native patch client, wraps the render in a hot-patch cutover,
-and calls `montrs_core::serve::montrs_serve`:
+The normal entry (used when hot reload is off) is unchanged:
 
 ```rust
-#[cfg(feature = "ssr")]
-fn main() {
-    tracing_subscriber::fmt().with_env_filter("info").init();
-    let spec = website::build_spec();
-    montrs_hotpatch::serve!(
-        spec.router,
-        || leptos::prelude::view! { <Shell /> }
-    )
-    .unwrap();
-}
+montrs_hotpatch::serve!(spec.router, || leptos::prelude::view! { <Shell /> });
 ```
 
-The root can be a closure or a named `fn`. A named `fn` is preferable for
-hot-patching because it gives the cutover a stable symbol:
+Add the dylib entry in the app **library** (the templates already do this):
 
 ```rust
-#[inline(never)]
-fn root() -> impl leptos::prelude::IntoView {
-    leptos::prelude::view! { <Shell /> }
-}
-
-montrs_hotpatch::serve!(spec.router, root).unwrap();
+#[cfg(not(target_arch = "wasm32"))]
+montrs_app_abi::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
 ```
-
-In a release build the cutover is a no-op, and the client only starts if the dev
-server exposes a socket — so the macro is safe to keep in shipped code.
-
-## How Rust hot-patching works
-
-1. **Capture.** With hot-patching enabled, `montrs serve` sets
-   `RUSTC_WORKSPACE_WRAPPER` to a shim that records each workspace crate's
-   `rustc` invocation, and sets the platform linker to a shim that, for the
-   **tip** link, links a "fat" binary: it exports `main`, disables high-entropy
-   VA and incremental linking, forces a full PDB, and saves the tip's object
-   files.
-2. **Edit.** A source change triggers a rebuild. The server runs from a
-   *sibling copy* (`app-ssr.run.exe`) so cargo can relink the real binary without
-   hitting the Windows "running executable" lock — the process keeps serving.
-3. **Patch.** The freshly linked tip objects plus generated *undefined-symbol
-   stubs* are linked into a small shared library. A jump table maps each symbol's
-   address in the running binary to its new address in the patch.
-4. **Broadcast.** The dev server's hub sends the jump table over the hot-patch
-   socket.
-5. **Apply.** The native client in the running app calls
-   `subsecond::apply_patch`, which loads the library and rebases the table by the
-   ASLR slide.
-6. **Cutover.** Every request re-enters the render through `subsecond::call`. If
-   the cutover's function is in the table, the patched version runs; otherwise the
-   original code runs.
 
 ## Project setup (already done in templates)
 
-A hot-patchable app needs three things, all shipped in the templates:
+- `[profile.hot]` in the root `Cargo.toml` — the client profile (`release` plus
+  `debug-assertions`), so the WASM client and the SSR server emit matching
+  hot-reload markers.
+- `.cargo/config.toml` pinning `LEPTOS_WATCH` — `leptos` reads it at compile
+  time and cargo does not track it, so it must be constant.
+- `montrs-app-abi` as a native dependency — the ABI and `export_app!`.
+- The `montrs-dev-shell` binary, built with the CLI (or on `PATH`).
 
-- `[profile.hot]` in the root `Cargo.toml` — the client profile (`release`
-  settings plus `debug-assertions`), so the WASM client and the SSR server emit
-  matching hot-reload markers.
-- `.cargo/config.toml` pinning `LEPTOS_WATCH` — the `leptos` crate reads it at
-  compile time, and cargo does not track it, so it must be constant.
-- `montrs-hotpatch` as a native dependency — the runtime facade and `serve!`.
+## State resets on reload
 
-## Status and rationale
-
-Rust hot reload has two opt-in native mechanisms:
-
-- **ThinLink tip-crate patching** (`[serve] hotpatch = true`) — applies Rust
-  edits in the bin (tip) crate without a restart.
-- **Dylib swap** (`[serve] dylib = true`) — hosts the app as a hot-swappable
-  `cdylib`; library/workspace edits reload in place with the shell process
-  unchanged. Verified end-to-end.
-
-Both stay **off by default**: they add build cost (a fat link + large PDB, or a
-`cdylib` link + large PDB) and change the run model, so the default dev loop
-keeps the fast static server. View/CSS hot reload is always on and needs no
-flag. The browser (WASM) Rust path is still being brought up.
-
-## Native workspace reload (dylib swap)
-
-Tip-crate hot-patching covers edits in the bin crate. Native **workspace** edits
-(a library or dependency crate) use dylib swap instead. Enable it in
-`montrs.toml`:
-
-```toml
-[serve]
-dylib = true
-```
-
-or with `MONTRS_DYLIB=1`. How it works:
-
-- the app library is built as a `cdylib` that exports `montrs_app_entry` (created
-  by `montrs_hotpatch::export_app!`) behind the stable `montrs-app-abi` C ABI;
-- a generic shell (`montrs-dev-shell`) owns the HTTP listener and renders each
-  request by calling into the dylib;
-- on a change the CLI rebuilds the dylib, copies it to a fresh filename, and
-  POSTs its path to the shell, which loads it and swaps the vtable atomically.
-  The listener never restarts, so the page keeps its connection.
-
-Everything crossing the boundary is plain C types, so the app and shell are
-rebuilt independently.
-
-Verified end-to-end: editing a **workspace library** function reloads the app
-in place with the shell process unchanged (same PID) and the new output served.
-
-### State resets on reload
-
-Each swapped-in dylib gets fresh globals, so in-dylib app state (caches,
-counters, open connections) is discarded on every reload. v1 treats SSR requests
+Each swapped-in library gets fresh globals, so in-dylib app state (caches,
+counters, open connections) is discarded on every reload. Requests are treated
 as stateless, which is fine for typical server-rendered pages.
 
 ### Future: state-transfer hook
 
 A later version can preserve long-lived state across reloads: add optional
 `export_state() -> bytes` / `import_state(bytes)` hooks to the ABI, and have the
-shell carry those bytes from the outgoing dylib to the incoming one. This is
+shell carry those bytes from the outgoing library to the incoming one. This is
 worth doing because it keeps sessions and warm caches alive across edits,
 turning every reload into a continuation instead of a reset — the difference
 between "the server restarted" and "the code changed." It requires the app to
@@ -172,78 +100,48 @@ declare a serializable state type, so it stays opt-in.
 
 ## Limitations
 
-- **Tip crate only (ThinLink).** The *patch* contains only the crate with
-  `main.rs`. Edits to a library or dependency crate are not patched by ThinLink:
-  the dev server detects this from the changed crates and falls back to a full
-  rebuild + restart. For native, enable `[serve] dylib = true` to reload
-  library/workspace edits in place instead (see above); the browser path is still
-  being brought up. An experimental `MONTRS_HOTPATCH_WORKSPACE=1` also links the
-  changed workspace crates into the patch, but it does not reliably redirect
-  calls that were inlined into the tip, so it is off by default.
-- **Struct layout and statics.** Subsecond does not support hot-reloading structs
-  that change layout, and globals/statics/thread-locals have caveats (renames look
-  like new globals; static initializers do not re-run; thread-locals in the tip
-  crate reset). Frameworks "re-instance" state to work around this; MontRS
-  currently does not. On native, `ifunc_count` is `0` — the jump table is applied
-  by loading the patch DLL and rebasing addresses; `ifunc_count` only matters for
-  the (unimplemented) wasm path.
-- **Debug builds only.** `subsecond::call` is compiled out when `debug_assertions`
-  is off, and hot-patching is a development feature. Never ship it.
-- **Cost.** Hot-patching fattens the server link, forces a large PDB (hundreds of
-  MB), and adds a relink + patch link per edit. That is why it is off by default.
+- **Browser (WASM) Rust hot reload is not finished.** Client-side changes are
+  covered by `view!`/CSS hot reload; Rust hot reload applies to the native dev
+  server. The wasm patch path (jump tables, PIC thin link) is in progress.
+- **Debug builds only.** This is a development feature and is never part of a
+  production build.
+- **State resets** on each reload (above).
 
 ## Environment variables
 
 | Variable | Purpose |
 |---|---|
-| `MONTRS_HOTPATCH` | Enable capture + fat link (same as `[serve] hotpatch`) |
-| `MONTRS_HOTPATCH_PATCH` | Also build and broadcast a patch on each edit |
-| `MONTRS_HOTPATCH_ADDR` | Address of the hub; set on the app by `serve` |
-| `MONTRS_HOTPATCH_DIR` | Capture directory (default `target/montrs-hotpatch`) |
-| `MONTRS_HOTPATCH_PROBE` | Log the cutover key and jump-table membership |
-| `MONTRS_HOTPATCH_WORKSPACE` | Experimental: also link changed workspace crates into the patch (unreliable; off by default) |
-| `MONTRS_DYLIB` | Same as `[serve] dylib = true`: serve the app as a hot-swappable cdylib |
-| `MONTRS_REAL_LINKER` / `MONTRS_HOTPATCH_FLAVOR` | Real linker + flavour used by the shims |
-| `MONTRS_HOTPATCH_TIP_OUT` / `MONTRS_HOTPATCH_WORKSPACE` | Tip binary + workspace target for the shims |
+| `MONTRS_HOTPATCH` | Enable Rust hot reload (same as `[serve] hotpatch`) |
+| `MONTRS_APP_DYLIB` | App library path; set on the shell by `serve` |
+| `MONTRS_RELOAD_FILE` | File whose contents name the current app library; the shell reloads when it changes |
+| `MONTRS_DEV_SHELL_PATH` | Override the `montrs-dev-shell` binary path |
 
 ## Crates
 
-- `montrs-hot-reload` — diffs `view!` macros and produces markup patches.
-- `montrs-dev-hotpatch` — capture, fat link, patch linker, jump-table builder,
-  the dev hub, the native client, and the wrapper/debug binaries.
-- `montrs-hotpatch` — the runtime facade: `serve!`, the cutover, and the client
-  bootstrap. This is the only crate an app references.
-- `packages/cli` — the `serve`/`watch` supervisor that ties it together.
+- `montrs-app-abi` — the stable C ABI and `export_app!`.
+- `montrs-dev-shell` — the generic shell: listener, loader, swap.
+- `montrs-hot-reload` — `view!` diffing and markup patches.
+- `montrs-hotpatch` — app-facing facade (`serve!`).
+- `montrs-dev-hotpatch` — capture/link/patch tooling; the base for the wasm path.
 
 ## Roadmap
 
-- **Workspace-crate patching.** Experimental (`MONTRS_HOTPATCH_WORKSPACE=1`):
-  the changed workspace crates' objects are linked into the patch, but calls
-  inlined into the tip are not redirected, so it is off by default. Solving this
-  needs codegen-level call-site routing.
-- **WASM (browser) Rust hot-patching.** Not implemented. The jump-table
-  foundation exists (`wasm_function_symbols`, `build_wasm_jump_table`), but the
-  patch path is unfinished: it needs base-module preparation, a `wasm-ld` PIC
-  thin link, and GOT/ifunc resolution before `subsecond::apply_patch` can
-  instantiate a patch module in the browser. Until then, client-side changes are
-  covered by `view!`/CSS hot reload, and Rust patches apply on the server (tip
-  crate only).
+- **WASM (browser) Rust hot reload.** The jump-table semantics are in place
+  (`wasm_function_table_indices` / `build_wasm_jump_table`). Remaining: capture
+  and replay changed wasm crates into objects, link a PIC patch module with
+  `wasm-ld`, serve the patch `.wasm`, and apply it in-browser.
 
 ## Troubleshooting
 
 - **Hydration panic (`failed_to_cast_element`).** The SSR and WASM builds emitted
   different hot-reload markers. Ensure `.cargo/config.toml` pins `LEPTOS_WATCH`
-  and that `[profile.hot]` exists; if you changed either, a one-time
+  and that `[profile.hot]` exists; after changing either, a one-time
   `cargo clean -p leptos` is needed because cargo does not track the env var.
-- **`could not open … .pdb`.** The patch builder reads symbols from a PDB. The fat
-  link forces `/DEBUG:FULL` and the run copy falls back to the `deps/<crate>.pdb`
-  when cargo does not copy it. If it still fails, the binary may have no debug
-  info.
-- **Crash on the first patched call (`0xC0000409`).** The patch exported `main` as
-  an incremental-link thunk whose address did not match the PDB RVA the table
-  rebases against. Both links pass `/INCREMENTAL:NO`; if you see this, check that
-  the linker shim is the current build.
-- **Patch applies but nothing changes.** The edit was in a dependency/lib crate,
-  which the patch does not contain (tip-crate limit). Move the change to the bin
-  crate or do a full rebuild. Run with `MONTRS_HOTPATCH_PROBE=1` — the client logs
-  whether the jump table contains the cutover key.
+- **`montrs-dev-shell not found`.** Build it with
+  `cargo build -p montrs-dev-shell`, or set `MONTRS_DEV_SHELL_PATH`.
+- **`app cdylib not found`.** The app library must call
+  `montrs_app_abi::export_app!`; the dylib is named after the package
+  (`<package>.dll`).
+- **An edit didn't show up.** Check the shell log for `reloaded app dylib …`.
+  Changes to the SSR bin/shell restart the server; changes to the app library
+  reload in place.

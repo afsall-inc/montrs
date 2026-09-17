@@ -56,11 +56,10 @@ pub async fn run() -> anyhow::Result<()> {
     };
     pipeline.release |= crate::config::current_release();
 
-    // Native Rust hot reload is dylib swap (see docs/tooling/hot-reload.md).
-    // `hotpatch` is accepted as a legacy alias for enabling it.
-    if pipeline.meta.serve.dylib
-        || pipeline.meta.serve.hotpatch
-        || std::env::var_os("MONTRS_DYLIB").is_some()
+    // Rust hot reload (dev-only): the app library is built as a cdylib and
+    // hosted by the generic dev shell, so edits reload in place without
+    // restarting the dev server (see docs/tooling/hot-reload.md).
+    if pipeline.meta.serve.hotpatch
         || std::env::var_os("MONTRS_HOTPATCH").is_some()
     {
         return super::serve_dylib::run().await;

@@ -150,16 +150,12 @@ pub struct ServeMeta {
     /// Whether to hash frontend files.
     #[serde(default)]
     pub hash_files: bool,
-    /// Enable experimental Rust hot-patching in `montrs serve`: the server is
-    /// fat-linked, a patch is built on each Rust edit, and the running app
-    /// applies it without restarting. Off by default (dev builds only).
+    /// Enable Rust hot reload in `montrs serve` (dev-only). The app library is
+    /// built as a `cdylib` and hosted by the generic dev shell, so edits to the
+    /// app or its workspace crates reload in place without restarting the dev
+    /// server. Off by default.
     #[serde(default)]
     pub hotpatch: bool,
-    /// Serve the app as a hot-swappable `cdylib` hosted by the generic dev
-    /// shell (dev-only). Library/workspace edits reload in place without a
-    /// server restart. Off by default.
-    #[serde(default)]
-    pub dylib: bool,
     /// Additional files to watch for changes.
     #[serde(default)]
     pub watch_additional_files: Vec<String>,
@@ -186,7 +182,6 @@ impl Default for ServeMeta {
             release: false,
             hash_files: false,
             hotpatch: false,
-            dylib: false,
             watch_additional_files: Vec::new(),
             style_file: None,
         }
