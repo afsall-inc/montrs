@@ -16,7 +16,7 @@ to turn it on, how it works internally, and what its limits are.
 | Mechanism | diff source → patch the DOM / swap CSS | rebuild the app library → swap it into the running shell |
 | Cargo rebuild | no | yes (incremental) |
 | Reaches | the browser DOM, across all crates | the app + its workspace crates |
-| State | preserved | process preserved; in-app state resets (see below) |
+| State | preserved | process and registered in-memory state preserved (see below) |
 | Latency | instant (ms) | ~seconds |
 | Status | **on by default with `montrs serve`** | **opt-in** |
 
@@ -174,10 +174,20 @@ unaffected and needs no registration.
 
 ## Roadmap
 
-- **WASM (browser) Rust hot reload.** The jump-table semantics are in place
-  (`wasm_function_table_indices` / `build_wasm_jump_table`). Remaining: capture
-  and replay changed wasm crates into objects, link a PIC patch module with
-  `wasm-ld`, serve the patch `.wasm`, and apply it in-browser.
+- **WASM (browser) Rust hot reload remains unsupported.** Capture, object
+  selection, patch linking, and broadcast wiring exist, but end-to-end patch
+  application is not verified. The dev shell now proxies `/_dioxus` upgrades
+  directly to the hotpatch hub rather than through the request-rendering ABI.
+  Transport tests do not establish browser state preservation.
+- **PIC compilation is a confirmed blocker.** Linking the website's captured
+  WASM objects with the current shared-module flags fails with
+  `R_WASM_TABLE_INDEX_SLEB` and `R_WASM_MEMORY_ADDR_SLEB` relocation errors
+  requesting recompilation with PIC. Linker flags alone are insufficient.
+- **Host compatibility still needs validation.** Captured objects reference
+  pre-bindgen imports, while the browser loads the transformed `front_bg.wasm`.
+  Patch generation must retain the running browser's baseline table rather than
+  using the newly rebuilt bundle, resolve imports against that host, and avoid
+  the full-page reload notifications currently sent after a rebuild.
 
 ## Troubleshooting
 

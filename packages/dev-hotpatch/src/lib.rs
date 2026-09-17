@@ -1345,7 +1345,9 @@ pub fn build_wasm_patch(req: &WasmPatchRequest) -> anyhow::Result<JumpTable> {
     let output = std::process::Command::new(req.wasm_ld)
         .args(&args)
         .output()
-        .map_err(|e| anyhow::anyhow!("could not run {}: {e}", req.wasm_ld.display()))?;
+        .map_err(|e| {
+            anyhow::anyhow!("could not run {}: {e}", req.wasm_ld.display())
+        })?;
     if !output.status.success() {
         anyhow::bail!(
             "wasm patch link failed: {}",
@@ -1911,6 +1913,115 @@ mod tests {
         assert_eq!(table.map.get(&0), Some(&0));
         assert_eq!(table.map.get(&2), Some(&1));
         assert_eq!(table.ifunc_count, 3);
+    }
+
+    #[test]
+    #[ignore = "requires the wasm32-unknown-unknown Rust toolchain target and \
+                rust-lld wasm linker"]
+    fn rejects_non_pic_wasm_objects() {
+        struct TempWorkspace(PathBuf);
+
+        impl Drop for TempWorkspace {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+
+        let wasm_ld = find_wasm_ld().expect("rust-lld wasm linker required");
+        let path = temp_dir("hp-non-pic-wasm");
+        std::fs::create_dir(&path).unwrap();
+        let workspace = TempWorkspace(path);
+        let dir = &workspace.0;
+        std::fs::create_dir(dir.join("src")).unwrap();
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"[workspace]
+resolver = "2"
+
+[package]
+name = "non-pic-wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[profile.hot]
+inherits = "release"
+debug-assertions = true
+debug = false
+incremental = true
+"#,
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("src/lib.rs"),
+            r#"#[unsafe(no_mangle)]
+pub static DATA: u32 = 42;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn read_data() -> u32 {
+    unsafe { std::ptr::read_volatile(&DATA) }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn data_ptr() -> *const u32 {
+    &DATA
+}
+"#,
+        )
+        .unwrap();
+
+        let target_dir = dir.join("target");
+        let output = std::process::Command::new(env!("CARGO"))
+            .current_dir(dir)
+            .args([
+                "build",
+                "--target",
+                "wasm32-unknown-unknown",
+                "--profile",
+                "hot",
+                "--offline",
+                "--target-dir",
+            ])
+            .arg(&target_dir)
+            .env("RUSTFLAGS", "--cfg erase_components")
+            .env("LEPTOS_WATCH", "1")
+            .env_remove("CARGO_ENCODED_RUSTFLAGS")
+            .env_remove("RUSTC_WRAPPER")
+            .env_remove("RUSTC_WORKSPACE_WRAPPER")
+            .env_remove("CARGO_BUILD_RUSTC_WRAPPER")
+            .env_remove("CARGO_BUILD_RUSTC_WORKSPACE_WRAPPER")
+            .output()
+            .expect("build wasm fixture with Cargo");
+        assert!(
+            output.status.success(),
+            "wasm fixture build failed ({}):\n{}\n{}",
+            output.status,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        let artifacts = target_dir.join("wasm32-unknown-unknown/hot");
+        let objects = extract_rlib_objects(
+            &[artifacts.join("libnon_pic_wasm.rlib")],
+            &dir.join("objects"),
+        )
+        .expect("extract compiled wasm objects");
+        assert!(!objects.is_empty(), "fixture must emit wasm objects");
+        let error = build_wasm_patch(&WasmPatchRequest {
+            fat_wasm: &artifacts.join("non_pic_wasm.wasm"),
+            objects: &objects,
+            out: &dir.join("patch.wasm"),
+            wasm_ld: &wasm_ld,
+            url: "patch.wasm",
+        })
+        .expect_err("non-PIC wasm objects must be rejected by the patch linker")
+        .to_string();
+        eprintln!("{error}");
+        assert!(error.contains("wasm patch link failed:"), "{error}");
+        assert!(error.contains("recompile with -fPIC"), "{error}");
+        assert!(error.contains("relocation R_WASM_MEMORY_ADDR_"), "{error}");
     }
 
     #[test]

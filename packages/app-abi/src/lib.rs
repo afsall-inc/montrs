@@ -176,8 +176,7 @@ pub mod state {
             if bytes.len() < name_len + 4 {
                 break;
             }
-            let name =
-                String::from_utf8_lossy(&bytes[..name_len]).into_owned();
+            let name = String::from_utf8_lossy(&bytes[..name_len]).into_owned();
             bytes = &bytes[name_len..];
             let data_len =
                 u32::from_le_bytes(bytes[..4].try_into().unwrap()) as usize;
@@ -214,8 +213,9 @@ pub mod state {
 macro_rules! export_app {
     ($spec:expr, $root:expr $(,)?) => {
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
-        static __MONTRS_APP: ::std::sync::OnceLock<::montrs_core::serve::SsrApp> =
-            ::std::sync::OnceLock::new();
+        static __MONTRS_APP: ::std::sync::OnceLock<
+            ::montrs_core::serve::SsrApp,
+        > = ::std::sync::OnceLock::new();
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
         unsafe extern "C" fn __montrs_render(
@@ -239,24 +239,22 @@ macro_rules! export_app {
                     .expect("failed to build MontRS SSR app")
             });
 
-            let (status, content_type, body) =
-                match app.render(&method, &path) {
-                    Ok((status, headers, body)) => {
-                        let ct = headers
-                            .iter()
-                            .find(|(k, _)| {
-                                k.eq_ignore_ascii_case("content-type")
-                            })
-                            .map(|(_, v)| v.clone())
-                            .unwrap_or_default();
-                        (status, ct, body)
-                    }
-                    Err(e) => (
-                        500,
-                        "text/plain; charset=utf-8".to_string(),
-                        format!("montrs render error: {e}").into_bytes(),
-                    ),
-                };
+            let (status, content_type, body) = match app.render(&method, &path)
+            {
+                Ok((status, headers, body)) => {
+                    let ct = headers
+                        .iter()
+                        .find(|(k, _)| k.eq_ignore_ascii_case("content-type"))
+                        .map(|(_, v)| v.clone())
+                        .unwrap_or_default();
+                    (status, ct, body)
+                }
+                Err(e) => (
+                    500,
+                    "text/plain; charset=utf-8".to_string(),
+                    format!("montrs render error: {e}").into_bytes(),
+                ),
+            };
 
             let body = body.into_boxed_slice();
             let body_len = body.len();
@@ -266,7 +264,8 @@ macro_rules! export_app {
                 *out = $crate::MontrsResponse {
                     status,
                     content_type: $crate::MontrsBytes {
-                        ptr: ::std::boxed::Box::into_raw(content_type) as *mut u8,
+                        ptr: ::std::boxed::Box::into_raw(content_type)
+                            as *mut u8,
                         len: ct_len,
                     },
                     body: $crate::MontrsBytes {
@@ -287,8 +286,9 @@ macro_rules! export_app {
             let resp = unsafe { &mut *out };
             for bytes in [resp.content_type, resp.body] {
                 if !bytes.ptr.is_null() {
-                    let slice =
-                        ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+                    let slice = ::std::ptr::slice_from_raw_parts_mut(
+                        bytes.ptr, bytes.len,
+                    );
                     drop(unsafe { ::std::boxed::Box::from_raw(slice) });
                 }
             }
@@ -305,7 +305,10 @@ macro_rules! export_app {
         }
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
-        unsafe extern "C" fn __montrs_import_state(_bytes: $crate::MontrsBytes) {}
+        unsafe extern "C" fn __montrs_import_state(
+            _bytes: $crate::MontrsBytes,
+        ) {
+        }
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
         unsafe extern "C" fn __montrs_free_state(_bytes: $crate::MontrsBytes) {}
@@ -314,15 +317,14 @@ macro_rules! export_app {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn montrs_app_entry()
         -> *const $crate::MontrsAppVtable {
-            static VTABLE: $crate::MontrsAppVtable =
-                $crate::MontrsAppVtable {
-                    abi_version: $crate::ABI_VERSION,
-                    render: __montrs_render,
-                    free_response: __montrs_free_response,
-                    export_state: __montrs_export_state,
-                    import_state: __montrs_import_state,
-                    free_state: __montrs_free_state,
-                };
+            static VTABLE: $crate::MontrsAppVtable = $crate::MontrsAppVtable {
+                abi_version: $crate::ABI_VERSION,
+                render: __montrs_render,
+                free_response: __montrs_free_response,
+                export_state: __montrs_export_state,
+                import_state: __montrs_import_state,
+                free_state: __montrs_free_state,
+            };
             &VTABLE
         }
     };
@@ -348,8 +350,9 @@ macro_rules! export_app {
 macro_rules! export_app_with_state {
     ($spec:expr, $root:expr, $export:expr, $import:expr $(,)?) => {
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
-        static __MONTRS_APP: ::std::sync::OnceLock<::montrs_core::serve::SsrApp> =
-            ::std::sync::OnceLock::new();
+        static __MONTRS_APP: ::std::sync::OnceLock<
+            ::montrs_core::serve::SsrApp,
+        > = ::std::sync::OnceLock::new();
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
         unsafe extern "C" fn __montrs_render(
@@ -373,24 +376,22 @@ macro_rules! export_app_with_state {
                     .expect("failed to build MontRS SSR app")
             });
 
-            let (status, content_type, body) =
-                match app.render(&method, &path) {
-                    Ok((status, headers, body)) => {
-                        let ct = headers
-                            .iter()
-                            .find(|(k, _)| {
-                                k.eq_ignore_ascii_case("content-type")
-                            })
-                            .map(|(_, v)| v.clone())
-                            .unwrap_or_default();
-                        (status, ct, body)
-                    }
-                    Err(e) => (
-                        500,
-                        "text/plain; charset=utf-8".to_string(),
-                        format!("montrs render error: {e}").into_bytes(),
-                    ),
-                };
+            let (status, content_type, body) = match app.render(&method, &path)
+            {
+                Ok((status, headers, body)) => {
+                    let ct = headers
+                        .iter()
+                        .find(|(k, _)| k.eq_ignore_ascii_case("content-type"))
+                        .map(|(_, v)| v.clone())
+                        .unwrap_or_default();
+                    (status, ct, body)
+                }
+                Err(e) => (
+                    500,
+                    "text/plain; charset=utf-8".to_string(),
+                    format!("montrs render error: {e}").into_bytes(),
+                ),
+            };
 
             let body = body.into_boxed_slice();
             let body_len = body.len();
@@ -400,7 +401,8 @@ macro_rules! export_app_with_state {
                 *out = $crate::MontrsResponse {
                     status,
                     content_type: $crate::MontrsBytes {
-                        ptr: ::std::boxed::Box::into_raw(content_type) as *mut u8,
+                        ptr: ::std::boxed::Box::into_raw(content_type)
+                            as *mut u8,
                         len: ct_len,
                     },
                     body: $crate::MontrsBytes {
@@ -421,8 +423,9 @@ macro_rules! export_app_with_state {
             let resp = unsafe { &mut *out };
             for bytes in [resp.content_type, resp.body] {
                 if !bytes.ptr.is_null() {
-                    let slice =
-                        ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+                    let slice = ::std::ptr::slice_from_raw_parts_mut(
+                        bytes.ptr, bytes.len,
+                    );
                     drop(unsafe { ::std::boxed::Box::from_raw(slice) });
                 }
             }
@@ -466,7 +469,8 @@ macro_rules! export_app_with_state {
             if bytes.ptr.is_null() {
                 return;
             }
-            let slice = ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+            let slice =
+                ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
             drop(unsafe { ::std::boxed::Box::from_raw(slice) });
         }
 
@@ -474,20 +478,18 @@ macro_rules! export_app_with_state {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn montrs_app_entry()
         -> *const $crate::MontrsAppVtable {
-            static VTABLE: $crate::MontrsAppVtable =
-                $crate::MontrsAppVtable {
-                    abi_version: $crate::ABI_VERSION,
-                    render: __montrs_render,
-                    free_response: __montrs_free_response,
-                    export_state: __montrs_export_state,
-                    import_state: __montrs_import_state,
-                    free_state: __montrs_free_state,
-                };
+            static VTABLE: $crate::MontrsAppVtable = $crate::MontrsAppVtable {
+                abi_version: $crate::ABI_VERSION,
+                render: __montrs_render,
+                free_response: __montrs_free_response,
+                export_state: __montrs_export_state,
+                import_state: __montrs_import_state,
+                free_state: __montrs_free_state,
+            };
             &VTABLE
         }
     };
 }
-
 
 /// Like [`export_app!`], but wires the app's `hotpatch.rs` convention file.
 ///
@@ -509,5 +511,12 @@ macro_rules! export_app_with_hotpatch {
             crate::hotpatch::export_state,
             crate::hotpatch::import_state,
         );
+
+        const _: () = {
+            let _ = crate::hotpatch::before_render as fn();
+            let _ =
+                crate::hotpatch::export_state as fn() -> ::std::vec::Vec<u8>;
+            let _ = crate::hotpatch::import_state as fn(&[u8]);
+        };
     };
 }
