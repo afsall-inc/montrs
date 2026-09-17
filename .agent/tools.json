@@ -145,6 +145,14 @@
       }
     },
     {
+      "description": "Capability provided by package app-abi. MUST follow invariants defined in agent.json under packages['app-abi'].invariants",
+      "name": "montrs_pkg_app-abi",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package auth. MUST follow invariants defined in agent.json under packages['auth'].invariants",
       "name": "montrs_pkg_auth",
       "parameters": {
@@ -249,6 +257,22 @@
       }
     },
     {
+      "description": "Capability provided by package dev-hotpatch. MUST follow invariants defined in agent.json under packages['dev-hotpatch'].invariants",
+      "name": "montrs_pkg_dev-hotpatch",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package dev-shell. MUST follow invariants defined in agent.json under packages['dev-shell'].invariants",
+      "name": "montrs_pkg_dev-shell",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package env. MUST follow invariants defined in agent.json under packages['env'].invariants",
       "name": "montrs_pkg_env",
       "parameters": {
@@ -273,7 +297,7 @@
       }
     },
     {
-      "description": "Capability provided by package hot-reload. Refer to its README for details.",
+      "description": "Capability provided by package hot-reload. MUST follow invariants defined in agent.json under packages['hot-reload'].invariants",
       "name": "montrs_pkg_hot-reload",
       "parameters": {
         "properties": {},
@@ -291,6 +315,14 @@
     {
       "description": "Capability provided by package hotkeys-web. MUST follow invariants defined in agent.json under packages['hotkeys-web'].invariants",
       "name": "montrs_pkg_hotkeys-web",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package hotpatch. MUST follow invariants defined in agent.json under packages['hotpatch'].invariants",
+      "name": "montrs_pkg_hotpatch",
       "parameters": {
         "properties": {},
         "type": "object"

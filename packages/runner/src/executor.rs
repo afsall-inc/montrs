@@ -167,7 +167,7 @@ pub async fn execute_task(
 /// When no shell is configured, defaults to the platform's native shell
 /// (`cmd` on Windows, `sh` elsewhere) so tasks work without a POSIX shell
 /// installed on Windows.
-fn resolve_shell<'a>(configured: Option<&'a str>) -> (&'a str, &'static str) {
+fn resolve_shell(configured: Option<&str>) -> (&str, &'static str) {
     if let Some(shell) = configured {
         let name = shell.to_ascii_lowercase();
         let flag = if name.contains("cmd") {

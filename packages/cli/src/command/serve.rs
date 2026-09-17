@@ -37,11 +37,12 @@
 //! socket stay reachable.
 
 use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::process::Command as TokioCommand;
-use tokio::task::JoinHandle;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
+use tokio::{process::Command as TokioCommand, task::JoinHandle};
 
 pub async fn run() -> anyhow::Result<()> {
     let mut pipeline = match Pipeline::from_root(Path::new(".")) {
@@ -55,11 +56,23 @@ pub async fn run() -> anyhow::Result<()> {
     };
     pipeline.release |= crate::config::current_release();
 
+    // Rust hot reload (dev-only): the app library is built as a cdylib and
+    // hosted by the generic dev shell, so edits reload in place without
+    // restarting the dev server (see docs/tooling/hot-reload.md).
+    if pipeline.meta.serve.hotpatch
+        || std::env::var_os("MONTRS_HOTPATCH").is_some()
+    {
+        return super::serve_dylib::run().await;
+    }
+
     // The dev server always builds in the dev profile. This keeps
     // `debug_assertions` on so the SSR HTML carries the Leptos hot-reload
-    // markers, and makes incremental rebuilds far faster. The WASM client is
-    // still built optimized (see `frontend_build_args`).
+    // markers, and makes incremental rebuilds far faster.
     pipeline.release = false;
+    // Build the WASM client with the matching `hot` profile too, so both sides
+    // emit the same hot-reload markers (otherwise `tachys` hydration panics and
+    // nothing is interactive).
+    pipeline.hot_reload = true;
 
     crate::command::resolve_pipeline_bins(&mut pipeline);
 
@@ -125,70 +138,10 @@ pub async fn run() -> anyhow::Result<()> {
         }
     }
     // cargo derives the `view!` stable ids from workspace-relative paths.
-    let workspace_root =
-        pipeline.workspace_target_dir.parent().map(|p| p.to_path_buf());
-
-    // Experimental (Stage 1 foundation): capture each workspace crate's rustc
-    // invocation so a later hot-patch pass can replay only changed crates.
-    // Enabled with `MONTRS_HOTPATCH=1`.
-    let hotpatch_enabled = std::env::var_os("MONTRS_HOTPATCH").is_some();
-    let hotpatch_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
-    if hotpatch_enabled {
-        match resolve_wrapper("rustc-wrapper") {
-            Some(wrapper) => {
-                let _ = std::fs::remove_dir_all(&hotpatch_dir);
-                // SAFETY: set once, before any build starts; the cargo child
-                // processes inherit this environment.
-                unsafe {
-                    std::env::set_var("RUSTC_WORKSPACE_WRAPPER", &wrapper);
-                    std::env::set_var("MONTRS_HOTPATCH_DIR", &hotpatch_dir);
-                }
-                println!(
-                    "Hot-patch capture enabled (rustc wrapper: {}).",
-                    wrapper.display()
-                );
-                println!("  capture dir: {}", hotpatch_dir.display());
-
-                if let Some(link_wrapper) = resolve_wrapper("link-wrapper") {
-                    match (discover_real_linker(), host_triple()) {
-                        (Some(real), Some(host)) => {
-                            let key = format!(
-                                "CARGO_TARGET_{}_LINKER",
-                                host.replace('-', "_").to_uppercase()
-                            );
-                            unsafe {
-                                std::env::set_var(
-                                    "MONTRS_REAL_LINKER",
-                                    &real,
-                                );
-                                std::env::set_var(key, &link_wrapper);
-                            }
-                            println!(
-                                "  link capture enabled (real linker: {}).",
-                                real.display()
-                            );
-                        }
-                        _ => eprintln!(
-                            "  link capture skipped: could not determine the \
-                             host triple or real linker."
-                        ),
-                    }
-                } else {
-                    eprintln!(
-                        "  link capture skipped: montrs-link-wrapper not found."
-                    );
-                }
-            }
-            None => {
-                eprintln!(
-                    "MONTRS_HOTPATCH is set but montrs-rustc-wrapper was not \
-                     found. Install it with:\n  cargo install --path \
-                     packages/dev-hotpatch --bin montrs-rustc-wrapper --bin \
-                     montrs-link-wrapper"
-                );
-            }
-        }
-    }
+    let workspace_root = pipeline
+        .workspace_target_dir
+        .parent()
+        .map(|p| p.to_path_buf());
 
     println!("Serving on http://{addr}");
     println!("Site root: {site_root}");
@@ -219,7 +172,7 @@ pub async fn run() -> anyhow::Result<()> {
     // Watch channel: the blocking file watcher signals a rebuild here. View
     // and CSS edits are handled entirely inside the watcher thread (instant
     // patches, no cargo) and never reach this channel.
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(1);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<PathBuf>>(1);
     let pipeline_arc = Arc::new(pipeline);
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
@@ -263,7 +216,7 @@ pub async fn run() -> anyhow::Result<()> {
                         }
                     }
                     if rebuild {
-                        let _ = tx.blocking_send(());
+                        let _ = tx.blocking_send(changed.to_vec());
                     }
                 },
             );
@@ -286,17 +239,12 @@ pub async fn run() -> anyhow::Result<()> {
         }
     };
 
-    if hotpatch_enabled {
-        log_capture(&hotpatch_dir);
-    }
-
     // If no SSR binary exists yet, serve the fallback page on the site address.
     // The same page takes over the address while each later rebuild runs.
     let mut fallback: Option<JoinHandle<()>> = None;
     let mut fallback_shutdown: Option<tokio::sync::oneshot::Sender<()>> = None;
     if !have_server {
-        let (h, s) =
-            spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
+        let (h, s) = spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
         fallback = Some(h);
         fallback_shutdown = Some(s);
         println!("Initial build failed — serving the dev fallback page.");
@@ -349,7 +297,7 @@ pub async fn run() -> anyhow::Result<()> {
         }
 
         tokio::select! {
-            Some(()) = rx.recv() => {
+            Some(_) = rx.recv() => {
                 println!("Change detected — rebuilding...");
                 if let Some(r) = &reload {
                     r.building();
@@ -364,12 +312,11 @@ pub async fn run() -> anyhow::Result<()> {
                 }
 
                 // Serve the "compiling…" fallback on the site address while we
-                // build, so navigating to the app keeps working (and reports
-                // any build error). It auto-reloads on `build-ok`.
+                // build, so navigating to the app keeps working (and reports any
+                // build error). It auto-reloads on `build-ok`.
                 if fallback.is_none() {
-                    let (h, s) = spawn_fallback(
-                        &addr, &site_root, &pkg_dir, reload_port,
-                    );
+                    let (h, s) =
+                        spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
                     fallback = Some(h);
                     fallback_shutdown = Some(s);
                 }
@@ -377,12 +324,6 @@ pub async fn run() -> anyhow::Result<()> {
                 match build_blocking(pipeline_arc.clone()).await {
                     Ok(()) => {
                         println!("Rebuild complete.");
-                        if hotpatch_enabled {
-                            log_capture(&hotpatch_dir);
-                        }
-                        // Hand the address back to the real server on the next
-                        // loop iteration. The reload is deferred until the new
-                        // child is listening (see the spawn branch above).
                         stop_fallback(&mut fallback, &mut fallback_shutdown).await;
                         have_server = true;
                         backoff = Duration::from_millis(250);
@@ -393,8 +334,6 @@ pub async fn run() -> anyhow::Result<()> {
                         if let Some(r) = &reload {
                             report_build_error(r, &e);
                         }
-                        // Keep showing the fallback page (it renders the error)
-                        // and keep the last-good WASM on disk for the retry.
                     }
                 }
             }
@@ -415,9 +354,7 @@ pub async fn run() -> anyhow::Result<()> {
 
 /// Run the (blocking) build pipeline off the async worker threads so the
 /// live-reload socket keeps accepting connections while cargo runs.
-async fn build_blocking(
-    pipeline: Arc<Pipeline>,
-) -> anyhow::Result<()> {
+async fn build_blocking(pipeline: Arc<Pipeline>) -> anyhow::Result<()> {
     tokio::task::spawn_blocking(move || pipeline.build_all())
         .await
         .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
@@ -441,9 +378,12 @@ fn spawn_fallback(
         let shutdown = async move {
             let _ = shutdown_rx.await;
         };
-        if let Err(e) =
-            montrs_build_serve::serve_fallback_with_shutdown(cfg, reload_port, shutdown)
-                .await
+        if let Err(e) = montrs_build_serve::serve_fallback_with_shutdown(
+            cfg,
+            reload_port,
+            shutdown,
+        )
+        .await
         {
             eprintln!("Fallback server error: {e}");
         }
@@ -463,82 +403,6 @@ async fn stop_fallback(
     if let Some(h) = fallback.take() {
         let _ = tokio::time::timeout(Duration::from_secs(3), h).await;
     }
-}
-
-/// Log how many rustc invocations the hot-patch wrapper captured.
-fn log_capture(dir: &Path) {
-    let count = montrs_dev_hotpatch::read_rustc_invocations().len();
-    println!(
-        "Hot-patch capture: {count} rustc invocations recorded ({}).",
-        dir.display()
-    );
-}
-
-/// Locate a wrapper binary by stem: `MONTRS_<STEM>_PATH` override, then `PATH`,
-/// then next to the running executable.
-fn resolve_wrapper(stem: &str) -> Option<PathBuf> {
-    let override_key = format!(
-        "MONTRS_{}_PATH",
-        stem.to_uppercase().replace('-', "_")
-    );
-    if let Some(p) = std::env::var_os(&override_key) {
-        return Some(PathBuf::from(p));
-    }
-    let bin = if cfg!(windows) {
-        format!("montrs-{stem}.exe")
-    } else {
-        format!("montrs-{stem}")
-    };
-    if let Some(paths) = std::env::var_os("PATH") {
-        for dir in std::env::split_paths(&paths) {
-            let candidate = dir.join(&bin);
-            if candidate.is_file() {
-                return Some(candidate);
-            }
-        }
-    }
-    if let Ok(exe) = std::env::current_exe()
-        && let Some(dir) = exe.parent()
-    {
-        let candidate = dir.join(&bin);
-        if candidate.is_file() {
-            return Some(candidate);
-        }
-    }
-    None
-}
-
-/// Ask rustc which linker it would use, so the link wrapper can forward to it.
-fn discover_real_linker() -> Option<PathBuf> {
-    let probe = std::env::temp_dir().join(format!(
-        "montrs-linker-probe-{}.rs",
-        std::process::id()
-    ));
-    std::fs::write(&probe, "fn main() {}").ok()?;
-    let output = std::process::Command::new("rustc")
-        .arg("--print=link-args")
-        .arg(&probe)
-        .output()
-        .ok();
-    let _ = std::fs::remove_file(&probe);
-    let output = output?;
-    if !output.status.success() {
-        return None;
-    }
-    montrs_dev_hotpatch::parse_linker_from_link_args(
-        &String::from_utf8_lossy(&output.stdout),
-    )
-}
-
-/// The host target triple cargo builds for (e.g. `x86_64-pc-windows-msvc`).
-fn host_triple() -> Option<String> {
-    let output = std::process::Command::new("rustc")
-        .arg("-vV")
-        .output()
-        .ok()?;
-    let text = String::from_utf8_lossy(&output.stdout);
-    text.lines()
-        .find_map(|l| l.strip_prefix("host: ").map(|s| s.trim().to_string()))
 }
 
 fn spawn_server(
@@ -574,7 +438,9 @@ fn report_build_error(reload: &LiveReload, err: &anyhow::Error) {
     reload.build_error(&msg, file.as_deref(), line, column, frame.as_deref());
 }
 
-fn parse_compiler_error(msg: &str) -> (Option<String>, Option<u32>, Option<u32>, Option<String>) {
+fn parse_compiler_error(
+    msg: &str,
+) -> (Option<String>, Option<u32>, Option<u32>, Option<String>) {
     let mut file = None;
     let mut line = None;
     let mut column = None;
@@ -592,7 +458,8 @@ fn parse_compiler_error(msg: &str) -> (Option<String>, Option<u32>, Option<u32>,
                     file = Some(f.to_string());
                     if let Some((ln, rest)) = rest.split_once(':') {
                         line = ln.parse().ok();
-                        column = rest.split_once(':')
+                        column = rest
+                            .split_once(':')
                             .and_then(|(c, _)| c.parse().ok())
                             .or_else(|| rest.trim().parse().ok());
                     }

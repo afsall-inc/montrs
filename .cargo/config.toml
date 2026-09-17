@@ -3,3 +3,12 @@
 # The workspace has 40+ packages, making incremental artifacts extremely large.
 # Tradeoff: slightly slower rebuilds, but saves ~48+ GB of disk space.
 incremental = false
+
+[env]
+# Leptos hot-reload markers are compiled into the `leptos` crate (it reads
+# `option_env!("LEPTOS_WATCH")`), and cargo does not track that env var — so a
+# value that changes between builds leaves mismatched rlibs and `tachys`
+# hydration panics. Setting it here (constant for every cargo run) keeps the
+# SSR server and the WASM client in agreement: debug builds (dev SSR, `hot`
+# client) emit `<!--hot-reload|id|-->` markers; release builds do not.
+LEPTOS_WATCH = "1"

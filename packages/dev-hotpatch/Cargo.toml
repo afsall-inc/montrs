@@ -16,10 +16,15 @@ anyhow.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 subsecond-types = "0.7"
+subsecond = "0.7"
 ar = "0.9"
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "time"] }
+tokio-tungstenite = "0.29"
+futures-util = "0.3"
 # Object files are read (symbols) and written (undefined-symbol stubs) on every
 # platform, so this is a normal dependency rather than target-gated.
 object = { version = "0.36", default-features = false, features = ["read", "write", "std"] }
+walrus = "0.23"
 
 # MSVC keeps a binary's symbols in a sibling .pdb.
 [target.'cfg(windows)'.dependencies]
@@ -35,3 +40,11 @@ path = "src/bin/montrs-rustc-wrapper.rs"
 [[bin]]
 name = "montrs-link-wrapper"
 path = "src/bin/montrs-link-wrapper.rs"
+
+[[bin]]
+name = "montrs-hotpatch-relink"
+path = "src/bin/montrs-hotpatch-relink.rs"
+
+[[bin]]
+name = "montrs-hotpatch-build"
+path = "src/bin/montrs-hotpatch-build.rs"

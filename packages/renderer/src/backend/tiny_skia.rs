@@ -187,8 +187,8 @@ impl Renderer for SkiaRenderer {
 
         let sk_stroke = SkStroke {
             width: stroke.width,
-            line_cap: line_cap,
-            line_join: line_join,
+            line_cap,
+            line_join,
             ..Default::default()
         };
 

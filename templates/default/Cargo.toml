@@ -5,3 +5,12 @@ members = ["app", "e2e"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
+
+# Dev hot-reload profile: optimized like `release`, but with debug assertions so
+# the WASM client emits the same hot-reload markers as the dev SSR server.
+# `montrs serve` builds the frontend with this profile.
+[profile.hot]
+inherits = "release"
+debug-assertions = true
+debug = false
+incremental = true

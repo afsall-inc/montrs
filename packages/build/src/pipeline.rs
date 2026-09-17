@@ -47,6 +47,9 @@ pub struct Pipeline {
     pub workspace_target_dir: PathBuf,
     /// Whether to build optimized (--release) artifacts.
     pub release: bool,
+    /// Build both halves with `debug_assertions` + `LEPTOS_WATCH` so the
+    /// hot-reload markers match between SSR and the WASM client (dev only).
+    pub hot_reload: bool,
     /// Path to the Tailwind CSS binary (managed install override).
     pub tailwind_bin: Option<PathBuf>,
     /// Path to the wasm-bindgen binary (managed install override).
@@ -77,6 +80,7 @@ impl Pipeline {
             server_bin_name,
             workspace_target_dir: workspace_target,
             release,
+            hot_reload: false,
             tailwind_bin: None,
             wasm_bindgen_bin: None,
         })
@@ -117,6 +121,7 @@ impl Pipeline {
             pkg,
             &self.meta.serve.lib_features,
             self.meta.serve.lib_default_features,
+            self.hot_reload,
         )
     }
 
@@ -131,12 +136,13 @@ impl Pipeline {
             .unwrap_or("app")
             .replace('-', "_");
 
+        // Matches the profile chosen in `frontend_build_args`: `hot` during
+        // hot-reload dev builds, otherwise `release`.
+        let wasm_profile = if self.hot_reload { "hot" } else { "release" };
         let wasm_target_dir = self
             .workspace_target_dir
             .join("wasm32-unknown-unknown")
-            // The frontend build always passes `--release` (see
-            // build_frontend_args), so the WASM output is always in `release/`.
-            .join("release");
+            .join(wasm_profile);
 
         let wasm_file = wasm_target_dir.join(format!("{}.wasm", lib_name));
 
@@ -214,14 +220,14 @@ impl Pipeline {
 impl BuildPipeline for Pipeline {
     fn build_server(&self) -> Result<()> {
         println!(" Building SSR server...");
-        run_cargo(&self.server_args())?;
+        run_cargo(&self.server_args(), self.hot_reload)?;
         println!(" SSR server built successfully");
         Ok(())
     }
 
     fn build_frontend(&self) -> Result<()> {
         println!(" Building frontend (WASM)...");
-        run_cargo(&self.build_frontend_args())?;
+        run_cargo(&self.build_frontend_args(), self.hot_reload)?;
         println!(" Bundling WASM with wasm-bindgen...");
         self.bundle_wasm()?;
         println!(" Frontend built successfully");
@@ -331,6 +337,7 @@ fn frontend_build_args(
     pkg: &str,
     lib_features: &[String],
     lib_default_features: bool,
+    hot_reload: bool,
 ) -> Vec<String> {
     let mut args = vec![
         "build".to_string(),
@@ -351,8 +358,16 @@ fn frontend_build_args(
         args.push("--no-default-features".to_string());
     }
     // A debug (unoptimized) WASM client is unusably large and slow in the
-    // browser, so the frontend is always built with optimization.
-    args.push("--release".to_string());
+    // browser, so the frontend is always built with optimization. In dev with
+    // hot reload the `hot` profile keeps optimization but enables
+    // `debug_assertions`, so the client emits the same hot-reload markers as
+    // the SSR server.
+    if hot_reload {
+        args.push("--profile".to_string());
+        args.push("hot".to_string());
+    } else {
+        args.push("--release".to_string());
+    }
     args
 }
 
@@ -394,7 +409,7 @@ mod tests {
 
     #[test]
     fn frontend_args_keep_features_flag_with_value() {
-        let args = frontend_build_args("website", &[], true);
+        let args = frontend_build_args("website", &[], true, false);
         let joined = args.join(" ");
         assert!(
             joined.contains("--features hydrate --release"),
@@ -414,6 +429,7 @@ mod tests {
             "website",
             &["hydrate".to_string(), "foo".to_string()],
             false,
+            false,
         );
         let joined = args.join(" ");
         assert!(
@@ -422,6 +438,17 @@ mod tests {
             ),
             "unexpected frontend args: {joined}"
         );
+    }
+
+    #[test]
+    fn frontend_args_use_hot_profile_when_hot_reloading() {
+        let args = frontend_build_args("website", &[], true, true);
+        let joined = args.join(" ");
+        assert!(
+            joined.contains("--features hydrate --profile hot"),
+            "unexpected frontend args: {joined}"
+        );
+        assert!(!joined.contains("--release"), "args: {joined}");
     }
 
     #[test]

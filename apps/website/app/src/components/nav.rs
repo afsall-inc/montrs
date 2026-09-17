@@ -56,17 +56,19 @@ pub fn NavLink(
     let href_attr = href.clone();
     let href_nav = href;
     let active_href = href_attr.clone();
-    let is_active = move || {
+    // A `Memo` gives the reactive read a tracking owner, so the current route
+    // is tracked (and the SSR "outside a reactive context" warning is gone).
+    let is_active = Memo::new(move |_| {
         let current = location.pathname.get();
         current == active_href
             || (active_href != "/"
                 && current.starts_with(&format!("{}/", active_href)))
-    };
+    });
     view! {
         <a
             href=href_attr
             class=class
-            aria-current=move || is_active().then_some("page")
+            aria-current=move || is_active.get().then_some("page")
             on:click=move |ev| {
                 ev.prevent_default();
                 navigate(&href_nav, Default::default());

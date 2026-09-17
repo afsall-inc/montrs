@@ -47,6 +47,9 @@ jobs:
     - name: Run tests
       run: cargo test --workspace
 
+    - name: Check templates
+      run: cargo test --package montrs-cli --test template_check -- --ignored --nocapture
+
     - name: Build (auth feature)
       run: cargo build --release --package montrs-cli --features auth
 

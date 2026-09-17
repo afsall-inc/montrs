@@ -45,6 +45,9 @@ console_error_panic_hook = "0.1"
 [features]
 default = []
 hydrate = ["leptos/hydrate"]
+# Rust hot-patching: enables Leptos's subsecond runtime and connects to the
+# dev server's hot-patch socket (`/_dioxus`).
+hotpatch = ["hydrate", "leptos/subsecond"]
 ssr = [
     "leptos/ssr",
     "leptos_meta/ssr",
@@ -56,3 +59,10 @@ ssr = [
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
+
+# Dev hot-patch runtime: provides the `serve!` cutover + native patch client.
+# A no-op in release builds, and active only when `montrs serve` exposes a
+# hot-patch socket, so app code contains no hot-patch wiring.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+montrs-hotpatch = { path = "../../packages/hotpatch" }
+montrs-app-abi = { path = "../../packages/app-abi" }
