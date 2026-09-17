@@ -41,7 +41,7 @@ use core::ffi::c_char;
 
 /// ABI version of the vtable. Bumped on any layout/semantic change; the shell
 /// refuses a mismatch.
-pub const ABI_VERSION: u32 = 1;
+pub const ABI_VERSION: u32 = 2;
 
 /// A `(pointer, length)` view over UTF-8 bytes owned by the dylib.
 #[repr(C)]
@@ -101,6 +101,25 @@ pub struct MontrsAppVtable {
     /// # Safety
     /// `out` must be a response previously produced by `render`.
     pub free_response: unsafe extern "C" fn(out: *mut MontrsResponse),
+    /// Serialize the app's long-lived in-memory state for a reload.
+    ///
+    /// Writes bytes owned by the dylib into `out`; the shell copies them and
+    /// then calls [`MontrsAppVtable::free_state`]. An app with no state writes
+    /// [`MontrsBytes::EMPTY`].
+    ///
+    /// # Safety
+    /// `out` must be writable.
+    pub export_state: unsafe extern "C" fn(out: *mut MontrsBytes),
+    /// Restore state previously produced by `export_state`.
+    ///
+    /// # Safety
+    /// `bytes` must be a valid byte view (the shell owns it for the call).
+    pub import_state: unsafe extern "C" fn(bytes: MontrsBytes),
+    /// Release bytes produced by `export_state`.
+    ///
+    /// # Safety
+    /// `bytes` must be a value produced by `export_state`.
+    pub free_state: unsafe extern "C" fn(bytes: MontrsBytes),
 }
 
 /// The symbol a MontRS app dylib must export.
@@ -108,6 +127,74 @@ pub type MontrsAppEntry = unsafe extern "C" fn() -> *const MontrsAppVtable;
 
 /// Name of the exported entry symbol.
 pub const ENTRY_SYMBOL: &[u8] = b"montrs_app_entry\0";
+
+/// A small registry for app state that should survive a hot reload.
+///
+/// Apps (through their `hotpatch.rs` convention file) register named,
+/// serializable stores here; the framework exports and imports them across a
+/// dylib swap. This keeps the state glue identical across apps.
+pub mod state {
+    use std::sync::Mutex;
+
+    type Load = fn() -> Vec<u8>;
+    type Save = fn(&[u8]);
+
+    static ENTRIES: Mutex<Vec<(&'static str, Load, Save)>> =
+        Mutex::new(Vec::new());
+
+    /// Register a named store. Registering the same name twice is a no-op.
+    pub fn register(name: &'static str, load: Load, save: Save) {
+        let mut entries = ENTRIES.lock().unwrap();
+        if !entries.iter().any(|(n, _, _)| *n == name) {
+            entries.push((name, load, save));
+        }
+    }
+
+    /// Serialize every registered store as `[len name][len data]…`.
+    pub fn export() -> Vec<u8> {
+        let entries = ENTRIES.lock().unwrap();
+        let mut out = Vec::new();
+        for (name, load, _) in entries.iter() {
+            let data = load();
+            out.extend_from_slice(&(name.len() as u32).to_le_bytes());
+            out.extend_from_slice(name.as_bytes());
+            out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+            out.extend_from_slice(&data);
+        }
+        out
+    }
+
+    /// Restore stores from a blob produced by [`export`]. Unknown names and
+    /// short/corrupt input are ignored so a schema change falls back to fresh
+    /// state instead of failing the reload.
+    pub fn import(mut bytes: &[u8]) {
+        let entries = ENTRIES.lock().unwrap();
+        while bytes.len() >= 4 {
+            let name_len =
+                u32::from_le_bytes(bytes[..4].try_into().unwrap()) as usize;
+            bytes = &bytes[4..];
+            if bytes.len() < name_len + 4 {
+                break;
+            }
+            let name =
+                String::from_utf8_lossy(&bytes[..name_len]).into_owned();
+            bytes = &bytes[name_len..];
+            let data_len =
+                u32::from_le_bytes(bytes[..4].try_into().unwrap()) as usize;
+            bytes = &bytes[4..];
+            if bytes.len() < data_len {
+                break;
+            }
+            let data = &bytes[..data_len];
+            bytes = &bytes[data_len..];
+            if let Some((_, _, save)) =
+                entries.iter().find(|(n, _, _)| *n == name)
+            {
+                save(data);
+            }
+        }
+    }
+}
 
 /// Export the stable C entry the dev shell loads from an app `cdylib`.
 ///
@@ -125,7 +212,7 @@ pub const ENTRY_SYMBOL: &[u8] = b"montrs_app_entry\0";
 /// guide).
 #[macro_export]
 macro_rules! export_app {
-    ($spec:expr, $root:expr) => {
+    ($spec:expr, $root:expr $(,)?) => {
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
         static __MONTRS_APP: ::std::sync::OnceLock<::montrs_core::serve::SsrApp> =
             ::std::sync::OnceLock::new();
@@ -209,6 +296,21 @@ macro_rules! export_app {
         }
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_export_state(
+            out: *mut $crate::MontrsBytes,
+        ) {
+            if !out.is_null() {
+                unsafe { *out = $crate::MontrsBytes::EMPTY };
+            }
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_import_state(_bytes: $crate::MontrsBytes) {}
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_free_state(_bytes: $crate::MontrsBytes) {}
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn montrs_app_entry()
         -> *const $crate::MontrsAppVtable {
@@ -217,8 +319,195 @@ macro_rules! export_app {
                     abi_version: $crate::ABI_VERSION,
                     render: __montrs_render,
                     free_response: __montrs_free_response,
+                    export_state: __montrs_export_state,
+                    import_state: __montrs_import_state,
+                    free_state: __montrs_free_state,
                 };
             &VTABLE
         }
+    };
+}
+
+/// Like [`export_app!`], but preserves long-lived in-memory state across reloads.
+///
+/// `$export` is a `fn() -> Vec<u8>` and `$import` a `fn(&[u8])`. The shell asks
+/// the outgoing library for its state before swapping and hands it to the new
+/// library, so counters, caches, and in-memory stores survive a reload. If the
+/// state cannot be imported (for example the shape changed), the app should
+/// ignore it and start fresh.
+///
+/// ```ignore
+/// montrs_app_abi::export_app_with_state!(
+///     app::build_spec(),
+///     || view! { <Shell /> },
+///     app::export_state,
+///     app::import_state,
+/// );
+/// ```
+#[macro_export]
+macro_rules! export_app_with_state {
+    ($spec:expr, $root:expr, $export:expr, $import:expr $(,)?) => {
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        static __MONTRS_APP: ::std::sync::OnceLock<::montrs_core::serve::SsrApp> =
+            ::std::sync::OnceLock::new();
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_render(
+            req: *const $crate::MontrsRequest,
+            out: *mut $crate::MontrsResponse,
+        ) {
+            if req.is_null() || out.is_null() {
+                return;
+            }
+            let req = unsafe { &*req };
+            let path = unsafe { ::std::ffi::CStr::from_ptr(req.path) }
+                .to_string_lossy()
+                .into_owned();
+            let method = unsafe { ::std::ffi::CStr::from_ptr(req.method) }
+                .to_string_lossy()
+                .into_owned();
+
+            let app = __MONTRS_APP.get_or_init(|| {
+                let spec = $spec;
+                ::montrs_core::serve::SsrApp::build(spec.router, $root)
+                    .expect("failed to build MontRS SSR app")
+            });
+
+            let (status, content_type, body) =
+                match app.render(&method, &path) {
+                    Ok((status, headers, body)) => {
+                        let ct = headers
+                            .iter()
+                            .find(|(k, _)| {
+                                k.eq_ignore_ascii_case("content-type")
+                            })
+                            .map(|(_, v)| v.clone())
+                            .unwrap_or_default();
+                        (status, ct, body)
+                    }
+                    Err(e) => (
+                        500,
+                        "text/plain; charset=utf-8".to_string(),
+                        format!("montrs render error: {e}").into_bytes(),
+                    ),
+                };
+
+            let body = body.into_boxed_slice();
+            let body_len = body.len();
+            let content_type = content_type.into_bytes().into_boxed_slice();
+            let ct_len = content_type.len();
+            unsafe {
+                *out = $crate::MontrsResponse {
+                    status,
+                    content_type: $crate::MontrsBytes {
+                        ptr: ::std::boxed::Box::into_raw(content_type) as *mut u8,
+                        len: ct_len,
+                    },
+                    body: $crate::MontrsBytes {
+                        ptr: ::std::boxed::Box::into_raw(body) as *mut u8,
+                        len: body_len,
+                    },
+                };
+            }
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_free_response(
+            out: *mut $crate::MontrsResponse,
+        ) {
+            if out.is_null() {
+                return;
+            }
+            let resp = unsafe { &mut *out };
+            for bytes in [resp.content_type, resp.body] {
+                if !bytes.ptr.is_null() {
+                    let slice =
+                        ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+                    drop(unsafe { ::std::boxed::Box::from_raw(slice) });
+                }
+            }
+            unsafe { *out = ::std::mem::zeroed() };
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_export_state(
+            out: *mut $crate::MontrsBytes,
+        ) {
+            if out.is_null() {
+                return;
+            }
+            let bytes: ::std::vec::Vec<u8> = {
+                let f: fn() -> ::std::vec::Vec<u8> = $export;
+                f()
+            };
+            let bytes = bytes.into_boxed_slice();
+            let len = bytes.len();
+            unsafe {
+                *out = $crate::MontrsBytes {
+                    ptr: ::std::boxed::Box::into_raw(bytes) as *mut u8,
+                    len,
+                };
+            }
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_import_state(bytes: $crate::MontrsBytes) {
+            let slice: &[u8] = if bytes.ptr.is_null() || bytes.len == 0 {
+                &[]
+            } else {
+                unsafe { ::std::slice::from_raw_parts(bytes.ptr, bytes.len) }
+            };
+            let f: fn(&[u8]) = $import;
+            f(slice);
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        unsafe extern "C" fn __montrs_free_state(bytes: $crate::MontrsBytes) {
+            if bytes.ptr.is_null() {
+                return;
+            }
+            let slice = ::std::ptr::slice_from_raw_parts_mut(bytes.ptr, bytes.len);
+            drop(unsafe { ::std::boxed::Box::from_raw(slice) });
+        }
+
+        #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn montrs_app_entry()
+        -> *const $crate::MontrsAppVtable {
+            static VTABLE: $crate::MontrsAppVtable =
+                $crate::MontrsAppVtable {
+                    abi_version: $crate::ABI_VERSION,
+                    render: __montrs_render,
+                    free_response: __montrs_free_response,
+                    export_state: __montrs_export_state,
+                    import_state: __montrs_import_state,
+                    free_state: __montrs_free_state,
+                };
+            &VTABLE
+        }
+    };
+}
+
+
+/// Like [`export_app!`], but wires the app's `hotpatch.rs` convention file.
+///
+/// Expects `crate::hotpatch` to provide `export_state() -> Vec<u8>`,
+/// `import_state(&[u8])`, and `before_render()`. The framework calls
+/// `before_render()` before each render and carries state across reloads, so an
+/// app's entrypoint stays a single macro call and its `hotpatch.rs` is the
+/// only place state lives.
+#[macro_export]
+#[allow(clippy::crate_in_macro_def)]
+macro_rules! export_app_with_hotpatch {
+    ($spec:expr, $root:expr $(,)?) => {
+        $crate::export_app_with_state!(
+            $spec,
+            || {
+                crate::hotpatch::before_render();
+                ($root)()
+            },
+            crate::hotpatch::export_state,
+            crate::hotpatch::import_state,
+        );
     };
 }

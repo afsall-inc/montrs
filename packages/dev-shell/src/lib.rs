@@ -89,6 +89,43 @@ impl LoadedApp {
             Ok((status, content_type, body))
         }
     }
+
+    /// Serialize the app's long-lived state (empty if the app has none).
+    pub fn export_state(&self) -> Vec<u8> {
+        unsafe {
+            let mut out = montrs_app_abi::MontrsBytes {
+                ptr: std::ptr::null_mut(),
+                len: 0,
+            };
+            ((*self.vtable).export_state)(&mut out);
+            let data = bytes(&out);
+            ((*self.vtable).free_state)(out);
+            data
+        }
+    }
+
+    /// Restore state produced by [`LoadedApp::export_state`].
+    pub fn import_state(&self, data: &[u8]) {
+        unsafe {
+            let b = montrs_app_abi::MontrsBytes {
+                ptr: data.as_ptr() as *mut u8,
+                len: data.len(),
+            };
+            ((*self.vtable).import_state)(b);
+        }
+    }
+}
+
+/// Load `path` and swap it in, carrying the outgoing app's state across so
+/// counters, caches, and in-memory stores survive the reload.
+fn swap(app: &SharedApp, path: &Path) -> Result<()> {
+    let state = app.read().unwrap().export_state();
+    let loaded = LoadedApp::load(path)?;
+    if !state.is_empty() {
+        loaded.import_state(&state);
+    }
+    *app.write().unwrap() = Arc::new(loaded);
+    Ok(())
 }
 
 unsafe fn bytes(b: &montrs_app_abi::MontrsBytes) -> Vec<u8> {
@@ -150,11 +187,8 @@ fn spawn_file_watcher(app: SharedApp, file: PathBuf) {
                 continue;
             }
             last = next.clone();
-            match LoadedApp::load(Path::new(&next)) {
-                Ok(loaded) => {
-                    *app.write().unwrap() = Arc::new(loaded);
-                    tracing::info!("reloaded app dylib {next}");
-                }
+            match swap(&app, Path::new(&next)) {
+                Ok(()) => tracing::info!("reloaded app dylib {next}"),
                 Err(e) => tracing::error!("reload of {next} failed: {e}"),
             }
         }
@@ -165,9 +199,8 @@ async fn reload_handler(
     State(app): State<SharedApp>,
     axum::Json(req): axum::Json<ReloadRequest>,
 ) -> Response {
-    match LoadedApp::load(&req.path) {
-        Ok(loaded) => {
-            *app.write().unwrap() = Arc::new(loaded);
+    match swap(&app, &req.path) {
+        Ok(()) => {
             tracing::info!("reloaded app dylib {}", req.path.display());
             StatusCode::OK.into_response()
         }

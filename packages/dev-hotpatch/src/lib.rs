@@ -202,10 +202,22 @@ pub fn changed_crates(
         let Some(name) = invocation.crate_name() else {
             continue;
         };
-        let mentions = invocation
-            .args
-            .iter()
-            .any(|arg| changed.contains(&arg.replace('\\', "/")));
+        // Captured args may be relative to the invocation's cwd, while the
+        // watcher reports absolute paths; resolve before comparing, and fall
+        // back to a suffix match either way.
+        let mentions = invocation.args.iter().any(|arg| {
+            let path = Path::new(arg);
+            let abs = if path.is_absolute() {
+                path.to_path_buf()
+            } else {
+                invocation.cwd.join(path)
+            };
+            let norm = abs.to_string_lossy().replace('\\', "/");
+            changed.contains(&norm)
+                || changed
+                    .iter()
+                    .any(|c| norm.ends_with(c) || c.ends_with(&norm))
+        });
         if mentions {
             crates.insert(name.to_string());
         }

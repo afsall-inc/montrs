@@ -14,6 +14,16 @@ pub fn build_spec() -> AppSpec<MyConfig> {
     spec
 }
 
+mod hotpatch;
+
+// Stable C entry the dev shell loads from the app cdylib (`montrs serve` with
+// `[serve] hotpatch = true`). State and per-request hooks live in `hotpatch.rs`.
+#[cfg(not(target_arch = "wasm32"))]
+montrs_app_abi::export_app_with_hotpatch!(
+    build_spec(),
+    || leptos::prelude::view! { <Shell /> }
+);
+
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {

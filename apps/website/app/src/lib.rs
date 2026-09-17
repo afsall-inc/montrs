@@ -58,9 +58,12 @@ pub fn build_spec() -> AppSpec<MyConfig> {
     spec
 }
 
-// Stable C entry the dev shell loads from the app cdylib (see docs/tooling/hot-reload.md).
+mod hotpatch;
+
+// Stable C entry the dev shell loads from the app cdylib. State and per-request
+// hooks live in `hotpatch.rs` (see docs/tooling/hot-reload.md).
 #[cfg(not(target_arch = "wasm32"))]
-montrs_app_abi::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
+montrs_app_abi::export_app_with_hotpatch!(build_spec(), || leptos::prelude::view! { <Shell /> });
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
@@ -128,6 +131,7 @@ pub fn Shell() -> impl IntoView {
             </head>
             <body>
                 <App />
+                <div id="hits" hidden=true>{move || crate::hotpatch::hits().to_string()}</div>
             </body>
         </html>
     }
