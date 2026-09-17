@@ -1150,36 +1150,96 @@ pub fn undefined_symbols(objects: &[PathBuf]) -> anyhow::Result<Vec<String>> {
 /// full wasm patcher additionally prepares the base module (promoting every
 /// function into the indirect-function table) and resolves `GOT.func`/
 /// `GOT.mem`/`__wbindgen_placeholder__` imports.
-pub fn wasm_function_symbols(
+/// Map exported function names to their **function-table slot** in a wasm
+/// module.
+///
+/// `subsecond`'s wasm `apply_patch` keys the jump table on function-table
+/// indices (function pointers are table slots), not the module's function index
+/// space, so this walks the element segments that populate the indirect
+/// function table.
+///
+/// `relative` is for a *patch* module: its element segment is based at the
+/// imported `__table_base`, and `apply_patch` adds `table_base` to the values,
+/// so the value must be the slot's zero-based position within the appended
+/// block. For a fat module use `relative = false`, which uses the segment's
+/// constant offset when available.
+pub fn wasm_function_table_indices(
     bytes: &[u8],
+    relative: bool,
 ) -> anyhow::Result<std::collections::HashMap<String, u32>> {
+    use std::collections::HashMap;
+    use walrus::{ConstExpr, ElementItems, ElementKind, ExportItem};
+
     let module = walrus::Module::from_buffer(bytes)?;
-    let mut map = std::collections::HashMap::new();
+
+    // function id -> exported name
+    let mut names: HashMap<walrus::FunctionId, String> = HashMap::new();
     for export in module.exports.iter() {
-        if let walrus::ExportItem::Function(id) = export.item {
-            map.insert(export.name.clone(), id.index() as u32);
+        if let ExportItem::Function(id) = export.item {
+            names.insert(id, export.name.clone());
         }
     }
-    Ok(map)
+
+    let mut out: HashMap<String, u32> = HashMap::new();
+    let mut running: u32 = 0;
+    for element in module.elements.iter() {
+        let ElementKind::Active { offset, .. } = element.kind else {
+            continue;
+        };
+        let base = if relative {
+            running
+        } else {
+            match offset {
+                ConstExpr::Value(walrus::ir::Value::I32(n)) => n as u32,
+                _ => running,
+            }
+        };
+        let mut i: u32 = 0;
+        match &element.items {
+            ElementItems::Functions(fids) => {
+                for id in fids {
+                    if let Some(name) = names.get(id) {
+                        out.insert(name.clone(), base + i);
+                    }
+                    i += 1;
+                }
+            }
+            ElementItems::Expressions(_, exprs) => {
+                for e in exprs {
+                    if let ConstExpr::RefFunc(id) = e
+                        && let Some(name) = names.get(id)
+                    {
+                        out.insert(name.clone(), base + i);
+                    }
+                    i += 1;
+                }
+            }
+        }
+        running += i;
+    }
+    Ok(out)
 }
 
-/// Build a wasm [`JumpTable`] mapping the fat module's function ids to the
-/// patch module's, keyed by exported name.
+/// Build a wasm [`JumpTable`] mapping the fat module's function-table slots to
+/// the patch module's appended slot positions, keyed by exported name.
 pub fn build_wasm_jump_table(
     lib: PathBuf,
     fat_wasm: &[u8],
     patch_wasm: &[u8],
 ) -> anyhow::Result<JumpTable> {
-    let fat = wasm_function_symbols(fat_wasm)?;
-    let patch = wasm_function_symbols(patch_wasm)?;
+    let fat = wasm_function_table_indices(fat_wasm, false)?;
+    let patch = wasm_function_table_indices(patch_wasm, true)?;
 
     let mut map = subsecond_types::AddressMap::default();
-    for (name, new_id) in &patch {
-        if let Some(old_id) = fat.get(name) {
-            map.insert(u64::from(*old_id), u64::from(*new_id));
+    let mut max_pos = 0u64;
+    for (name, pos) in &patch {
+        if let Some(old) = fat.get(name) {
+            map.insert(u64::from(*old), u64::from(*pos));
+            max_pos = max_pos.max(u64::from(*pos) + 1);
         }
     }
-    let ifunc_count = patch.len() as u64;
+    // Number of function-table slots the patch appends.
+    let ifunc_count = max_pos.max(patch.len() as u64);
 
     Ok(JumpTable {
         lib,
@@ -1654,26 +1714,55 @@ mod tests {
     }
 
     #[test]
-    fn wasm_jump_table_maps_functions_by_name() {
+    fn wasm_jump_table_maps_table_slots_by_name() {
         fn module_with(exports: &[&str]) -> Vec<u8> {
             let mut module = walrus::Module::default();
+            let table = module.tables.add_local(
+                false,
+                exports.len() as u64,
+                None,
+                walrus::RefType::Funcref,
+            );
+            let mut fids = Vec::new();
             for name in exports {
                 let builder =
                     walrus::FunctionBuilder::new(&mut module.types, &[], &[]);
                 let fid = builder.finish(vec![], &mut module.funcs);
                 module.exports.add(name, fid);
+                fids.push(fid);
             }
+            module.elements.add(
+                walrus::ElementKind::Active {
+                    table,
+                    offset: walrus::ConstExpr::Value(walrus::ir::Value::I32(0)),
+                },
+                walrus::ElementItems::Functions(fids),
+            );
             module.emit_wasm()
         }
 
         let fat = module_with(&["a", "b", "c"]);
         let patch = module_with(&["a", "c", "d"]);
-        assert_eq!(wasm_function_symbols(&fat).unwrap().len(), 3);
+
+        // Fat: table slots are the element offsets.
+        let fat_idx = wasm_function_table_indices(&fat, false).unwrap();
+        assert_eq!(fat_idx.get("a"), Some(&0));
+        assert_eq!(fat_idx.get("b"), Some(&1));
+        assert_eq!(fat_idx.get("c"), Some(&2));
+
+        // Patch: values are zero-based positions in the appended block.
+        let patch_idx = wasm_function_table_indices(&patch, true).unwrap();
+        assert_eq!(patch_idx.get("a"), Some(&0));
+        assert_eq!(patch_idx.get("c"), Some(&1));
+        assert_eq!(patch_idx.get("d"), Some(&2));
 
         let table =
             build_wasm_jump_table(PathBuf::from("patch.wasm"), &fat, &patch)
                 .unwrap();
-        assert_eq!(table.map.len(), 2, "only names in both modules map");
+        // Only names in both modules map: a (0->0) and c (2->1).
+        assert_eq!(table.map.len(), 2);
+        assert_eq!(table.map.get(&0), Some(&0));
+        assert_eq!(table.map.get(&2), Some(&1));
         assert_eq!(table.ifunc_count, 3);
     }
 
