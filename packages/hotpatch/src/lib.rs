@@ -77,14 +77,7 @@ pub fn install_client_from_env() {
 #[macro_export]
 macro_rules! serve {
     ($router:expr, $root:expr) => {{
-        $crate::install_client_from_env();
-        ::montrs_core::serve::montrs_serve($router, move || {
-            if ::std::env::var_os("MONTRS_HOTPATCH_PROBE").is_some() {
-                let key = $crate::cutover_key($root.clone());
-                $crate::montrs_dev_hotpatch::set_cutover_key(key);
-            }
-            $crate::subsecond::call($root)
-        })
+        ::montrs_core::serve::montrs_serve($router, $root)
     }};
 }
 

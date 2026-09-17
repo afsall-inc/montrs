@@ -30,21 +30,18 @@ They are not the same thing:
 `view!` and CSS hot reload are always active during `montrs serve`/`montrs watch`.
 Nothing to configure.
 
-Rust hot-patching is opt-in. Enable it in `montrs.toml`:
+Native Rust hot reload is opt-in and uses **dylib swap**. Enable it in
+`montrs.toml`:
 
 ```toml
 [serve]
-hotpatch = true
+dylib = true
 ```
 
-or per session with environment variables:
-
-```bash
-MONTRS_HOTPATCH=1 MONTRS_HOTPATCH_PATCH=1 montrs serve
-```
-
-Both forms do the same thing: fat-link the server, build a patch on every Rust
-edit, and deliver it to the running app.
+or per session with `MONTRS_DYLIB=1 montrs serve`. (`[serve] hotpatch` and
+`MONTRS_HOTPATCH` are accepted as legacy aliases.) The app is built as a
+`cdylib` and hosted by the generic dev shell; on each Rust edit the library is
+rebuilt and swapped in place.
 
 ## How to write the app
 
