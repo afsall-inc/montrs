@@ -75,8 +75,8 @@ pub fn RouterDocs() -> impl IntoView {
         (
             Glyph::ScrollText,
             "Route data",
-            "Loaders fetch before render; actions mutate and revalidate. \
-             Both are tracked in deterministic test runtimes.",
+            "Loaders fetch before render; actions mutate and revalidate. Both \
+             are tracked in deterministic test runtimes.",
         ),
         (
             Glyph::Shapes,

@@ -45,7 +45,8 @@ pub fn Docs() -> impl IntoView {
             "/cli",
             Glyph::Terminal,
             "CLI",
-            "Every command — scaffold, install, serve, build, and agent tooling.",
+            "Every command — scaffold, install, serve, build, and agent \
+             tooling.",
         ),
         (
             "/runtime",

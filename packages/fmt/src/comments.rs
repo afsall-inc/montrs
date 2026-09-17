@@ -325,8 +325,8 @@ mod tests {
         // A license header is a contiguous leading comment block. Because
         // `prettyplease` drops comments, reinsertion must keep the block
         // together at the top instead of scattering it by line number.
-        let source = "// line one\n// line two\n// line three\n\n\
-                      use std::path::Path;\n\nfn main() {}\n";
+        let source = "// line one\n// line two\n// line three\n\nuse \
+                      std::path::Path;\n\nfn main() {}\n";
         let (_, comments) = extract_comments(source);
         let formatted = "use std::path::Path;\n\nfn main() {}\n";
         let result = reinsert_comments(formatted, comments);

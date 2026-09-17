@@ -32,12 +32,11 @@
 //! button, and a mobile sheet. All navigation goes through [`NavLink`] so the
 //! address bar updates immediately under the custom MontRS `RouterOutlet`.
 
+use crate::components::NavLink;
 use leptos::prelude::*;
 use leptos_router::hooks::use_navigate;
 use montrs_icons::*;
 use montrs_ui::prelude::*;
-
-use crate::components::NavLink;
 
 /// `(label, href, icon)` — top-level navigation. Framework destinations live
 /// in the dedicated "Framework" dropdown; the UI section has its own sub-nav.
@@ -49,8 +48,18 @@ const NAV: &[(&str, &str, Glyph)] = &[
 
 /// `(label, href, icon, description)` — the Framework dropdown.
 const FRAMEWORK: &[(&str, &str, Glyph, &str)] = &[
-    ("Router", "/router", Glyph::Route, "Typed routes, layouts, and outlets."),
-    ("CLI", "/cli", Glyph::Terminal, "Every command, from scaffold to agent."),
+    (
+        "Router",
+        "/router",
+        Glyph::Route,
+        "Typed routes, layouts, and outlets.",
+    ),
+    (
+        "CLI",
+        "/cli",
+        Glyph::Terminal,
+        "Every command, from scaffold to agent.",
+    ),
     (
         "Runtime",
         "/runtime",
@@ -63,7 +72,12 @@ const FRAMEWORK: &[(&str, &str, Glyph, &str)] = &[
         Glyph::ShieldCheck,
         "Sessions, OAuth, 2FA, and RBAC.",
     ),
-    ("AI Kit", "/ai", Glyph::Bot, "Agent sidecar, tools, and MCP."),
+    (
+        "AI Kit",
+        "/ai",
+        Glyph::Bot,
+        "Agent sidecar, tools, and MCP.",
+    ),
     (
         "Foundations",
         "/foundations",
@@ -91,7 +105,11 @@ const COMMANDS: &[(&str, &str, &str)] = &[
     ("Runtime", "/runtime", "Framework"),
     ("AI Kit", "/ai", "Framework"),
     ("Foundations", "/foundations", "Framework"),
-    ("GitHub repository", "https://github.com/afsall-inc/montrs", "External"),
+    (
+        "GitHub repository",
+        "https://github.com/afsall-inc/montrs",
+        "External",
+    ),
 ];
 
 #[component]

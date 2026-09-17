@@ -47,6 +47,7 @@ use montrs_ui::components::{
         DropdownMenu, DropdownMenuContent, DropdownMenuItem,
         DropdownMenuTrigger,
     },
+    floating_tab_bar::FloatingTabBar,
     input::Input,
     label::Label,
     progress::Progress,
@@ -58,7 +59,6 @@ use montrs_ui::components::{
     spinner::Spinner,
     switch::Switch,
     tabs::{Tabs, TabsContent, TabsList, TabsTrigger},
-    floating_tab_bar::FloatingTabBar,
     textarea::Textarea,
     tooltip::Tooltip,
 };
@@ -349,8 +349,10 @@ pub fn Components() -> impl IntoView {
             }
             active.set(current);
         }));
-        let _ = window
-            .add_event_listener_with_callback("scroll", cb.as_ref().unchecked_ref());
+        let _ = window.add_event_listener_with_callback(
+            "scroll",
+            cb.as_ref().unchecked_ref(),
+        );
         cb.forget();
     });
 

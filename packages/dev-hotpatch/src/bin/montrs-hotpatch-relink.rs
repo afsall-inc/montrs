@@ -8,9 +8,8 @@
 //!
 //! Usage: `montrs-hotpatch-relink <exe> <workspace-target-dir> <fat-archive> <real-linker> <msvc|gnu>`
 
-use std::{path::PathBuf, process::ExitCode};
-
 use montrs_dev_hotpatch::LinkerFlavor;
+use std::{path::PathBuf, process::ExitCode};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -37,15 +36,12 @@ fn main() -> ExitCode {
     };
 
     match montrs_dev_hotpatch::relink_fat(
-        &linker,
-        flavor,
-        &link.args,
-        &target,
-        &archive,
-        &exe,
+        &linker, flavor, &link.args, &target, &archive, &exe,
     ) {
         Ok(count) => {
-            println!("fat relink complete ({count} workspace objects archived)");
+            println!(
+                "fat relink complete ({count} workspace objects archived)"
+            );
             ExitCode::SUCCESS
         }
         Err(e) => {

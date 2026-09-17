@@ -82,8 +82,7 @@ fn main() -> ExitCode {
 
     if std::env::var_os("MONTRS_HOTPATCH_FATLINK").is_some()
         && is_tip(&resolved)
-        && let Some(workspace) =
-            std::env::var_os("MONTRS_HOTPATCH_WORKSPACE")
+        && let Some(workspace) = std::env::var_os("MONTRS_HOTPATCH_WORKSPACE")
     {
         let capture = montrs_dev_hotpatch::capture_dir();
         // Save the tip's fresh objects before rustc removes them, and record

@@ -1101,27 +1101,33 @@ fn Faq() -> impl IntoView {
     const FAQ: &[(&str, &str)] = &[
         (
             "Do I need to know Rust?",
-            "Yes — but the Golden Path and `montrs new` get you productive fast, and the compiler is the teacher.",
+            "Yes — but the Golden Path and `montrs new` get you productive \
+             fast, and the compiler is the teacher.",
         ),
         (
             "Is it on crates.io?",
-            "Not yet. Install from source with `cargo install --path packages/cli`, or run `montrs new` in a checkout.",
+            "Not yet. Install from source with `cargo install --path \
+             packages/cli`, or run `montrs new` in a checkout.",
         ),
         (
             "How does cross-platform work?",
-            "One AppSpec, plus adapters for WASM web, winit/wgpu desktop, and mobile shells. Same routes, same loaders.",
+            "One AppSpec, plus adapters for WASM web, winit/wgpu desktop, and \
+             mobile shells. Same routes, same loaders.",
         ),
         (
             "What is a Plate?",
-            "A feature module with explicit trait boundaries that registers its routes, tools, and invariants.",
+            "A feature module with explicit trait boundaries that registers \
+             its routes, tools, and invariants.",
         ),
         (
             "How do agents use MontRS?",
-            "Spec snapshots, skills, and `montrs agent doctor` make every project machine-readable — no prompt archaeology.",
+            "Spec snapshots, skills, and `montrs agent doctor` make every \
+             project machine-readable — no prompt archaeology.",
         ),
         (
             "What's the license?",
-            "Dual-licensed Apache-2.0 and MIT. Use it commercially, contribute back if you can.",
+            "Dual-licensed Apache-2.0 and MIT. Use it commercially, \
+             contribute back if you can.",
         ),
     ];
 

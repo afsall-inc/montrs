@@ -333,9 +333,9 @@ fn usage_snippet(col: Collection, glyph: &CollectedGlyph) -> String {
         format!(r#"<Icon glyph=Glyph::{} class="w-6 h-6" />"#, glyph.name)
     } else {
         format!(
-            "use montrs_icons::{{CustomIcon, Collection}};\n\
-             let icon = Collection::{col:?}.glyph(\"{}\").unwrap();\n\
-             <CustomIcon svg=icon.svg viewbox=icon.viewbox />",
+            "use montrs_icons::{{CustomIcon, Collection}};\nlet icon = \
+             Collection::{col:?}.glyph(\"{}\").unwrap();\n<CustomIcon \
+             svg=icon.svg viewbox=icon.viewbox />",
             glyph.name.to_lowercase()
         )
     }

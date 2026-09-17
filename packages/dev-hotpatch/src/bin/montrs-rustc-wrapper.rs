@@ -27,10 +27,7 @@ fn main() -> ExitCode {
     if std::env::var_os("MONTRS_HOTPATCH_DIR").is_some() {
         let invocation = montrs_dev_hotpatch::RustcInvocation {
             args: std::iter::once(real_rustc.to_string_lossy().into_owned())
-                .chain(
-                    rest.iter()
-                        .map(|a| a.to_string_lossy().into_owned()),
-                )
+                .chain(rest.iter().map(|a| a.to_string_lossy().into_owned()))
                 .collect(),
             cwd: std::env::current_dir().unwrap_or_default(),
             envs: montrs_dev_hotpatch::capture_env_allowlist(),

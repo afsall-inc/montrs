@@ -36,8 +36,7 @@
 
 use anyhow::Result;
 use axum::Router;
-use std::path::PathBuf;
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 use tower_http::services::ServeDir;
 use tracing::info;
 

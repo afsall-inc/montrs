@@ -76,8 +76,5 @@ pub fn install_client_from_env() {
 /// ```
 #[macro_export]
 macro_rules! serve {
-    ($router:expr, $root:expr) => {{
-        ::montrs_core::serve::montrs_serve($router, $root)
-    }};
+    ($router:expr, $root:expr) => {{ ::montrs_core::serve::montrs_serve($router, $root) }};
 }
-

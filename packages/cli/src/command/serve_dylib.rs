@@ -11,7 +11,11 @@
 //! the shell swaps the app in place, so the HTTP listener never restarts.
 
 use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
-use std::{path::{Path, PathBuf}, sync::Arc, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 use tokio::process::Command as TokioCommand;
 
 pub async fn run() -> anyhow::Result<()> {
@@ -31,7 +35,11 @@ pub async fn run() -> anyhow::Result<()> {
         .iter()
         .any(|f| f == "hotpatch")
     {
-        pipeline.meta.serve.lib_features.push("hotpatch".to_string());
+        pipeline
+            .meta
+            .serve
+            .lib_features
+            .push("hotpatch".to_string());
     }
     let capture_dir = pipeline.workspace_target_dir.join("montrs-hotpatch");
     if let Some(wrapper) = resolve_wrapper("rustc-wrapper") {
@@ -101,14 +109,18 @@ pub async fn run() -> anyhow::Result<()> {
     let reload = match LiveReload::start(reload_port).await {
         Ok((r, port)) => {
             if port != reload_port {
-                println!("Live reload port {reload_port} was busy — using {port}.");
+                println!(
+                    "Live reload port {reload_port} was busy — using {port}."
+                );
             }
             reload_port = port;
             println!("Live reload listening on ws://0.0.0.0:{port}");
             Some(r)
         }
         Err(e) => {
-            eprintln!("Live reload unavailable ({e}); page won't auto-refresh.");
+            eprintln!(
+                "Live reload unavailable ({e}); page won't auto-refresh."
+            );
             None
         }
     };
@@ -141,14 +153,17 @@ pub async fn run() -> anyhow::Result<()> {
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
         move || {
-            let _ = montrs_build::watch_paths(&watch_roots, move |changed: &[PathBuf]| {
-                let rust_changed = changed.iter().any(|p| {
-                    p.extension().and_then(|e| e.to_str()) == Some("rs")
-                });
-                if rust_changed {
-                    let _ = tx.blocking_send(changed.to_vec());
-                }
-            });
+            let _ = montrs_build::watch_paths(
+                &watch_roots,
+                move |changed: &[PathBuf]| {
+                    let rust_changed = changed.iter().any(|p| {
+                        p.extension().and_then(|e| e.to_str()) == Some("rs")
+                    });
+                    if rust_changed {
+                        let _ = tx.blocking_send(changed.to_vec());
+                    }
+                },
+            );
         }
     });
 
@@ -160,8 +175,14 @@ pub async fn run() -> anyhow::Result<()> {
 
     println!("Serving (dylib mode) on http://{addr}");
     let mut child = spawn_shell(
-        &shell_bin, &addr, &site_root, &pkg_dir, &output_name, reload_port,
-        &current, &reload_file,
+        &shell_bin,
+        &addr,
+        &site_root,
+        &pkg_dir,
+        &output_name,
+        reload_port,
+        &current,
+        &reload_file,
     )?;
     println!("montrs-dev-shell started.");
 
@@ -221,7 +242,10 @@ fn copy_versioned(
             cdylib.display()
         );
     }
-    let dest = run_dir.join(format!("{lib_name}-{version}{}", std::env::consts::DLL_SUFFIX));
+    let dest = run_dir.join(format!(
+        "{lib_name}-{version}{}",
+        std::env::consts::DLL_SUFFIX
+    ));
     if dest.exists() {
         let _ = std::fs::remove_file(&dest);
     }
@@ -324,8 +348,12 @@ fn try_wasm_patch(
     }
 
     let patch_out = pipeline.pkg_dir.join("montrs-patch.wasm");
-    let pkg_component =
-        pipeline.meta.serve.site_pkg_dir.trim_matches('/').to_string();
+    let pkg_component = pipeline
+        .meta
+        .serve
+        .site_pkg_dir
+        .trim_matches('/')
+        .to_string();
     let url = format!("/{pkg_component}/montrs-patch.wasm");
 
     let request = montrs_dev_hotpatch::WasmPatchRequest {

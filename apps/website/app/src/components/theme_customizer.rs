@@ -210,7 +210,11 @@ fn rotate_hue(hsl: &str, delta: f64) -> String {
 /// Full semantic token set for a configuration and color mode.
 fn tokens_for(cfg: ThemeCfg, dark: bool) -> Vec<(&'static str, String)> {
     let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-    let palette = if dark { GRAY_OPTIONS } else { LIGHT_GRAY_OPTIONS };
+    let palette = if dark {
+        GRAY_OPTIONS
+    } else {
+        LIGHT_GRAY_OPTIONS
+    };
     let (_, bg, fg, muted_fg, border) = palette[cfg.gray];
     let (_, radius) = RADIUS_OPTIONS[cfg.radius];
     vec![

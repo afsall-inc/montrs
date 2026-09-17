@@ -131,11 +131,8 @@ pub fn watch_paths(
                         | EventKind::Remove(_)
                 )
             {
-                let changed: Vec<PathBuf> = event
-                    .paths
-                    .into_iter()
-                    .filter(|p| is_watched(p))
-                    .collect();
+                let changed: Vec<PathBuf> =
+                    event.paths.into_iter().filter(|p| is_watched(p)).collect();
                 if !changed.is_empty() {
                     let _ = tx.send(changed);
                 }

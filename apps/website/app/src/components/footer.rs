@@ -28,10 +28,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+use crate::components::NavLink;
 use leptos::prelude::*;
 use montrs_ui::prelude::*;
-
-use crate::components::NavLink;
 
 #[component]
 pub fn Footer() -> impl IntoView {

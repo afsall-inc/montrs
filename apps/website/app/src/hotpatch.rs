@@ -7,10 +7,11 @@
 //! this file stays the same across apps. Keep your own app state in `state.rs`
 //! (or wherever you like) and register it here.
 
-use std::sync::Once;
-use std::sync::atomic::{AtomicU32, Ordering};
-
 use montrs_app_abi::state;
+use std::sync::{
+    Once,
+    atomic::{AtomicU32, Ordering},
+};
 
 /// Requests served (a demo store that persists across reloads).
 static HITS: AtomicU32 = AtomicU32::new(0);

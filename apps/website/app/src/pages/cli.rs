@@ -37,15 +37,37 @@ use montrs_ui::prelude::*;
 pub fn Cli() -> impl IntoView {
     let commands: &[(&str, &str)] = &[
         ("montrs new <name>", "Scaffold a new app from a template."),
-        ("montrs install", "Install the toolchain the project needs (Tailwind, wasm-bindgen, wasm target)."),
-        ("montrs serve", "Dev server with hot reload and a live error overlay."),
-        ("montrs watch", "Alias for `montrs serve` — rebuild + reload on change."),
-        ("montrs build", "Production build for web, desktop, or mobile."),
-        ("montrs add <component>", "Copy a component, icon, or theme into your app."),
+        (
+            "montrs install",
+            "Install the toolchain the project needs (Tailwind, wasm-bindgen, \
+             wasm target).",
+        ),
+        (
+            "montrs serve",
+            "Dev server with hot reload and a live error overlay.",
+        ),
+        (
+            "montrs watch",
+            "Alias for `montrs serve` — rebuild + reload on change.",
+        ),
+        (
+            "montrs build",
+            "Production build for web, desktop, or mobile.",
+        ),
+        (
+            "montrs add <component>",
+            "Copy a component, icon, or theme into your app.",
+        ),
         ("montrs fmt", "Format Rust and view! macros."),
         ("montrs test", "Run the workspace test suite."),
-        ("montrs agent check", "Agent-level diagnostics over your project."),
-        ("montrs mcp serve", "Start the MCP server for agent tool calls."),
+        (
+            "montrs agent check",
+            "Agent-level diagnostics over your project.",
+        ),
+        (
+            "montrs mcp serve",
+            "Start the MCP server for agent tool calls.",
+        ),
     ];
 
     let terminals: &[&str] = &[
