@@ -26,6 +26,7 @@ montrs-table-core = { path = "../../packages/table-core" }
 montrs-content = { path = "../../packages/content" }
 montrs-hotkeys-core = { path = "../../packages/hotkeys-core" }
 montrs-hotkeys-web = { path = "../../packages/hotkeys-web" }
+montrs-app-abi = { path = "../../packages/app-abi" }
 leptos.workspace = true
 leptos_meta.workspace = true
 leptos_router.workspace = true
@@ -65,4 +66,3 @@ getrandom = { version = "0.2", features = ["js"] }
 # hot-patch socket, so app code contains no hot-patch wiring.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 montrs-hotpatch = { path = "../../packages/hotpatch" }
-montrs-app-abi = { path = "../../packages/app-abi" }

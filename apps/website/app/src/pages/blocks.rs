@@ -42,7 +42,9 @@ pub fn Blocks() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Blocks"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Blocks"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Pre-built UI sections built from real MontRS Plates.
                     Copy, paste, and customize — no generators, no magic."
@@ -62,25 +64,30 @@ pub fn Blocks() -> impl IntoView {
                 <div class="terminal mt-6 flex max-w-xl flex-col gap-2">
                     <div class="flex items-center justify-between gap-4">
                         <span>
-                            <span class="terminal-prompt">"$"</span>
+                            <span class="terminal-prompt">
+                                "$"
+                            </span>
                             " montrs add faq01"
                         </span>
                         <CopyButton text="montrs add faq01".to_string() label="Copy" />
                     </div>
                     <div class="flex items-center justify-between gap-4">
                         <span>
-                            <span class="terminal-prompt">"$"</span>
+                            <span class="terminal-prompt">
+                                "$"
+                            </span>
                             " montrs add sidenav01"
                         </span>
                         <CopyButton text="montrs add sidenav01".to_string() label="Copy" />
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">
                 <nav class="hidden lg:block">
                     <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
-                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">"Blocks"</p>
+                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                            "Blocks"
+                        </p>
                         {[("faq", "FAQ"), ("footers", "Footers"), ("headers", "Headers"), ("integrations", "Integrations"), ("login", "Login"), ("sidenav", "Sidenav")].iter().map(|(id, label)| {
                             let on_click = scroll_to(id);
                             view! {
@@ -93,137 +100,143 @@ pub fn Blocks() -> impl IntoView {
                         }).collect::<Vec<_>>()}
                     </div>
                 </nav>
-
                 <div class="min-w-0">
-            <SectionTitle id="faq">"FAQ"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <BlockCard name="faq-01.rs" source=include_str!("../blocks/faq/faq01.rs")>
-                    <Faq01 />
-                </BlockCard>
-                <BlockCard name="faq-02.rs" source=include_str!("../blocks/faq/faq02.rs")>
-                    <Faq02 />
-                </BlockCard>
-                <BlockCard name="faq-03.rs" source=include_str!("../blocks/faq/faq03.rs")>
-                    <Faq03 />
-                </BlockCard>
-            </div>
-
-            <SectionTitle id="footers">"Footers"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <BlockCard name="footer-01.rs" source=include_str!("../blocks/footer/footer01.rs")>
-                    <Footer01 />
-                </BlockCard>
-                <BlockCard name="footer-02.rs" source=include_str!("../blocks/footer/footer02.rs")>
-                    <Footer02 />
-                </BlockCard>
-                <BlockCard name="footer-03.rs" source=include_str!("../blocks/footer/footer03.rs")>
-                    <Footer03 />
-                </BlockCard>
-                <BlockCard name="footer-04.rs" source=include_str!("../blocks/footer/footer04.rs")>
-                    <Footer04 />
-                </BlockCard>
-                <BlockCard name="footer-05.rs" source=include_str!("../blocks/footer/footer05.rs")>
-                    <Footer05 />
-                </BlockCard>
-                <BlockCard name="footer-logos.rs" source=include_str!("../blocks/footer/footer_logos.rs")>
-                    <FooterLogos />
-                </BlockCard>
-            </div>
-
-            <SectionTitle id="headers">"Headers"</SectionTitle>
-            <BlockCard name="header-01.rs" source=include_str!("../blocks/header/header01.rs")>
-                <Header01 />
-            </BlockCard>
-
-            <SectionTitle id="integrations">"Integrations"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <BlockCard name="integration-01.rs" source=include_str!("../blocks/integration/integration01.rs")>
-                    <Integration01 />
-                </BlockCard>
-                <BlockCard name="integration-02.rs" source=include_str!("../blocks/integration/integration02.rs")>
-                    <Integration02 />
-                </BlockCard>
-                <BlockCard name="integration-03.rs" source=include_str!("../blocks/integration/integration03.rs")>
-                    <Integration03 />
-                </BlockCard>
-                <BlockCard name="integration-04.rs" source=include_str!("../blocks/integration/integration04.rs")>
-                    <Integration04 />
-                </BlockCard>
-                <BlockCard name="integration-05.rs" source=include_str!("../blocks/integration/integration05.rs")>
-                    <Integration05 />
-                </BlockCard>
-                <BlockCard name="integration-06.rs" source=include_str!("../blocks/integration/integration06.rs")>
-                    <Integration06 />
-                </BlockCard>
-                <BlockCard name="integration-07.rs" source=include_str!("../blocks/integration/integration07.rs")>
-                    <Integration07 />
-                </BlockCard>
-            </div>
-
-            <SectionTitle id="login">"Login"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <BlockCard name="login-01.rs" source=include_str!("../blocks/login/login01.rs")>
-                    <Login01 />
-                </BlockCard>
-                <BlockCard name="login-02.rs" source=include_str!("../blocks/login/login02.rs")>
-                    <Login02 />
-                </BlockCard>
-                <BlockCard name="login-03.rs" source=include_str!("../blocks/login/login03.rs")>
-                    <Login03 />
-                </BlockCard>
-                <BlockCard name="login-04.rs" source=include_str!("../blocks/login/login04.rs")>
-                    <Login04 />
-                </BlockCard>
-            </div>
-
-            <SectionTitle id="sidenav">"Sidenav"</SectionTitle>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <BlockCard name="sidenav-01.rs" source=include_str!("../blocks/sidenav/sidenav01.rs")>
-                    <Sidenav01 />
-                </BlockCard>
-                <BlockCard name="sidenav-02.rs" source=include_str!("../blocks/sidenav/sidenav02.rs")>
-                    <Sidenav02 />
-                </BlockCard>
-                <BlockCard name="sidenav-03.rs" source=include_str!("../blocks/sidenav/sidenav03.rs")>
-                    <Sidenav03 />
-                </BlockCard>
-                <BlockCard name="sidenav-04.rs" source=include_str!("../blocks/sidenav/sidenav04.rs")>
-                    <Sidenav04 />
-                </BlockCard>
-                <BlockCard name="sidenav-05.rs" source=include_str!("../blocks/sidenav/sidenav05.rs")>
-                    <Sidenav05 />
-                </BlockCard>
-                <BlockCard name="sidenav-06.rs" source=include_str!("../blocks/sidenav/sidenav06.rs")>
-                    <Sidenav06 />
-                </BlockCard>
-                <BlockCard name="sidenav-07.rs" source=include_str!("../blocks/sidenav/sidenav07.rs")>
-                    <Sidenav07 />
-                </BlockCard>
-                <BlockCard name="sidenav-08.rs" source=include_str!("../blocks/sidenav/sidenav08.rs")>
-                    <Sidenav08 />
-                </BlockCard>
-                <BlockCard name="sidenav-09.rs" source=include_str!("../blocks/sidenav/sidenav09.rs")>
-                    <Sidenav09 />
-                </BlockCard>
-                <BlockCard name="sidenav-10.rs" source=include_str!("../blocks/sidenav/sidenav10.rs")>
-                    <Sidenav10 />
-                </BlockCard>
-                <BlockCard name="sidenav-11.rs" source=include_str!("../blocks/sidenav/sidenav11.rs")>
-                    <Sidenav11 />
-                </BlockCard>
-                <BlockCard name="sidenav-inset-right.rs" source=include_str!("../blocks/sidenav/sidenav_inset_right.rs")>
-                    <SidenavInsetRight />
-                </BlockCard>
-                <BlockCard name="sidenav-routes.rs" source=include_str!("../blocks/sidenav/sidenav_routes.rs")>
-                    <SidenavRoutes />
-                </BlockCard>
-                <BlockCard name="sidenav-routes-selector.rs" source=include_str!("../blocks/sidenav/sidenav_routes_selector.rs")>
-                    <SidenavRoutesSelector />
-                </BlockCard>
-                <BlockCard name="sidenav-routes-simplified.rs" source=include_str!("../blocks/sidenav/sidenav_routes_simplified.rs")>
-                    <SidenavRoutesSimplified />
-                </BlockCard>
-            </div>
+                    <SectionTitle id="faq">
+                        "FAQ"
+                    </SectionTitle>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <BlockCard name="faq-01.rs" source=include_str!("../blocks/faq/faq01.rs")>
+                            <Faq01 />
+                        </BlockCard>
+                        <BlockCard name="faq-02.rs" source=include_str!("../blocks/faq/faq02.rs")>
+                            <Faq02 />
+                        </BlockCard>
+                        <BlockCard name="faq-03.rs" source=include_str!("../blocks/faq/faq03.rs")>
+                            <Faq03 />
+                        </BlockCard>
+                    </div>
+                    <SectionTitle id="footers">
+                        "Footers"
+                    </SectionTitle>
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <BlockCard name="footer-01.rs" source=include_str!("../blocks/footer/footer01.rs")>
+                            <Footer01 />
+                        </BlockCard>
+                        <BlockCard name="footer-02.rs" source=include_str!("../blocks/footer/footer02.rs")>
+                            <Footer02 />
+                        </BlockCard>
+                        <BlockCard name="footer-03.rs" source=include_str!("../blocks/footer/footer03.rs")>
+                            <Footer03 />
+                        </BlockCard>
+                        <BlockCard name="footer-04.rs" source=include_str!("../blocks/footer/footer04.rs")>
+                            <Footer04 />
+                        </BlockCard>
+                        <BlockCard name="footer-05.rs" source=include_str!("../blocks/footer/footer05.rs")>
+                            <Footer05 />
+                        </BlockCard>
+                        <BlockCard name="footer-logos.rs" source=include_str!("../blocks/footer/footer_logos.rs")>
+                            <FooterLogos />
+                        </BlockCard>
+                    </div>
+                    <SectionTitle id="headers">
+                        "Headers"
+                    </SectionTitle>
+                    <BlockCard name="header-01.rs" source=include_str!("../blocks/header/header01.rs")>
+                        <Header01 />
+                    </BlockCard>
+                    <SectionTitle id="integrations">
+                        "Integrations"
+                    </SectionTitle>
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <BlockCard name="integration-01.rs" source=include_str!("../blocks/integration/integration01.rs")>
+                            <Integration01 />
+                        </BlockCard>
+                        <BlockCard name="integration-02.rs" source=include_str!("../blocks/integration/integration02.rs")>
+                            <Integration02 />
+                        </BlockCard>
+                        <BlockCard name="integration-03.rs" source=include_str!("../blocks/integration/integration03.rs")>
+                            <Integration03 />
+                        </BlockCard>
+                        <BlockCard name="integration-04.rs" source=include_str!("../blocks/integration/integration04.rs")>
+                            <Integration04 />
+                        </BlockCard>
+                        <BlockCard name="integration-05.rs" source=include_str!("../blocks/integration/integration05.rs")>
+                            <Integration05 />
+                        </BlockCard>
+                        <BlockCard name="integration-06.rs" source=include_str!("../blocks/integration/integration06.rs")>
+                            <Integration06 />
+                        </BlockCard>
+                        <BlockCard name="integration-07.rs" source=include_str!("../blocks/integration/integration07.rs")>
+                            <Integration07 />
+                        </BlockCard>
+                    </div>
+                    <SectionTitle id="login">
+                        "Login"
+                    </SectionTitle>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <BlockCard name="login-01.rs" source=include_str!("../blocks/login/login01.rs")>
+                            <Login01 />
+                        </BlockCard>
+                        <BlockCard name="login-02.rs" source=include_str!("../blocks/login/login02.rs")>
+                            <Login02 />
+                        </BlockCard>
+                        <BlockCard name="login-03.rs" source=include_str!("../blocks/login/login03.rs")>
+                            <Login03 />
+                        </BlockCard>
+                        <BlockCard name="login-04.rs" source=include_str!("../blocks/login/login04.rs")>
+                            <Login04 />
+                        </BlockCard>
+                    </div>
+                    <SectionTitle id="sidenav">
+                        "Sidenav"
+                    </SectionTitle>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <BlockCard name="sidenav-01.rs" source=include_str!("../blocks/sidenav/sidenav01.rs")>
+                            <Sidenav01 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-02.rs" source=include_str!("../blocks/sidenav/sidenav02.rs")>
+                            <Sidenav02 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-03.rs" source=include_str!("../blocks/sidenav/sidenav03.rs")>
+                            <Sidenav03 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-04.rs" source=include_str!("../blocks/sidenav/sidenav04.rs")>
+                            <Sidenav04 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-05.rs" source=include_str!("../blocks/sidenav/sidenav05.rs")>
+                            <Sidenav05 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-06.rs" source=include_str!("../blocks/sidenav/sidenav06.rs")>
+                            <Sidenav06 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-07.rs" source=include_str!("../blocks/sidenav/sidenav07.rs")>
+                            <Sidenav07 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-08.rs" source=include_str!("../blocks/sidenav/sidenav08.rs")>
+                            <Sidenav08 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-09.rs" source=include_str!("../blocks/sidenav/sidenav09.rs")>
+                            <Sidenav09 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-10.rs" source=include_str!("../blocks/sidenav/sidenav10.rs")>
+                            <Sidenav10 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-11.rs" source=include_str!("../blocks/sidenav/sidenav11.rs")>
+                            <Sidenav11 />
+                        </BlockCard>
+                        <BlockCard name="sidenav-inset-right.rs" source=include_str!("../blocks/sidenav/sidenav_inset_right.rs")>
+                            <SidenavInsetRight />
+                        </BlockCard>
+                        <BlockCard name="sidenav-routes.rs" source=include_str!("../blocks/sidenav/sidenav_routes.rs")>
+                            <SidenavRoutes />
+                        </BlockCard>
+                        <BlockCard name="sidenav-routes-selector.rs" source=include_str!("../blocks/sidenav/sidenav_routes_selector.rs")>
+                            <SidenavRoutesSelector />
+                        </BlockCard>
+                        <BlockCard name="sidenav-routes-simplified.rs" source=include_str!("../blocks/sidenav/sidenav_routes_simplified.rs")>
+                            <SidenavRoutesSimplified />
+                        </BlockCard>
+                    </div>
                 </div>
             </div>
         </div>
@@ -283,7 +296,9 @@ fn BlockCard(
     view! {
         <div class="showcase-card flex flex-col">
             <div class="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-                <span class="font-mono text-xs text-muted-foreground">{name}</span>
+                <span class="font-mono text-xs text-muted-foreground">
+                    {name}
+                </span>
                 <div class="flex items-center gap-2">
                     <div class="hidden items-center gap-0.5 rounded-md border border-border p-0.5 sm:inline-flex">
                         {VIEWPORTS.iter().map(|(key, label, icon)| {
@@ -309,18 +324,14 @@ fn BlockCard(
                             }
                         }).collect::<Vec<_>>()}
                     </div>
-                    <button
-                        type="button"
-                        class=move || {
+                    <button type="button" class=move || {
                             let base = "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-colors";
                             if show_code.get() {
                                 format!("{base} border-primary bg-primary/10 text-primary")
                             } else {
                                 format!("{base} text-muted-foreground hover:bg-accent hover:text-foreground")
                             }
-                        }
-                        on:click=move |_| show_code.update(|v| *v = !*v)
-                    >
+                        } on:click=move |_| show_code.update(|v| *v = !*v)>
                         <Icon glyph=Glyph::CodeXml class="h-3.5 w-3.5" />
                         {move || if show_code.get() { "Preview" } else { "Code" }}
                     </button>
@@ -332,15 +343,14 @@ fn BlockCard(
                     "tablet" => "mx-auto w-full max-w-2xl rounded-lg border border-border p-2",
                     "mobile" => "mx-auto w-full max-w-sm rounded-lg border border-border p-2",
                     _ => "w-full",
-                }>{children()}</div>
+                }>
+                    {children()}
+                </div>
             </div>
-            <pre
-                class=move || {
+            <pre class=move || {
                     let base = "max-h-96 overflow-auto border-t border-border bg-background p-4 font-mono text-xs leading-6";
                     if show_code.get() { base.to_string() } else { format!("{base} hidden") }
-                }
-                inner_html=code_html
-            ></pre>
+                } inner_html=code_html />
         </div>
     }
 }

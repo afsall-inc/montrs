@@ -79,28 +79,10 @@ pub fn Slider(
     view! {
         <div class=merged data-name="Slider">
             <div class="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
-                <div
-                    class="absolute h-full bg-primary"
-                    style=range_style
-                    data-name="SliderRange"
-                />
+                <div class="absolute h-full bg-primary" style=range_style data-name="SliderRange" />
             </div>
-            <input
-                type="range"
-                min=min
-                max=max
-                step=step
-                value=move || value.get()
-                disabled=disabled
-                on:input=on_input
-                class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                data-name="SliderInput"
-            />
-            <div
-                class="absolute h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                style=move || format!("left: calc({}% - 10px);", pct())
-                data-name="SliderThumb"
-            />
+            <input type="range" min=min max=max step=step value=move || value.get() disabled=disabled on:input=on_input class="absolute inset-0 h-full w-full cursor-pointer opacity-0" data-name="SliderInput" />
+            <div class="absolute h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" style=move || format!("left: calc({}% - 10px);", pct()) data-name="SliderThumb" />
         </div>
     }
 }

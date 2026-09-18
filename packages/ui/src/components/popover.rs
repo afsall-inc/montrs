@@ -98,12 +98,7 @@ pub fn PopoverContent(
     let close = move |_| open.set(false);
 
     view! {
-        <div
-            class=merged
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
-            data-name="PopoverContent"
-        >
+        <div class=merged data-state=move || if open.get() { "open" } else { "closed" } hidden=move || !open.get() data-name="PopoverContent">
             {children()}
         </div>
         {move || if open.get() {

@@ -180,17 +180,18 @@ impl Pipeline {
             Ok(o) => {
                 let stderr = String::from_utf8_lossy(&o.stderr);
                 return Err(anyhow!(
-                    "wasm-bindgen failed to process the WASM bundle.\n{}\n\
-                     Hint: run `montrs install` to install a wasm-bindgen CLI \
-                     that matches the `wasm-bindgen` crate version used by the \
-                     app (a version mismatch produces exactly this error).",
+                    "wasm-bindgen failed to process the WASM \
+                     bundle.\n{}\nHint: run `montrs install` to install a \
+                     wasm-bindgen CLI that matches the `wasm-bindgen` crate \
+                     version used by the app (a version mismatch produces \
+                     exactly this error).",
                     stderr.trim()
                 ));
             }
             Err(e) => {
                 return Err(anyhow!(
-                    "could not run wasm-bindgen: {e}.\n\
-                     Hint: run `montrs install` to install wasm-bindgen."
+                    "could not run wasm-bindgen: {e}.\nHint: run `montrs \
+                     install` to install wasm-bindgen."
                 ));
             }
         }

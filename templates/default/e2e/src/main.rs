@@ -7,15 +7,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Navigate to the app (automatically handles base URL)
     driver.goto("/").await?;
-    
+
     println!("Successfully navigated to {}", driver.url());
-    
+
     // Example assertion
     // assertions::assert_title_contains(&driver.page, "Montrs").await?;
-    
+
     // Screenshot for verification
     // driver.screenshot("screenshot.png").await?;
-    
+
     // Cleanup
     driver.close().await?;
 

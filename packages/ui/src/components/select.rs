@@ -97,29 +97,11 @@ pub fn Select(
 
     view! {
         <div class="relative" data-name="Select">
-            <button
-                type="button"
-                role="combobox"
-                class=merged
-                aria-expanded=move || open.get()
-                aria-haspopup="listbox"
-                aria-label="Select"
-                on:click=toggle
-                on:keydown=on_key_down
-                data-name="SelectTrigger"
-            >
-                <span>{move || value.get().to_string()}</span>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24" height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="h-4 w-4 opacity-50"
-                >
+            <button type="button" role="combobox" class=merged aria-expanded=move || open.get() aria-haspopup="listbox" aria-label="Select" on:click=toggle on:keydown=on_key_down data-name="SelectTrigger">
+                <span>
+                    {move || value.get().to_string()}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 opacity-50">
                     <path d="m6 9 6 6 6-6" />
                 </svg>
             </button>
@@ -193,15 +175,7 @@ pub fn SelectContent(
         };
 
     view! {
-        <div
-            class=merged
-            data-state=move || if ctx.open.get() { "open" } else { "closed" }
-            hidden=move || !ctx.open.get()
-            data-name="SelectContent"
-            role="listbox"
-            aria-label="Options"
-            on:keydown=on_key_down
-        >
+        <div class=merged data-state=move || if ctx.open.get() { "open" } else { "closed" } hidden=move || !ctx.open.get() data-name="SelectContent" role="listbox" aria-label="Options" on:keydown=on_key_down>
             <div class="max-h-96 overflow-y-auto">
                 {children()}
             </div>
@@ -268,16 +242,7 @@ pub fn SelectItem(
     let is_selected_for_svg = is_selected.clone();
 
     view! {
-        <div
-            class=merged
-            role="option"
-            tabindex="-1"
-            data-select-index=idx.to_string()
-            aria-selected=is_selected_for_aria
-            on:click=select
-            on:keydown=handle_key_down
-            data-name="SelectItem"
-        >
+        <div class=merged role="option" tabindex="-1" data-select-index=idx.to_string() aria-selected=is_selected_for_aria on:click=select on:keydown=handle_key_down data-name="SelectItem">
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                 {move || if is_selected_for_svg() {
                     view! {

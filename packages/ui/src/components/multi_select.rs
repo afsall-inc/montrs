@@ -50,7 +50,9 @@ pub fn MultiSelect(
     view! {
         <div class="relative" data-name="MultiSelect">
             <button type="button" class=merged on:click=toggle data-name="MultiSelectTrigger">
-                <span>{move || format!("{} selected", value.get().len())}</span>
+                <span>
+                    {move || format!("{} selected", value.get().len())}
+                </span>
             </button>
         </div>
     }

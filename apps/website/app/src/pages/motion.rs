@@ -48,7 +48,9 @@ pub fn Motion() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Motion & Animation"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Motion & Animation"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Interactive demos of spring physics, tween easing, keyframe
                     interpolation, shape morphing, and gesture-driven motion — all
@@ -67,11 +69,12 @@ pub fn Motion() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[180px_1fr]">
                 <nav class="hidden lg:block">
                     <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
-                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">"Demos"</p>
+                        <p class="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                            "Demos"
+                        </p>
                         {demos.iter().map(|(id, label)| {
                             let on_click = scroll_to(id);
                             view! {
@@ -84,7 +87,6 @@ pub fn Motion() -> impl IntoView {
                         }).collect::<Vec<_>>()}
                     </div>
                 </nav>
-
                 <div class="min-w-0">
                     <section id="icons" class="scroll-mt-24">
                         <AnimatedIconsDemo />
@@ -167,46 +169,46 @@ fn SpringDemo() -> impl IntoView {
         <div class="showcase-card p-6">
             <div class="flex items-center gap-2">
                 <Icon glyph=Glyph::Activity class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Spring Physics"</h2>
+                <h2 class="text-xl font-semibold">
+                    "Spring Physics"
+                </h2>
             </div>
             <p class="mt-1 text-sm text-muted-foreground">
                 "Tune the spring and watch the mass settle."
             </p>
-
             <div class="mt-6 space-y-5">
                 <div>
                     <label class="flex justify-between text-sm font-medium">
                         "Stiffness"
-                        <span class="font-mono text-muted-foreground">{move || format!("{:.0}", stiffness.get())}</span>
+                        <span class="font-mono text-muted-foreground">
+                            {move || format!("{:.0}", stiffness.get())}
+                        </span>
                     </label>
                     <Slider min=10.0 max=500.0 step=1.0 value=stiffness class="mt-2" />
                 </div>
                 <div>
                     <label class="flex justify-between text-sm font-medium">
                         "Damping"
-                        <span class="font-mono text-muted-foreground">{move || format!("{:.1}", damping.get())}</span>
+                        <span class="font-mono text-muted-foreground">
+                            {move || format!("{:.1}", damping.get())}
+                        </span>
                     </label>
                     <Slider min=1.0 max=50.0 step=0.5 value=damping class="mt-2" />
                 </div>
                 <div>
                     <label class="flex justify-between text-sm font-medium">
                         "Mass"
-                        <span class="font-mono text-muted-foreground">{move || format!("{:.1}", mass.get())}</span>
+                        <span class="font-mono text-muted-foreground">
+                            {move || format!("{:.1}", mass.get())}
+                        </span>
                     </label>
                     <Slider min=0.1 max=10.0 step=0.1 value=mass class="mt-2" />
                 </div>
-
-                <button
-                    type="button"
-                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    on:click=play_spring
-                    disabled=move || playing.get()
-                >
+                <button type="button" class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50" on:click=play_spring disabled=move || playing.get()>
                     <Icon glyph=Glyph::Play class="h-4 w-4" />
                     {move || if playing.get() { "Playing…" } else { "Play Spring" }}
                 </button>
             </div>
-
             <div class="mt-6 flex items-end gap-1 rounded-md border border-border bg-background p-4" style="height: 140px;">
                 {move || {
                     let pct = (value.get() * 100.0).min(100.0);
@@ -267,42 +269,34 @@ fn TweenDemo() -> impl IntoView {
         <div class="showcase-card p-6">
             <div class="flex items-center gap-2">
                 <Icon glyph=Glyph::ChartSpline class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Tween Easing Visualizer"</h2>
+                <h2 class="text-xl font-semibold">
+                    "Tween Easing Visualizer"
+                </h2>
             </div>
             <p class="mt-1 text-sm text-muted-foreground">
                 "Pick an easing function and watch the curve."
             </p>
-
             <div class="mt-6 space-y-5">
                 <div>
-                    <label class="mb-2 block text-sm font-medium">"Easing"</label>
-                    <select
-                        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        prop:value=move || easing_idx.get().to_string()
-                        on:change=move |e| {
+                    <label class="mb-2 block text-sm font-medium">
+                        "Easing"
+                    </label>
+                    <select class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" prop:value=move || easing_idx.get().to_string() on:change=move |e| {
                             let val = event_target_value(&e);
                             if let Ok(idx) = val.parse::<usize>() {
                                 easing_idx.set(idx);
                             }
-                        }
-                    >
+                        }>
                         {easings.iter().enumerate().map(|(i, (name, _))| {
                             view! { <option value=i.to_string()>{*name}</option> }
                         }).collect::<Vec<_>>()}
                     </select>
                 </div>
-
-                <button
-                    type="button"
-                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    on:click=play_tween
-                    disabled=move || playing.get()
-                >
+                <button type="button" class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50" on:click=play_tween disabled=move || playing.get()>
                     <Icon glyph=Glyph::Play class="h-4 w-4" />
                     {move || if playing.get() { "Playing…" } else { "Play Tween" }}
                 </button>
             </div>
-
             <div class="mt-6">
                 <svg viewBox="0 0 200 120" class="h-32 w-full rounded-md border border-border bg-background">
                     <line x1="0" y1="120" x2="200" y2="120" stroke="currentColor" stroke-width="1" opacity="0.25" />
@@ -367,19 +361,16 @@ fn PathDemo() -> impl IntoView {
                 <div>
                     <div class="flex items-center gap-2">
                         <Icon glyph=Glyph::PenLine class="h-5 w-5 text-primary" />
-                        <h2 class="text-xl font-semibold">"SVG Path Animation"</h2>
+                        <h2 class="text-xl font-semibold">
+                            "SVG Path Animation"
+                        </h2>
                     </div>
                     <p class="mt-1 text-sm text-muted-foreground">
                         "Stroke-dasharray / stroke-dashoffset path drawing."
                     </p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button
-                        type="button"
-                        class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-                        on:click=play_path
-                        disabled=move || playing.get()
-                    >
+                    <button type="button" class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50" on:click=play_path disabled=move || playing.get()>
                         <Icon glyph=Glyph::Play class="h-4 w-4" />
                         {move || if playing.get() { "Drawing…" } else { "Animate Path" }}
                     </button>
@@ -388,7 +379,6 @@ fn PathDemo() -> impl IntoView {
                     </span>
                 </div>
             </div>
-
             <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
                 <svg viewBox="0 0 200 120" class="h-40 w-full max-w-64">
                     {move || {
@@ -473,19 +463,15 @@ fn KeyframesDemo() -> impl IntoView {
         <div class="showcase-card p-6">
             <div class="flex items-center gap-2">
                 <Icon glyph=Glyph::Layers class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Keyframe Interpolation"</h2>
+                <h2 class="text-xl font-semibold">
+                    "Keyframe Interpolation"
+                </h2>
             </div>
             <p class="mt-1 text-sm text-muted-foreground">
                 "Multi-segment interpolation with per-segment easing between stops."
             </p>
-
             <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
-                <button
-                    type="button"
-                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    on:click=play_kf
-                    disabled=move || playing.get()
-                >
+                <button type="button" class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50" on:click=play_kf disabled=move || playing.get()>
                     <Icon glyph=Glyph::Play class="h-4 w-4" />
                     {move || if playing.get() { "Bouncing…" } else { "Play Keyframes" }}
                 </button>
@@ -493,13 +479,9 @@ fn KeyframesDemo() -> impl IntoView {
                     {move || format!("{:.0}%", progress.get() * 100.0)}
                 </span>
             </div>
-
             <div class="mt-6">
                 <svg viewBox="0 0 220 120" class="h-40 w-full rounded-md border border-border bg-background">
-                    <line
-                        x1="20" y1="100" x2="200" y2="100"
-                        stroke="hsl(var(--foreground))" stroke-width="1" opacity="0.15"
-                    />
+                    <line x1="20" y1="100" x2="200" y2="100" stroke="hsl(var(--foreground))" stroke-width="1" opacity="0.15" />
                     {x_stops.iter().zip(&y_stops).map(|(x, y)| {
                         let cx = (20.0 + x).to_string();
                         let cy = (100.0 + y).to_string();
@@ -507,11 +489,7 @@ fn KeyframesDemo() -> impl IntoView {
                             <circle cx=cx cy=cy r="3.5" fill="hsl(var(--foreground))" opacity="0.35" />
                         }
                     }).collect::<Vec<_>>()}
-                    <path
-                        d=trail_d
-                        stroke="hsl(var(--primary))" stroke-width="1.5" fill="none"
-                        opacity="0.4" stroke-dasharray="2 4"
-                    />
+                    <path d=trail_d stroke="hsl(var(--primary))" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="2 4" />
                     {move || {
                         let t = progress.get();
                         let bx = (20.0 + xs_ball.sample(t)).to_string();
@@ -566,37 +544,33 @@ fn MorphDemo() -> impl IntoView {
         <div class="showcase-card p-6">
             <div class="flex items-center gap-2">
                 <Icon glyph=Glyph::Star class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Shape Morphing"</h2>
+                <h2 class="text-xl font-semibold">
+                    "Shape Morphing"
+                </h2>
             </div>
             <p class="mt-1 text-sm text-muted-foreground">
                 "A spring-driven MotionValue interpolates every vertex between two shapes."
             </p>
-
             <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
-                <button
-                    type="button"
-                    class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                    on:click=toggle
-                >
+                <button type="button" class="inline-flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90" on:click=toggle>
                     <Icon glyph=Glyph::Repeat class="h-4 w-4" />
                     "Morph"
                 </button>
                 <div class="flex items-center gap-3 font-mono text-xs text-muted-foreground">
-                    <span>{name}</span>
-                    <span>{move || format!("p={:.2}", shape_p.get())}</span>
-                    <span>{move || format!("v={:+.0}", shape_v.velocity())}</span>
+                    <span>
+                        {name}
+                    </span>
+                    <span>
+                        {move || format!("p={:.2}", shape_p.get())}
+                    </span>
+                    <span>
+                        {move || format!("v={:+.0}", shape_v.velocity())}
+                    </span>
                 </div>
             </div>
-
             <div class="mt-6 flex justify-center rounded-md border border-border bg-background p-6">
                 <svg viewBox="0 0 200 200" class="h-48 w-full max-w-48">
-                    <polygon
-                        points=pts
-                        fill="hsl(var(--primary) / 0.12)"
-                        stroke="hsl(var(--primary))"
-                        stroke-width="2"
-                        stroke-linejoin="round"
-                    />
+                    <polygon points=pts fill="hsl(var(--primary) / 0.12)" stroke="hsl(var(--primary))" stroke-width="2" stroke-linejoin="round" />
                 </svg>
             </div>
         </div>
@@ -656,51 +630,37 @@ fn GestureDemo() -> impl IntoView {
         <div class="showcase-card p-6">
             <div class="flex items-center gap-2">
                 <Icon glyph=Glyph::Move class="h-5 w-5 text-primary" />
-                <h2 class="text-xl font-semibold">"Gesture Primitives"</h2>
+                <h2 class="text-xl font-semibold">
+                    "Gesture Primitives"
+                </h2>
             </div>
             <p class="mt-1 text-sm text-muted-foreground">
                 "Hover, press, and pan helpers — drag the tile and it springs back."
             </p>
-
             <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <button
-                    type="button"
-                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors"
-                    on:mouseenter=hover_enter
-                    on:mouseleave=hover_leave
-                    style=move || format!("transform: scale({:.2}); transition: {};", hover_scale(), SCALE)
-                >
+                <button type="button" class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors" on:mouseenter=hover_enter on:mouseleave=hover_leave style=move || format!("transform: scale({:.2}); transition: {};", hover_scale(), SCALE)>
                     <Icon glyph=Glyph::Mouse class="h-5 w-5" />
                     {move || if hovered.get() { "hovered" } else { "hover" }}
                 </button>
-                <button
-                    type="button"
-                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors"
-                    on:mousedown=press_down
-                    on:mouseup=press_up
-                    on:mouseleave=press_up_leave
-                    style=move || format!("transform: scale({:.2}); transition: {};", press_scale(), SCALE)
-                >
+                <button type="button" class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground transition-colors" on:mousedown=press_down on:mouseup=press_up on:mouseleave=press_up_leave style=move || format!("transform: scale({:.2}); transition: {};", press_scale(), SCALE)>
                     <Icon glyph=Glyph::Hand class="h-5 w-5" />
                     {move || if pressed.get() { "pressed" } else { "press" }}
                 </button>
-                <div
-                    class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground cursor-grab active:cursor-grabbing select-none touch-none"
-                    on:mousedown=on_pan_down
-                    on:mousemove=on_pan_move
-                    on:mouseup=on_pan_up
-                    on:mouseleave=pan_up_leave
-                    style=drag_style
-                >
+                <div class="flex h-24 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background font-mono text-xs text-muted-foreground cursor-grab active:cursor-grabbing select-none touch-none" on:mousedown=on_pan_down on:mousemove=on_pan_move on:mouseup=on_pan_up on:mouseleave=pan_up_leave style=drag_style>
                     <Icon glyph=Glyph::Grip class="h-5 w-5" />
                     {move || if dragging.get() { "dragging" } else { "drag me" }}
                 </div>
             </div>
-
             <div class="mt-6 space-y-1 font-mono text-xs text-muted-foreground">
-                <p>{move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}</p>
-                <p>{move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}</p>
-                <p>{move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}</p>
+                <p>
+                    {move || format!("hover: {} · press: {} · drag: {}", hovered.get(), pressed.get(), dragging.get())}
+                </p>
+                <p>
+                    {move || format!("dx {:+.0}px · dy {:+.0}px", delta.get().0, delta.get().1)}
+                </p>
+                <p>
+                    {move || format!("vx {:+.1} · vy {:+.1}", mvx_read.velocity(), mvy_read.velocity())}
+                </p>
             </div>
         </div>
     }
@@ -745,12 +705,13 @@ fn AnimatedIconsDemo() -> impl IntoView {
 
     view! {
         <div>
-            <h2 class="text-2xl font-bold tracking-tight">"Animated icons"</h2>
+            <h2 class="text-2xl font-bold tracking-tight">
+                "Animated icons"
+            </h2>
             <p class="mt-1 text-sm text-muted-foreground">
                 "23,000+ icons ship with hover animations — path draw for stroke sets,
                 pulse for fill sets. Pick a profile, then hover a tile."
             </p>
-
             <div class="mt-4 flex flex-wrap gap-2">
                 {PROFILES.iter().map(|(label, value)| {
                     let value = *value;
@@ -770,7 +731,6 @@ fn AnimatedIconsDemo() -> impl IntoView {
                     }
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
                 {ANIMATED_ICON_SAMPLE.iter().copied().map(|glyph| {
                     view! {

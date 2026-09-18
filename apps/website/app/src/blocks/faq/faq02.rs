@@ -63,7 +63,9 @@ pub fn Faq02() -> impl IntoView {
 
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm p-6">
-            <h3 class="text-lg font-semibold mb-6">"Frequently Asked Questions"</h3>
+            <h3 class="text-lg font-semibold mb-6">
+                "Frequently Asked Questions"
+            </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {items.into_iter().enumerate().map(|(i, (q, a))| {
                     let is_open = move || open.get() == Some(i);

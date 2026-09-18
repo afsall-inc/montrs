@@ -91,7 +91,8 @@ pub fn ThemeProvider(children: Children) -> impl IntoView {
         let Some(window) = web_sys::window() else {
             return;
         };
-        let Ok(Some(query)) = window.match_media("(prefers-color-scheme: dark)")
+        let Ok(Some(query)) =
+            window.match_media("(prefers-color-scheme: dark)")
         else {
             return;
         };

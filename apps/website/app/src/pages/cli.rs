@@ -37,15 +37,37 @@ use montrs_ui::prelude::*;
 pub fn Cli() -> impl IntoView {
     let commands: &[(&str, &str)] = &[
         ("montrs new <name>", "Scaffold a new app from a template."),
-        ("montrs install", "Install the toolchain the project needs (Tailwind, wasm-bindgen, wasm target)."),
-        ("montrs serve", "Dev server with hot reload and a live error overlay."),
-        ("montrs watch", "Alias for `montrs serve` — rebuild + reload on change."),
-        ("montrs build", "Production build for web, desktop, or mobile."),
-        ("montrs add <component>", "Copy a component, icon, or theme into your app."),
+        (
+            "montrs install",
+            "Install the toolchain the project needs (Tailwind, wasm-bindgen, \
+             wasm target).",
+        ),
+        (
+            "montrs serve",
+            "Dev server with hot reload and a live error overlay.",
+        ),
+        (
+            "montrs watch",
+            "Alias for `montrs serve` — rebuild + reload on change.",
+        ),
+        (
+            "montrs build",
+            "Production build for web, desktop, or mobile.",
+        ),
+        (
+            "montrs add <component>",
+            "Copy a component, icon, or theme into your app.",
+        ),
         ("montrs fmt", "Format Rust and view! macros."),
         ("montrs test", "Run the workspace test suite."),
-        ("montrs agent check", "Agent-level diagnostics over your project."),
-        ("montrs mcp serve", "Start the MCP server for agent tool calls."),
+        (
+            "montrs agent check",
+            "Agent-level diagnostics over your project.",
+        ),
+        (
+            "montrs mcp serve",
+            "Start the MCP server for agent tool calls.",
+        ),
     ];
 
     let terminals: &[&str] = &[
@@ -57,21 +79,24 @@ pub fn Cli() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"CLI"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "CLI"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "One binary wires the whole toolchain: scaffold, install,
                     serve, build, and run agent tooling — no Node, no package
                     manager, no config sprawl."
                 </p>
             </div>
-
             <div class="mx-auto max-w-3xl">
                 <div class="code-window">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"terminal"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "terminal"
+                        </span>
                     </div>
                     <div class="code-window-body space-y-2">
                         {terminals.iter().map(|cmd| view! {
@@ -86,7 +111,6 @@ pub fn Cli() -> impl IntoView {
                     </div>
                 </div>
             </div>
-
             <div class="mx-auto mt-10 max-w-3xl">
                 <div class="overflow-hidden rounded-xl border border-border">
                     {commands.iter().map(|(cmd, desc)| view! {
@@ -97,19 +121,12 @@ pub fn Cli() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div class="mt-10 flex flex-wrap gap-3">
-                <a
-                    href="/docs"
-                    class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                >
+                <a href="/docs" class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                     <Icon glyph=Glyph::BookOpen class="mr-2 h-4 w-4" />
                     "Read the docs"
                 </a>
-                <a
-                    href="/router"
-                    class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                >
+                <a href="/router" class="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                     <Icon glyph=Glyph::Route class="mr-2 h-4 w-4" />
                     "Router guide"
                 </a>

@@ -56,13 +56,7 @@ pub fn ButtonAction(
         }
     };
     view! {
-        <button
-            type="button"
-            class=merged
-            disabled=disabled || loading
-            on:click=handle_click
-            data-name="ButtonAction"
-        >
+        <button type="button" class=merged disabled=disabled || loading on:click=handle_click data-name="ButtonAction">
             {children()}
         </button>
     }

@@ -7,9 +7,8 @@
 //!
 //! Usage: `montrs-hotpatch-build <exe> <capture-base> <real-linker> <msvc|gnu> <workspace-target> [aslr-hex]`
 
-use std::{path::Path, process::ExitCode};
-
 use montrs_dev_hotpatch::{LinkerFlavor, PatchRequest, SymbolIndex};
+use std::{path::Path, process::ExitCode};
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -56,8 +55,8 @@ fn main() -> ExitCode {
 
     if args.len() < 6 {
         eprintln!(
-            "usage: montrs-hotpatch-build <exe> <capture-base> \
-             <real-linker> <msvc|gnu> <workspace-target> [aslr-hex]"
+            "usage: montrs-hotpatch-build <exe> <capture-base> <real-linker> \
+             <msvc|gnu> <workspace-target> [aslr-hex]"
         );
         return ExitCode::from(2);
     }

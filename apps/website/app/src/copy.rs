@@ -94,9 +94,7 @@ pub fn CopyButton(
     };
 
     view! {
-        <button
-            type="button"
-            class=move || {
+        <button type="button" class=move || {
                 let state = if copied.get() {
                     " border-transparent bg-primary/15 text-primary"
                 } else {
@@ -104,9 +102,7 @@ pub fn CopyButton(
                 };
                 let user = if class.is_empty() { "" } else { &class };
                 format!("copy-btn{state} {user}")
-            }
-            on:click=on_click
-        >
+            } on:click=on_click>
             {move || if copied.get() { "Copied".to_string() } else { label.clone() }}
         </button>
     }

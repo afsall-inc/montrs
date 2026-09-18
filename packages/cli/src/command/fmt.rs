@@ -55,8 +55,17 @@ pub async fn run(
     } else {
         for entry in WalkDir::new(&input_path)
             .into_iter()
+            .filter_entry(|e| {
+                !matches!(
+                    e.file_name().to_str(),
+                    Some("target" | ".git" | "node_modules")
+                )
+            })
             .filter_map(|e| e.ok())
-            .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+            .filter(|e| {
+                e.file_type().is_file()
+                    && e.path().extension().is_some_and(|ext| ext == "rs")
+            })
         {
             if format_one_file(entry.path(), &settings, check, verbose)? {
                 exit_code = 1;

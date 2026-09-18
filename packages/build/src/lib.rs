@@ -49,12 +49,11 @@ pub use pipeline::Pipeline;
 /// reduced type-depth and faster compiles. On failure the full compiler
 /// output is returned as the error message so the dev server can forward it
 /// to the browser error overlay.
-pub fn run_cargo(
-    args: &[String],
-    leptos_watch: bool,
-) -> anyhow::Result<()> {
-    use std::io::{BufRead, BufReader};
-    use std::process::{Command, Stdio};
+pub fn run_cargo(args: &[String], leptos_watch: bool) -> anyhow::Result<()> {
+    use std::{
+        io::{BufRead, BufReader},
+        process::{Command, Stdio},
+    };
 
     let mut command = Command::new("cargo");
     command

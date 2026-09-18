@@ -45,9 +45,11 @@
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::{
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tokio::{net::TcpListener, sync::broadcast};
 
 /// A tiny WS server that fans out dev events to every connected browser tab.
@@ -108,7 +110,8 @@ impl LiveReload {
                 let tx = tx2.clone();
                 let last = last2.clone();
                 tokio::spawn(async move {
-                    let Ok(mut ws) = tokio_tungstenite::accept_async(stream).await
+                    let Ok(mut ws) =
+                        tokio_tungstenite::accept_async(stream).await
                     else {
                         return;
                     };
@@ -270,8 +273,9 @@ mod tests {
         // be told the pending state on connect.
         reload.building();
 
-        let (mut ws, _) =
-            tokio_tungstenite::connect_async(&url).await.expect("connect");
+        let (mut ws, _) = tokio_tungstenite::connect_async(&url)
+            .await
+            .expect("connect");
         ws.send(Message::Text("{\"hello\":\"montrs-overlay\"}".into()))
             .await
             .expect("send hello");
@@ -292,8 +296,9 @@ mod tests {
         let url = format!("ws://127.0.0.1:{port}/");
 
         // No hello => tagged as a Leptos reload client.
-        let (mut ws, _) =
-            tokio_tungstenite::connect_async(&url).await.expect("connect");
+        let (mut ws, _) = tokio_tungstenite::connect_async(&url)
+            .await
+            .expect("connect");
         // The server waits up to 750ms for a hello before subscribing.
         tokio::time::sleep(Duration::from_millis(900)).await;
 

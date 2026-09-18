@@ -139,18 +139,37 @@ impl MontrsConfig {
     /// If the file is missing, returns default configuration.
     /// Also attempts to resolve the project name from `Cargo.toml`.
     pub fn load() -> Result<Self> {
-        let mut config = if std::path::Path::new("montrs.toml").exists() {
+        let has_montrs_toml = std::path::Path::new("montrs.toml").exists();
+        let mut config = if has_montrs_toml {
             Self::from_file("montrs.toml")?
         } else {
             Self::default()
         };
 
         // Cascade of Truth: Load montrs-fmt.toml if it exists and override the [fmt] section
+        let mut fmt_explicit = false;
         if std::path::Path::new("montrs-fmt.toml").exists() {
             let content = std::fs::read_to_string("montrs-fmt.toml")?;
             if let Ok(fmt_settings) = toml::from_str(&content) {
                 config.fmt = fmt_settings;
+                fmt_explicit = true;
             }
+        }
+        if !fmt_explicit
+            && has_montrs_toml
+            && let Ok(content) = std::fs::read_to_string("montrs.toml")
+            && let Ok(value) = toml::from_str::<toml::Value>(&content)
+            && value.get("fmt").is_some()
+        {
+            fmt_explicit = true;
+        }
+
+        // With no MontRS-specific formatting config, follow the project's
+        // `rustfmt.toml` so `montrs fmt` agrees with `cargo fmt`.
+        if !fmt_explicit {
+            config
+                .fmt
+                .apply_rustfmt_toml(std::path::Path::new("rustfmt.toml"));
         }
 
         // Try to resolve project name if still default

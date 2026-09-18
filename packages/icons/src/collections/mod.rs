@@ -236,9 +236,7 @@ impl Collection {
         match self {
             Collection::Lucide => Glyph::count(),
             #[cfg(feature = "col-radix")]
-            Collection::Radix => {
-                crate::collections::data::radix_icons().len()
-            }
+            Collection::Radix => crate::collections::data::radix_icons().len(),
             #[cfg(feature = "col-tabler")]
             Collection::Tabler => {
                 crate::collections::data::tabler_icons().len()

@@ -16,7 +16,7 @@ to turn it on, how it works internally, and what its limits are.
 | Mechanism | diff source → patch the DOM / swap CSS | rebuild the app library → swap it into the running shell |
 | Cargo rebuild | no | yes (incremental) |
 | Reaches | the browser DOM, across all crates | the app + its workspace crates |
-| State | preserved | process preserved; in-app state resets (see below) |
+| State | preserved | process and registered in-memory state preserved (see below) |
 | Latency | instant (ms) | ~seconds |
 | Status | **on by default with `montrs serve`** | **opt-in** |
 
@@ -65,12 +65,48 @@ The normal entry (used when hot reload is off) is unchanged:
 montrs_hotpatch::serve!(spec.router, || leptos::prelude::view! { <Shell /> });
 ```
 
-Add the dylib entry in the app **library** (the templates already do this):
+For hot reload, add two things to the app **library**: a `mod hotpatch;` and the
+dylib entry. `hotpatch.rs` is the convention file the framework wires
+automatically:
 
 ```rust
+mod hotpatch;
+
 #[cfg(not(target_arch = "wasm32"))]
-montrs_app_abi::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> });
+montrs_app_abi::export_app_with_hotpatch!(
+    build_spec(),
+    || leptos::prelude::view! { <Shell /> }
+);
 ```
+
+`hotpatch.rs` is small and nearly identical across apps — it holds the state
+that should survive a reload and an optional per-request hook:
+
+```rust
+use montrs_app_abi::state;
+
+static HITS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+pub fn before_render() { /* called before each render */ }
+pub fn export_state() -> Vec<u8> { state::export() }
+pub fn import_state(bytes: &[u8]) { state::import(bytes) }
+```
+
+Register any long-lived store with `state::register(name, load, save)` (see
+[State across reloads](#state-across-reloads)). Prefer `state.rs` (or any other
+file) for your own state management — `hotpatch.rs` is only the bridge. If you
+want the hooks somewhere else, use the explicit-path form:
+
+```rust
+montrs_app_abi::export_app_with_state!(
+    build_spec(),
+    || leptos::prelude::view! { <Shell /> },
+    crate::state::export_state,
+    crate::state::import_state,
+);
+```
+
+`export_app!` (no state) is still available.
 
 ## Project setup (already done in templates)
 
@@ -79,24 +115,35 @@ montrs_app_abi::export_app!(build_spec(), || leptos::prelude::view! { <Shell /> 
   hot-reload markers.
 - `.cargo/config.toml` pinning `LEPTOS_WATCH` — `leptos` reads it at compile
   time and cargo does not track it, so it must be constant.
-- `montrs-app-abi` as a native dependency — the ABI and `export_app!`.
+- `montrs-app-abi` as a dependency — the ABI, `export_app_with_hotpatch!`, and
+  the `state` registry.
 - The `montrs-dev-shell` binary, built with the CLI (or on `PATH`).
 
-## State resets on reload
+## State across reloads
 
-Each swapped-in library gets fresh globals, so in-dylib app state (caches,
-counters, open connections) is discarded on every reload. Requests are treated
-as stateless, which is fine for typical server-rendered pages.
+Each swapped-in library gets fresh globals, so any state the app kept **in
+memory** would reset on a reload. MontRS preserves it: before swapping, the
+shell asks the outgoing library for `export_state()`, and after loading the new
+one, hands it back via `import_state()`.
 
-### Future: state-transfer hook
+Register each store in `hotpatch.rs` with `montrs_app_abi::state::register`:
 
-A later version can preserve long-lived state across reloads: add optional
-`export_state() -> bytes` / `import_state(bytes)` hooks to the ABI, and have the
-shell carry those bytes from the outgoing library to the incoming one. This is
-worth doing because it keeps sessions and warm caches alive across edits,
-turning every reload into a continuation instead of a reset — the difference
-between "the server restarted" and "the code changed." It requires the app to
-declare a serializable state type, so it stays opt-in.
+```rust
+state::register(
+    "hits",
+    || HITS.load(Ordering::Relaxed).to_le_bytes().to_vec(),
+    |bytes| { /* restore */ },
+);
+```
+
+The registry serializes all registered stores into one framed blob, so the glue
+is the same for every app. Import is best-effort: an unknown name or a blob that
+no longer matches the new code is ignored, so a schema change falls back to
+fresh state instead of failing the reload. This keeps sessions and warm caches
+alive across edits — a reload becomes a continuation rather than a reset.
+
+State that lives outside the process (a real database, Redis, files) is
+unaffected and needs no registration.
 
 ## Limitations
 
@@ -105,7 +152,8 @@ declare a serializable state type, so it stays opt-in.
   server. The wasm patch path (jump tables, PIC thin link) is in progress.
 - **Debug builds only.** This is a development feature and is never part of a
   production build.
-- **State resets** on each reload (above).
+- **State transfer is opt-in.** State kept in memory survives a reload only if
+  it is registered in `hotpatch.rs`; unregistered globals reset.
 
 ## Environment variables
 
@@ -126,10 +174,20 @@ declare a serializable state type, so it stays opt-in.
 
 ## Roadmap
 
-- **WASM (browser) Rust hot reload.** The jump-table semantics are in place
-  (`wasm_function_table_indices` / `build_wasm_jump_table`). Remaining: capture
-  and replay changed wasm crates into objects, link a PIC patch module with
-  `wasm-ld`, serve the patch `.wasm`, and apply it in-browser.
+- **WASM (browser) Rust hot reload remains unsupported.** Capture, object
+  selection, patch linking, and broadcast wiring exist, but end-to-end patch
+  application is not verified. The dev shell now proxies `/_dioxus` upgrades
+  directly to the hotpatch hub rather than through the request-rendering ABI.
+  Transport tests do not establish browser state preservation.
+- **PIC compilation is a confirmed blocker.** Linking the website's captured
+  WASM objects with the current shared-module flags fails with
+  `R_WASM_TABLE_INDEX_SLEB` and `R_WASM_MEMORY_ADDR_SLEB` relocation errors
+  requesting recompilation with PIC. Linker flags alone are insufficient.
+- **Host compatibility still needs validation.** Captured objects reference
+  pre-bindgen imports, while the browser loads the transformed `front_bg.wasm`.
+  Patch generation must retain the running browser's baseline table rather than
+  using the newly rebuilt bundle, resolve imports against that host, and avoid
+  the full-page reload notifications currently sent after a rebuild.
 
 ## Troubleshooting
 

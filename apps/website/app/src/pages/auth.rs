@@ -95,20 +95,50 @@ pub fn Auth() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Auth"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Auth"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "A complete, plugin-based authentication system — email/password,
                     OAuth, 2FA, passkeys, sessions, and RBAC — composed behind one trait."
                 </p>
             </div>
-
             <div class="mb-10 flex flex-wrap gap-x-8 gap-y-2 font-mono text-sm text-muted-foreground">
-                <span>"30+"</span><span class="text-foreground">"plugins"</span>
-                <span>"· "</span><span>"10+ "</span><span class="text-foreground">"OAuth providers"</span>
-                <span>"· "</span><span>"full "</span><span class="text-foreground">"RBAC"</span>
-                <span>"· "</span><span>"agent-"></span><span class="text-foreground">"native"</span>
+                <span>
+                    "30+"
+                </span>
+                <span class="text-foreground">
+                    "plugins"
+                </span>
+                <span>
+                    "· "
+                </span>
+                <span>
+                    "10+ "
+                </span>
+                <span class="text-foreground">
+                    "OAuth providers"
+                </span>
+                <span>
+                    "· "
+                </span>
+                <span>
+                    "full "
+                </span>
+                <span class="text-foreground">
+                    "RBAC"
+                </span>
+                <span>
+                    "· "
+                </span>
+                <span>
+                    "agent-"
+                    >
+                </span>
+                <span class="text-foreground">
+                    "native"
+                </span>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {features.into_iter().map(|(icon, title, desc)| view! {
                     <div class="showcase-card reveal p-6">
@@ -122,16 +152,17 @@ pub fn Auth() -> impl IntoView {
                     </div>
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div class="code-window">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"auth.rs"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "auth.rs"
+                        </span>
                     </div>
-                    <pre class="code-window-body text-left" inner_html=highlight_rust(AUTH_SNIPPET)></pre>
+                    <pre class="code-window-body text-left" inner_html=highlight_rust(AUTH_SNIPPET) />
                 </div>
                 <div class="flex flex-col justify-center space-y-4 text-sm text-muted-foreground">
                     <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">

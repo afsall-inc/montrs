@@ -15,8 +15,10 @@ allowed_deps = ["montrs-app-abi"]
 montrs-app-abi = { path = "../app-abi" }
 anyhow.workspace = true
 libloading = "0.8"
-axum = "0.8"
+axum = { version = "0.8", features = ["ws"] }
+futures-util = "0.3"
 tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = "0.29"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing.workspace = true

@@ -45,7 +45,8 @@ pub fn Docs() -> impl IntoView {
             "/cli",
             Glyph::Terminal,
             "CLI",
-            "Every command — scaffold, install, serve, build, and agent tooling.",
+            "Every command — scaffold, install, serve, build, and agent \
+             tooling.",
         ),
         (
             "/runtime",
@@ -88,13 +89,14 @@ pub fn Docs() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Docs"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Docs"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Guides for the framework itself — routes, the CLI, the
                     runtime, and the packages behind them."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {guides.into_iter().map(|(href, icon, title, desc)| view! {
                     <a href=href class="showcase-card reveal flex flex-col p-6 transition-colors hover:border-ring/40">

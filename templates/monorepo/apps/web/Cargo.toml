@@ -16,6 +16,7 @@ required-features = ["ssr"]
 montrs-core = { workspace = true }
 montrs-ui = { workspace = true }
 montrs-icons = { workspace = true }
+montrs-app-abi = { path = "../../../../packages/app-abi" }
 ui = { path = "../../packages/ui" }
 leptos = { version = "0.8" }
 leptos_meta = { version = "0.8" }

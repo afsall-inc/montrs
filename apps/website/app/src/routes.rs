@@ -40,119 +40,153 @@ use montrs_core::*;
 pub struct HomeView;
 impl RouteView for HomeView {
     fn render(&self) -> impl IntoView {
-        view! { <Home /> }
+        view! {
+            <Home />
+        }
     }
 }
 
 pub struct UiView;
 impl RouteView for UiView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Ui /> }
+        view! {
+            <crate::pages::Ui />
+        }
     }
 }
 
 pub struct IconsView;
 impl RouteView for IconsView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Icons /> }
+        view! {
+            <crate::pages::Icons />
+        }
     }
 }
 
 pub struct ComponentsView;
 impl RouteView for ComponentsView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Components /> }
+        view! {
+            <crate::pages::Components />
+        }
     }
 }
 
 pub struct BlocksView;
 impl RouteView for BlocksView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Blocks /> }
+        view! {
+            <crate::pages::Blocks />
+        }
     }
 }
 
 pub struct MotionView;
 impl RouteView for MotionView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Motion /> }
+        view! {
+            <crate::pages::Motion />
+        }
     }
 }
 
 pub struct PackagesView;
 impl RouteView for PackagesView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Packages /> }
+        view! {
+            <crate::pages::Packages />
+        }
     }
 }
 
 pub struct AuthView;
 impl RouteView for AuthView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Auth /> }
+        view! {
+            <crate::pages::Auth />
+        }
     }
 }
 
 pub struct RuntimeView;
 impl RouteView for RuntimeView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Runtime /> }
+        view! {
+            <crate::pages::Runtime />
+        }
     }
 }
 
 pub struct AiKitView;
 impl RouteView for AiKitView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::AiKit /> }
+        view! {
+            <crate::pages::AiKit />
+        }
     }
 }
 
 pub struct FoundationsView;
 impl RouteView for FoundationsView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Foundations /> }
+        view! {
+            <crate::pages::Foundations />
+        }
     }
 }
 
 pub struct ThemesView;
 impl RouteView for ThemesView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Themes /> }
+        view! {
+            <crate::pages::Themes />
+        }
     }
 }
 
 pub struct BackgroundsView;
 impl RouteView for BackgroundsView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Backgrounds /> }
+        view! {
+            <crate::pages::Backgrounds />
+        }
     }
 }
 
 pub struct TemplatesView;
 impl RouteView for TemplatesView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Templates /> }
+        view! {
+            <crate::pages::Templates />
+        }
     }
 }
 
 pub struct RouterView;
 impl RouteView for RouterView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::RouterDocs /> }
+        view! {
+            <crate::pages::RouterDocs />
+        }
     }
 }
 
 pub struct CliView;
 impl RouteView for CliView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Cli /> }
+        view! {
+            <crate::pages::Cli />
+        }
     }
 }
 
 pub struct DocsView;
 impl RouteView for DocsView {
     fn render(&self) -> impl IntoView {
-        view! { <crate::pages::Docs /> }
+        view! {
+            <crate::pages::Docs />
+        }
     }
 }
 

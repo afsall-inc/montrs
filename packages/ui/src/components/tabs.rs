@@ -137,12 +137,7 @@ pub fn TabsList(
     };
 
     view! {
-        <div
-            class=merged
-            role="tablist"
-            data-name="TabsList"
-            on:keydown=on_key_down
-        >
+        <div class=merged role="tablist" data-name="TabsList" on:keydown=on_key_down>
             {children()}
         </div>
     }
@@ -205,18 +200,7 @@ pub fn TabsTrigger(
     };
 
     view! {
-        <button
-            type="button"
-            role="tab"
-            class=merged
-            id=tab_id.clone()
-            aria-selected=is_active_for_aria
-            aria-controls=panel_id.clone()
-            tabindex=tabindex
-            data-state=move || if is_active_for_state() { "active" } else { "inactive" }
-            on:click=select
-            data-name="TabsTrigger"
-        >
+        <button type="button" role="tab" class=merged id=tab_id.clone() aria-selected=is_active_for_aria aria-controls=panel_id.clone() tabindex=tabindex data-state=move || if is_active_for_state() { "active" } else { "inactive" } on:click=select data-name="TabsTrigger">
             {children()}
         </button>
     }
@@ -250,15 +234,7 @@ pub fn TabsContent(
     };
 
     view! {
-        <div
-            role="tabpanel"
-            class=merged
-            id=panel_id.clone()
-            aria-labelledby=tab_id.clone()
-            data-state=move || if is_active_for_state() { "active" } else { "inactive" }
-            hidden=move || !is_active_for_hidden()
-            data-name="TabsContent"
-        >
+        <div role="tabpanel" class=merged id=panel_id.clone() aria-labelledby=tab_id.clone() data-state=move || if is_active_for_state() { "active" } else { "inactive" } hidden=move || !is_active_for_hidden() data-name="TabsContent">
             {children()}
         </div>
     }

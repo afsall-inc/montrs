@@ -46,7 +46,9 @@ pub fn Attachment(
     };
     view! {
         <div class=merged data-name="Attachment">
-            <span class="truncate font-medium">{filename}</span>
+            <span class="truncate font-medium">
+                {filename}
+            </span>
             {file_size.map(|s| view! { <span class="text-muted-foreground">{s}</span> })}
         </div>
     }

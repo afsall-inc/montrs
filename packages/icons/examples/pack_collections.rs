@@ -38,8 +38,7 @@
 //! lazily and leaks the result to obtain `&'static` glyph tables.
 
 use montrs_icons::collections::{CollectedGlyph, Collection};
-use std::io::Write;
-use std::path::Path;
+use std::{io::Write, path::Path};
 
 fn write_u8(buf: &mut Vec<u8>, s: &str) {
     buf.push(s.len() as u8);

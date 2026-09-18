@@ -258,10 +258,8 @@ impl SsrApp {
         &self,
         method: &str,
         uri: &str,
-    ) -> Result<
-        (u16, Vec<(String, String)>, Vec<u8>),
-        Box<dyn std::error::Error>,
-    > {
+    ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
+    {
         use axum::body::Body;
         use tower::ServiceExt;
 
@@ -587,10 +585,8 @@ async fn inject_dev_overlay(
 
     let port = std::env::var("MONTRS_RELOAD_PORT")
         .unwrap_or_else(|_| "3001".to_string());
-    let meta_tag = format!(
-        "<meta name=\"montrs:reload-port\" content=\"{}\">",
-        port
-    );
+    let meta_tag =
+        format!("<meta name=\"montrs:reload-port\" content=\"{}\">", port);
     // `HOT_RELOAD_JS` defines the global `patch(json)` that applies Leptos
     // `view!` patches to the live DOM. Injected here so every MontRS app gets
     // view hot-reload with no app changes.

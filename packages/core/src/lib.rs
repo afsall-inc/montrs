@@ -310,7 +310,11 @@ impl<C: AppConfig> AppSpec<C> {
             }
 
             let view = main_view();
-            view! { <leptos_router::components::Router>{view}</leptos_router::components::Router> }
+            view! {
+                <leptos_router::components::Router>
+                    {view}
+                </leptos_router::components::Router>
+            }
         });
     }
 }

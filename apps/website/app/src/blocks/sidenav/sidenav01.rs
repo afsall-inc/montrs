@@ -48,7 +48,9 @@ pub fn Sidenav01() -> impl IntoView {
             <div class="w-56 p-4 space-y-1">
                 <div class="flex items-center gap-2 px-3 py-2 mb-4">
                     <Icon glyph=Glyph::Blocks class="w-5 h-5 text-primary" />
-                    <span class="font-semibold text-sm">"MontRS"</span>
+                    <span class="font-semibold text-sm">
+                        "MontRS"
+                    </span>
                 </div>
                 {items.into_iter().map(|(label, icon)| {
                     let l = label;

@@ -131,12 +131,7 @@ pub fn MenubarContent(
     let close = move |_| open.set(false);
 
     view! {
-        <div
-            class=merged
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
-            data-name="MenubarContent"
-        >
+        <div class=merged data-state=move || if open.get() { "open" } else { "closed" } hidden=move || !open.get() data-name="MenubarContent">
             {children()}
         </div>
         {move || if open.get() {

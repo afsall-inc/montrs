@@ -91,20 +91,7 @@ pub fn Checkbox(
 
     view! {
         <div class="flex items-center space-x-2">
-            <button
-                type="button"
-                role="checkbox"
-                id=input_id.clone()
-                class=merged
-                data-state=state
-                aria-checked=aria_checked
-                aria-required=required.then_some("true")
-                aria-label=aria_label
-                disabled=disabled
-                on:click=click
-                on:keydown=toggle
-                data-name="Checkbox"
-            >
+            <button type="button" role="checkbox" id=input_id.clone() class=merged data-state=state aria-checked=aria_checked aria-required=required.then_some("true") aria-label=aria_label disabled=disabled on:click=click on:keydown=toggle data-name="Checkbox">
                 {move || {
                     if indeterminate {
                         view! {

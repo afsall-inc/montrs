@@ -46,10 +46,16 @@ pub fn Sidenav05() -> impl IntoView {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
             <div class="w-56 p-4 space-y-1">
                 <div class="flex items-center gap-3 px-3 py-3 mb-4 rounded-lg bg-muted">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">"JD"</div>
+                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                        "JD"
+                    </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">"Jane Doe"</p>
-                        <p class="text-xs text-muted-foreground truncate">"jane@example.com"</p>
+                        <p class="text-sm font-medium truncate">
+                            "Jane Doe"
+                        </p>
+                        <p class="text-xs text-muted-foreground truncate">
+                            "jane@example.com"
+                        </p>
                     </div>
                 </div>
                 {items.into_iter().map(|(label, icon)| {

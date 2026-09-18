@@ -68,9 +68,9 @@ fn buildable_templates_typecheck() {
             .args(*extra)
             .env("CARGO_TARGET_DIR", &target_dir);
 
-        let status = cmd
-            .status()
-            .unwrap_or_else(|e| panic!("failed to run cargo for `{template}`: {e}"));
+        let status = cmd.status().unwrap_or_else(|e| {
+            panic!("failed to run cargo for `{template}`: {e}")
+        });
 
         assert!(
             status.success(),

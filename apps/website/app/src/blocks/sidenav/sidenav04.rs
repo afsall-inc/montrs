@@ -51,12 +51,7 @@ pub fn Sidenav04() -> impl IntoView {
             <div class="w-56 p-4 space-y-1">
                 <div class="relative mb-4">
                     <Icon glyph=Glyph::Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        on:input=move |ev| query.set(event_target_value(&ev))
-                        class="w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
+                    <input type="text" placeholder="Search..." on:input=move |ev| query.set(event_target_value(&ev)) class="w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
                 </div>
                 {items.iter().filter_map(|label| {
                     let q = query.get().to_lowercase();

@@ -50,13 +50,7 @@ pub fn InputPrompt(
         move |ev: leptos::ev::Event| value.set(event_target_value(&ev));
     view! {
         <div class="relative" data-name="InputPrompt">
-            <input
-                type="text"
-                class=merged
-                value=move || value.get()
-                on:input=on_input
-                data-name="InputPromptField"
-            />
+            <input type="text" class=merged value=move || value.get() on:input=on_input data-name="InputPromptField" />
         </div>
     }
 }

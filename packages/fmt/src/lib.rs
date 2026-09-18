@@ -111,53 +111,65 @@ pub fn format_source(
     source: &str,
     settings: &FormatterSettings,
 ) -> Result<String, FormatError> {
-    // 0. Normalize Scaffolded headers
+    let use_crlf = match settings.newline_style {
+        config::NewlineStyle::Windows => true,
+        config::NewlineStyle::Unix => false,
+        config::NewlineStyle::Auto => source.contains("\r\n"),
+    };
     let source = normalize_scaffold_headers(source);
-
-    // 1. Extract comments
-    let (source_rope, comments) = comments::extract_comments(&source);
-
-    // 2. Parse the file into a syn::File
-    let file = syn::parse_file(&source)?;
-
-    // 3. Collect and format view! macros
+    syn::parse_file(&source)?;
+    let formatted = format_rust(&source, settings)?;
+    let file = syn::parse_file(&formatted)?;
+    let mut rope = crop::Rope::from(formatted);
     let mut edits = Vec::new();
-    macro_fmt::collect_and_format_macros(
-        &file,
-        &source_rope,
-        settings,
-        &mut edits,
-    )?;
+    macro_fmt::collect_and_format_macros(&file, &rope, settings, &mut edits)?;
+    macro_fmt::apply_edits(&mut rope, edits);
+    let result = rope.to_string();
+    syn::parse_file(&result)?;
+    if use_crlf {
+        Ok(result.replace('\n', "\r\n"))
+    } else {
+        Ok(result)
+    }
+}
 
-    // 4. Format the file using prettyplease
-    // Note: prettyplease will format the macros too, but we will overwrite them
-    let formatted = prettyplease::unparse(&file);
+fn format_rust(
+    source: &str,
+    settings: &FormatterSettings,
+) -> Result<String, FormatError> {
+    use std::{
+        io::Write,
+        process::{Command, Stdio},
+    };
 
-    // 5. Re-apply macro edits to the formatted output
-    // This is tricky because prettyplease changed the spans.
-    // Instead, we should have formatted the macros and then used them.
-    // For now, let's stick to the pipeline:
-    // If we have macros, we need to find them in the formatted output.
-
-    // Simplified: re-parse the formatted output and find macros again to apply edits
-    let formatted_ast = syn::parse_file(&formatted)?;
-    let mut formatted_rope = crop::Rope::from(formatted);
-
-    let mut formatted_edits = Vec::new();
-    macro_fmt::collect_and_format_macros(
-        &formatted_ast,
-        &formatted_rope,
-        settings,
-        &mut formatted_edits,
-    )?;
-
-    macro_fmt::apply_edits(&mut formatted_rope, formatted_edits);
-
-    // 6. Re-insert comments
-    let final_source =
-        comments::reinsert_comments(&formatted_rope.to_string(), comments);
-
-    Ok(final_source)
+    let config = format!(
+        "edition=2024,skip_children=true,max_width={},tab_spaces={},\
+         hard_tabs={},newline_style=Unix,format_macro_bodies=false",
+        settings.max_width,
+        settings.tab_spaces,
+        settings.indentation_style == config::IndentationStyle::Tabs
+    );
+    let mut child = Command::new("rustfmt")
+        .args(["--emit", "stdout", "--config", &config])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+    let mut stdin = child.stdin.take().unwrap();
+    let output = std::thread::scope(|scope| {
+        let writer = scope.spawn(move || stdin.write_all(source.as_bytes()));
+        let output = child.wait_with_output();
+        writer.join().unwrap()?;
+        output
+    })?;
+    if !output.status.success() {
+        return Err(FormatError::Macro(format!(
+            "rustfmt failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        )));
+    }
+    String::from_utf8(output.stdout)
+        .map_err(|error| FormatError::Macro(error.to_string()))
 }
 
 fn normalize_scaffold_headers(source: &str) -> String {
@@ -169,7 +181,8 @@ fn normalize_scaffold_headers(source: &str) -> String {
 
     // Standardize "MontRS Plate Sketch" and "MontRS Route Sketch" headers
     for line in lines.iter_mut().take(3) {
-        if line.contains("MontRS")
+        if line.trim_start().starts_with("//")
+            && line.contains("MontRS")
             && (line.contains("Sketch") || line.contains("Blueprint"))
             && !line.starts_with("//!")
         {
