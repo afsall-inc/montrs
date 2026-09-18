@@ -54,15 +54,7 @@ pub fn Form(
     };
 
     view! {
-        <form
-            class=merged
-            data-name="Form"
-            role="form"
-            aria-label=aria_label
-            aria-labelledby=aria_labelledby
-            novalidate=novalidate.then_some("")
-            on:submit=handle_submit
-        >
+        <form class=merged data-name="Form" role="form" aria-label=aria_label aria-labelledby=aria_labelledby novalidate=novalidate.then_some("") on:submit=handle_submit>
             {children()}
         </form>
     }
@@ -142,13 +134,7 @@ pub fn FormMessage(
     let id = crate::utils::Utils::use_random_id();
 
     view! {
-        <p
-            class=merged
-            data-name="FormMessage"
-            id=id
-            role="alert"
-            aria-live="polite"
-        >
+        <p class=merged data-name="FormMessage" id=id role="alert" aria-live="polite">
             {children()}
         </p>
     }

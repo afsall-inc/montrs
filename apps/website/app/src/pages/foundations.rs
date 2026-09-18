@@ -42,18 +42,25 @@ pub fn Foundations() -> impl IntoView {
     view! {
         <div class="mx-auto max-w-5xl px-6 py-12 lg:px-8">
             <div class="mb-10">
-                <p class="text-sm font-medium text-primary">"MontRS foundations"</p>
-                <h1 class="mt-2 text-3xl font-bold tracking-tight">"State, content, tables, and hotkeys"</h1>
+                <p class="text-sm font-medium text-primary">
+                    "MontRS foundations"
+                </p>
+                <h1 class="mt-2 text-3xl font-bold tracking-tight">
+                    "State, content, tables, and hotkeys"
+                </h1>
                 <p class="mt-3 max-w-2xl text-muted-foreground">
                     "These examples use the Rust-native foundation packages that power MontRS applications."
                 </p>
             </div>
-
             <div class="grid gap-6 md:grid-cols-2">
                 <Card>
                     <div class="p-6">
-                        <h2 class="text-xl font-semibold">"Notification center"</h2>
-                        <p class="mt-2 text-sm text-muted-foreground">"Structured state rendered by the MontRS toaster."</p>
+                        <h2 class="text-xl font-semibold">
+                            "Notification center"
+                        </h2>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Structured state rendered by the MontRS toaster."
+                        </p>
                         <Button class="mt-4" on:click=move |_| {
                             let next = count.get() + 1;
                             count.set(next);
@@ -66,11 +73,14 @@ pub fn Foundations() -> impl IntoView {
                         </Button>
                     </div>
                 </Card>
-
                 <Card>
                     <div class="p-6">
-                        <h2 class="text-xl font-semibold">"Headless table model"</h2>
-                        <p class="mt-2 text-sm text-muted-foreground">"Stable IDs and deterministic row state."</p>
+                        <h2 class="text-xl font-semibold">
+                            "Headless table model"
+                        </h2>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Stable IDs and deterministic row state."
+                        </p>
                         <div class="mt-4 overflow-hidden rounded-md border">
                             <TableHeader />
                             {packages.into_iter().map(|row| view! {
@@ -92,8 +102,12 @@ pub fn Foundations() -> impl IntoView {
 fn TableHeader() -> impl IntoView {
     view! {
         <div class="grid grid-cols-2 bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide">
-            <span>"ID"</span>
-            <span>"Package"</span>
+            <span>
+                "ID"
+            </span>
+            <span>
+                "Package"
+            </span>
         </div>
     }
 }

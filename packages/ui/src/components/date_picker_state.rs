@@ -48,12 +48,6 @@ pub fn DatePickerState(
     let on_input =
         move |ev: leptos::ev::Event| value.set(event_target_value(&ev));
     view! {
-        <input
-            type="date"
-            class=merged
-            value=move || value.get()
-            on:input=on_input
-            data-name="DatePickerState"
-        />
+        <input type="date" class=merged value=move || value.get() on:input=on_input data-name="DatePickerState" />
     }
 }

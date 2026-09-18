@@ -266,10 +266,8 @@ pub fn AnimatedSvg(
     };
 
     view! {
-            <span class="inline-flex cursor-pointer">
-    <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class=move || {
+        <span class="inline-flex cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class=move || {
                       let extra = css_class.get();
                       let base = class_val.get();
                       if extra.is_empty() {
@@ -277,22 +275,9 @@ pub fn AnimatedSvg(
                       } else {
                           format!("{} {}", base, extra)
                       }
-                  }
-                  width=size_ok
-                  height=size2_ok
-                  viewBox=viewbox_ok
-                  fill=fill_ok
-                  stroke=stroke_ok
-                  stroke-width=sw_ok
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  style=svg_style
-                  on:mouseenter=on_enter
-                  on:mouseleave=on_leave
-                  inner_html=move || svg_text.get()
-                />
-            </span>
-        }
+                  } width=size_ok height=size2_ok viewBox=viewbox_ok fill=fill_ok stroke=stroke_ok stroke-width=sw_ok stroke-linecap="round" stroke-linejoin="round" style=svg_style on:mouseenter=on_enter on:mouseleave=on_leave inner_html=move || svg_text.get() />
+        </span>
+    }
 }
 
 /// Animated icon component for built-in [`Glyph`]s with spring physics on hover.
@@ -326,16 +311,7 @@ pub fn AnimatedIcon(
     });
 
     view! {
-        <AnimatedSvg
-            svg={TextProp::from(move || glyph.get().svg())}
-            class={class.unwrap_or_else(|| TextProp::from(""))}
-            size={size.unwrap_or_else(|| TextProp::from(DEFAULT_SIZE))}
-            fill={fill.unwrap_or_else(|| TextProp::from(DEFAULT_FILL))}
-            stroke={stroke.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE))}
-            stroke_width={stroke_width.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE_WIDTH))}
-            viewbox={viewbox.unwrap_or_else(|| TextProp::from("0 0 24 24"))}
-            profile=resolved
-        />
+        <AnimatedSvg svg={TextProp::from(move || glyph.get().svg())} class={class.unwrap_or_else(|| TextProp::from(""))} size={size.unwrap_or_else(|| TextProp::from(DEFAULT_SIZE))} fill={fill.unwrap_or_else(|| TextProp::from(DEFAULT_FILL))} stroke={stroke.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE))} stroke_width={stroke_width.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE_WIDTH))} viewbox={viewbox.unwrap_or_else(|| TextProp::from("0 0 24 24"))} profile=resolved />
     }
 }
 

@@ -151,20 +151,12 @@ pub fn PaginationPrevious(
 
     view! {
         <a href=href class=merged data-name="PaginationPrevious" aria-label="Go to previous page">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24" height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-4 w-4"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
                 <path d="m15 18-6-6 6-6" />
             </svg>
-            <span>"Previous"</span>
+            <span>
+                "Previous"
+            </span>
         </a>
     }
 }
@@ -190,18 +182,10 @@ pub fn PaginationNext(
 
     view! {
         <a href=href class=merged data-name="PaginationNext" aria-label="Go to next page">
-            <span>"Next"</span>
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24" height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-4 w-4"
-            >
+            <span>
+                "Next"
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
                 <path d="m9 18 6-6-6-6" />
             </svg>
         </a>
@@ -218,22 +202,14 @@ pub fn PaginationEllipsis(
 
     view! {
         <li class=merged data-name="PaginationEllipsis" aria-hidden="true">
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24" height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-4 w-4"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
                 <circle cx="12" cy="12" r="1" />
                 <circle cx="19" cy="12" r="1" />
                 <circle cx="5" cy="12" r="1" />
             </svg>
-            <span class="sr-only">"More pages"</span>
+            <span class="sr-only">
+                "More pages"
+            </span>
         </li>
     }
 }

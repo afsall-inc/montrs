@@ -1,16 +1,16 @@
+use async_trait::async_trait;
 use leptos::prelude::*;
 use montrs_core::{
-    AppConfig, AppSpec, EnvConfig, EnvError, Plate, PlateContext, Route, RouteAction,
-    RouteContext, RouteError, RouteLoader, RouteParams, RouteView, Router, RouterOutlet, Target,
+    AppConfig, AppSpec, EnvConfig, EnvError, Plate, PlateContext, Route,
+    RouteAction, RouteContext, RouteError, RouteLoader, RouteParams, RouteView,
+    Router, RouterOutlet, Target, Validator as _,
 };
-use montrs_core::Validator as _;
-use montrs_validator::Validator;
-use montrs_ui::prelude::*;
 use montrs_icons::*;
-use serde::{Deserialize, Serialize};
-use async_trait::async_trait;
 use montrs_state::SimpleStore;
 use montrs_table_core::{Row, Table};
+use montrs_ui::prelude::*;
+use montrs_validator::Validator;
+use serde::{Deserialize, Serialize};
 
 pub fn build_spec() -> AppSpec<MyConfig> {
     let mut spec = AppSpec::new(
@@ -60,7 +60,9 @@ pub fn Shell() -> impl IntoView {
                 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
                 <link rel="apple-touch-icon" href="/favicon-180.png" />
                 <link rel="stylesheet" href="/main.css" />
-                <title>"MontRS Todo"</title>
+                <title>
+                    "MontRS Todo"
+                </title>
                 <script>
                     "(function(){try{var t=localStorage.getItem('montrs-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();"
                 </script>
@@ -76,25 +78,30 @@ pub fn Shell() -> impl IntoView {
 #[component]
 pub fn App() -> impl IntoView {
     let todos = SimpleStore::new(Vec::<String>::new());
-    let table = Table::new(vec![Row { id: "example".into(), value: "Todo state" }]);
+    let table = Table::new(vec![Row {
+        id: "example".into(),
+        value: "Todo state",
+    }]);
     provide_context(todos);
     provide_context(table);
 
     view! {
         <leptos_router::components::Router>
             <ThemeProvider>
-            <div class="min-h-screen bg-background text-foreground">
-                <header class="border-b border-border">
-                    <div class="mx-auto flex h-16 max-w-2xl items-center gap-2 px-6">
-                        <CheckCheckIcon class="h-6 w-6 text-primary" />
-                        <span class="text-lg font-bold">"MontRS Todo"</span>
-                    </div>
-                </header>
-                <main class="mx-auto max-w-2xl px-6 py-12">
-                    {RouterOutlet::<MyConfig>()}
-                </main>
-            </div>
-        </ThemeProvider>
+                <div class="min-h-screen bg-background text-foreground">
+                    <header class="border-b border-border">
+                        <div class="mx-auto flex h-16 max-w-2xl items-center gap-2 px-6">
+                            <CheckCheckIcon class="h-6 w-6 text-primary" />
+                            <span class="text-lg font-bold">
+                                "MontRS Todo"
+                            </span>
+                        </div>
+                    </header>
+                    <main class="mx-auto max-w-2xl px-6 py-12">
+                        {RouterOutlet::<MyConfig>()}
+                    </main>
+                </div>
+            </ThemeProvider>
         </leptos_router::components::Router>
     }
 }
@@ -192,19 +199,19 @@ impl RouteView for TodoView {
                 <div class="flex items-center gap-3">
                     <ListChecksIcon class="h-8 w-8 text-primary" />
                     <div>
-                        <h1 class="text-2xl font-bold">"Todo Manager"</h1>
+                        <h1 class="text-2xl font-bold">
+                            "Todo Manager"
+                        </h1>
                         <p class="text-sm text-muted-foreground">
                             "Scaffolded Explicit Architecture example."
                         </p>
                     </div>
                 </div>
                 <div class="mt-8 flex items-center gap-4">
-                    <button
-                        on:click=move |_| set_count.update(|n| *n += 1)
-                        class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
+                    <button on:click=move |_| set_count.update(|n| *n += 1) class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                         <PlusIcon class="h-4 w-4" />
-                        "Count: " {count}
+                        "Count: "
+                        {count}
                     </button>
                     <span class="text-sm text-muted-foreground">
                         "Click to increment"

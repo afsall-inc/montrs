@@ -107,12 +107,7 @@ pub fn CollapsibleContent(
     let state = move || if open.get() { "open" } else { "closed" };
 
     view! {
-        <div
-            class=merged
-            data-state=state
-            hidden=move || !open.get()
-            data-name="CollapsibleContent"
-        >
+        <div class=merged data-state=state hidden=move || !open.get() data-name="CollapsibleContent">
             {children()}
         </div>
     }

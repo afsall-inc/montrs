@@ -648,12 +648,7 @@ fn GithubStars() -> impl IntoView {
     };
 
     view! {
-        <a
-            href=REPO
-            target="_blank"
-            rel="noopener noreferrer"
-            class="hidden items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex"
-        >
+        <a href=REPO target="_blank" rel="noopener noreferrer" class="hidden items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-flex">
             <Icon glyph=Glyph::Star class="h-3.5 w-3.5" />
             {label}
         </a>

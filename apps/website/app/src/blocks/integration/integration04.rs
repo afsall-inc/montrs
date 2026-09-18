@@ -49,10 +49,18 @@ pub fn Integration04() -> impl IntoView {
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-border bg-muted/50">
-                            <th class="text-left px-4 py-3 font-medium">"Feature"</th>
-                            <th class="text-left px-4 py-3 font-medium">"MontRS"</th>
-                            <th class="text-left px-4 py-3 font-medium">"Framework A"</th>
-                            <th class="text-left px-4 py-3 font-medium">"Framework B"</th>
+                            <th class="text-left px-4 py-3 font-medium">
+                                "Feature"
+                            </th>
+                            <th class="text-left px-4 py-3 font-medium">
+                                "MontRS"
+                            </th>
+                            <th class="text-left px-4 py-3 font-medium">
+                                "Framework A"
+                            </th>
+                            <th class="text-left px-4 py-3 font-medium">
+                                "Framework B"
+                            </th>
                         </tr>
                     </thead>
                     <tbody>

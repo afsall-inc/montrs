@@ -84,15 +84,7 @@ pub fn DropdownMenuTrigger(
     let merged = move || cn!("", class.get());
 
     view! {
-        <button
-            type="button"
-            class=merged
-            on:click=toggle
-            on:keydown=on_key_down
-            data-name="DropdownMenuTrigger"
-            aria-haspopup="true"
-            aria-expanded=move || ctx.open.get()
-        >
+        <button type="button" class=merged on:click=toggle on:keydown=on_key_down data-name="DropdownMenuTrigger" aria-haspopup="true" aria-expanded=move || ctx.open.get()>
             {children()}
         </button>
     }
@@ -161,15 +153,7 @@ pub fn DropdownMenuContent(
         };
 
     view! {
-        <div
-            class=merged
-            data-state=move || if ctx.open.get() { "open" } else { "closed" }
-            hidden=move || !ctx.open.get()
-            data-name="DropdownMenuContent"
-            role="menu"
-            aria-orientation="vertical"
-            on:keydown=on_key_down
-        >
+        <div class=merged data-state=move || if ctx.open.get() { "open" } else { "closed" } hidden=move || !ctx.open.get() data-name="DropdownMenuContent" role="menu" aria-orientation="vertical" on:keydown=on_key_down>
             {children()}
         </div>
         {move || if ctx.open.get() {
@@ -230,15 +214,7 @@ pub fn DropdownMenuItem(
     };
 
     view! {
-        <div
-            class=merged
-            role="menuitem"
-            tabindex="-1"
-            data-dropdown-index=idx.to_string()
-            on:click=handle_click
-            on:keydown=handle_key_down
-            data-name="DropdownMenuItem"
-        >
+        <div class=merged role="menuitem" tabindex="-1" data-dropdown-index=idx.to_string() on:click=handle_click on:keydown=handle_key_down data-name="DropdownMenuItem">
             {children()}
         </div>
     }
@@ -319,16 +295,7 @@ pub fn DropdownMenuRadioItem(
     };
 
     view! {
-        <div
-            class=merged
-            role="menuitemradio"
-            tabindex="-1"
-            data-dropdown-index=idx.to_string()
-            aria-checked=move || checked.get()
-            on:click=toggle
-            on:keydown=handle_key_down
-            data-name="DropdownMenuRadioItem"
-        >
+        <div class=merged role="menuitemradio" tabindex="-1" data-dropdown-index=idx.to_string() aria-checked=move || checked.get() on:click=toggle on:keydown=handle_key_down data-name="DropdownMenuRadioItem">
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                 {move || if checked.get() {
                     view! {
@@ -389,16 +356,7 @@ pub fn DropdownMenuCheckboxItem(
     };
 
     view! {
-        <div
-            class=merged
-            role="menuitemcheckbox"
-            tabindex="-1"
-            data-dropdown-index=idx.to_string()
-            aria-checked=move || checked.get()
-            on:click=toggle
-            on:keydown=handle_key_down
-            data-name="DropdownMenuCheckboxItem"
-        >
+        <div class=merged role="menuitemcheckbox" tabindex="-1" data-dropdown-index=idx.to_string() aria-checked=move || checked.get() on:click=toggle on:keydown=handle_key_down data-name="DropdownMenuCheckboxItem">
             <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                 {move || if checked.get() {
                     view! {

@@ -46,7 +46,9 @@ pub fn Integration02() -> impl IntoView {
 
     view! {
         <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <h3 class="text-sm font-semibold mb-4">"Integrations — Click to select"</h3>
+            <h3 class="text-sm font-semibold mb-4">
+                "Integrations — Click to select"
+            </h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {integrations.into_iter().map(|(name, desc, icon)| {
                     let l = name;

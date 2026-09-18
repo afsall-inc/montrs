@@ -173,13 +173,14 @@ pub fn Packages() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Packages"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Packages"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "One framework. Forty packages. Every layer documented,
                     trait-driven, and deterministic."
                 </p>
             </div>
-
             <div class="mb-6 flex flex-wrap gap-2">
                 {groups.into_iter().map(|g| {
                     let g2 = g.to_string();
@@ -201,12 +202,8 @@ pub fn Packages() -> impl IntoView {
                     }
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                <For
-                    each=move || filtered()
-                    key=|p| p.0
-                    children=move |(name, purpose, group)| {
+                <For each=move || filtered() key=|p| p.0 children=move |(name, purpose, group)| {
                         view! {
                             <div class="showcase-card p-4">
                                 <div class="flex items-center justify-between gap-2">
@@ -216,13 +213,13 @@ pub fn Packages() -> impl IntoView {
                                 <p class="mt-2 text-sm text-muted-foreground">{purpose}</p>
                             </div>
                         }
-                    }
-                />
+                    } />
             </div>
-
             <div class="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <section>
-                    <h2 class="text-2xl font-bold tracking-tight">"Templates"</h2>
+                    <h2 class="text-2xl font-bold tracking-tight">
+                        "Templates"
+                    </h2>
                     <p class="mt-1 text-sm text-muted-foreground">
                         "Start from a pre-configured workspace with one command."
                     </p>
@@ -241,9 +238,10 @@ pub fn Packages() -> impl IntoView {
                         }).collect::<Vec<_>>()}
                     </div>
                 </section>
-
                 <section>
-                    <h2 class="text-2xl font-bold tracking-tight">"CLI"</h2>
+                    <h2 class="text-2xl font-bold tracking-tight">
+                        "CLI"
+                    </h2>
                     <p class="mt-1 text-sm text-muted-foreground">
                         "Everything you need, one binary."
                     </p>

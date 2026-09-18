@@ -60,40 +60,60 @@ pub fn Themes() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Themes"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Themes"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Pick a color. Make it yours. The customizer applies your
                     choices instantly across the whole site and emits the CSS
                     variables so you can paste them into your own app."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>"Theme Editor"</CardTitle>
+                        <CardTitle>
+                            "Theme Editor"
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ThemeCustomizer />
                     </CardContent>
                 </Card>
-
                 <Card>
                     <CardHeader>
-                        <CardTitle>"Live preview"</CardTitle>
+                        <CardTitle>
+                            "Live preview"
+                        </CardTitle>
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <div class="flex flex-wrap items-center gap-3">
-                            <Button>"Primary"</Button>
-                            <Button variant=ButtonVariant::Secondary>"Secondary"</Button>
-                            <Button variant=ButtonVariant::Outline>"Outline"</Button>
-                            <Button variant=ButtonVariant::Ghost>"Ghost"</Button>
-                            <Button variant=ButtonVariant::Destructive>"Danger"</Button>
+                            <Button>
+                                "Primary"
+                            </Button>
+                            <Button variant=ButtonVariant::Secondary>
+                                "Secondary"
+                            </Button>
+                            <Button variant=ButtonVariant::Outline>
+                                "Outline"
+                            </Button>
+                            <Button variant=ButtonVariant::Ghost>
+                                "Ghost"
+                            </Button>
+                            <Button variant=ButtonVariant::Destructive>
+                                "Danger"
+                            </Button>
                         </div>
                         <div class="flex flex-wrap items-center gap-3">
-                            <Badge>"New"</Badge>
-                            <Badge variant=BadgeVariant::Secondary>"Secondary"</Badge>
-                            <Badge variant=BadgeVariant::Outline>"Outline"</Badge>
+                            <Badge>
+                                "New"
+                            </Badge>
+                            <Badge variant=BadgeVariant::Secondary>
+                                "Secondary"
+                            </Badge>
+                            <Badge variant=BadgeVariant::Outline>
+                                "Outline"
+                            </Badge>
                             <StatusDot />
                             <Switch checked=switch_on />
                             <span class="text-sm text-muted-foreground">
@@ -102,14 +122,19 @@ pub fn Themes() -> impl IntoView {
                         </div>
                         <Input placeholder="Type something…" />
                         <div class="grid grid-cols-3 gap-2 text-center font-mono text-xs text-muted-foreground">
-                            <div class="rounded-md border border-border p-3">"one"</div>
-                            <div class="rounded-md border border-border p-3">"two"</div>
-                            <div class="rounded-md border border-border p-3">"three"</div>
+                            <div class="rounded-md border border-border p-3">
+                                "one"
+                            </div>
+                            <div class="rounded-md border border-border p-3">
+                                "two"
+                            </div>
+                            <div class="rounded-md border border-border p-3">
+                                "three"
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
-
             <h2 class="mb-4 mt-12 scroll-mt-24 text-xl font-semibold tracking-tight">
                 "Presets"
             </h2>
@@ -160,7 +185,7 @@ pub fn Themes() -> impl IntoView {
 fn StatusDot() -> impl IntoView {
     view! {
         <span class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span class="h-2 w-2 rounded-full bg-green-500"></span>
+            <span class="h-2 w-2 rounded-full bg-green-500" />
             "online"
         </span>
     }

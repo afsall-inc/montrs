@@ -48,12 +48,13 @@ pub fn Sidenav08() -> impl IntoView {
                         format!("{} text-muted-foreground hover:text-foreground hover:bg-muted", base)
                     }
                 }>
-                    <Icon glyph=Glyph::LayoutDashboard class="w-4 h-4" />"Dashboard"
+                    <Icon glyph=Glyph::LayoutDashboard class="w-4 h-4" />
+                    "Dashboard"
                 </button>
-                <button on:click=move |_| open.update(|v| *v = !*v)
-                    class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                <button on:click=move |_| open.update(|v| *v = !*v) class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
                     <div class="flex items-center gap-3">
-                        <Icon glyph=Glyph::Folder class="w-4 h-4" />"Projects"
+                        <Icon glyph=Glyph::Folder class="w-4 h-4" />
+                        "Projects"
                     </div>
                     <Icon glyph=Glyph::ChevronDown class=move || {
                         if open.get() { "w-4 h-4 transition-transform rotate-180" } else { "w-4 h-4 transition-transform" }
@@ -86,7 +87,8 @@ pub fn Sidenav08() -> impl IntoView {
                         format!("{} text-muted-foreground hover:text-foreground hover:bg-muted", base)
                     }
                 }>
-                    <Icon glyph=Glyph::Settings class="w-4 h-4" />"Settings"
+                    <Icon glyph=Glyph::Settings class="w-4 h-4" />
+                    "Settings"
                 </button>
             </div>
         </div>

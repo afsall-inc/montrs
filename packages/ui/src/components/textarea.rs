@@ -97,17 +97,7 @@ pub fn Textarea(
                     }
                 }
             })}
-            <textarea
-                id=input_id
-                class=merged
-                placeholder=placeholder
-                prop:value=move || value.get()
-                disabled=disabled
-                required=required
-                rows=rows
-                on:input=on_input
-                data-name="Textarea"
-            ></textarea>
+            <textarea id=input_id class=merged placeholder=placeholder prop:value=move || value.get() disabled=disabled required=required rows=rows on:input=on_input data-name="Textarea" />
             {description.map(|d| view! {
                 <p class="text-sm text-muted-foreground">{d}</p>
             })}

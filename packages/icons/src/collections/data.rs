@@ -111,4 +111,8 @@ collection_table!(phosphor_icons, "col-phosphor", "phosphor.bin");
 collection_table!(mdi_icons, "col-mdi", "mdi.bin");
 collection_table!(bootstrap_icons, "col-bootstrap", "bootstrap.bin");
 collection_table!(simple_icons_icons, "col-simple-icons", "simple-icons.bin");
-collection_table!(cryptocurrency_icons, "col-cryptocurrency", "cryptocurrency.bin");
+collection_table!(
+    cryptocurrency_icons,
+    "col-cryptocurrency",
+    "cryptocurrency.bin"
+);

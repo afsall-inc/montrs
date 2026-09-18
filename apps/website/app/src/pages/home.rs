@@ -124,43 +124,54 @@ fn HotReload() -> impl IntoView {
                         "Three levels of live updates while you work: styles, markup, and — experimentally — the Rust itself."
                     </p>
                 </div>
-
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div class="showcase-card p-6">
-                        <span class="pill"><span class="pill-accent">"Instant"</span></span>
-                        <h3 class="mt-4 font-semibold">"CSS & assets"</h3>
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "Instant"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "CSS & assets"
+                        </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
                             "Stylesheet and asset edits apply immediately — no recompile, no reload."
                         </p>
                     </div>
                     <div class="showcase-card p-6">
-                        <span class="pill"><span class="pill-accent">"Hot reload"</span></span>
-                        <h3 class="mt-4 font-semibold">"view! markup"</h3>
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "Hot reload"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "view! markup"
+                        </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
                             "Edit structure, text, or classes and the browser DOM is patched in place, preserving state."
                         </p>
                     </div>
                     <div class="showcase-card p-6">
-                        <span class="pill"><span class="pill-accent">"Hot patch"</span></span>
-                        <h3 class="mt-4 font-semibold">"Rust logic"</h3>
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "Hot patch"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "Rust logic"
+                        </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
                             "Change real Rust code and the running server applies a thin-linked patch without restarting — same PID, state kept."
                         </p>
                     </div>
                 </div>
-
                 <div class="mx-auto mt-14 max-w-3xl">
-                    <CodeWindow
-                        tab="main.rs"
-                        body=move || highlight_rust(HOTRELOAD_SNIPPET)
-                    />
+                    <CodeWindow tab="main.rs" body=move || highlight_rust(HOTRELOAD_SNIPPET) />
                 </div>
-
                 <div class="mt-8 flex justify-center">
-                    <a
-                        href="/docs"
-                        class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-                    >"Read the live-loop guide"</a>
+                    <a href="/docs" class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+                        "Read the live-loop guide"
+                    </a>
                 </div>
             </div>
         </section>
@@ -179,66 +190,65 @@ fn Hero() -> impl IntoView {
                 <div class="mx-auto max-w-3xl text-center">
                     <div class="flex justify-center">
                         <span class="pill">
-                            <span class="pill-accent">"Agent-first. Deterministic."</span>
+                            <span class="pill-accent">
+                                "Agent-first. Deterministic."
+                            </span>
                             "One AppSpec, three targets →"
                         </span>
                     </div>
-
                     <h1 class="mt-6 text-4xl font-bold tracking-tight sm:text-6xl">
                         "The most comprehensive full-stack framework."
                     </h1>
-
                     <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
                         <span class="pill">
-                            <span class="pill-accent">"Built with"</span>
+                            <span class="pill-accent">
+                                "Built with"
+                            </span>
                         </span>
                         <span class="text-gradient text-4xl font-bold tracking-tight sm:text-6xl">
                             "Rust"
                         </span>
                     </div>
-
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
                         "MontRS gives you a unified, trait-driven environment for web,
                         desktop, and mobile — powered by Leptos, defined by a serializable
                         AppSpec, and natively understandable by AI agents. No magic.
                         No global state. Same input, same output, everywhere."
                     </p>
-
                     <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
-                        <a
-                            href="/ui/components"
-                            class="inline-flex items-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                        >
+                        <a href="/ui/components" class="inline-flex items-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                             "Get Started"
                             <Icon glyph=Glyph::ArrowRight class="ml-2 h-4 w-4" />
                         </a>
-                        <a
-                            href="/packages"
-                            class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent"
-                        >
+                        <a href="/packages" class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent">
                             "Browse packages"
                         </a>
                     </div>
-
                     <div class="mx-auto mt-12 max-w-xl">
                         <div class="code-window">
                             <div class="code-window-bar">
-                                <span class="traffic-light traffic-light-red"></span>
-                                <span class="traffic-light traffic-light-yellow"></span>
-                                <span class="traffic-light traffic-light-green"></span>
-                                <span class="code-window-tab">"terminal"</span>
+                                <span class="traffic-light traffic-light-red" />
+                                <span class="traffic-light traffic-light-yellow" />
+                                <span class="traffic-light traffic-light-green" />
+                                <span class="code-window-tab">
+                                    "terminal"
+                                </span>
                             </div>
                             <div class="code-window-body text-left">
                                 <div class="flex items-center justify-between gap-3">
                                     <span>
-                                        <span class="terminal-prompt">"$"</span>
+                                        <span class="terminal-prompt">
+                                            "$"
+                                        </span>
                                         " cargo install montrs-cli"
                                     </span>
                                     <CopyButton text="cargo install montrs-cli" label="Copy" />
                                 </div>
                                 <div class="mt-3 flex items-center justify-between gap-3">
                                     <span>
-                                        <span class="terminal-prompt">"$"</span>
+                                        <span class="terminal-prompt">
+                                            "$"
+                                        </span>
                                         " montrs new my-app"
                                     </span>
                                     <CopyButton text="montrs new my-app" label="Copy" />
@@ -247,14 +257,9 @@ fn Hero() -> impl IntoView {
                         </div>
                     </div>
                 </div>
-
                 <div class="mx-auto mt-14 max-w-3xl">
-                    <CodeWindow
-                        tab="hello.rs"
-                        body=move || highlight_rust(HELLO_SNIPPET)
-                    />
+                    <CodeWindow tab="hello.rs" body=move || highlight_rust(HELLO_SNIPPET) />
                 </div>
-
                 <div class="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
                     <span class="inline-flex items-center gap-2">
                         <Icon glyph=Glyph::Monitor class="h-4 w-4" />
@@ -272,12 +277,20 @@ fn Hero() -> impl IntoView {
                         <Icon glyph=Glyph::Server class="h-4 w-4" />
                         "Server"
                     </span>
-                    <span class="hidden h-4 w-px bg-border sm:block"></span>
+                    <span class="hidden h-4 w-px bg-border sm:block" />
                     <span class="hidden sm:inline-flex sm:items-center sm:gap-2">
-                        <span class="kbd-hint">"WASM"</span>
-                        <span class="kbd-hint">"wgpu"</span>
-                        <span class="kbd-hint">"axum"</span>
-                        <span class="kbd-hint">"Leptos"</span>
+                        <span class="kbd-hint">
+                            "WASM"
+                        </span>
+                        <span class="kbd-hint">
+                            "wgpu"
+                        </span>
+                        <span class="kbd-hint">
+                            "axum"
+                        </span>
+                        <span class="kbd-hint">
+                            "Leptos"
+                        </span>
                     </span>
                 </div>
             </div>
@@ -293,12 +306,14 @@ fn CodeWindow(
     view! {
         <div class="code-window">
             <div class="code-window-bar">
-                <span class="traffic-light traffic-light-red"></span>
-                <span class="traffic-light traffic-light-yellow"></span>
-                <span class="traffic-light traffic-light-green"></span>
-                <span class="code-window-tab">{tab}</span>
+                <span class="traffic-light traffic-light-red" />
+                <span class="traffic-light traffic-light-yellow" />
+                <span class="traffic-light traffic-light-green" />
+                <span class="code-window-tab">
+                    {tab}
+                </span>
             </div>
-            <pre class="code-window-body text-left" inner_html=move || body.get()></pre>
+            <pre class="code-window-body text-left" inner_html=move || body.get() />
         </div>
     }
 }
@@ -602,7 +617,6 @@ fn GoldenPath() -> impl IntoView {
                         "The Golden Path is the recommended workflow — from empty folder to shipped app."
                     </p>
                 </div>
-
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-5">
                     {steps.into_iter().map(|(num, title, desc, cmd, icon)| view! {
                         <div class="showcase-card reveal p-5">
@@ -681,7 +695,6 @@ fn Philosophy() -> impl IntoView {
                         "Building complex apps requires more than a UI library."
                     </p>
                 </div>
-
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
                     {items.into_iter().map(|(icon, title, desc)| view! {
                         <div class="showcase-card reveal p-6">
@@ -719,47 +732,83 @@ fn AgentFirst() -> impl IntoView {
                         <div class="mt-6 space-y-3 text-sm">
                             <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">
                                 <Icon glyph=Glyph::Braces class="h-4 w-4 shrink-0 text-primary" />
-                                <span class="font-mono">"agent.json"</span>
-                                <span class="text-muted-foreground">"— plates, routes, invariants"</span>
+                                <span class="font-mono">
+                                    "agent.json"
+                                </span>
+                                <span class="text-muted-foreground">
+                                    "— plates, routes, invariants"
+                                </span>
                             </div>
                             <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">
                                 <Icon glyph=Glyph::Wrench class="h-4 w-4 shrink-0 text-primary" />
-                                <span class="font-mono">"@agent-tool"</span>
-                                <span class="text-muted-foreground">"— agent-callable functions"</span>
+                                <span class="font-mono">
+                                    "@agent-tool"
+                                </span>
+                                <span class="text-muted-foreground">
+                                    "— agent-callable functions"
+                                </span>
                             </div>
                             <div class="flex items-center gap-3 rounded-md border border-border px-4 py-3">
                                 <Icon glyph=Glyph::Blocks class="h-4 w-4 shrink-0 text-primary" />
-                                <span class="font-mono">"@agent-skill"</span>
-                                <span class="text-muted-foreground">"— composable workflows"</span>
+                                <span class="font-mono">
+                                    "@agent-skill"
+                                </span>
+                                <span class="text-muted-foreground">
+                                    "— composable workflows"
+                                </span>
                             </div>
                         </div>
-                        <a
-                            href="/ai"
-                            class="mt-6 inline-flex items-center text-sm font-medium text-primary hover:underline"
-                        >
+                        <a href="/ai" class="mt-6 inline-flex items-center text-sm font-medium text-primary hover:underline">
                             "Explore the AI Kit →"
                         </a>
                     </div>
-
                     <div class="code-window">
                         <div class="code-window-bar">
-                            <span class="traffic-light traffic-light-red"></span>
-                            <span class="traffic-light traffic-light-yellow"></span>
-                            <span class="traffic-light traffic-light-green"></span>
-                            <span class="code-window-tab">"agent terminal"</span>
+                            <span class="traffic-light traffic-light-red" />
+                            <span class="traffic-light traffic-light-yellow" />
+                            <span class="traffic-light traffic-light-green" />
+                            <span class="code-window-tab">
+                                "agent terminal"
+                            </span>
                         </div>
                         <pre class="code-window-body text-left">
-                            <span class="terminal-prompt">"$"</span>
-                            " montrs agent doctor"{"\n"}
-                            <span class="token-string">"  ✅ root Cargo.toml found"</span>{"\n"}
-                            <span class="token-string">"  ✅ .agent directory exists"</span>{"\n"}
-                            <span class="token-string">"  ✅ all tracked errors resolved"</span>{"\n"}
-                            <span class="token-string">"  ✅ rust toolchain available"</span>{"\n\n"}
-                            <span class="terminal-prompt">"$"</span>
-                            " montrs agent check"{"\n"}
-                            <span class="token-string">"  ✓ 48 packages · 12 plates · 7 routes"</span>{"\n"}
-                            <span class="token-string">"  ✓ invariants satisfied"</span>{"\n"}
-                            <span class="token-comment">"  # skills: fixing-errors, adding-features"</span>
+                            <span class="terminal-prompt">
+                                "$"
+                            </span>
+                            " montrs agent doctor"
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✅ root Cargo.toml found"
+                            </span>
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✅ .agent directory exists"
+                            </span>
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✅ all tracked errors resolved"
+                            </span>
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✅ rust toolchain available"
+                            </span>
+                            {"\n\n"}
+                            <span class="terminal-prompt">
+                                "$"
+                            </span>
+                            " montrs agent check"
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✓ 48 packages · 12 plates · 7 routes"
+                            </span>
+                            {"\n"}
+                            <span class="token-string">
+                                "  ✓ invariants satisfied"
+                            </span>
+                            {"\n"}
+                            <span class="token-comment">
+                                "  # skills: fixing-errors, adding-features"
+                            </span>
                         </pre>
                     </div>
                 </div>
@@ -942,25 +991,19 @@ fn FinalCta() -> impl IntoView {
                 <div class="glow-orange mx-auto max-w-2xl rounded-2xl border border-border p-10">
                     <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
                         "Stop debugging nondeterminism."
-                        <span class="block text-primary">"Start shipping."</span>
+                        <span class="block text-primary">
+                            "Start shipping."
+                        </span>
                     </h2>
                     <p class="mx-auto mt-4 max-w-xl text-muted-foreground">
                         "Describe it once. Run it everywhere — web, desktop, and mobile,
                         with the same AppSpec, the same tests, the same output."
                     </p>
                     <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-                        <a
-                            href="/ui/components"
-                            class="inline-flex items-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                        >
+                        <a href="/ui/components" class="inline-flex items-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                             "Get Started"
                         </a>
-                        <a
-                            href="https://github.com/afsall-inc/montrs"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent"
-                        >
+                        <a href="https://github.com/afsall-inc/montrs" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent">
                             <Icon glyph=Glyph::Star class="mr-2 h-4 w-4" />
                             "Star on GitHub"
                         </a>
@@ -1021,38 +1064,22 @@ fn DocsCards() -> impl IntoView {
                         each gets a path through the same spec."
                     </p>
                 </div>
-
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <DocCard
-                        icon=Glyph::Rocket
-                        title="Application developers"
-                        subtitle="Building with MontRS"
-                        links=vec![
+                    <DocCard icon=Glyph::Rocket title="Application developers" subtitle="Building with MontRS" links=vec![
                             ("First 30 Minutes", "/ui/components"),
                             ("Golden Path", "/packages"),
                             ("Common Mistakes", "/foundations"),
-                        ]
-                    />
-                    <DocCard
-                        icon=Glyph::Wrench
-                        title="Framework contributors"
-                        subtitle="Working on MontRS"
-                        links=vec![
+                        ] />
+                    <DocCard icon=Glyph::Wrench title="Framework contributors" subtitle="Working on MontRS" links=vec![
                             ("Architecture Overview", "/runtime"),
                             ("Package Boundaries", "/packages"),
                             ("Invariants & Philosophy", "/foundations"),
-                        ]
-                    />
-                    <DocCard
-                        icon=Glyph::Bot
-                        title="Agents"
-                        subtitle="Machine-readable context"
-                        links=vec![
+                        ] />
+                    <DocCard icon=Glyph::Bot title="Agents" subtitle="Machine-readable context" links=vec![
                             ("Spec Snapshot", "/ai"),
                             ("Skills System", "/ai"),
                             ("agent.json", "/ai"),
-                        ]
-                    />
+                        ] />
                 </div>
             </div>
         </section>
@@ -1071,8 +1098,12 @@ fn DocCard(
             <span class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40">
                 <Icon glyph=icon class="h-4 w-4 text-primary" />
             </span>
-            <h3 class="mt-4 font-semibold">{title}</h3>
-            <p class="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            <h3 class="mt-4 font-semibold">
+                {title}
+            </h3>
+            <p class="mt-1 text-sm text-muted-foreground">
+                {subtitle}
+            </p>
             <ul class="mt-4 space-y-2 text-sm">
                 {links.into_iter().map(|(label, href)| {
                     view! {
@@ -1142,7 +1173,6 @@ fn Faq() -> impl IntoView {
                         "The questions every framework site gets, answered without the fluff."
                     </p>
                 </div>
-
                 <div class="mx-auto mt-10 max-w-3xl">
                     <Accordion class="rounded-xl border border-border">
                         {FAQ.iter().map(|(question, answer)| {

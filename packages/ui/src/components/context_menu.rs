@@ -118,13 +118,7 @@ pub fn ContextMenuContent(
     let close = move |_| open.set(false);
 
     view! {
-        <div
-            class=merged
-            style=style
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
-            data-name="ContextMenuContent"
-        >
+        <div class=merged style=style data-state=move || if open.get() { "open" } else { "closed" } hidden=move || !open.get() data-name="ContextMenuContent">
             {children()}
         </div>
         {move || if open.get() {
@@ -165,12 +159,7 @@ pub fn ContextMenuItem(
     };
 
     view! {
-        <div
-            class=merged
-            role="menuitem"
-            on:click=handle_click
-            data-name="ContextMenuItem"
-        >
+        <div class=merged role="menuitem" on:click=handle_click data-name="ContextMenuItem">
             {children()}
         </div>
     }

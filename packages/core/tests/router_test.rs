@@ -88,7 +88,11 @@ impl RouteAction<UserParams, TestConfig> for UserAction {
 struct UserView;
 impl RouteView for UserView {
     fn render(&self) -> impl IntoView {
-        view! { <div>"User View"</div> }
+        view! {
+            <div>
+                "User View"
+            </div>
+        }
     }
 }
 

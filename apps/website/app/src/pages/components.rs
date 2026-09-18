@@ -359,25 +359,22 @@ pub fn Components() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Components"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Components"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "91 shadcn-inspired components built on montrs-ui and Tailwind CSS.
                     Copy the source, own every pixel."
                 </p>
-                <FloatingTabBar
-                    items=SECTIONS
+                <FloatingTabBar items=SECTIONS
                         .iter()
                         .map(|(id, label)| ((*label).to_string(), (*id).to_string()))
-                        .collect()
-                    active
-                    on_select=Callback::new(move |id: String| {
+                        .collect() active on_select=Callback::new(move |id: String| {
                         active.set(id.clone());
                         let scroll_fn = scroll_to_str(id);
                         scroll_fn();
-                    })
-                />
+                    }) />
             </div>
-
             <div class="grid grid-cols-1 gap-10 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_160px]">
                 <nav class="hidden lg:block">
                     <div class="sticky top-20 space-y-1 border-l border-border pl-4 text-sm">
@@ -400,60 +397,76 @@ pub fn Components() -> impl IntoView {
                         }).collect::<Vec<_>>()}
                     </div>
                 </nav>
-
                 <div class="min-w-0 space-y-16">
-                    <ComponentSection
-                        id="button"
-                        title="Button"
-                        description="Action triggers with variants and sizes."
-                        snippet=BUTTON_SNIPPET
-                    >
+                    <ComponentSection id="button" title="Button" description="Action triggers with variants and sizes." snippet=BUTTON_SNIPPET>
                         <div class="flex flex-wrap items-center gap-3">
-                            <Button>"Default"</Button>
-                            <Button variant=ButtonVariant::Secondary>"Secondary"</Button>
-                            <Button variant=ButtonVariant::Outline>"Outline"</Button>
-                            <Button variant=ButtonVariant::Ghost>"Ghost"</Button>
-                            <Button variant=ButtonVariant::Destructive>"Delete"</Button>
+                            <Button>
+                                "Default"
+                            </Button>
+                            <Button variant=ButtonVariant::Secondary>
+                                "Secondary"
+                            </Button>
+                            <Button variant=ButtonVariant::Outline>
+                                "Outline"
+                            </Button>
+                            <Button variant=ButtonVariant::Ghost>
+                                "Ghost"
+                            </Button>
+                            <Button variant=ButtonVariant::Destructive>
+                                "Delete"
+                            </Button>
                         </div>
                         <div class="mt-4 flex flex-wrap items-center gap-3">
-                            <Button size=ButtonSize::Sm>"Small"</Button>
-                            <Button>"Default"</Button>
-                            <Button size=ButtonSize::Lg>"Large"</Button>
+                            <Button size=ButtonSize::Sm>
+                                "Small"
+                            </Button>
+                            <Button>
+                                "Default"
+                            </Button>
+                            <Button size=ButtonSize::Lg>
+                                "Large"
+                            </Button>
                             <Button size=ButtonSize::Icon>
                                 <Icon glyph=Glyph::Search class="h-4 w-4" />
                             </Button>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="badge"
-                        title="Badge"
-                        description="Short statuses and labels."
-                        snippet=BADGE_SNIPPET
-                    >
+                    <ComponentSection id="badge" title="Badge" description="Short statuses and labels." snippet=BADGE_SNIPPET>
                         <div class="flex flex-wrap items-center gap-3">
-                            <Badge>"Default"</Badge>
-                            <Badge variant=BadgeVariant::Secondary>"Secondary"</Badge>
-                            <Badge variant=BadgeVariant::Outline>"Outline"</Badge>
-                            <Badge variant=BadgeVariant::Destructive>"Destructive"</Badge>
+                            <Badge>
+                                "Default"
+                            </Badge>
+                            <Badge variant=BadgeVariant::Secondary>
+                                "Secondary"
+                            </Badge>
+                            <Badge variant=BadgeVariant::Outline>
+                                "Outline"
+                            </Badge>
+                            <Badge variant=BadgeVariant::Destructive>
+                                "Destructive"
+                            </Badge>
                         </div>
                         <div class="mt-4 flex flex-wrap items-center gap-3">
-                            <Badge size=BadgeSize::Sm>"Small"</Badge>
-                            <Badge>"Default"</Badge>
-                            <Badge size=BadgeSize::Lg>"Large"</Badge>
+                            <Badge size=BadgeSize::Sm>
+                                "Small"
+                            </Badge>
+                            <Badge>
+                                "Default"
+                            </Badge>
+                            <Badge size=BadgeSize::Lg>
+                                "Large"
+                            </Badge>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="card"
-                        title="Card"
-                        description="Contained surfaces for related content."
-                        snippet=CARD_SNIPPET
-                    >
+                    <ComponentSection id="card" title="Card" description="Contained surfaces for related content." snippet=CARD_SNIPPET>
                         <Card class="max-w-sm">
                             <CardHeader>
-                                <CardTitle>"Deployments"</CardTitle>
-                                <CardDescription>"Manage your live services"</CardDescription>
+                                <CardTitle>
+                                    "Deployments"
+                                </CardTitle>
+                                <CardDescription>
+                                    "Manage your live services"
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <p class="text-sm text-muted-foreground">
@@ -462,111 +475,91 @@ pub fn Components() -> impl IntoView {
                             </CardContent>
                         </Card>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="input"
-                        title="Input"
-                        description="Text entry with focus rings and errors."
-                        snippet=INPUT_SNIPPET
-                    >
+                    <ComponentSection id="input" title="Input" description="Text entry with focus rings and errors." snippet=INPUT_SNIPPET>
                         <div class="flex max-w-sm flex-col gap-3">
                             <Input placeholder="Search packages…" />
                             <Input placeholder="Password" input_type="password" />
                             <Input placeholder="Invalid value" error="Must be at least 3 characters" />
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="switch"
-                        title="Switch"
-                        description="Binary on/off control."
-                        snippet=SWITCH_SNIPPET
-                    >
+                    <ComponentSection id="switch" title="Switch" description="Binary on/off control." snippet=SWITCH_SNIPPET>
                         <div class="flex items-center gap-3">
                             <Switch />
-                            <span class="text-sm text-muted-foreground">"Default (off)"</span>
+                            <span class="text-sm text-muted-foreground">
+                                "Default (off)"
+                            </span>
                         </div>
                         <div class="mt-3 flex items-center gap-3">
                             <Switch checked=RwSignal::new(true) />
-                            <span class="text-sm text-muted-foreground">"Checked"</span>
+                            <span class="text-sm text-muted-foreground">
+                                "Checked"
+                            </span>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="tabs"
-                        title="Tabs"
-                        description="Switch between related panels."
-                        snippet=TABS_SNIPPET
-                    >
+                    <ComponentSection id="tabs" title="Tabs" description="Switch between related panels." snippet=TABS_SNIPPET>
                         <Tabs default_value="preview">
                             <TabsList>
-                                <TabsTrigger value={"preview".to_string()}>"Preview"</TabsTrigger>
-                                <TabsTrigger value={"code".to_string()}>"Code"</TabsTrigger>
+                                <TabsTrigger value={"preview".to_string()}>
+                                    "Preview"
+                                </TabsTrigger>
+                                <TabsTrigger value={"code".to_string()}>
+                                    "Code"
+                                </TabsTrigger>
                             </TabsList>
                             <TabsContent value={"preview".to_string()}>
-                                <p class="mt-4 text-sm text-muted-foreground">"Live preview panel"</p>
+                                <p class="mt-4 text-sm text-muted-foreground">
+                                    "Live preview panel"
+                                </p>
                             </TabsContent>
                             <TabsContent value={"code".to_string()}>
-                                <p class="mt-4 text-sm text-muted-foreground">"Source code panel"</p>
+                                <p class="mt-4 text-sm text-muted-foreground">
+                                    "Source code panel"
+                                </p>
                             </TabsContent>
                         </Tabs>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="accordion"
-                        title="Accordion"
-                        description="Collapsible content sections."
-                        snippet=ACCORDION_SNIPPET
-                    >
+                    <ComponentSection id="accordion" title="Accordion" description="Collapsible content sections." snippet=ACCORDION_SNIPPET>
                         <Accordion class="max-w-md rounded-lg border border-border">
                             <AccordionItem value={"what".to_string()}>
-                                <AccordionTrigger>"What is a Plate?"</AccordionTrigger>
+                                <AccordionTrigger>
+                                    "What is a Plate?"
+                                </AccordionTrigger>
                                 <AccordionContent>
                                     "A feature module with explicit trait boundaries that registers its routes."
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value={"why".to_string()}>
-                                <AccordionTrigger>"Why deterministic?"</AccordionTrigger>
+                                <AccordionTrigger>
+                                    "Why deterministic?"
+                                </AccordionTrigger>
                                 <AccordionContent>
                                     "Same input, same output — in production, in tests, on every platform."
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value={"how".to_string()}>
-                                <AccordionTrigger>"How do agents help?"</AccordionTrigger>
+                                <AccordionTrigger>
+                                    "How do agents help?"
+                                </AccordionTrigger>
                                 <AccordionContent>
                                     "Spec snapshots and skills make your codebase readable by AI coding partners."
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="alert"
-                        title="Alert"
-                        description="Inline feedback for important states."
-                        snippet=ALERT_SNIPPET
-                    >
+                    <ComponentSection id="alert" title="Alert" description="Inline feedback for important states." snippet=ALERT_SNIPPET>
                         <div class="space-y-3">
-                            <Alert>"A new version of MontRS is available."</Alert>
-                            <Alert variant=AlertVariant::Destructive>"Build failed — fix the lints."</Alert>
+                            <Alert>
+                                "A new version of MontRS is available."
+                            </Alert>
+                            <Alert variant=AlertVariant::Destructive>
+                                "Build failed — fix the lints."
+                            </Alert>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="checkbox"
-                        title="Checkbox"
-                        description="Binary selection with an optional label."
-                        snippet=CHECKBOX_SNIPPET
-                    >
+                    <ComponentSection id="checkbox" title="Checkbox" description="Binary selection with an optional label." snippet=CHECKBOX_SNIPPET>
                         <Checkbox label="Send me product updates" checked=RwSignal::new(true) />
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="collapsible"
-                        title="Collapsible"
-                        description="Expand/collapse a hidden region."
-                        snippet=COLLAPSIBLE_SNIPPET
-                    >
+                    <ComponentSection id="collapsible" title="Collapsible" description="Expand/collapse a hidden region." snippet=COLLAPSIBLE_SNIPPET>
                         <Collapsible class="w-full max-w-sm">
                             <CollapsibleTrigger class="rounded-md border border-border px-3 py-1.5 text-sm">
                                 "Show system details"
@@ -576,109 +569,91 @@ pub fn Components() -> impl IntoView {
                             </CollapsibleContent>
                         </Collapsible>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="dialog"
-                        title="Dialog"
-                        description="Modal dialogs with focus trapping."
-                        snippet=DIALOG_SNIPPET
-                    >
+                    <ComponentSection id="dialog" title="Dialog" description="Modal dialogs with focus trapping." snippet=DIALOG_SNIPPET>
                         <Dialog>
-                            <DialogTrigger class=trigger_button_class(ButtonVariant::Default)>"Open dialog"</DialogTrigger>
+                            <DialogTrigger class=trigger_button_class(ButtonVariant::Default)>
+                                "Open dialog"
+                            </DialogTrigger>
                             <DialogContent>
-                                <DialogHeader><DialogTitle>"Confirm"</DialogTitle></DialogHeader>
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        "Confirm"
+                                    </DialogTitle>
+                                </DialogHeader>
                                 "Delete the deployed service?"
-                                <DialogFooter><Button variant=ButtonVariant::Destructive>"Delete"</Button></DialogFooter>
+                                <DialogFooter>
+                                    <Button variant=ButtonVariant::Destructive>
+                                        "Delete"
+                                    </Button>
+                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="dropdown"
-                        title="Dropdown Menu"
-                        description="Action menus triggered by a button."
-                        snippet=DROPDOWN_SNIPPET
-                    >
+                    <ComponentSection id="dropdown" title="Dropdown Menu" description="Action menus triggered by a button." snippet=DROPDOWN_SNIPPET>
                         <DropdownMenu>
-                            <DropdownMenuTrigger class=trigger_button_class(ButtonVariant::Outline)>"Menu"</DropdownMenuTrigger>
+                            <DropdownMenuTrigger class=trigger_button_class(ButtonVariant::Outline)>
+                                "Menu"
+                            </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem>"Profile"</DropdownMenuItem>
-                                <DropdownMenuItem>"Settings"</DropdownMenuItem>
-                                <DropdownMenuItem>"Log out"</DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    "Profile"
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    "Settings"
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    "Log out"
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="label"
-                        title="Label"
-                        description="Accessible field labels."
-                        snippet=LABEL_SNIPPET
-                    >
+                    <ComponentSection id="label" title="Label" description="Accessible field labels." snippet=LABEL_SNIPPET>
                         <div class="space-y-2">
-                            <Label>"Email address"</Label>
+                            <Label>
+                                "Email address"
+                            </Label>
                             <Input placeholder="you@example.com" />
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="progress"
-                        title="Progress"
-                        description="Determinate progress bars."
-                        snippet=PROGRESS_SNIPPET
-                    >
+                    <ComponentSection id="progress" title="Progress" description="Determinate progress bars." snippet=PROGRESS_SNIPPET>
                         <div class="w-full max-w-sm space-y-3">
                             <Progress value=64.0 max=100.0 />
                             <Progress value=92.0 max=100.0 />
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="radio"
-                        title="Radio Group"
-                        description="Single-choice selection."
-                        snippet=RADIO_SNIPPET
-                    >
+                    <ComponentSection id="radio" title="Radio Group" description="Single-choice selection." snippet=RADIO_SNIPPET>
                         <RadioButtonGroup>
                             <RadioButton value="free".to_string() label="Free" />
                             <RadioButton value="pro".to_string() label="Pro" />
                         </RadioButtonGroup>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="select"
-                        title="Select"
-                        description="Native-feeling listbox picker."
-                        snippet=SELECT_SNIPPET
-                    >
+                    <ComponentSection id="select" title="Select" description="Native-feeling listbox picker." snippet=SELECT_SNIPPET>
                         <Select value=RwSignal::new(String::from("prod")) class="w-full max-w-xs">
                             <SelectContent>
-                                <SelectItem value="dev".to_string()>"Development"</SelectItem>
-                                <SelectItem value="staging".to_string()>"Staging"</SelectItem>
-                                <SelectItem value="prod".to_string()>"Production"</SelectItem>
+                                <SelectItem value="dev".to_string()>
+                                    "Development"
+                                </SelectItem>
+                                <SelectItem value="staging".to_string()>
+                                    "Staging"
+                                </SelectItem>
+                                <SelectItem value="prod".to_string()>
+                                    "Production"
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="separator"
-                        title="Separator"
-                        description="Visual dividers."
-                        snippet=SEPARATOR_SNIPPET
-                    >
+                    <ComponentSection id="separator" title="Separator" description="Visual dividers." snippet=SEPARATOR_SNIPPET>
                         <div>
-                            <p class="text-sm text-muted-foreground">"Above the line"</p>
+                            <p class="text-sm text-muted-foreground">
+                                "Above the line"
+                            </p>
                             <Separator class="my-4" />
-                            <p class="text-sm text-muted-foreground">"Below the line"</p>
+                            <p class="text-sm text-muted-foreground">
+                                "Below the line"
+                            </p>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="skeleton"
-                        title="Skeleton"
-                        description="Loading placeholders."
-                        snippet=SKELETON_SNIPPET
-                    >
+                    <ComponentSection id="skeleton" title="Skeleton" description="Loading placeholders." snippet=SKELETON_SNIPPET>
                         <div class="flex items-center gap-3">
                             <Skeleton class="h-10 w-10 rounded-full" />
                             <div class="space-y-2">
@@ -687,60 +662,32 @@ pub fn Components() -> impl IntoView {
                             </div>
                         </div>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="spinner"
-                        title="Spinner"
-                        description="Indeterminate loading indicator."
-                        snippet=SPINNER_SNIPPET
-                    >
+                    <ComponentSection id="spinner" title="Spinner" description="Indeterminate loading indicator." snippet=SPINNER_SNIPPET>
                         <Spinner class="h-6 w-6" />
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="textarea"
-                        title="Textarea"
-                        description="Multi-line text entry."
-                        snippet=TEXTAREA_SNIPPET
-                    >
+                    <ComponentSection id="textarea" title="Textarea" description="Multi-line text entry." snippet=TEXTAREA_SNIPPET>
                         <Textarea placeholder="Describe your plate…" rows=4 class="w-full max-w-sm" />
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="tooltip"
-                        title="Tooltip"
-                        description="Contextual hints on hover/focus."
-                        snippet=TOOLTIP_SNIPPET
-                    >
+                    <ComponentSection id="tooltip" title="Tooltip" description="Contextual hints on hover/focus." snippet=TOOLTIP_SNIPPET>
                         <Tooltip text="Copied to clipboard">
-                            <Button variant=ButtonVariant::Outline>"Copy"</Button>
+                            <Button variant=ButtonVariant::Outline>
+                                "Copy"
+                            </Button>
                         </Tooltip>
                     </ComponentSection>
-
-                    <ComponentSection
-                        id="floating_tab_bar"
-                        title="Floating Tab Bar"
-                        description="Sticky centered tab bar with page offset for documentation-style navigation."
-                        snippet=FLOATING_TAB_BAR_SNIPPET
-                    >
+                    <ComponentSection id="floating_tab_bar" title="Floating Tab Bar" description="Sticky centered tab bar with page offset for documentation-style navigation." snippet=FLOATING_TAB_BAR_SNIPPET>
                         <div class="flex flex-col gap-4">
-                            <FloatingTabBar
-                                items=vec![
+                            <FloatingTabBar items=vec![
                                     ("Overview".to_string(), "overview".to_string()),
                                     ("Details".to_string(), "details".to_string()),
                                     ("Usage".to_string(), "usage".to_string()),
-                                ]
-                                sticky=false
-                                active=demo_tab
-                                on_select=Callback::new(move |id: String| demo_tab.set(id))
-                            />
+                                ] sticky=false active=demo_tab on_select=Callback::new(move |id: String| demo_tab.set(id)) />
                             <p class="text-sm text-muted-foreground">
                                 {move || format!("Selected: {}", demo_tab.get())}
                             </p>
                         </div>
                     </ComponentSection>
                 </div>
-
                 <aside class="hidden xl:block">
                     <div class="sticky top-20 text-xs">
                         <p class="mb-3 font-mono uppercase tracking-wide text-muted-foreground">
@@ -795,40 +742,44 @@ fn ComponentSection(
         <section id=id class="scroll-mt-24">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="text-2xl font-bold tracking-tight">{title}</h2>
-                    <p class="mt-1 text-sm text-muted-foreground">{description}</p>
+                    <h2 class="text-2xl font-bold tracking-tight">
+                        {title}
+                    </h2>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {description}
+                    </p>
                 </div>
                 <div class="inline-flex gap-0.5 rounded-md border border-border bg-background p-0.5 text-xs">
-                    <button
-                        type="button"
-                        class=move || tab_btn(tab.get() == "preview")
-                        on:click=move |_| tab.set("preview")
-                    >"Preview"</button>
-                    <button
-                        type="button"
-                        class=move || tab_btn(tab.get() == "code")
-                        on:click=move |_| tab.set("code")
-                    >"Code"</button>
+                    <button type="button" class=move || tab_btn(tab.get() == "preview") on:click=move |_| tab.set("preview")>
+                        "Preview"
+                    </button>
+                    <button type="button" class=move || tab_btn(tab.get() == "code") on:click=move |_| tab.set("code")>
+                        "Code"
+                    </button>
                 </div>
             </div>
-
             <div class="mt-4">
                 <div class=move || {
                     if tab.get() == "preview" { "showcase-card p-6" } else { "hidden" }
-                }>{children()}</div>
+                }>
+                    {children()}
+                </div>
                 <div class=move || {
                     if tab.get() == "code" { "code-window" } else { "hidden" }
                 }>
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">{id}.rs</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            {id}
+                            . rs
+                        </span>
                         <span class="ml-auto">
                             <CopyButton text=snippet.to_string() label="Copy" />
                         </span>
                     </div>
-                    <pre class="code-window-body text-left" inner_html=snippet_html></pre>
+                    <pre class="code-window-body text-left" inner_html=snippet_html />
                 </div>
             </div>
         </section>

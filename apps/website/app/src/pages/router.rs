@@ -95,14 +95,15 @@ pub fn RouterDocs() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Router"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Router"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "The MontRS router is a typed, file-free router built on
                     Leptos — routes are types, layouts compose, and data
                     loading happens before paint."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {features.into_iter().map(|(icon, title, desc)| view! {
                     <div class="showcase-card reveal p-6">
@@ -112,16 +113,17 @@ pub fn RouterDocs() -> impl IntoView {
                     </div>
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-10">
                 <div class="code-window max-w-2xl">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"routes.rs"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "routes.rs"
+                        </span>
                     </div>
-                    <pre class="code-window-body text-left" inner_html=highlight_rust(ROUTER_SNIPPET)></pre>
+                    <pre class="code-window-body text-left" inner_html=highlight_rust(ROUTER_SNIPPET) />
                 </div>
             </div>
         </div>

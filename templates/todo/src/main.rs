@@ -1,12 +1,12 @@
 use leptos::prelude::*;
 use montrs_core::{
-    AppConfig, AppSpec, Plate, PlateContext, Route, RouteAction, RouteContext, RouteError,
-    RouteLoader, RouteParams, RouteView, Router, Target,
+    AppConfig, AppSpec, Plate, PlateContext, Route, RouteAction, RouteContext,
+    RouteError, RouteLoader, RouteParams, RouteView, Router, Target,
+    Validator as _,
 };
-use montrs_core::Validator as _;
-use montrs_validator::Validator;
-use montrs_ui::prelude::*;
 use montrs_icons::*;
+use montrs_ui::prelude::*;
+use montrs_validator::Validator;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, thiserror::Error, Serialize, Deserialize)]
@@ -89,7 +89,9 @@ impl RouteAction<TodoParams, MyConfig> for TodoAction {
 pub struct TodoViewImpl;
 impl RouteView for TodoViewImpl {
     fn render(&self) -> impl IntoView {
-        view! { <TodoApp /> }
+        view! {
+            <TodoApp />
+        }
     }
 }
 
@@ -100,18 +102,33 @@ impl Route<MyConfig> for TodoRoute {
     type Action = TodoAction;
     type View = TodoViewImpl;
 
-    fn path() -> &'static str { "/" }
-    fn loader(&self) -> Self::Loader { TodoLoader }
-    fn action(&self) -> Self::Action { TodoAction }
-    fn view(&self) -> Self::View { TodoViewImpl }
+    fn path() -> &'static str {
+        "/"
+    }
+    fn loader(&self) -> Self::Loader {
+        TodoLoader
+    }
+    fn action(&self) -> Self::Action {
+        TodoAction
+    }
+    fn view(&self) -> Self::View {
+        TodoViewImpl
+    }
 }
 
 pub struct TodoPlate;
 #[async_trait::async_trait]
 impl Plate<MyConfig> for TodoPlate {
-    fn name(&self) -> &'static str { "todo" }
-    fn dependencies(&self) -> Vec<&'static str> { vec![] }
-    async fn init(&self, _ctx: &mut PlateContext<MyConfig>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn name(&self) -> &'static str {
+        "todo"
+    }
+    fn dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+    async fn init(
+        &self,
+        _ctx: &mut PlateContext<MyConfig>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
     fn register_routes(&self, router: &mut Router<MyConfig>) {
@@ -129,7 +146,9 @@ fn TodoApp() -> impl IntoView {
                 <header class="border-b border-border">
                     <div class="mx-auto flex h-16 max-w-2xl items-center gap-2 px-6">
                         <CheckCheckIcon class="h-6 w-6 text-primary" />
-                        <span class="text-lg font-bold">"MontRS Todo"</span>
+                        <span class="text-lg font-bold">
+                            "MontRS Todo"
+                        </span>
                     </div>
                 </header>
                 <main class="mx-auto max-w-2xl px-6 py-12">
@@ -137,19 +156,19 @@ fn TodoApp() -> impl IntoView {
                         <div class="flex items-center gap-3">
                             <ListChecksIcon class="h-8 w-8 text-primary" />
                             <div>
-                                <h1 class="text-2xl font-bold">"Todo Manager"</h1>
+                                <h1 class="text-2xl font-bold">
+                                    "Todo Manager"
+                                </h1>
                                 <p class="text-sm text-muted-foreground">
                                     "Scaffolded Explicit Architecture example."
                                 </p>
                             </div>
                         </div>
                         <div class="mt-8 flex items-center gap-4">
-                            <button
-                                on:click=move |_| set_count.update(|n| *n += 1)
-                                class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                            >
+                            <button on:click=move |_| set_count.update(|n| *n += 1) class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                                 <PlusIcon class="h-4 w-4" />
-                                "Count: " {count}
+                                "Count: "
+                                {count}
                             </button>
                             <span class="text-sm text-muted-foreground">
                                 "Click to increment"
@@ -169,14 +188,19 @@ fn TodoApp() -> impl IntoView {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let config = MyConfig { db_url: ":memory:".to_string() };
+    let config = MyConfig {
+        db_url: ":memory:".to_string(),
+    };
     let env = MyEnv;
 
     let spec = AppSpec::new(config, env)
         .with_target(Target::Web)
         .with_plate(TodoPlate);
 
-    println!("App ready with plates: {:?}", spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>());
+    println!(
+        "App ready with plates: {:?}",
+        spec.plates.iter().map(|p| p.name()).collect::<Vec<_>>()
+    );
 
     let valid_todo = CreateTodo {
         title: "Build with MontRS".to_string(),
@@ -184,7 +208,11 @@ async fn main() -> anyhow::Result<()> {
     println!("Validation check: {:?}", valid_todo.validate());
 
     println!("Mounting Leptos application...");
-    spec.mount(|| view! { <TodoApp /> });
+    spec.mount(|| {
+        view! {
+            <TodoApp />
+        }
+    });
 
     Ok(())
 }

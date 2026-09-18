@@ -256,20 +256,9 @@ pub fn Toaster(
     };
 
     view! {
-        <div
-            style=style
-            class="fixed flex flex-col"
-            role="list"
-            aria-live="polite"
-            data-name="Toaster"
-            on:mouseenter=move |_| is_expanded.set(true)
-            on:mouseleave=move |_| is_expanded.set(false)
-        >
+        <div style=style class="fixed flex flex-col" role="list" aria-live="polite" data-name="Toaster" on:mouseenter=move |_| is_expanded.set(true) on:mouseleave=move |_| is_expanded.set(false)>
             {children.map(|c| c())}
-            <For
-                each=move || notifications.get()
-                key=|notification| notification.id
-                children=move |notification| {
+            <For each=move || notifications.get() key=|notification| notification.id children=move |notification| {
                     let id = notification.id;
                     let level = notification.level.clone();
                     let title = notification.title.clone();
@@ -285,8 +274,7 @@ pub fn Toaster(
                             remove_toast=Callback::new(move |_| center.dismiss(id))
                         />
                     }
-                }
-            />
+                } />
         </div>
     }
 }
@@ -347,13 +335,11 @@ fn ToastItem(
     };
 
     view! {
-        <div
-            class=merged
-            role="listitem"
-            data-name="ToastItem"
-        >
+        <div class=merged role="listitem" data-name="ToastItem">
             <div class="min-w-0 flex-1">
-                <div class="text-sm font-medium">{title}</div>
+                <div class="text-sm font-medium">
+                    {title}
+                </div>
                 {description.map(|d| view! { <div class="mt-1 text-sm opacity-80">{d}</div> })}
             </div>
             {is_dismissible.then(|| view! {

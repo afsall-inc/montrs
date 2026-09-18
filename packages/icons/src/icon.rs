@@ -134,20 +134,7 @@ pub fn CollectionIcon(
         }
     };
     view! {
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class=move || class.get()
-            width=move || size.get()
-            height=move || size2.get()
-            viewBox=move || glyph.get().viewbox
-            fill=fill_ok
-            stroke=stroke_ok
-            stroke-width=sw_ok
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            style=style_ok
-            inner_html=move || glyph.get().svg
-        />
+        <svg xmlns="http://www.w3.org/2000/svg" class=move || class.get() width=move || size.get() height=move || size2.get() viewBox=move || glyph.get().viewbox fill=fill_ok stroke=stroke_ok stroke-width=sw_ok stroke-linecap="round" stroke-linejoin="round" style=style_ok inner_html=move || glyph.get().svg />
     }
 }
 
@@ -207,17 +194,7 @@ pub fn AnimatedCollectionIcon(
         }
     };
     view! {
-        <AnimatedSvg
-            svg={TextProp::from(move || glyph.get().svg)}
-            viewbox={TextProp::from(move || glyph.get().viewbox)}
-            fill={TextProp::from(fill_ok)}
-            stroke={TextProp::from(stroke_ok)}
-            stroke_width={TextProp::from(sw_ok)}
-            color={TextProp::from(color_ok)}
-            class={class.unwrap_or_else(|| "".into())}
-            size={size.unwrap_or_else(|| DEFAULT_SIZE.into())}
-            profile=profile
-        />
+        <AnimatedSvg svg={TextProp::from(move || glyph.get().svg)} viewbox={TextProp::from(move || glyph.get().viewbox)} fill={TextProp::from(fill_ok)} stroke={TextProp::from(stroke_ok)} stroke_width={TextProp::from(sw_ok)} color={TextProp::from(color_ok)} class={class.unwrap_or_else(|| "".into())} size={size.unwrap_or_else(|| DEFAULT_SIZE.into())} profile=profile />
     }
 }
 
@@ -240,18 +217,6 @@ pub fn render_svg(
     let viewbox = viewbox.unwrap_or_else(|| "0 0 24 24".into());
 
     view! {
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class=move || class.get()
-          width=move || size.get()
-          height=move || size2.get()
-          viewBox=move || viewbox.get()
-          fill=move || fill.get()
-          stroke=move || stroke.get()
-          stroke-width=move || stroke_width.get()
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          inner_html=move || svg.get()
-        />
+        <svg xmlns="http://www.w3.org/2000/svg" class=move || class.get() width=move || size.get() height=move || size2.get() viewBox=move || viewbox.get() fill=move || fill.get() stroke=move || stroke.get() stroke-width=move || stroke_width.get() stroke-linecap="round" stroke-linejoin="round" inner_html=move || svg.get() />
     }
 }

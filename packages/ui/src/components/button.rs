@@ -75,15 +75,7 @@ pub fn Button(
     let data_name = data_name.unwrap_or_else(|| "Button".to_string());
 
     view! {
-        <button
-            type="button"
-            class=computed_class
-            data-name=data_name
-            disabled=disabled
-            aria-disabled=disabled
-            aria-label=aria_label
-            aria-pressed=aria_pressed
-        >
+        <button type="button" class=computed_class data-name=data_name disabled=disabled aria-disabled=disabled aria-label=aria_label aria-pressed=aria_pressed>
             {children()}
         </button>
     }

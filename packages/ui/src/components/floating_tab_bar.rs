@@ -59,15 +59,12 @@ pub fn FloatingTabBar(
 
     view! {
         <div class=container_class>
-            <div
-                class={move || {
+            <div class={move || {
                     cn!(
                         "inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-background/80 p-1 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60",
                         class.get()
                     )
-                }}
-                role="tablist"
-            >
+                }} role="tablist">
                 {items.into_iter().map(|(label, id)| {
                     let id_active = id.clone();
                     let id_class = id.clone();

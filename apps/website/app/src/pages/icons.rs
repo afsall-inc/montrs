@@ -1506,12 +1506,6 @@ fn AnimatedGlyphView(
         }
     });
     view! {
-        <AnimatedCollectionIcon
-            glyph=glyph
-            size=size
-            stroke_width=sw
-            color=color
-            profile=profile
-        />
+        <AnimatedCollectionIcon glyph=glyph size=size stroke_width=sw color=color profile=profile />
     }
 }

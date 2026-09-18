@@ -61,10 +61,7 @@ pub fn ScrollArea(
             <div class=viewport_class data-name="ScrollAreaViewport">
                 {children()}
             </div>
-            <div
-                class="flex touch-none select-none transition-colors"
-                data-name="ScrollBar"
-            >
+            <div class="flex touch-none select-none transition-colors" data-name="ScrollBar">
                 <div class="relative flex-1 rounded-full bg-border" />
             </div>
         </div>

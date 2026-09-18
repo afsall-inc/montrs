@@ -93,13 +93,14 @@ pub fn AiKit() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"AI Kit"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "AI Kit"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "The agentic side of MontRS: your project is machine-readable
                     by design, so AI tools work on it without guessing."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {features.into_iter().map(|(icon, title, desc)| view! {
                     <div class="showcase-card reveal p-6">
@@ -109,26 +110,50 @@ pub fn AiKit() -> impl IntoView {
                     </div>
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <div class="code-window">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"agent terminal"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "agent terminal"
+                        </span>
                     </div>
                     <pre class="code-window-body text-left">
-                        <span class="terminal-prompt">"$"</span>
-                        " montrs agent doctor"{"\n"}
-                        <span class="token-string">"  ✅ root Cargo.toml found"</span>{"\n"}
-                        <span class="token-string">"  ✅ .agent directory exists"</span>{"\n"}
-                        <span class="token-string">"  ✅ all tracked errors resolved"</span>{"\n"}
-                        <span class="token-string">"  ✅ rust toolchain available"</span>{"\n\n"}
-                        <span class="terminal-prompt">"$"</span>
-                        " montrs agent list-errors"{"\n"}
-                        <span class="token-comment">"  # id  package  level  message"</span>{"\n"}
-                        <span class="token-string">"  # 2/2 resolved · 0 pending"</span>
+                        <span class="terminal-prompt">
+                            "$"
+                        </span>
+                        " montrs agent doctor"
+                        {"\n"}
+                        <span class="token-string">
+                            "  ✅ root Cargo.toml found"
+                        </span>
+                        {"\n"}
+                        <span class="token-string">
+                            "  ✅ .agent directory exists"
+                        </span>
+                        {"\n"}
+                        <span class="token-string">
+                            "  ✅ all tracked errors resolved"
+                        </span>
+                        {"\n"}
+                        <span class="token-string">
+                            "  ✅ rust toolchain available"
+                        </span>
+                        {"\n\n"}
+                        <span class="terminal-prompt">
+                            "$"
+                        </span>
+                        " montrs agent list-errors"
+                        {"\n"}
+                        <span class="token-comment">
+                            "  # id  package  level  message"
+                        </span>
+                        {"\n"}
+                        <span class="token-string">
+                            "  # 2/2 resolved · 0 pending"
+                        </span>
                     </pre>
                 </div>
                 <div class="flex flex-col justify-center space-y-4 text-sm text-muted-foreground">
@@ -146,12 +171,15 @@ pub fn AiKit() -> impl IntoView {
                     </div>
                 </div>
             </div>
-
             <div class="mt-16 border-t border-border pt-12">
                 <div class="flex flex-wrap items-center gap-3">
-                    <h2 class="text-2xl font-bold tracking-tight">"montrs-ai SDK"</h2>
+                    <h2 class="text-2xl font-bold tracking-tight">
+                        "montrs-ai SDK"
+                    </h2>
                     <span class="pill">
-                        <span class="pill-accent">"In development"</span>
+                        <span class="pill-accent">
+                            "In development"
+                        </span>
                     </span>
                 </div>
                 <p class="mt-3 max-w-2xl text-muted-foreground">
@@ -160,21 +188,21 @@ pub fn AiKit() -> impl IntoView {
                     of the framework. Swap a real provider for a scripted fake LLM in
                     tests — no mocking, no flakes."
                 </p>
-
                 <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
                     <div class="code-window">
                         <div class="code-window-bar">
-                            <span class="traffic-light traffic-light-red"></span>
-                            <span class="traffic-light traffic-light-yellow"></span>
-                            <span class="traffic-light traffic-light-green"></span>
-                            <span class="code-window-tab">"support_chat.rs"</span>
+                            <span class="traffic-light traffic-light-red" />
+                            <span class="traffic-light traffic-light-yellow" />
+                            <span class="traffic-light traffic-light-green" />
+                            <span class="code-window-tab">
+                                "support_chat.rs"
+                            </span>
                             <span class="ml-auto">
                                 <CopyButton text=SDK_SNIPPET.to_string() label="Copy" />
                             </span>
                         </div>
-                        <pre class="code-window-body text-left" inner_html=highlight_rust(SDK_SNIPPET)></pre>
+                        <pre class="code-window-body text-left" inner_html=highlight_rust(SDK_SNIPPET) />
                     </div>
-
                     <div class="flex flex-col justify-center gap-3 text-sm text-muted-foreground">
                         {[
                             (Glyph::Cpu, "Provider adapters — Anthropic, OpenAI, Groq"),

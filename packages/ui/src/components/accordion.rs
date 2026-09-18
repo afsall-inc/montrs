@@ -245,31 +245,9 @@ pub fn AccordionTrigger(
     };
 
     view! {
-        <button
-            type="button"
-            class=merged
-            data-name="AccordionTrigger"
-            role="button"
-            aria-expanded=is_open
-            aria-controls=panel_id.clone()
-            id=trigger_id.clone()
-            tabindex=tabindex
-            on:click=toggle
-            on:keydown=on_key_down
-        >
+        <button type="button" class=merged data-name="AccordionTrigger" role="button" aria-expanded=is_open aria-controls=panel_id.clone() id=trigger_id.clone() tabindex=tabindex on:click=toggle on:keydown=on_key_down>
             {children()}
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="h-4 w-4 shrink-0 transition-transform duration-200"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 transition-transform duration-200">
                 <path d="m6 9 6 6 6-6" />
             </svg>
         </button>
@@ -301,15 +279,10 @@ pub fn AccordionContent(
     };
 
     view! {
-        <div
-            class=merged
-            data-name="AccordionContent"
-            role="region"
-            aria-labelledby=trigger_id.clone()
-            id=panel_id.clone()
-            hidden=move || !is_open()
-        >
-            <div class="pb-4 pt-0">{children()}</div>
+        <div class=merged data-name="AccordionContent" role="region" aria-labelledby=trigger_id.clone() id=panel_id.clone() hidden=move || !is_open()>
+            <div class="pb-4 pt-0">
+                {children()}
+            </div>
         </div>
     }
 }

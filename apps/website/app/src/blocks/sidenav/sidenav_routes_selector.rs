@@ -46,7 +46,9 @@ pub fn SidenavRoutesSelector() -> impl IntoView {
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
             <div class="w-56 p-4 space-y-1">
-                <h4 class="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">"Routes"</h4>
+                <h4 class="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    "Routes"
+                </h4>
                 {routes.into_iter().map(|(label, icon)| {
                     let l = label;
                     let is_active = move || active.get() == l;

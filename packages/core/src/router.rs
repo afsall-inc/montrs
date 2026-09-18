@@ -400,8 +400,12 @@ impl<C: AppConfig> Router<C> {
         // 4. Built-in 404
         view! {
             <div class="flex flex-col items-center justify-center min-h-[60vh]">
-                <h1 class="text-4xl font-bold">"404"</h1>
-                <p class="text-muted-foreground">"Page not found"</p>
+                <h1 class="text-4xl font-bold">
+                    "404"
+                </h1>
+                <p class="text-muted-foreground">
+                    "Page not found"
+                </p>
             </div>
         }
         .into_any()
@@ -531,7 +535,7 @@ pub fn RouterAnchorGuard() -> impl IntoView {
     }
 
     view! {
-        <span class="hidden" aria-hidden="true"></span>
+        <span class="hidden" aria-hidden="true" />
     }
 }
 
@@ -593,16 +597,10 @@ pub fn RouteLink<C: AppConfig + 'static>(
     };
 
     view! {
-        <a
-            href=to_owned
-            class=a_class
-            data-montrs-route=to
-            aria-current=move || active.get().then_some("page")
-            on:click=move |ev| {
+        <a href=to_owned class=a_class data-montrs-route=to aria-current=move || active.get().then_some("page") on:click=move |ev| {
                 ev.prevent_default();
                 navigate(to, Default::default());
-            }
-        >
+            }>
             {children()}
         </a>
     }
