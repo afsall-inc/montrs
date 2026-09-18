@@ -49,11 +49,12 @@ pub struct MacroEdit {
 
 pub fn collect_and_format_macros(
     file: &File,
-    _source: &Rope,
+    source: &Rope,
     settings: &FormatterSettings,
     edits: &mut Vec<MacroEdit>,
 ) -> Result<(), FormatError> {
     let mut visitor = MacroVisitor {
+        source,
         settings,
         edits,
         errors: Vec::new(),
@@ -68,6 +69,7 @@ pub fn collect_and_format_macros(
 }
 
 struct MacroVisitor<'a> {
+    source: &'a Rope,
     settings: &'a FormatterSettings,
     edits: &'a mut Vec<MacroEdit>,
     errors: Vec<String>,
@@ -109,6 +111,18 @@ impl MacroVisitor<'_> {
     }
 
     fn format_macro(&self, mac: &Macro) -> Result<String, FormatError> {
+        let span = mac.delimiter.span().join();
+        let original = crate::comments::get_text_between_spans(
+            self.source,
+            span.start(),
+            span.end(),
+        );
+        if !crate::comments::extract_comments(&original).1.is_empty() {
+            return Ok(original);
+        }
+        let line = self.source.line(span.start().line - 1).to_string();
+        let base_indent =
+            line.chars().take_while(|c| c.is_whitespace()).count();
         let tokens = mac.tokens.clone();
 
         // rstml 0.12.x provides a top-level parse2 function
@@ -117,7 +131,7 @@ impl MacroVisitor<'_> {
 
         let mut printer = RstmlPrinter {
             settings: self.settings,
-            indent: self.settings.tab_spaces, // Start with one level of indentation
+            indent: base_indent + self.settings.tab_spaces,
             result: String::new(),
         };
 
@@ -126,7 +140,13 @@ impl MacroVisitor<'_> {
         let result = printer.result.trim_end();
 
         // Return only the contents of the braces, with the braces themselves
-        Ok(format!("{{\n{result}\n}}"))
+        let closing_indent = " ".repeat(base_indent);
+        let (open, close) = match mac.delimiter {
+            syn::MacroDelimiter::Brace(_) => ('{', '}'),
+            syn::MacroDelimiter::Paren(_) => ('(', ')'),
+            syn::MacroDelimiter::Bracket(_) => ('[', ']'),
+        };
+        Ok(format!("{open}\n{result}\n{closing_indent}{close}"))
     }
 }
 
@@ -160,11 +180,30 @@ impl RstmlPrinter<'_> {
             }
             Node::Block(block) => {
                 self.add_indent();
-                self.result.push_str("{ ");
                 self.result.push_str(&block.to_token_stream().to_string());
-                self.result.push_str(" }\n");
+                self.result.push('\n');
             }
-            _ => {} // Handle other nodes as needed
+            Node::Comment(comment) => {
+                self.add_indent();
+                self.result.push_str("<!-- ");
+                self.result
+                    .push_str(&comment.value.to_token_stream().to_string());
+                self.result.push_str(" -->\n");
+            }
+            Node::Fragment(fragment) => {
+                self.add_indent();
+                self.result.push_str("<>\n");
+                self.indent += self.settings.tab_spaces;
+                self.print_nodes(&fragment.children);
+                self.indent -= self.settings.tab_spaces;
+                self.add_indent();
+                self.result.push_str("</>\n");
+            }
+            _ => {
+                self.add_indent();
+                self.result.push_str(&node.to_token_stream().to_string());
+                self.result.push('\n');
+            }
         }
     }
 
@@ -174,16 +213,11 @@ impl RstmlPrinter<'_> {
     {
         self.add_indent();
         let original_name = el.name().to_string();
-        let name = if original_name
-            .chars()
-            .next()
-            .map(|c| c.is_uppercase())
-            .unwrap_or(false)
-        {
-            // Component: Force PascalCase
+        let name = if original_name.contains("::") {
+            original_name.clone()
+        } else if original_name.starts_with(char::is_uppercase) {
             montrs_utils::to_pascal_case(&original_name)
         } else {
-            // HTML Tag: Force lowercase
             original_name.to_lowercase()
         };
         self.result.push('<');
@@ -264,5 +298,11 @@ fn line_col_to_byte_offset(
         return None;
     }
     let line_start = source.byte_of_line(line - 1);
-    Some(line_start + col)
+    let text = source.line(line - 1).to_string();
+    let byte_col = text
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain(std::iter::once(text.len()))
+        .nth(col)?;
+    Some(line_start + byte_col)
 }

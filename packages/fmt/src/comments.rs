@@ -48,17 +48,46 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
     let mut comments = Vec::new();
     let rope = Rope::from(source);
 
+    fn literal_ranges(
+        tokens: proc_macro2::TokenStream,
+        ranges: &mut Vec<std::ops::Range<usize>>,
+    ) {
+        for token in tokens {
+            match token {
+                proc_macro2::TokenTree::Literal(literal) => {
+                    ranges.push(literal.span().byte_range());
+                }
+                proc_macro2::TokenTree::Group(group) => {
+                    literal_ranges(group.stream(), ranges);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    let mut literals = Vec::new();
+    if let Ok(tokens) = source.parse() {
+        literal_ranges(tokens, &mut literals);
+    }
+    let mut literals = literals.into_iter().peekable();
     let mut chars = source.char_indices().peekable();
     let mut line = 1;
     let mut col = 0;
 
-    while let Some((_idx, c)) = chars.next() {
+    while let Some((idx, c)) = chars.next() {
         if c == '\n' {
             line += 1;
             col = 0;
             continue;
         }
         col += 1;
+
+        while literals.peek().is_some_and(|range| range.end <= idx) {
+            literals.next();
+        }
+        if literals.peek().is_some_and(|range| range.contains(&idx)) {
+            continue;
+        }
 
         if c == '/'
             && let Some(&(_, next_c)) = chars.peek()
@@ -100,6 +129,7 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
                 chars.next(); // consume *
                 col += 1;
 
+                let mut depth = 1;
                 while let Some((_, c)) = chars.next() {
                     text.push(c);
                     if c == '\n' {
@@ -108,14 +138,22 @@ pub fn extract_comments(source: &str) -> (Rope, Vec<Comment>) {
                     } else {
                         col += 1;
                     }
-                    if c == '*'
-                        && let Some(&(_, next_c)) = chars.peek()
-                        && next_c == '/'
+                    if c == '/' && chars.peek().is_some_and(|(_, c)| *c == '*')
+                    {
+                        text.push('*');
+                        chars.next();
+                        col += 1;
+                        depth += 1;
+                    } else if c == '*'
+                        && chars.peek().is_some_and(|(_, c)| *c == '/')
                     {
                         text.push('/');
                         chars.next();
                         col += 1;
-                        break;
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
                     }
                 }
                 let end = LineColumn { line, column: col };
@@ -267,12 +305,12 @@ pub fn get_text_between_spans(
                 line_str.len()
             };
 
-            if start_col < line_str.len() {
-                result.push_str(
-                    &line_str
-                        [start_col..std::cmp::min(end_col, line_str.len())],
-                );
-            }
+            result.extend(
+                line_str
+                    .chars()
+                    .skip(start_col)
+                    .take(end_col.saturating_sub(start_col)),
+            );
             if line_idx < end.line - 1 {
                 result.push('\n');
             }
