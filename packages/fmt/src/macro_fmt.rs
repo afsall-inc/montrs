@@ -30,7 +30,6 @@
 
 use crate::{FormatError, FormatterSettings};
 use crop::Rope;
-use montrs_utils::to_kebab_case;
 use quote::ToTokens;
 use rstml::node::{Node, NodeAttribute, NodeElement};
 use syn::{
@@ -251,7 +250,7 @@ impl RstmlPrinter<'_> {
                 self.result.push_str(&block.to_token_stream().to_string());
             }
             NodeAttribute::Attribute(a) => {
-                self.result.push_str(&to_kebab_case(&a.key.to_string()));
+                self.result.push_str(&a.key.to_string());
                 if let Some(value) = a.value() {
                     self.result.push('=');
                     self.result.push_str(&value.to_token_stream().to_string());
