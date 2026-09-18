@@ -129,6 +129,7 @@ impl MacroVisitor<'_> {
             .map_err(|e| FormatError::Macro(e.to_string()))?;
 
         let mut printer = RstmlPrinter {
+            source: self.source,
             settings: self.settings,
             indent: base_indent + self.settings.tab_spaces,
             result: String::new(),
@@ -150,6 +151,7 @@ impl MacroVisitor<'_> {
 }
 
 struct RstmlPrinter<'a> {
+    source: &'a Rope,
     settings: &'a FormatterSettings,
     indent: usize,
     result: String,
@@ -173,13 +175,21 @@ impl RstmlPrinter<'_> {
             Node::Element(el) => self.print_element(el),
             Node::Text(text) => {
                 self.add_indent();
-                self.result
-                    .push_str(&text.value.to_token_stream().to_string());
+                let tokens = text.value.to_token_stream();
+                self.result.push_str(
+                    &self
+                        .span_text(&tokens)
+                        .unwrap_or_else(|| tokens.to_string()),
+                );
                 self.result.push('\n');
             }
             Node::Block(block) => {
                 self.add_indent();
-                self.result.push_str(&block.to_token_stream().to_string());
+                let tokens = block.to_token_stream();
+                let text = self
+                    .span_text(&tokens)
+                    .unwrap_or_else(|| tokens.to_string());
+                self.result.push_str(text.trim());
                 self.result.push('\n');
             }
             Node::Comment(comment) => {
@@ -247,13 +257,22 @@ impl RstmlPrinter<'_> {
     fn print_attribute(&mut self, attr: &NodeAttribute) {
         match attr {
             NodeAttribute::Block(block) => {
-                self.result.push_str(&block.to_token_stream().to_string());
+                let tokens = block.to_token_stream();
+                let text = self
+                    .span_text(&tokens)
+                    .unwrap_or_else(|| tokens.to_string());
+                self.result.push_str(text.trim());
             }
             NodeAttribute::Attribute(a) => {
                 self.result.push_str(&a.key.to_string());
                 if let Some(value) = a.value() {
                     self.result.push('=');
-                    self.result.push_str(&value.to_token_stream().to_string());
+                    let tokens = value.to_token_stream();
+                    self.result.push_str(
+                        &self
+                            .span_text(&tokens)
+                            .unwrap_or_else(|| tokens.to_string()),
+                    );
                 }
             }
         }
@@ -263,6 +282,16 @@ impl RstmlPrinter<'_> {
         for _ in 0..self.indent {
             self.result.push(' ');
         }
+    }
+
+    fn span_text(&self, tokens: &proc_macro2::TokenStream) -> Option<String> {
+        let trees: Vec<_> = tokens.clone().into_iter().collect();
+        let start = trees.first()?.span().byte_range().start;
+        let end = trees.last()?.span().byte_range().end;
+        if start >= end {
+            return None;
+        }
+        Some(self.source.byte_slice(start..end).to_string())
     }
 }
 

@@ -95,7 +95,7 @@ fn preserves_literals_and_header_like_strings() {
 fn view_blocks_are_idempotent() {
     let result = assert_stable("fn main() { view! { <div>{value}</div> }; }");
     assert!(result.contains("        <div>"));
-    assert_eq!(result, "fn main() {\n    view! {\n        <div>\n            { value }\n        </div>\n    };\n}\n");
+    assert_eq!(result, "fn main() {\n    view! {\n        <div>\n            {value}\n        </div>\n    };\n}\n");
 }
 
 #[test]
