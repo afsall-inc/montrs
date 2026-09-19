@@ -65,48 +65,31 @@ The normal entry (used when hot reload is off) is unchanged:
 montrs_hotpatch::serve!(spec.router, || leptos::prelude::view! { <Shell /> });
 ```
 
-For hot reload, add two things to the app **library**: a `mod hotpatch;` and the
-dylib entry. `hotpatch.rs` is the convention file the framework wires
-automatically:
+For hot reload, add the dylib entry to the app **library**:
 
 ```rust
-mod hotpatch;
-
 #[cfg(not(target_arch = "wasm32"))]
-montrs_app_abi::export_app_with_hotpatch!(
+montrs_app_abi::export_app!(
     build_spec(),
     || leptos::prelude::view! { <Shell /> }
 );
 ```
 
-`hotpatch.rs` is small and nearly identical across apps — it holds the state
-that should survive a reload and an optional per-request hook:
+`export_app!` automatically connects to `montrs_app_abi::state`, which carries
+registered in-memory stores across dylib swaps without needing any dedicated glue file.
+
+To preserve in-memory state across reloads, simply register any long-lived store
+anywhere in your app using `montrs_app_abi::state::register(name, load, save)`:
 
 ```rust
 use montrs_app_abi::state;
 
-static HITS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-
-pub fn before_render() { /* called before each render */ }
-pub fn export_state() -> Vec<u8> { state::export() }
-pub fn import_state(bytes: &[u8]) { state::import(bytes) }
-```
-
-Register any long-lived store with `state::register(name, load, save)` (see
-[State across reloads](#state-across-reloads)). Prefer `state.rs` (or any other
-file) for your own state management — `hotpatch.rs` is only the bridge. If you
-want the hooks somewhere else, use the explicit-path form:
-
-```rust
-montrs_app_abi::export_app_with_state!(
-    build_spec(),
-    || leptos::prelude::view! { <Shell /> },
-    crate::state::export_state,
-    crate::state::import_state,
+state::register(
+    "hits",
+    || HITS.load(Ordering::Relaxed).to_le_bytes().to_vec(),
+    |bytes| { /* restore */ },
 );
 ```
-
-`export_app!` (no state) is still available.
 
 ## Project setup (already done in templates)
 
@@ -115,26 +98,16 @@ montrs_app_abi::export_app_with_state!(
   hot-reload markers.
 - `.cargo/config.toml` pinning `LEPTOS_WATCH` — `leptos` reads it at compile
   time and cargo does not track it, so it must be constant.
-- `montrs-app-abi` as a dependency — the ABI, `export_app_with_hotpatch!`, and
-  the `state` registry.
+- `montrs-app-abi` as a dependency — the ABI, `export_app!`, and the `state`
+  registry.
 - The `montrs-dev-shell` binary, built with the CLI (or on `PATH`).
 
 ## State across reloads
 
 Each swapped-in library gets fresh globals, so any state the app kept **in
 memory** would reset on a reload. MontRS preserves it: before swapping, the
-shell asks the outgoing library for `export_state()`, and after loading the new
-one, hands it back via `import_state()`.
-
-Register each store in `hotpatch.rs` with `montrs_app_abi::state::register`:
-
-```rust
-state::register(
-    "hits",
-    || HITS.load(Ordering::Relaxed).to_le_bytes().to_vec(),
-    |bytes| { /* restore */ },
-);
-```
+shell asks the outgoing library for its state via `montrs_app_abi::state::export()`,
+and after loading the new one, hands it back via `montrs_app_abi::state::import()`.
 
 The registry serializes all registered stores into one framed blob, so the glue
 is the same for every app. Import is best-effort: an unknown name or a blob that
@@ -153,7 +126,7 @@ unaffected and needs no registration.
 - **Debug builds only.** This is a development feature and is never part of a
   production build.
 - **State transfer is opt-in.** State kept in memory survives a reload only if
-  it is registered in `hotpatch.rs`; unregistered globals reset.
+  it is registered with `montrs_app_abi::state::register`; unregistered globals reset.
 
 ## Environment variables
 

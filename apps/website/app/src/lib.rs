@@ -58,12 +58,11 @@ pub fn build_spec() -> AppSpec<MyConfig> {
     spec
 }
 
-mod hotpatch;
-
-// Stable C entry the dev shell loads from the app cdylib. State and per-request
-// hooks live in `hotpatch.rs` (see docs/tooling/hot-reload.md).
+// Stable C entry the dev shell loads from the app cdylib. `export_app!`
+// automatically carries registered in-memory state across reloads via
+// `montrs_app_abi::state` (see docs/tooling/hot-reload.md).
 #[cfg(not(target_arch = "wasm32"))]
-montrs_app_abi::export_app_with_hotpatch!(
+montrs_app_abi::export_app!(
     build_spec(),
     || leptos::prelude::view! { <Shell /> }
 );
@@ -135,7 +134,6 @@ pub fn Shell() -> impl IntoView {
             </head>
             <body>
                 <App />
-                <div id="hits" hidden=true>{move || crate::hotpatch::hits().to_string()}</div>
             </body>
         </html>
     }

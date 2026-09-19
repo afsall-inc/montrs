@@ -17,12 +17,11 @@ pub fn build_spec() -> AppSpec<MyConfig> {
     spec
 }
 
-mod hotpatch;
-
 // Stable C entry the dev shell loads from the app cdylib (`montrs serve` with
-// `[serve] hotpatch = true`). State and per-request hooks live in `hotpatch.rs`.
+// `[serve] hotpatch = true`). `export_app!` automatically carries registered
+// in-memory state across reloads via `montrs_app_abi::state`.
 #[cfg(not(target_arch = "wasm32"))]
-montrs_app_abi::export_app_with_hotpatch!(
+montrs_app_abi::export_app!(
     build_spec(),
     || leptos::prelude::view! { <Shell /> }
 );
