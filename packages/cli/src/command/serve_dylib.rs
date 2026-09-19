@@ -168,7 +168,10 @@ pub async fn run() -> anyhow::Result<()> {
     let (tx, mut rx) =
         tokio::sync::mpsc::channel::<(RebuildKind, Vec<PathBuf>)>(1);
     let pipeline_arc = Arc::new(pipeline);
-    let workspace_root = pipeline_arc.workspace_target_dir.parent().map(|p| p.to_path_buf());
+    let workspace_root = pipeline_arc
+        .workspace_target_dir
+        .parent()
+        .map(|p| p.to_path_buf());
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
         let reload = reload.clone();
@@ -290,9 +293,7 @@ async fn build(pipeline: Arc<Pipeline>) -> anyhow::Result<()> {
 /// the `view!` hot-reload watcher, so it stays valid. The app lib is already a
 /// `cdylib`, so `build_server_only` produces the `.dll` the shell swaps in.
 /// This is the fast path for server-only `.rs` edits in dylib mode.
-async fn build_server_only(
-    pipeline: Arc<Pipeline>,
-) -> anyhow::Result<()> {
+async fn build_server_only(pipeline: Arc<Pipeline>) -> anyhow::Result<()> {
     tokio::task::spawn_blocking(move || pipeline.build_server_only())
         .await
         .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?

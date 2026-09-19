@@ -316,9 +316,7 @@ macro_rules! export_app {
         }
 
         #[cfg(all(not(target_arch = "wasm32"), feature = "ssr"))]
-        unsafe extern "C" fn __montrs_import_state(
-            bytes: $crate::MontrsBytes,
-        ) {
+        unsafe extern "C" fn __montrs_import_state(bytes: $crate::MontrsBytes) {
             let slice: &[u8] = if bytes.ptr.is_null() || bytes.len == 0 {
                 &[]
             } else {
