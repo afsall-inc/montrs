@@ -207,9 +207,11 @@ pub mod state {
 ///
 /// This lives in the (dependency-free) ABI crate on purpose: the app library
 /// only needs `montrs-core` and this crate, so its `cdylib` stays light and
-/// fast to rebuild. The app is built lazily on first request, so a reloaded
-/// library starts from a clean app (see the state caveat in the hot-reload
-/// guide).
+/// fast to rebuild.
+///
+/// Automatically wires [`state::export`] and [`state::import`] into the vtable,
+/// so any store registered with [`state::register`] survives a reload with no
+/// boilerplate files. The app is built lazily on first request.
 #[macro_export]
 macro_rules! export_app {
     ($spec:expr, $root:expr $(,)?) => {
@@ -349,17 +351,5 @@ macro_rules! export_app {
             };
             &VTABLE
         }
-    };
-}
-
-/// Like [`export_app!`], but wires the app's `hotpatch.rs` convention file.
-///
-/// **Deprecated**: `export_app!` now automatically wires the `state` registry.
-/// Use `export_app!` instead.
-#[macro_export]
-#[allow(clippy::crate_in_macro_def)]
-macro_rules! export_app_with_hotpatch {
-    ($spec:expr, $root:expr $(,)?) => {
-        $crate::export_app!($spec, $root);
     };
 }

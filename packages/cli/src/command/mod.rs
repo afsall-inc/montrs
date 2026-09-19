@@ -57,6 +57,31 @@ pub mod ui_init;
 pub mod upgrade;
 pub mod watch;
 
+/// What kind of rebuild a source change triggered.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RebuildKind {
+    /// Non-`.rs` source or client-reachable `.rs` — full frontend + server.
+    Full,
+    /// Server-only `.rs` edit (`main.rs`, `src/bin/`, `server/`) — the WASM
+    /// client never links these, so only the SSR binary is rebuilt.
+    ServerOnly,
+}
+
+/// Whether a `.rs` file is compiled only into the SSR binary — never into the
+/// WASM client. These are the `[[bin]]` entries and any `server/`/`bin/` tree;
+/// the app `lib` and everything it transitively uses go into both, so they
+/// force a frontend rebuild to keep hydration markers in sync.
+pub fn is_server_only_rs(path: &Path) -> bool {
+    let file = path.file_name().and_then(|n| n.to_str());
+    if file == Some("main.rs") {
+        return true;
+    }
+    path.components().any(|c| {
+        let s = c.as_os_str().to_string_lossy();
+        s == "bin" || s == "server"
+    })
+}
+
 use montrs_build::Pipeline;
 use std::path::Path;
 

@@ -77,6 +77,13 @@ pub trait BuildPipeline: Send + Sync {
     /// Run all build steps in order.
     fn build_all(&self) -> Result<()>;
 
+    /// Rebuild only the SSR server — the WASM client is already patched live
+    /// by the `view!` hot-reload watcher, so it stays valid. This is the fast
+    /// path for non-view `.rs` edits (server logic, comments, non-markup code).
+    fn build_server_only(&self) -> Result<()> {
+        self.build_server()
+    }
+
     /// Returns the project metadata.
     fn metadata(&self) -> &MontrsMetadata;
 

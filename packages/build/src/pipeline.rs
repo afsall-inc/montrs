@@ -313,6 +313,16 @@ impl BuildPipeline for Pipeline {
         Ok(())
     }
 
+    /// Rebuild only the SSR server — the WASM client is already patched live
+    /// by the `view!` hot-reload watcher, so it stays valid. This is the fast
+    /// path for non-view `.rs` edits (server logic, comments, non-markup code).
+    fn build_server_only(&self) -> Result<()> {
+        std::fs::create_dir_all(&self.site_root)?;
+        self.build_server()?;
+        println!(" Server rebuilt (client unchanged)");
+        Ok(())
+    }
+
     fn metadata(&self) -> &MontrsMetadata {
         &self.meta
     }

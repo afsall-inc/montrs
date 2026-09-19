@@ -10,6 +10,7 @@
 //! the fresh dylib to a new filename, and points the shell's reload file at it;
 //! the shell swaps the app in place, so the HTTP listener never restarts.
 
+use super::{RebuildKind, is_server_only_rs};
 use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
 use std::{
     path::{Path, PathBuf},
@@ -106,6 +107,22 @@ pub async fn run() -> anyhow::Result<()> {
         watch_roots.push(pipeline.project_root.clone());
     }
 
+    // View roots scanned for `view!` macros so markup edits can be patched
+    // live without an SSR recompile or shell reload.
+    let mut view_roots: Vec<PathBuf> = Vec::new();
+    for candidate in ["app", "src"] {
+        let dir = pipeline.project_root.join(candidate);
+        if dir.exists() {
+            view_roots.push(dir);
+        }
+    }
+    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
+        let ui = ws_root.join("packages").join("ui");
+        if ui.exists() {
+            view_roots.push(ui);
+        }
+    }
+
     let reload = match LiveReload::start(reload_port).await {
         Ok((r, port)) => {
             if port != reload_port {
@@ -148,19 +165,54 @@ pub async fn run() -> anyhow::Result<()> {
         }
     };
 
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<PathBuf>>(1);
+    let (tx, mut rx) =
+        tokio::sync::mpsc::channel::<(RebuildKind, Vec<PathBuf>)>(1);
     let pipeline_arc = Arc::new(pipeline);
+    let workspace_root = pipeline_arc.workspace_target_dir.parent().map(|p| p.to_path_buf());
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
+        let reload = reload.clone();
         move || {
+            let mut patcher = montrs_hot_reload::ViewPatcher::new(
+                &view_roots,
+                workspace_root,
+            );
             let _ = montrs_build::watch_paths(
                 &watch_roots,
                 move |changed: &[PathBuf]| {
-                    let rust_changed = changed.iter().any(|p| {
-                        p.extension().and_then(|e| e.to_str()) == Some("rs")
-                    });
-                    if rust_changed {
-                        let _ = tx.blocking_send(changed.to_vec());
+                    let mut rebuild = false;
+                    let mut needs_frontend = false;
+                    for path in changed {
+                        match path.extension().and_then(|e| e.to_str()) {
+                            Some("rs") => {
+                                let view_only = patcher.is_view_only(path);
+                                if let Some(patches) = patcher.patch(path)
+                                    && let Ok(json) =
+                                        serde_json::to_string(&patches)
+                                    && let Some(r) = &reload
+                                {
+                                    r.view(json);
+                                }
+                                if !view_only {
+                                    rebuild = true;
+                                    if !is_server_only_rs(path) {
+                                        needs_frontend = true;
+                                    }
+                                }
+                            }
+                            _ => {
+                                rebuild = true;
+                                needs_frontend = true;
+                            }
+                        }
+                    }
+                    if rebuild {
+                        let kind = if needs_frontend {
+                            RebuildKind::Full
+                        } else {
+                            RebuildKind::ServerOnly
+                        };
+                        let _ = tx.blocking_send((kind, changed.to_vec()));
                     }
                 },
             );
@@ -188,10 +240,14 @@ pub async fn run() -> anyhow::Result<()> {
 
     loop {
         tokio::select! {
-            Some(changed) = rx.recv() => {
+            Some((kind, changed)) = rx.recv() => {
                 println!("Change detected — rebuilding...");
                 if let Some(r) = &reload { r.building(); }
-                match build(pipeline_arc.clone()).await {
+                let result = match kind {
+                    RebuildKind::Full => build(pipeline_arc.clone()).await,
+                    RebuildKind::ServerOnly => build_server_only(pipeline_arc.clone()).await,
+                };
+                match result {
                     Ok(()) => {
                         version += 1;
                         current = copy_versioned(&cdylib, &run_dir, &lib_name, version)?;
@@ -226,6 +282,18 @@ pub async fn run() -> anyhow::Result<()> {
 
 async fn build(pipeline: Arc<Pipeline>) -> anyhow::Result<()> {
     tokio::task::spawn_blocking(move || pipeline.build_all())
+        .await
+        .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
+}
+
+/// Rebuild only the SSR `cdylib` — the WASM client is already patched live by
+/// the `view!` hot-reload watcher, so it stays valid. The app lib is already a
+/// `cdylib`, so `build_server_only` produces the `.dll` the shell swaps in.
+/// This is the fast path for server-only `.rs` edits in dylib mode.
+async fn build_server_only(
+    pipeline: Arc<Pipeline>,
+) -> anyhow::Result<()> {
+    tokio::task::spawn_blocking(move || pipeline.build_server_only())
         .await
         .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
 }

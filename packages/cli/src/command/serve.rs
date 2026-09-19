@@ -36,6 +36,7 @@
 //! fallback page is served on the site address so the overlay and live-reload
 //! socket stay reachable.
 
+use super::{RebuildKind, is_server_only_rs};
 use montrs_build::{BuildPipeline, Pipeline, reload::LiveReload};
 use std::{
     path::{Path, PathBuf},
@@ -172,7 +173,7 @@ pub async fn run() -> anyhow::Result<()> {
     // Watch channel: the blocking file watcher signals a rebuild here. View
     // and CSS edits are handled entirely inside the watcher thread (instant
     // patches, no cargo) and never reach this channel.
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<PathBuf>>(1);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<RebuildKind>(1);
     let pipeline_arc = Arc::new(pipeline);
     let _watcher = tokio::task::spawn_blocking({
         let tx = tx.clone();
@@ -189,9 +190,19 @@ pub async fn run() -> anyhow::Result<()> {
                 move |changed: &[PathBuf]| {
                     let mut rebuild = false;
                     let mut css_changed = false;
+                    // Whether the WASM client needs a rebuild. A markup-only
+                    // (`view!`) edit is patched into the live DOM and needs no
+                    // compile at all. A `.rs` edit to a *server-only* file —
+                    // the SSR binary entry (`main.rs`, `src/bin/`, a `server/`
+                    // dir) or a manifest — rebuilds just the server binary.
+                    // Anything that can be linked into the client (the app
+                    // lib, `packages/`, `pages/`, `components/`) forces the
+                    // full frontend build so hydration markers stay in sync.
+                    let mut needs_frontend = false;
                     for path in changed {
                         match path.extension().and_then(|e| e.to_str()) {
                             Some("rs") => {
+                                let view_only = patcher.is_view_only(path);
                                 if let Some(patches) = patcher.patch(path)
                                     && let Ok(json) =
                                         serde_json::to_string(&patches)
@@ -199,12 +210,18 @@ pub async fn run() -> anyhow::Result<()> {
                                 {
                                     r.view(json);
                                 }
-                                if !patcher.is_view_only(path) {
+                                if !view_only {
                                     rebuild = true;
+                                    if !is_server_only_rs(path) {
+                                        needs_frontend = true;
+                                    }
                                 }
                             }
                             Some("css") => css_changed = true,
-                            _ => rebuild = true,
+                            _ => {
+                                rebuild = true;
+                                needs_frontend = true;
+                            }
                         }
                     }
                     if css_changed {
@@ -216,7 +233,12 @@ pub async fn run() -> anyhow::Result<()> {
                         }
                     }
                     if rebuild {
-                        let _ = tx.blocking_send(changed.to_vec());
+                        let kind = if needs_frontend {
+                            RebuildKind::Full
+                        } else {
+                            RebuildKind::ServerOnly
+                        };
+                        let _ = tx.blocking_send(kind);
                     }
                 },
             );
@@ -297,31 +319,50 @@ pub async fn run() -> anyhow::Result<()> {
         }
 
         tokio::select! {
-            Some(_) = rx.recv() => {
+            Some(kind) = rx.recv() => {
                 println!("Change detected — rebuilding...");
                 if let Some(r) = &reload {
                     r.building();
                 }
 
-                // Stop the SSR child *before* building: cargo cannot replace a
-                // running executable on Windows, and doing so would otherwise
-                // abort the whole build before the WASM/CSS steps ran.
-                if let Some(mut c) = child.take() {
-                    let _ = c.kill().await;
-                    let _ = c.wait().await;
-                }
+                // Server-only rebuilds are quick (the WASM client is already
+                // patched live), so keep the running SSR serving the app while
+                // cargo compiles — no "compiling…" fallback page. Full rebuilds
+                // still swap to the fallback so a long WASM build doesn't leave
+                // the site dead.
+                let build_result = match kind {
+                    RebuildKind::ServerOnly => {
+                        // Build first, then swap. The running server holds the
+                        // old binary open, but cargo writes a fresh one (the
+                        // exe is only locked while it *runs* — we kill it just
+                        // before the link step would conflict on Windows).
+                        let res = build_server_only_blocking(pipeline_arc.clone()).await;
+                        if let Some(mut c) = child.take() {
+                            let _ = c.kill().await;
+                            let _ = c.wait().await;
+                        }
+                        res
+                    }
+                    RebuildKind::Full => {
+                        // Stop the SSR child *before* building: cargo cannot
+                        // replace a running executable on Windows, and doing so
+                        // would otherwise abort the whole build before the
+                        // WASM/CSS steps ran.
+                        if let Some(mut c) = child.take() {
+                            let _ = c.kill().await;
+                            let _ = c.wait().await;
+                        }
+                        if fallback.is_none() {
+                            let (h, s) =
+                                spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
+                            fallback = Some(h);
+                            fallback_shutdown = Some(s);
+                        }
+                        build_blocking(pipeline_arc.clone()).await
+                    }
+                };
 
-                // Serve the "compiling…" fallback on the site address while we
-                // build, so navigating to the app keeps working (and reports any
-                // build error). It auto-reloads on `build-ok`.
-                if fallback.is_none() {
-                    let (h, s) =
-                        spawn_fallback(&addr, &site_root, &pkg_dir, reload_port);
-                    fallback = Some(h);
-                    fallback_shutdown = Some(s);
-                }
-
-                match build_blocking(pipeline_arc.clone()).await {
+                match build_result {
                     Ok(()) => {
                         println!("Rebuild complete.");
                         stop_fallback(&mut fallback, &mut fallback_shutdown).await;
@@ -356,6 +397,17 @@ pub async fn run() -> anyhow::Result<()> {
 /// live-reload socket keeps accepting connections while cargo runs.
 async fn build_blocking(pipeline: Arc<Pipeline>) -> anyhow::Result<()> {
     tokio::task::spawn_blocking(move || pipeline.build_all())
+        .await
+        .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
+}
+
+/// Rebuild only the SSR server — the WASM client is already patched live by
+/// the `view!` hot-reload watcher, so it stays valid. This is the fast path
+/// for non-view `.rs` edits (server logic, comments, non-markup code).
+async fn build_server_only_blocking(
+    pipeline: Arc<Pipeline>,
+) -> anyhow::Result<()> {
+    tokio::task::spawn_blocking(move || pipeline.build_server_only())
         .await
         .map_err(|e| anyhow::anyhow!("build task panicked: {e}"))?
 }
