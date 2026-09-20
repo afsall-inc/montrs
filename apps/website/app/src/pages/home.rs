@@ -121,7 +121,7 @@ fn HotReload() -> impl IntoView {
                         "A live loop that keeps up with you"
                     </h2>
                     <p class="mt-4 text-muted-foreground">
-                        "Three levels of live updates while you work: styles, markup, and — experimentally — the Rust itself."
+                        "Two complementary technologies working in harmony: Hot Reload for instant DOM & CSS updates without recompiling, and Hot Patch for replacing compiled Rust logic on the fly."
                     </p>
                 </div>
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -132,39 +132,100 @@ fn HotReload() -> impl IntoView {
                             </span>
                         </span>
                         <h3 class="mt-4 font-semibold">
-                            "CSS & assets"
+                            "CSS & Assets"
                         </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            "Stylesheet and asset edits apply immediately — no recompile, no reload."
+                            "Stylesheet and asset edits apply immediately in the browser — zero recompile, zero page reload."
                         </p>
                     </div>
                     <div class="showcase-card p-6">
                         <span class="pill">
                             <span class="pill-accent">
-                                "Hot reload"
+                                "Hot Reload"
                             </span>
                         </span>
                         <h3 class="mt-4 font-semibold">
-                            "view! markup"
+                            "view! Markup"
                         </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            "Edit structure, text, or classes and the browser DOM is patched in place, preserving state."
+                            "Edit template structure, classes, or text. The live DOM is patched instantly via WebSockets while preserving component state."
                         </p>
                     </div>
                     <div class="showcase-card p-6">
                         <span class="pill">
                             <span class="pill-accent">
-                                "Hot patch"
+                                "Hot Patch"
                             </span>
                         </span>
                         <h3 class="mt-4 font-semibold">
-                            "Rust logic"
+                            "Rust Logic"
                         </h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            "Change real Rust code and the running server applies a thin-linked patch without restarting — same PID, state kept."
+                            "Change backend functions, routing, and business logic. The running server swaps the app dylib in-place with state preserved."
                         </p>
                     </div>
                 </div>
+
+                // Dev Console showcase
+                <div class="mt-14 rounded-2xl border border-border/80 bg-card/60 p-6 backdrop-blur sm:p-8">
+                    <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+                        <div class="lg:col-span-5">
+                            <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                                <Icon glyph=Glyph::Terminal class="h-3.5 w-3.5" />
+                                "Dev Console & Error Overlay"
+                            </div>
+                            <h3 class="mt-3 text-2xl font-bold tracking-tight">
+                                "Real-time diagnostics right in your browser"
+                            </h3>
+                            <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+                                "Never switch contexts to see what failed. The floating MontRS Dev Console gives you instant visual feedback with color-coded status rings, build and server error tracking, and one-click copy buttons for logs and stack traces."
+                            </p>
+                            <ul class="mt-6 space-y-3 text-sm">
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full bg-[#e5484d] ring-4 ring-[#e5484d]/20" />
+                                    <span>
+                                        <strong class="text-foreground">"Red Ring"</strong>
+                                        <span class="text-muted-foreground">" — Signals build errors, server panics, or unhandled runtime rejections."</span>
+                                    </span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full bg-[#d29922] ring-4 ring-[#d29922]/20" />
+                                    <span>
+                                        <strong class="text-foreground">"Yellow Ring"</strong>
+                                        <span class="text-muted-foreground">" — Alerts you to compiler warnings and console warnings without interrupting work."</span>
+                                    </span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <span class="mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full bg-[#3fb950] ring-4 ring-[#3fb950]/20" />
+                                    <span>
+                                        <strong class="text-foreground">"One-Click Copy"</strong>
+                                        <span class="text-muted-foreground">" — Copy individual error messages, stack frames, or the full diagnostic report directly to your clipboard."</span>
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="lg:col-span-7">
+                            <div class="relative overflow-hidden rounded-xl border border-border shadow-2xl bg-black/40">
+                                <div class="flex items-center justify-between border-b border-border/80 bg-muted/40 px-4 py-2.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="h-3 w-3 rounded-full bg-[#e5484d]" />
+                                        <span class="h-3 w-3 rounded-full bg-[#d29922]" />
+                                        <span class="h-3 w-3 rounded-full bg-[#3fb950]" />
+                                        <span class="ml-2 text-xs font-mono text-muted-foreground">"MontRS Dev Console"</span>
+                                    </div>
+                                    <span class="text-[11px] font-mono text-muted-foreground">"127.0.0.1:3000"</span>
+                                </div>
+                                <img
+                                    src="/dev-console-hot-reload.png"
+                                    alt="MontRS Dev Console showing real-time error overlay and hot reload status"
+                                    class="w-full object-cover"
+                                    loading="lazy"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mx-auto mt-14 max-w-3xl">
                     <CodeWindow tab="main.rs" body=move || highlight_rust(HOTRELOAD_SNIPPET) />
                 </div>

@@ -309,10 +309,32 @@ if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
 // iterations pin old bundles in Chrome even across a hard refresh.
 try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) { navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }); } if (window.caches && caches.keys) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }); } } catch (_) {}
 var E = [];
-function push(k, m, f) { E.push([k, m, f || '']); if (E.length > 60) E.shift(); }
+function hasError() {
+  for (var i = 0; i < E.length; i++) {
+    var k = E[i][0];
+    if (k === 'error' || k === 'rejection' || k === 'build' || k === 'server') return true;
+  }
+  return false;
+}
+function hasWarn() {
+  for (var i = 0; i < E.length; i++) {
+    var k = E[i][0];
+    if (k === 'warn' || k === 'console' || k === 'warning') return true;
+  }
+  return false;
+}
+function push(k, m, f) {
+  E.push([k, m, f || '']);
+  if (E.length > 60) E.shift();
+  if (typeof updateRing === 'function') updateRing();
+  if (open && typeof render === 'function') render();
+}
 window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
 window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; push('rejection', r ? String(r) : 'Promise rejected'); });
-try { (function (ce) { console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); }; })(console.error); } catch (_) {}
+try { (function (ce, cw) {
+  console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); };
+  if (cw) { console.warn = function () { push('warn', Array.prototype.map.call(arguments, String).join(' ')); return cw.apply(console, arguments); }; }
+})(console.error, console.warn); } catch (_) {}
 // User preferences: which side the button floats on, and how opaque it is.
 // Never fully transparent, so it can always be found and reopened.
 var MIN_OPACITY = 0.2;
@@ -352,6 +374,21 @@ try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo 
 if (!logo) {
   btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
+// Red ring when anything failed, amber ring when only warnings are present,
+// no ring when the log is clean. Drawn as an outline so it survives the logo
+// background and stays visible at any opacity.
+function updateRing() {
+  if (!btn) return;
+  var err = hasError(), warn = hasWarn();
+  var ring = err ? '#e5484d' : (warn ? '#d29922' : '');
+  btn.style.outline = ring ? '2px solid ' + ring : 'none';
+  btn.style.outlineOffset = '2px';
+  var shadow = '0 8px 24px rgba(0,0,0,0.25)';
+  if (ring) shadow += ',0 0 0 4px ' + (err ? 'rgba(229,72,77,0.25)' : 'rgba(210,153,34,0.25)');
+  btn.style.boxShadow = shadow;
+  var n = err ? 'error(s)' : (warn ? 'warning(s)' : '');
+  btn.title = 'MontRS dev console' + (n ? ' — ' + n + ' logged' : '') + ' — open to move it or change opacity';
+}
 function styleBtn() {
   btn.style.cssText = css().btn;
   if (logo) {
@@ -360,11 +397,24 @@ function styleBtn() {
     btn.style.backgroundRepeat = 'no-repeat';
     btn.style.backgroundPosition = 'center';
   }
+  updateRing();
 }
 styleBtn();
 var panel = null, open = false;
-function badge(k){ return k==='error' ? '#e5484d' : k==='rejection' ? '#b7791f' : '#60a5fa'; }
-function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function badge(k){
+  if (k === 'error' || k === 'build' || k === 'server') return '#e5484d';
+  if (k === 'rejection' || k === 'warn' || k === 'warning') return '#d29922';
+  return '#60a5fa';
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function copyAllText() {
+  return E.map(function (e) {
+    var tag = '[' + e[0].toUpperCase() + '] ';
+    var body = e[1] || '';
+    if (e[2]) body += '\n' + e[2];
+    return tag + body;
+  }).join('\n\n');
+}
 function render() {
   if (!panel) return;
   var sep = dark() ? '#333' : '#eee';
@@ -378,27 +428,56 @@ function render() {
     + '<button class="pos-toggle" title="Move the console to the other side" style="' + css().ctrl + '">'
     + (settings.pos === 'left' ? 'Right ▸' : '◂ Left') + '</button>'
     + '<span style="opacity:0.7;white-space:nowrap">Opacity</span>'
-    + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">'
-    + '</div>';
+    + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">';
+  if (E.length > 0) {
+    out += '<button class="copy-all" title="Copy all logged messages and frames" style="' + css().ctrl + ';margin-left:auto">Copy all</button>';
+  }
+  out += '</div>';
   if (E.length === 0) {
     out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
   } else {
     for (var i = 0; i < E.length; i++) {
       var c = badge(E[i][0]);
-      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + ';color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
+      var kind = E[i][0];
+      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + '">';
+      out += '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">';
+      out += '<span style="font-weight:600;font-size:10px;text-transform:uppercase;color:' + c + '">' + esc(kind) + '</span>';
+      out += '<button class="copy-item" data-i="' + i + '" style="' + css().ctrl + ';padding:1px 6px;font-size:9px" title="Copy this message">copy</button>';
+      out += '</div>';
+      out += '<div style="color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
       if (E[i][2]) {
-        out += '<pre style="position:relative">' + esc(E[i][2]) + '<button class="copy" style="' + css().copy + '" data-i="' + i + '">copy</button></pre>';
+        out += '<pre style="position:relative;margin:6px 0 0;' + css().frame + '">' + esc(E[i][2]) + '<button class="copy-frame" style="' + css().copy + '" data-i="' + i + '">copy frame</button></pre>';
       }
+      out += '</div>';
     }
   }
   panel.innerHTML = out;
-  panel.querySelectorAll && panel.querySelectorAll('.copy').forEach(function (b) {
+  panel.querySelectorAll && panel.querySelectorAll('.copy-item').forEach(function (b) {
+    b.onclick = function () {
+      var i = parseInt(b.getAttribute('data-i'), 10);
+      var item = E[i];
+      if (!item) return;
+      var text = '[' + item[0].toUpperCase() + '] ' + item[1] + (item[2] ? '\n\n' + item[2] : '');
+      try { navigator.clipboard.writeText(text); b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy'; }, 1500); }
+      catch (_) { b.textContent = 'fail'; }
+    };
+  });
+  panel.querySelectorAll && panel.querySelectorAll('.copy-frame').forEach(function (b) {
     b.onclick = function () {
       var i = parseInt(b.getAttribute('data-i'), 10);
       var t = E[i] && E[i][2] || '';
-      try { navigator.clipboard.writeText(t); b.textContent = 'copied'; } catch (_) { b.textContent = 'fail'; }
+      try { navigator.clipboard.writeText(t); b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy frame'; }, 1500); }
+      catch (_) { b.textContent = 'fail'; }
     };
   });
+  var copyAllBtn = panel.querySelector('.copy-all');
+  if (copyAllBtn) {
+    copyAllBtn.onclick = function () {
+      var all = copyAllText();
+      try { navigator.clipboard.writeText(all); copyAllBtn.textContent = 'Copied!'; setTimeout(function(){ copyAllBtn.textContent = 'Copy all'; }, 1500); }
+      catch (_) { copyAllBtn.textContent = 'Failed'; }
+    };
+  }
   var op = panel.querySelector('.op');
   if (op) {
     op.oninput = function () {
