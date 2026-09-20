@@ -400,8 +400,12 @@ impl<C: AppConfig> Router<C> {
         // 4. Built-in 404
         view! {
             <div class="flex flex-col items-center justify-center min-h-[60vh]">
-                <h1 class="text-4xl font-bold">"404"</h1>
-                <p class="text-muted-foreground">"Page not found"</p>
+                <h1 class="text-4xl font-bold">
+                    "404"
+                </h1>
+                <p class="text-muted-foreground">
+                    "Page not found"
+                </p>
             </div>
         }
         .into_any()
@@ -479,52 +483,47 @@ pub fn RouterAnchorGuard() -> impl IntoView {
                 return;
             };
 
-            let cb =
-                Closure::<dyn FnMut(leptos::web_sys::MouseEvent)>::wrap(
-                    Box::new(move |ev: leptos::web_sys::MouseEvent| {
-                        if ev.default_prevented() {
-                            return;
-                        }
-                        let Some(target) = ev
-                            .target()
-                            .and_then(|t| {
-                                t.dyn_into::<leptos::web_sys::Element>().ok()
-                            })
-                        else {
-                            return;
-                        };
-                        let Ok(Some(anchor)) = target.closest("a") else {
-                            return;
-                        };
-                        let href =
-                            anchor.get_attribute("href").unwrap_or_default();
+            let cb = Closure::<dyn FnMut(leptos::web_sys::MouseEvent)>::wrap(
+                Box::new(move |ev: leptos::web_sys::MouseEvent| {
+                    if ev.default_prevented() {
+                        return;
+                    }
+                    let Some(target) = ev.target().and_then(|t| {
+                        t.dyn_into::<leptos::web_sys::Element>().ok()
+                    }) else {
+                        return;
+                    };
+                    let Ok(Some(anchor)) = target.closest("a") else {
+                        return;
+                    };
+                    let href = anchor.get_attribute("href").unwrap_or_default();
 
-                        // Only bare `#` placeholders are neutralised; real
-                        // fragment links (e.g. the skip link) must keep working.
-                        if href.is_empty() || href == "#" {
-                            ev.prevent_default();
-                            return;
-                        }
-                        if !href.starts_with('/') || href.starts_with("//") {
-                            return;
-                        }
-                        if ev.meta_key()
-                            || ev.ctrl_key()
-                            || ev.shift_key()
-                            || ev.alt_key()
-                        {
-                            return;
-                        }
-                        if anchor.get_attribute("target").is_some()
-                            || anchor.get_attribute("download").is_some()
-                        {
-                            return;
-                        }
-
+                    // Only bare `#` placeholders are neutralised; real
+                    // fragment links (e.g. the skip link) must keep working.
+                    if href.is_empty() || href == "#" {
                         ev.prevent_default();
-                        navigate(&href, Default::default());
-                    }),
-                );
+                        return;
+                    }
+                    if !href.starts_with('/') || href.starts_with("//") {
+                        return;
+                    }
+                    if ev.meta_key()
+                        || ev.ctrl_key()
+                        || ev.shift_key()
+                        || ev.alt_key()
+                    {
+                        return;
+                    }
+                    if anchor.get_attribute("target").is_some()
+                        || anchor.get_attribute("download").is_some()
+                    {
+                        return;
+                    }
+
+                    ev.prevent_default();
+                    navigate(&href, Default::default());
+                }),
+            );
 
             let _ = document.add_event_listener_with_callback_and_bool(
                 "click",
@@ -536,7 +535,7 @@ pub fn RouterAnchorGuard() -> impl IntoView {
     }
 
     view! {
-        <span class="hidden" aria-hidden="true"></span>
+        <span class="hidden" aria-hidden="true" />
     }
 }
 
@@ -598,16 +597,10 @@ pub fn RouteLink<C: AppConfig + 'static>(
     };
 
     view! {
-        <a
-            href=to_owned
-            class=a_class
-            data-montrs-route=to
-            aria-current=move || active.get().then_some("page")
-            on:click=move |ev| {
+        <a href=to_owned class=a_class data-montrs-route=to aria-current=move || active.get().then_some("page") on:click=move |ev| {
                 ev.prevent_default();
                 navigate(to, Default::default());
-            }
-        >
+            }>
             {children()}
         </a>
     }

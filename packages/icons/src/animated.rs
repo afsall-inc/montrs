@@ -179,48 +179,48 @@ pub fn AnimatedSvg(
             }
         }
         match profile.get() {
-        AnimationProfile::Pulse => css_class.set("montrs-pulse"),
-        AnimationProfile::Bounce => css_class.set("montrs-bounce"),
-        AnimationProfile::Ping => css_class.set("montrs-ping"),
-        AnimationProfile::Spin => {
-            is_spinning.set(true);
-            let start = FrameLoop::now();
-            FrameLoop::on_frame(move || {
-                if !is_spinning.get() {
-                    return false;
-                }
-                let elapsed = FrameLoop::now() - start;
-                rotate.set((elapsed * 360.0 * 1.5) % 360.0);
-                true
-            });
-        }
-        AnimationProfile::Shake => {
-            is_spinning.set(true);
-            let start = FrameLoop::now();
-            FrameLoop::on_frame(move || {
-                let elapsed = FrameLoop::now() - start;
-                if elapsed > 0.6 || !is_spinning.get() {
-                    return false;
-                }
-                rotate.set((elapsed * 40.0).sin() * 10.0);
-                true
-            });
-        }
-        AnimationProfile::Nod => {
-            translate_y.set(-4.0);
-            FrameLoop::on_frame(move || {
-                let current: f64 = translate_y.get();
-                let next: f64 = current + (0.0 - current) * 0.2;
-                translate_y.set(next);
-                next.abs() > 0.1
-            });
-        }
-        AnimationProfile::PathDraw => {
-            if let Some(svg) = resolve_svg(&ev) {
-                draw_svg(&svg, 350, 0);
+            AnimationProfile::Pulse => css_class.set("montrs-pulse"),
+            AnimationProfile::Bounce => css_class.set("montrs-bounce"),
+            AnimationProfile::Ping => css_class.set("montrs-ping"),
+            AnimationProfile::Spin => {
+                is_spinning.set(true);
+                let start = FrameLoop::now();
+                FrameLoop::on_frame(move || {
+                    if !is_spinning.get() {
+                        return false;
+                    }
+                    let elapsed = FrameLoop::now() - start;
+                    rotate.set((elapsed * 360.0 * 1.5) % 360.0);
+                    true
+                });
             }
-        }
-        AnimationProfile::None => {}
+            AnimationProfile::Shake => {
+                is_spinning.set(true);
+                let start = FrameLoop::now();
+                FrameLoop::on_frame(move || {
+                    let elapsed = FrameLoop::now() - start;
+                    if elapsed > 0.6 || !is_spinning.get() {
+                        return false;
+                    }
+                    rotate.set((elapsed * 40.0).sin() * 10.0);
+                    true
+                });
+            }
+            AnimationProfile::Nod => {
+                translate_y.set(-4.0);
+                FrameLoop::on_frame(move || {
+                    let current: f64 = translate_y.get();
+                    let next: f64 = current + (0.0 - current) * 0.2;
+                    translate_y.set(next);
+                    next.abs() > 0.1
+                });
+            }
+            AnimationProfile::PathDraw => {
+                if let Some(svg) = resolve_svg(&ev) {
+                    draw_svg(&svg, 350, 0);
+                }
+            }
+            AnimationProfile::None => {}
         }
     };
 
@@ -266,10 +266,8 @@ pub fn AnimatedSvg(
     };
 
     view! {
-            <span class="inline-flex cursor-pointer">
-    <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class=move || {
+        <span class="inline-flex cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class=move || {
                       let extra = css_class.get();
                       let base = class_val.get();
                       if extra.is_empty() {
@@ -277,22 +275,9 @@ pub fn AnimatedSvg(
                       } else {
                           format!("{} {}", base, extra)
                       }
-                  }
-                  width=size_ok
-                  height=size2_ok
-                  viewBox=viewbox_ok
-                  fill=fill_ok
-                  stroke=stroke_ok
-                  stroke-width=sw_ok
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  style=svg_style
-                  on:mouseenter=on_enter
-                  on:mouseleave=on_leave
-                  inner_html=move || svg_text.get()
-                />
-            </span>
-        }
+                  } width=size_ok height=size2_ok viewBox=viewbox_ok fill=fill_ok stroke=stroke_ok stroke-width=sw_ok stroke-linecap="round" stroke-linejoin="round" style=svg_style on:mouseenter=on_enter on:mouseleave=on_leave inner_html=move || svg_text.get() />
+        </span>
+    }
 }
 
 /// Animated icon component for built-in [`Glyph`]s with spring physics on hover.
@@ -326,16 +311,7 @@ pub fn AnimatedIcon(
     });
 
     view! {
-        <AnimatedSvg
-            svg={TextProp::from(move || glyph.get().svg())}
-            class={class.unwrap_or_else(|| TextProp::from(""))}
-            size={size.unwrap_or_else(|| TextProp::from(DEFAULT_SIZE))}
-            fill={fill.unwrap_or_else(|| TextProp::from(DEFAULT_FILL))}
-            stroke={stroke.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE))}
-            stroke_width={stroke_width.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE_WIDTH))}
-            viewbox={viewbox.unwrap_or_else(|| TextProp::from("0 0 24 24"))}
-            profile=resolved
-        />
+        <AnimatedSvg svg={TextProp::from(move || glyph.get().svg())} class={class.unwrap_or_else(|| TextProp::from(""))} size={size.unwrap_or_else(|| TextProp::from(DEFAULT_SIZE))} fill={fill.unwrap_or_else(|| TextProp::from(DEFAULT_FILL))} stroke={stroke.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE))} stroke_width={stroke_width.unwrap_or_else(|| TextProp::from(DEFAULT_STROKE_WIDTH))} viewbox={viewbox.unwrap_or_else(|| TextProp::from("0 0 24 24"))} profile=resolved />
     }
 }
 

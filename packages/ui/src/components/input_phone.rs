@@ -48,13 +48,6 @@ pub fn InputPhone(
     let on_input =
         move |ev: leptos::ev::Event| value.set(event_target_value(&ev));
     view! {
-        <input
-            type="tel"
-            class=merged
-            value=move || value.get()
-            on:input=on_input
-            placeholder="+1 (555) 000-0000"
-            data-name="InputPhone"
-        />
+        <input type="tel" class=merged value=move || value.get() on:input=on_input placeholder="+1 (555) 000-0000" data-name="InputPhone" />
     }
 }

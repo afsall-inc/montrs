@@ -78,14 +78,15 @@ pub fn Templates() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Templates"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Templates"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Start from a pre-configured workspace with one command.
                     Every template includes Tailwind, dark mode, tests, and the
                     montrs task runner wired up in montrs.toml."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {TEMPLATES.iter().map(|(name, tag, cmd, desc)| view! {
                     <div class="showcase-card reveal p-6">
@@ -104,21 +105,33 @@ pub fn Templates() -> impl IntoView {
                     </div>
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div class="code-window">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"montrs.toml"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "montrs.toml"
+                        </span>
                     </div>
                     <pre class="code-window-body text-left">
-                        <span class="token-comment">"# tasks run from montrs.toml — no Makefile needed"</span>{"\n"}
-                        <span class="token-keyword">"[tasks]"</span>{"\n"}
-                        "dev = \"montrs serve\""{"\n"}
-                        "test = \"cargo test --workspace\""{"\n"}
-                        <span class="token-keyword">"[tasks.ci]"</span>{"\n"}
+                        <span class="token-comment">
+                            "# tasks run from montrs.toml — no Makefile needed"
+                        </span>
+                        {"\n"}
+                        <span class="token-keyword">
+                            "[tasks]"
+                        </span>
+                        {"\n"}
+                        "dev = \"montrs serve\""
+                        {"\n"}
+                        "test = \"cargo test --workspace\""
+                        {"\n"}
+                        <span class="token-keyword">
+                            "[tasks.ci]"
+                        </span>
+                        {"\n"}
                         "depends = [\"fmt\", \"lint\", \"test\"]"
                     </pre>
                 </div>

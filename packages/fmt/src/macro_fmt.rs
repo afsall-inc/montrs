@@ -30,7 +30,6 @@
 
 use crate::{FormatError, FormatterSettings};
 use crop::Rope;
-use montrs_utils::to_kebab_case;
 use quote::ToTokens;
 use rstml::node::{Node, NodeAttribute, NodeElement};
 use syn::{
@@ -49,11 +48,12 @@ pub struct MacroEdit {
 
 pub fn collect_and_format_macros(
     file: &File,
-    _source: &Rope,
+    source: &Rope,
     settings: &FormatterSettings,
     edits: &mut Vec<MacroEdit>,
 ) -> Result<(), FormatError> {
     let mut visitor = MacroVisitor {
+        source,
         settings,
         edits,
         errors: Vec::new(),
@@ -68,6 +68,7 @@ pub fn collect_and_format_macros(
 }
 
 struct MacroVisitor<'a> {
+    source: &'a Rope,
     settings: &'a FormatterSettings,
     edits: &'a mut Vec<MacroEdit>,
     errors: Vec<String>,
@@ -109,6 +110,18 @@ impl MacroVisitor<'_> {
     }
 
     fn format_macro(&self, mac: &Macro) -> Result<String, FormatError> {
+        let span = mac.delimiter.span().join();
+        let original = crate::comments::get_text_between_spans(
+            self.source,
+            span.start(),
+            span.end(),
+        );
+        if !crate::comments::extract_comments(&original).1.is_empty() {
+            return Ok(original);
+        }
+        let line = self.source.line(span.start().line - 1).to_string();
+        let base_indent =
+            line.chars().take_while(|c| c.is_whitespace()).count();
         let tokens = mac.tokens.clone();
 
         // rstml 0.12.x provides a top-level parse2 function
@@ -116,8 +129,9 @@ impl MacroVisitor<'_> {
             .map_err(|e| FormatError::Macro(e.to_string()))?;
 
         let mut printer = RstmlPrinter {
+            source: self.source,
             settings: self.settings,
-            indent: self.settings.tab_spaces, // Start with one level of indentation
+            indent: base_indent + self.settings.tab_spaces,
             result: String::new(),
         };
 
@@ -126,11 +140,18 @@ impl MacroVisitor<'_> {
         let result = printer.result.trim_end();
 
         // Return only the contents of the braces, with the braces themselves
-        Ok(format!("{{\n{result}\n}}"))
+        let closing_indent = " ".repeat(base_indent);
+        let (open, close) = match mac.delimiter {
+            syn::MacroDelimiter::Brace(_) => ('{', '}'),
+            syn::MacroDelimiter::Paren(_) => ('(', ')'),
+            syn::MacroDelimiter::Bracket(_) => ('[', ']'),
+        };
+        Ok(format!("{open}\n{result}\n{closing_indent}{close}"))
     }
 }
 
 struct RstmlPrinter<'a> {
+    source: &'a Rope,
     settings: &'a FormatterSettings,
     indent: usize,
     result: String,
@@ -154,17 +175,44 @@ impl RstmlPrinter<'_> {
             Node::Element(el) => self.print_element(el),
             Node::Text(text) => {
                 self.add_indent();
-                self.result
-                    .push_str(&text.value.to_token_stream().to_string());
+                let tokens = text.value.to_token_stream();
+                self.result.push_str(
+                    &self
+                        .span_text(&tokens)
+                        .unwrap_or_else(|| tokens.to_string()),
+                );
                 self.result.push('\n');
             }
             Node::Block(block) => {
                 self.add_indent();
-                self.result.push_str("{ ");
-                self.result.push_str(&block.to_token_stream().to_string());
-                self.result.push_str(" }\n");
+                let tokens = block.to_token_stream();
+                let text = self
+                    .span_text(&tokens)
+                    .unwrap_or_else(|| tokens.to_string());
+                self.result.push_str(text.trim());
+                self.result.push('\n');
             }
-            _ => {} // Handle other nodes as needed
+            Node::Comment(comment) => {
+                self.add_indent();
+                self.result.push_str("<!-- ");
+                self.result
+                    .push_str(&comment.value.to_token_stream().to_string());
+                self.result.push_str(" -->\n");
+            }
+            Node::Fragment(fragment) => {
+                self.add_indent();
+                self.result.push_str("<>\n");
+                self.indent += self.settings.tab_spaces;
+                self.print_nodes(&fragment.children);
+                self.indent -= self.settings.tab_spaces;
+                self.add_indent();
+                self.result.push_str("</>\n");
+            }
+            _ => {
+                self.add_indent();
+                self.result.push_str(&node.to_token_stream().to_string());
+                self.result.push('\n');
+            }
         }
     }
 
@@ -174,16 +222,11 @@ impl RstmlPrinter<'_> {
     {
         self.add_indent();
         let original_name = el.name().to_string();
-        let name = if original_name
-            .chars()
-            .next()
-            .map(|c| c.is_uppercase())
-            .unwrap_or(false)
-        {
-            // Component: Force PascalCase
+        let name = if original_name.contains("::") {
+            original_name.clone()
+        } else if original_name.starts_with(char::is_uppercase) {
             montrs_utils::to_pascal_case(&original_name)
         } else {
-            // HTML Tag: Force lowercase
             original_name.to_lowercase()
         };
         self.result.push('<');
@@ -214,13 +257,22 @@ impl RstmlPrinter<'_> {
     fn print_attribute(&mut self, attr: &NodeAttribute) {
         match attr {
             NodeAttribute::Block(block) => {
-                self.result.push_str(&block.to_token_stream().to_string());
+                let tokens = block.to_token_stream();
+                let text = self
+                    .span_text(&tokens)
+                    .unwrap_or_else(|| tokens.to_string());
+                self.result.push_str(text.trim());
             }
             NodeAttribute::Attribute(a) => {
-                self.result.push_str(&to_kebab_case(&a.key.to_string()));
+                self.result.push_str(&a.key.to_string());
                 if let Some(value) = a.value() {
                     self.result.push('=');
-                    self.result.push_str(&value.to_token_stream().to_string());
+                    let tokens = value.to_token_stream();
+                    self.result.push_str(
+                        &self
+                            .span_text(&tokens)
+                            .unwrap_or_else(|| tokens.to_string()),
+                    );
                 }
             }
         }
@@ -230,6 +282,16 @@ impl RstmlPrinter<'_> {
         for _ in 0..self.indent {
             self.result.push(' ');
         }
+    }
+
+    fn span_text(&self, tokens: &proc_macro2::TokenStream) -> Option<String> {
+        let trees: Vec<_> = tokens.clone().into_iter().collect();
+        let start = trees.first()?.span().byte_range().start;
+        let end = trees.last()?.span().byte_range().end;
+        if start >= end {
+            return None;
+        }
+        Some(self.source.byte_slice(start..end).to_string())
     }
 }
 
@@ -264,5 +326,11 @@ fn line_col_to_byte_offset(
         return None;
     }
     let line_start = source.byte_of_line(line - 1);
-    Some(line_start + col)
+    let text = source.line(line - 1).to_string();
+    let byte_col = text
+        .char_indices()
+        .map(|(offset, _)| offset)
+        .chain(std::iter::once(text.len()))
+        .nth(col)?;
+    Some(line_start + byte_col)
 }

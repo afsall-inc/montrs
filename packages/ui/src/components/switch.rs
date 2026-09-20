@@ -79,20 +79,7 @@ pub fn Switch(
 
     view! {
         <div class="flex items-center space-x-2">
-            <button
-                type="button"
-                role="switch"
-                id=id.clone()
-                class=merged
-                aria-checked=move || checked.get()
-                aria-label=aria_label
-                aria-disabled=disabled.then_some("true")
-                data-state=move || if checked.get() { "checked" } else { "unchecked" }
-                disabled=disabled
-                on:click=click
-                on:keydown=toggle
-                data-name="Switch"
-            >
+            <button type="button" role="switch" id=id.clone() class=merged aria-checked=move || checked.get() aria-label=aria_label aria-disabled=disabled.then_some("true") data-state=move || if checked.get() { "checked" } else { "unchecked" } disabled=disabled on:click=click on:keydown=toggle data-name="Switch">
                 <span class=thumb_class data-name="SwitchThumb" />
             </button>
             {label.map(move |l| {

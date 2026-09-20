@@ -93,23 +93,7 @@ pub fn Input(
                     }
                 }
             })}
-            <input
-                id=input_id
-                type=input_type
-                class=merged
-                placeholder=placeholder
-                value=move || value.get()
-                disabled=disabled
-                required=required
-                readonly=readonly
-                aria-invalid=move || has_error().then_some("true")
-                aria-describedby=error_for_input.as_ref().filter(|e| !e.is_empty()).map(|_| error_id.clone())
-                aria-required=required.then_some("true")
-                aria-label=aria_label
-                aria-disabled=disabled.then_some("true")
-                on:input=on_input
-                data-name="Input"
-            />
+            <input id=input_id type=input_type class=merged placeholder=placeholder value=move || value.get() disabled=disabled required=required readonly=readonly aria-invalid=move || has_error().then_some("true") aria-describedby=error_for_input.as_ref().filter(|e| !e.is_empty()).map(|_| error_id.clone()) aria-required=required.then_some("true") aria-label=aria_label aria-disabled=disabled.then_some("true") on:input=on_input data-name="Input" />
             {description.map(|d| view! {
                 <p class="text-sm text-muted-foreground">{d}</p>
             })}

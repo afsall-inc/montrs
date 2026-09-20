@@ -68,12 +68,7 @@ pub fn HoverCardTrigger(
     let merged = move || cn!("", class.get());
 
     view! {
-        <div
-            class=merged
-            on:mouseenter=move |_| open.set(true)
-            on:mouseleave=move |_| open.set(false)
-            data-name="HoverCardTrigger"
-        >
+        <div class=merged on:mouseenter=move |_| open.set(true) on:mouseleave=move |_| open.set(false) data-name="HoverCardTrigger">
             {children()}
         </div>
     }
@@ -100,12 +95,7 @@ pub fn HoverCardContent(
     };
 
     view! {
-        <div
-            class=merged
-            data-state=move || if open.get() { "open" } else { "closed" }
-            hidden=move || !open.get()
-            data-name="HoverCardContent"
-        >
+        <div class=merged data-state=move || if open.get() { "open" } else { "closed" } hidden=move || !open.get() data-name="HoverCardContent">
             {children()}
         </div>
     }

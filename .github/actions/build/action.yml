@@ -1,21 +1,10 @@
 name: 'Build'
 description: 'Build the project'
-inputs:
-  toolchain:
-    description: 'Rust toolchain version'
-    required: true
-    default: 'nightly'
 runs:
   using: "composite"
   steps:
-    - name: Validate toolchain
-      shell: bash
-      run: |
-        toolchain="${{ inputs.toolchain }}"
-        if [[ -z $toolchain ]]; then
-          echo "'toolchain' is a required input" >&2
-          exit 1
-        fi
     - name: Run Build
       shell: bash
-      run: cargo build --workspace --release
+      run: |
+        set -euo pipefail
+        cargo build --workspace --release

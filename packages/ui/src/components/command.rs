@@ -234,31 +234,19 @@ pub fn CommandMenu(
         };
 
     view! {
-            {children()}
-            <Show when=move || show.get()>
-                <div
-                    class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50"
-                    on:click=move |_| show.set(false)
-                >
-                    <div
-                        class="w-full max-w-lg rounded-lg border bg-popover shadow-2xl overflow-hidden"
-                        on:click=move |ev| ev.stop_propagation()
-                    >
-                        <div class="flex items-center border-b px-3">
-                            <svg class="mr-2 h-4 w-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            <input
-                                class="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
-                                placeholder="Type a command or search..."
-                                prop:value=move || search.get()
-                                on:input=move |ev| { search.set(event_target_value(&ev)); selected_index.set(0); }
-                                on:keydown=on_keydown
-                            />
-                        </div>
-                        <div class="max-h-[300px] overflow-y-auto p-1">
-    <For
-                                each=move || filtered()
-                                key=|action| action.id
-                                children=move |action| {
+        {children()}
+        <Show when=move || show.get()>
+            <div class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50" on:click=move |_| show.set(false)>
+                <div class="w-full max-w-lg rounded-lg border bg-popover shadow-2xl overflow-hidden" on:click=move |ev| ev.stop_propagation()>
+                    <div class="flex items-center border-b px-3">
+                        <svg class="mr-2 h-4 w-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                        </svg>
+                        <input class="flex h-11 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground" placeholder="Type a command or search..." prop:value=move || search.get() on:input=move |ev| { search.set(event_target_value(&ev)); selected_index.set(0); } on:keydown=on_keydown />
+                    </div>
+                    <div class="max-h-[300px] overflow-y-auto p-1">
+                        <For each=move || filtered() key=|action| action.id children=move |action| {
                                     let action_id = action.id;
                                     let action_name = action.name.clone();
                                     let action_shortcut = action.shortcut.clone();
@@ -293,9 +281,8 @@ pub fn CommandMenu(
                                             }}
                                         </div>
                                     }
-                                }
-                            />
-                            {move || {
+                                } />
+                        {move || {
                                 let items = filtered();
                                 if items.is_empty() {
                                     Some(view! {
@@ -305,9 +292,9 @@ pub fn CommandMenu(
                                     })
                                 } else { None }
                             }}
-                        </div>
                     </div>
                 </div>
-            </Show>
-        }
+            </div>
+        </Show>
+    }
 }

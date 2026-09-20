@@ -3,10 +3,15 @@ use montrs_auth::AuthConfig;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt().with_max_level(tracing::Level::INFO).init();
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
 
     let auth = montrs_auth::MontrsAuth::builder()
-        .config(AuthConfig::new("change-me-32-char-minimum-secret!!").base_url("http://localhost:3000"))
+        .config(
+            AuthConfig::new("change-me-32-char-minimum-secret!!")
+                .base_url("http://localhost:3000"),
+        )
         .database(Box::new(montrs_auth::database::MemoryDatabaseAdapter::new()))
         .build()
         .await?;

@@ -48,7 +48,9 @@ pub fn Integration01() -> impl IntoView {
 
     view! {
         <div class="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <h3 class="text-sm font-semibold mb-4">"Icon Library — Click to copy name"</h3>
+            <h3 class="text-sm font-semibold mb-4">
+                "Icon Library — Click to copy name"
+            </h3>
             <div class="grid grid-cols-4 gap-4">
                 {icons.into_iter().map(|g| {
                     let name = format!("{:?}", g);

@@ -90,13 +90,14 @@ pub fn Backgrounds() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Backgrounds"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Backgrounds"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "Ready-made CSS backgrounds — copy the class (or the full rule)
                     and drop it into your MontRS app. Pure CSS, no assets."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {patterns.into_iter().map(|(name, cls, desc)| {
                     let css = format!(".{cls} /* {desc} */");
@@ -114,15 +115,16 @@ pub fn Backgrounds() -> impl IntoView {
                     }
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="code-window mt-10 max-w-2xl">
                 <div class="code-window-bar">
-                    <span class="traffic-light traffic-light-red"></span>
-                    <span class="traffic-light traffic-light-yellow"></span>
-                    <span class="traffic-light traffic-light-green"></span>
-                    <span class="code-window-tab">"backgrounds.css"</span>
+                    <span class="traffic-light traffic-light-red" />
+                    <span class="traffic-light traffic-light-yellow" />
+                    <span class="traffic-light traffic-light-green" />
+                    <span class="code-window-tab">
+                        "backgrounds.css"
+                    </span>
                 </div>
-                <pre class="code-window-body text-left" inner_html=move || crate::highlight::escape_html(PATTERNS)></pre>
+                <pre class="code-window-body text-left" inner_html=move || crate::highlight::escape_html(PATTERNS) />
             </div>
         </div>
     }

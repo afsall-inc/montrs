@@ -44,7 +44,9 @@ pub fn DatePickerDualState(
     view! {
         <div class=merged data-name="DatePickerDualState">
             <input type="date" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value=move || start.get() on:input=on_start />
-            <span class="text-muted-foreground">"to"</span>
+            <span class="text-muted-foreground">
+                "to"
+            </span>
             <input type="date" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value=move || end.get() on:input=on_end />
         </div>
     }

@@ -14,7 +14,9 @@ pub fn MarketingHero() -> impl IntoView {
         <section class="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
             <div>
                 <span class="pill">
-                    <span class="pill-accent">"New"</span>
+                    <span class="pill-accent">
+                        "New"
+                    </span>
                     "Shipped in v0.1.0"
                 </span>
                 <h3 class="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
@@ -25,7 +27,9 @@ pub fn MarketingHero() -> impl IntoView {
                     MontRS handles the rest, deterministically."
                 </p>
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <Button size=ButtonSize::Lg>"Get started"</Button>
+                    <Button size=ButtonSize::Lg>
+                        "Get started"
+                    </Button>
                     <Button variant=ButtonVariant::Outline size=ButtonSize::Lg>
                         "Read the docs"
                     </Button>
@@ -45,12 +49,15 @@ pub fn MarketingHero() -> impl IntoView {
             </div>
             <div class="code-window">
                 <div class="code-window-bar">
-                    <span class="traffic-light traffic-light-red"></span>
-                    <span class="traffic-light traffic-light-yellow"></span>
-                    <span class="traffic-light traffic-light-green"></span>
-                    <span class="code-window-tab">"montrs.toml"</span>
+                    <span class="traffic-light traffic-light-red" />
+                    <span class="traffic-light traffic-light-yellow" />
+                    <span class="traffic-light traffic-light-green" />
+                    <span class="code-window-tab">
+                        "montrs.toml"
+                    </span>
                 </div>
-                <pre class="code-window-body text-left">"# One spec, every target
+                <pre class="code-window-body text-left">
+                    "# One spec, every target
 
 [project]
 name = \"my-app\"
@@ -60,7 +67,8 @@ target = \"web\"
 
 [tasks]
 ship = \"montrs build\"
-"</pre>
+"
+                </pre>
             </div>
         </section>
     }

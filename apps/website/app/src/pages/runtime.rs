@@ -83,13 +83,14 @@ pub fn Runtime() -> impl IntoView {
     view! {
         <div class="page-container py-12">
             <div class="mb-10">
-                <h1 class="text-3xl font-bold tracking-tight">"Runtime"</h1>
+                <h1 class="text-3xl font-bold tracking-tight">
+                    "Runtime"
+                </h1>
                 <p class="mt-2 max-w-2xl text-muted-foreground">
                     "A native Rust runtime for embedded scripting — Deno-inspired
                     ops, memory-optimized, and deterministic."
                 </p>
             </div>
-
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {ops.into_iter().map(|(icon, title, desc)| view! {
                     <div class="showcase-card reveal p-6">
@@ -99,16 +100,17 @@ pub fn Runtime() -> impl IntoView {
                     </div>
                 }).collect::<Vec<_>>()}
             </div>
-
             <div class="mt-10">
                 <div class="code-window max-w-2xl">
                     <div class="code-window-bar">
-                        <span class="traffic-light traffic-light-red"></span>
-                        <span class="traffic-light traffic-light-yellow"></span>
-                        <span class="traffic-light traffic-light-green"></span>
-                        <span class="code-window-tab">"runtime.rs"</span>
+                        <span class="traffic-light traffic-light-red" />
+                        <span class="traffic-light traffic-light-yellow" />
+                        <span class="traffic-light traffic-light-green" />
+                        <span class="code-window-tab">
+                            "runtime.rs"
+                        </span>
                     </div>
-                    <pre class="code-window-body text-left" inner_html=highlight_rust(RUNTIME_SNIPPET)></pre>
+                    <pre class="code-window-body text-left" inner_html=highlight_rust(RUNTIME_SNIPPET) />
                 </div>
             </div>
         </div>

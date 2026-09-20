@@ -51,6 +51,7 @@ pub enum IndentationStyle {
 pub enum NewlineStyle {
     Unix,
     Windows,
+    Auto,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -81,7 +82,7 @@ impl Default for FormatterSettings {
             max_width: 100,
             tab_spaces: 4,
             indentation_style: IndentationStyle::Spaces,
-            newline_style: NewlineStyle::Unix,
+            newline_style: NewlineStyle::Auto,
             view: ViewSettings::default(),
         }
     }
@@ -110,6 +111,37 @@ impl FormatterSettings {
         }
 
         Self::default()
+    }
+
+    /// Apply `max_width`, `tab_spaces`, and `hard_tabs` from a `rustfmt.toml`,
+    /// if present. Used as a fallback so `montrs fmt` agrees with `cargo fmt`
+    /// when the project has no MontRS-specific formatting config.
+    pub fn apply_rustfmt_toml(&mut self, path: &std::path::Path) {
+        let Ok(content) = std::fs::read_to_string(path) else {
+            return;
+        };
+        let Ok(value) = toml::from_str::<toml::Value>(&content) else {
+            return;
+        };
+        if let Some(max_width) =
+            value.get("max_width").and_then(|v| v.as_integer())
+        {
+            self.max_width = max_width.max(1) as usize;
+        }
+        if let Some(tab_spaces) =
+            value.get("tab_spaces").and_then(|v| v.as_integer())
+        {
+            self.tab_spaces = tab_spaces.max(1) as usize;
+        }
+        if let Some(hard_tabs) =
+            value.get("hard_tabs").and_then(|v| v.as_bool())
+        {
+            self.indentation_style = if hard_tabs {
+                IndentationStyle::Tabs
+            } else {
+                IndentationStyle::Spaces
+            };
+        }
     }
 }
 

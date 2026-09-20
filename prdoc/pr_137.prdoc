@@ -1,0 +1,56 @@
+---
+title: Hotpatch - preserve app state across reloads via a hotpatch.rs convention
+author: balqaasem
+pr: 137
+
+doc:
+  - audience: Developer
+    description: |
+      Changes for PR #137
+
+crates:
+  - name: montrs
+    bump: minor
+  - name: montrs-agent
+    bump: minor
+  - name: montrs-agentignore
+    bump: minor
+  - name: montrs-app-abi
+    bump: minor
+  - name: montrs-bench
+    bump: minor
+  - name: montrs-build
+    bump: minor
+  - name: montrs-build-core
+    bump: minor
+  - name: montrs-build-serve
+    bump: minor
+  - name: montrs-build-watch
+    bump: minor
+  - name: montrs-cli
+    bump: minor
+  - name: montrs-core
+    bump: minor
+  - name: montrs-dev-hotpatch
+    bump: minor
+  - name: montrs-dev-shell
+    bump: minor
+  - name: montrs-fmt
+    bump: minor
+  - name: montrs-haptics
+    bump: minor
+  - name: montrs-hot-reload
+    bump: minor
+  - name: montrs-hotpatch
+    bump: minor
+  - name: montrs-icons
+    bump: minor
+  - name: montrs-test
+    bump: minor
+  - name: montrs-ui
+    bump: minor
+  - name: montrs-utils
+    bump: minor
+  - name: website
+    bump: minor
+---

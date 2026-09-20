@@ -19,6 +19,7 @@ montrs-orm = { path = "../../../packages/orm" }
 montrs-test = { path = "../../../packages/test" }
 montrs-ui = { path = "../../../packages/ui" }
 montrs-icons = { path = "../../../packages/icons" }
+montrs-app-abi = { path = "../../../packages/app-abi" }
 montrs-state = { path = "../../../packages/state" }
 montrs-table-core = { path = "../../../packages/table-core" }
 montrs-hotkeys-core = { path = "../../../packages/hotkeys-core" }

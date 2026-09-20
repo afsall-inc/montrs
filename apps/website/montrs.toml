@@ -18,7 +18,6 @@ package = "website"
 # up with the actual WASM bundle.
 output-name = "front"
 assets-dir = "assets"
-release = true
 
 [tasks]
 dev = "montrs serve"

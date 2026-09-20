@@ -49,12 +49,6 @@ pub fn DatePicker(
         value.set(event_target_value(&ev));
     };
     view! {
-        <input
-            type="date"
-            class=merged
-            value=move || value.get()
-            on:input=on_input
-            data-name="DatePicker"
-        />
+        <input type="date" class=merged value=move || value.get() on:input=on_input data-name="DatePicker" />
     }
 }

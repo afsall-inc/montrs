@@ -41,17 +41,15 @@
 //! When in doubt it reports "not view-only", so a needed compile is never
 //! skipped.
 
+use leptos_hot_reload::ViewMacros;
+pub use leptos_hot_reload::diff::Patches;
 use std::{
     collections::HashMap,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
 };
-
-use leptos_hot_reload::ViewMacros;
 use syn::{spanned::Spanned, visit::Visit};
 use walkdir::WalkDir;
-
-pub use leptos_hot_reload::diff::Patches;
 
 /// Per-file hot-reload state: the parsed `view!` baseline and a hash of the
 /// file's non-view "skeleton".
@@ -76,7 +74,8 @@ impl ViewPatcher {
                 if !entry.file_type().is_file() {
                     continue;
                 }
-                if entry.path().extension().and_then(|e| e.to_str()) != Some("rs")
+                if entry.path().extension().and_then(|e| e.to_str())
+                    != Some("rs")
                 {
                     continue;
                 }
@@ -270,7 +269,8 @@ fn Card() -> impl IntoView {
 
         std::fs::write(
             &file,
-            "fn c() -> impl IntoView {\n    let x = 1;\n    view! { <div class=\"a\">\"hi\"</div> }\n}\n",
+            "fn c() -> impl IntoView {\n    let x = 1;\n    view! { <div \
+             class=\"a\">\"hi\"</div> }\n}\n",
         )
         .unwrap();
 
@@ -282,7 +282,8 @@ fn Card() -> impl IntoView {
 
         std::fs::write(
             &file,
-            "fn c() -> impl IntoView {\n    let x = 1;\n    view! { <div class=\"b\">\"bye\"</div> }\n}\n",
+            "fn c() -> impl IntoView {\n    let x = 1;\n    view! { <div \
+             class=\"b\">\"bye\"</div> }\n}\n",
         )
         .unwrap();
 
@@ -295,7 +296,8 @@ fn Card() -> impl IntoView {
         // A logic edit outside the view! macro must not be view-only.
         std::fs::write(
             &file,
-            "fn c() -> impl IntoView {\n    let x = 2;\n    view! { <div class=\"b\">\"bye\"</div> }\n}\n",
+            "fn c() -> impl IntoView {\n    let x = 2;\n    view! { <div \
+             class=\"b\">\"bye\"</div> }\n}\n",
         )
         .unwrap();
         assert!(!patcher.is_view_only(&file));

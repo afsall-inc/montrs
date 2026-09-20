@@ -59,11 +59,6 @@ pub fn Separator(
     };
 
     view! {
-        <div
-            class=merged
-            role="separator"
-            aria-orientation=if is_horizontal { "horizontal" } else { "vertical" }
-            data-name="Separator"
-        />
+        <div class=merged role="separator" aria-orientation=if is_horizontal { "horizontal" } else { "vertical" } data-name="Separator" />
     }
 }

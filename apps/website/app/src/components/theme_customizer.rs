@@ -210,7 +210,11 @@ fn rotate_hue(hsl: &str, delta: f64) -> String {
 /// Full semantic token set for a configuration and color mode.
 fn tokens_for(cfg: ThemeCfg, dark: bool) -> Vec<(&'static str, String)> {
     let (_, primary, primary_fg) = PRIMARY_OPTIONS[cfg.primary];
-    let palette = if dark { GRAY_OPTIONS } else { LIGHT_GRAY_OPTIONS };
+    let palette = if dark {
+        GRAY_OPTIONS
+    } else {
+        LIGHT_GRAY_OPTIONS
+    };
     let (_, bg, fg, muted_fg, border) = palette[cfg.gray];
     let (_, radius) = RADIUS_OPTIONS[cfg.radius];
     vec![
@@ -374,7 +378,6 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div>
                 <p class="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
                     "Background"
@@ -413,7 +416,6 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div>
                 <p class="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
                     "Border radius"
@@ -439,7 +441,6 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div>
                 <p class="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
                     "Quick presets"
@@ -457,29 +458,21 @@ pub fn ThemeCustomizer() -> impl IntoView {
                     }).collect::<Vec<_>>()}
                 </div>
             </div>
-
             <div class="flex flex-wrap items-center gap-2 border-t border-border pt-4">
-                <button
-                    type="button"
-                    class=move || {
+                <button type="button" class=move || {
                         let base = "copy-btn inline-flex items-center gap-1";
                         if copied.get() {
                             format!("{base} border-transparent bg-primary/15 text-primary")
                         } else {
                             base.to_string()
                         }
-                    }
-                    on:click=move |_| {
+                    } on:click=move |_| {
                         crate::copy::copy_text(&copy_css(cfg.get()));
                         flash_copied();
-                    }
-                >
+                    }>
                     {move || if copied.get() { "Copied".to_string() } else { "Copy theme CSS".to_string() }}
                 </button>
-                <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    on:click=move |_| {
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" on:click=move |_| {
                         #[cfg(target_arch = "wasm32")]
                         let url = {
                             let c = cfg.get();
@@ -501,16 +494,11 @@ pub fn ThemeCustomizer() -> impl IntoView {
                         let url = String::new();
                         crate::copy::copy_text(&url);
                         flash_copied();
-                    }
-                >
+                    }>
                     <Icon glyph=Glyph::Link class="h-3.5 w-3.5" />
                     "Copy link"
                 </button>
-                <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    on:click=reset
-                >
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" on:click=reset>
                     <Icon glyph=Glyph::RotateCcw class="h-3.5 w-3.5" />
                     "Reset"
                 </button>

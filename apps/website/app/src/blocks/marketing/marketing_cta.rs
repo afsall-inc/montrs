@@ -21,7 +21,9 @@ pub fn MarketingCta() -> impl IntoView {
                     with the same AppSpec, the same tests, the same output."
                 </p>
                 <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
-                    <Button size=ButtonSize::Lg>"Get Started"</Button>
+                    <Button size=ButtonSize::Lg>
+                        "Get Started"
+                    </Button>
                     <Button variant=ButtonVariant::Outline size=ButtonSize::Lg>
                         <Icon glyph=Glyph::Star class="mr-1.5 h-4 w-4" />
                         "Star on GitHub"

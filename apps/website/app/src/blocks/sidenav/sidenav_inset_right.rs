@@ -45,7 +45,9 @@ pub fn SidenavInsetRight() -> impl IntoView {
     view! {
         <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
             <div class="w-48 p-4 space-y-1">
-                <h4 class="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">"Details"</h4>
+                <h4 class="px-3 mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    "Details"
+                </h4>
                 {items.into_iter().map(|(label, icon)| {
                     let l = label;
                     let is_active = move || active.get() == l;
@@ -65,8 +67,12 @@ pub fn SidenavInsetRight() -> impl IntoView {
                     }
                 }).collect::<Vec<_>>()}
                 <div class="mt-4 pt-4 border-t border-border px-3">
-                    <p class="text-xs text-muted-foreground">"Status: Active"</p>
-                    <p class="text-xs text-muted-foreground mt-1">"Last edited: 2m ago"</p>
+                    <p class="text-xs text-muted-foreground">
+                        "Status: Active"
+                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">
+                        "Last edited: 2m ago"
+                    </p>
                 </div>
             </div>
         </div>

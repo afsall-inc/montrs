@@ -65,15 +65,10 @@ pub fn NavLink(
                 && current.starts_with(&format!("{}/", active_href)))
     });
     view! {
-        <a
-            href=href_attr
-            class=class
-            aria-current=move || is_active.get().then_some("page")
-            on:click=move |ev| {
+        <a href=href_attr class=class aria-current=move || is_active.get().then_some("page") on:click=move |ev| {
                 ev.prevent_default();
                 navigate(&href_nav, Default::default());
-            }
-        >
+            }>
             {children()}
         </a>
     }

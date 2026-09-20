@@ -6,14 +6,10 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      toolchain:
-        description: 'Rust toolchain version'
-        required: true
-        default: 'stable'
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_TOOLCHAIN: nightly-2026-02-18
 
 jobs:
   build:
@@ -25,7 +21,7 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@v1
       with:
-        toolchain: nightly-2026-02-18
+        toolchain: ${{ env.RUST_TOOLCHAIN }}
         components: rustfmt, clippy
         targets: wasm32-unknown-unknown
 
@@ -72,5 +68,3 @@ jobs:
 
     - name: Build
       uses: ./.github/actions/build
-      with:
-        toolchain: nightly-2026-02-18

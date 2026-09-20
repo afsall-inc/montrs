@@ -76,20 +76,7 @@ pub fn RadioButton(
 
     view! {
         <div class="flex items-center space-x-2">
-            <button
-                type="button"
-                role="radio"
-                id=id.clone()
-                class=merged
-                aria-checked=is_selected_for_aria
-                aria-label=aria_label
-                data-state=move || if is_selected_for_data_state() { "checked" } else { "unchecked" }
-                disabled=disabled
-                on:click=select
-                on:keydown=on_key_down
-                data-name="RadioButton"
-                value=value
-            >
+            <button type="button" role="radio" id=id.clone() class=merged aria-checked=is_selected_for_aria aria-label=aria_label data-state=move || if is_selected_for_data_state() { "checked" } else { "unchecked" } disabled=disabled on:click=select on:keydown=on_key_down data-name="RadioButton" value=value>
                 {move || if is_selected_for_svg() {
                     view! {
                         <svg
@@ -141,12 +128,7 @@ pub fn RadioGroup(
         };
 
     view! {
-        <div
-            class=merged
-            role="radiogroup"
-            data-name="RadioGroup"
-            on:keydown=on_key_down
-        >
+        <div class=merged role="radiogroup" data-name="RadioGroup" on:keydown=on_key_down>
             {children()}
         </div>
     }
