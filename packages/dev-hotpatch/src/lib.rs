@@ -1760,6 +1760,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(windows)]
     fn parses_linker_from_print_link_args() {
         let sample = "\"C:\\\\Program Files\\\\Microsoft Visual \
                       Studio\\\\2022\\\\VC\\\\Tools\\\\MSVC\\\\14.44.35207\\\\\
@@ -1774,6 +1775,15 @@ mod tests {
                  x64\\link.exe"
             )
         );
+        assert!(parse_linker_from_link_args("not quoted").is_none());
+    }
+
+    #[test]
+    #[cfg(not(windows))]
+    fn parses_linker_from_print_link_args() {
+        let sample = "\"/usr/bin/cc\" \"-o\" \"probe\"";
+        let linker = parse_linker_from_link_args(sample).expect("linker");
+        assert_eq!(linker, PathBuf::from("/usr/bin/cc"));
         assert!(parse_linker_from_link_args("not quoted").is_none());
     }
 
@@ -1838,11 +1848,14 @@ mod tests {
 
     #[test]
     fn workspace_rlibs_filter_by_prefix() {
-        let ws = PathBuf::from("C:\\proj\\target");
+        let ws = Path::new("proj").join("target");
+        let app = ws.join("debug").join("deps").join("libapp-1.rlib");
+        let sysroot = Path::new("rust").join("lib").join("libstd.rlib");
+        let ui = ws.join("debug").join("deps").join("libui-2.rlib");
         let args = vec![
-            "C:\\proj\\target\\debug\\deps\\libapp-1.rlib".to_string(),
-            "C:\\rust\\lib\\rustlib\\...\\libstd.rlib".to_string(),
-            "C:\\proj\\target\\debug\\deps\\libui-2.rlib".to_string(),
+            app.to_string_lossy().into_owned(),
+            sysroot.to_string_lossy().into_owned(),
+            ui.to_string_lossy().into_owned(),
             "-o".to_string(),
             "app.exe".to_string(),
         ];
