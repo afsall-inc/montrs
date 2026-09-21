@@ -61,12 +61,14 @@
 //! ```
 
 pub mod integration;
+pub mod kernel;
 pub mod unit;
 
 #[cfg(feature = "e2e")]
 pub mod e2e;
 
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
+pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
 use montrs_core::AgentError;
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
