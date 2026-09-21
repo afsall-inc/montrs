@@ -41,7 +41,7 @@ impl TestResponse {
     /// The rendered HTML with Leptos hot-reload markers removed — suitable for
     /// snapshot comparison.
     pub fn rendered_html(&self) -> String {
-        strip_hot_reload_markers(&self.text())
+        crate::strip_hot_reload_markers(&self.text())
     }
 
     /// Deserialize the body as JSON.
@@ -91,24 +91,6 @@ impl TestResponse {
         );
         self
     }
-}
-
-/// Remove `<!--hot-reload|…|open-->` / `…|close-->` markers from HTML.
-pub fn strip_hot_reload_markers(html: &str) -> String {
-    let mut out = String::with_capacity(html.len());
-    let mut rest = html;
-    while let Some(start) = rest.find("<!--hot-reload|") {
-        out.push_str(&rest[..start]);
-        match rest[start..].find("-->") {
-            Some(end) => rest = &rest[start + end + 3..],
-            None => {
-                rest = "";
-                break;
-            }
-        }
-    }
-    out.push_str(rest);
-    out
 }
 
 /// A client that drives an app's router in-process.
@@ -310,7 +292,7 @@ mod tests {
     #[test]
     fn strip_markers_is_idempotent_on_clean_html() {
         let html = "<!--hot-reload|a|open--><p>x</p><!--hot-reload|a|close-->";
-        assert_eq!(strip_hot_reload_markers(html), "<p>x</p>");
-        assert_eq!(strip_hot_reload_markers("<p>y</p>"), "<p>y</p>");
+        assert_eq!(crate::strip_hot_reload_markers(html), "<p>x</p>");
+        assert_eq!(crate::strip_hot_reload_markers("<p>y</p>"), "<p>y</p>");
     }
 }

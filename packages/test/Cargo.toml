@@ -17,6 +17,8 @@ montrs-orm = { path = "../orm" }
 leptos = { workspace = true, optional = true }
 montrs-motion = { path = "../motion", optional = true }
 rusqlite = { version = "0.31", features = ["bundled"], optional = true }
+scraper = { version = "0.20", optional = true }
+taffy = { version = "0.7", optional = true }
 playwright = { package = "playwright-rs", version = "0.8.2", optional = true }
 serde.workspace = true
 serde_json.workspace = true
@@ -30,4 +32,6 @@ default = []
 db = ["montrs-orm/sqlite", "dep:rusqlite"]
 e2e = ["dep:playwright"]
 http = ["montrs-core/ssr", "dep:leptos"]
+layout = ["sim-dom", "dep:taffy"]
 motion = ["dep:montrs-motion"]
+sim-dom = ["montrs-core/ssr", "dep:leptos", "dep:scraper"]

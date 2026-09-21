@@ -76,11 +76,33 @@ pub mod http;
 #[cfg(feature = "motion")]
 pub mod motion;
 
+#[cfg(feature = "sim-dom")]
+pub mod dom;
+
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
 pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
 use montrs_core::AgentError;
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
+
+/// Remove `<!--hot-reload|…|open-->` / `…|close-->` markers from HTML so that
+/// rendered output is stable for snapshots.
+pub fn strip_hot_reload_markers(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(start) = rest.find("<!--hot-reload|") {
+        out.push_str(&rest[..start]);
+        match rest[start..].find("-->") {
+            Some(end) => rest = &rest[start + end + 3..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
 
 /// Errors that can occur during testing.
 #[derive(Error, Debug)]
