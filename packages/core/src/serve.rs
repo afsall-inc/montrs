@@ -223,6 +223,68 @@ where
         .with_state(options)
 }
 
+/// A request to render through [`SsrApp`] without binding a socket.
+#[cfg(feature = "ssr")]
+#[derive(Debug, Clone, Default)]
+pub struct SsrRequest {
+    /// HTTP method (defaults to `GET`).
+    pub method: String,
+    /// Request URI, e.g. `/api/users?active=true`.
+    pub uri: String,
+    /// Request headers.
+    pub headers: Vec<(String, String)>,
+    /// Request body bytes.
+    pub body: Vec<u8>,
+}
+
+#[cfg(feature = "ssr")]
+impl SsrRequest {
+    /// A `GET` request for `uri`.
+    pub fn get(uri: impl Into<String>) -> Self {
+        Self {
+            method: "GET".to_string(),
+            uri: uri.into(),
+            ..Default::default()
+        }
+    }
+
+    /// A request with an explicit method and `uri`.
+    pub fn new(method: impl Into<String>, uri: impl Into<String>) -> Self {
+        Self {
+            method: method.into(),
+            uri: uri.into(),
+            ..Default::default()
+        }
+    }
+
+    /// Set the request body.
+    pub fn with_body(mut self, body: impl Into<Vec<u8>>) -> Self {
+        self.body = body.into();
+        self
+    }
+
+    /// Set a JSON body and `content-type` header.
+    pub fn with_json<T: serde::Serialize>(
+        mut self,
+        value: &T,
+    ) -> Result<Self, serde_json::Error> {
+        self.body = serde_json::to_vec(value)?;
+        self.headers
+            .push(("content-type".to_string(), "application/json".to_string()));
+        Ok(self)
+    }
+
+    /// Add a header.
+    pub fn with_header(
+        mut self,
+        name: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
+        self.headers.push((name.into(), value.into()));
+        self
+    }
+}
+
 /// An SSR app that can render individual requests **without** binding a socket.
 ///
 /// Used by the dev shell's hot-swappable app dylib: the shell owns the HTTP
@@ -260,6 +322,15 @@ impl SsrApp {
         uri: &str,
     ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
     {
+        self.render_request(SsrRequest::new(method, uri))
+    }
+
+    /// Render a full request (method, URI, headers, body) without a socket.
+    pub fn render_request(
+        &self,
+        request: SsrRequest,
+    ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
+    {
         use axum::body::Body;
         use tower::ServiceExt;
 
@@ -268,14 +339,16 @@ impl SsrApp {
             .build()?;
         let local = tokio::task::LocalSet::new();
         let app = self.app.clone();
-        let method = axum::http::Method::from_bytes(method.as_bytes())?;
-        let uri = uri.to_string();
+        let method = axum::http::Method::from_bytes(request.method.as_bytes())?;
+        let uri = request.uri.clone();
 
         rt.block_on(local.run_until(async move {
-            let req = axum::http::Request::builder()
-                .method(method)
-                .uri(uri)
-                .body(Body::empty())?;
+            let mut builder =
+                axum::http::Request::builder().method(method).uri(uri);
+            for (name, value) in &request.headers {
+                builder = builder.header(name.as_str(), value.as_str());
+            }
+            let req = builder.body(Body::from(request.body))?;
             let res = app.oneshot(req).await?;
             let status = res.status().as_u16();
             let headers = res
