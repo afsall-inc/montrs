@@ -100,6 +100,15 @@ impl RouteView for ProductsView {
     }
 }
 
+pub struct TestingView;
+impl RouteView for TestingView {
+    fn render(&self) -> impl IntoView {
+        view! {
+            <crate::pages::Testing />
+        }
+    }
+}
+
 pub struct AuthView;
 impl RouteView for AuthView {
     fn render(&self) -> impl IntoView {
@@ -205,6 +214,7 @@ view_route! { MotionRoute, "/ui/motion", MotionView }
 
 // Framework sections
 view_route! { ProductsRoute, "/products", ProductsView }
+view_route! { TestingRoute, "/testing", TestingView }
 view_route! { AuthRoute, "/auth", AuthView }
 view_route! { RuntimeRoute, "/runtime", RuntimeView }
 view_route! { AiKitRoute, "/ai", AiKitView }
@@ -261,6 +271,7 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(CliRoute);
         router.register(DocsRoute);
         router.register(ProductsRoute);
+        router.register(TestingRoute);
         router.register(AuthRoute);
         router.register(RuntimeRoute);
         router.register(AiKitRoute);

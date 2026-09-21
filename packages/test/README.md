@@ -63,4 +63,76 @@ async fn test_home_page() -> anyhow::Result<()> {
 }
 ```
 
+## Deterministic Test Fabric
+
+Everything below runs **in-process**: no server, no browser, no database, no wall clock.
+
+| Feature | Adds | What you test |
+|---------|------|---------------|
+| (kernel) | `Clock`, `TestClock`, `Rng`, `TestRng`, `TestHarness` | Deterministic time and randomness |
+| `http` | `TestClient`, `TestResponse`, harness `load`/`act` | Backend, APIs, loaders, actions |
+| `db` | `sqlite_memory`, `SqliteFixture`, `RecordingDb`, `MockDb` | SQL behaviour and call expectations |
+| `sim-dom` | `ComponentTest` | Component structure, text, classes, ARIA |
+| `layout` | `SimLayout`, `Viewport` | Box-model layout and **horizontal overflow** |
+| `motion` | `MotionTest` | Springs, tweens, keyframes over a virtual timeline |
+
+### Kernel
+
+```rust
+use montrs_test::prelude::*;
+
+let harness = TestHarness::new(build_spec()).seed(42).with_env("MODE", "test");
+harness.advance_ms(500); // time only moves when you say so
+```
+
+### APIs and loaders (no server)
+
+```rust
+let client = TestClient::new(&spec, || view! { <App /> })?;
+client.get("/health").unwrap().assert_status(200);
+
+let data = harness.load("/users/:id").await?;   // runs the loader in-process
+harness.act("/users", json!({ "name": "Ada" })).await?;
+```
+
+### Database (no server)
+
+```rust
+let db = sqlite_memory()?;                       // real SQL, in memory
+let rec = RecordingDb::new(sqlite_memory()?);    // records + delegates
+assert!(rec.ran("INSERT INTO users"));
+```
+
+### Components and overflow (no browser)
+
+```rust
+let view = ComponentTest::render(|| view! { <Card /> });
+view.assert_role("button", "Save");
+view.assert_class("div", "card");
+
+SimLayout::compute(view.html(), Viewport::width(320))
+    .assert_no_horizontal_overflow();
+```
+
+### Motion (deterministic timeline)
+
+```rust
+let mut motion = MotionTest::new(Spring::new(100.0, 10.0, 1.0).with_range(0.0, 1.0));
+motion.step_ms(16);
+motion.assert_settles_within_ms(600, 0.01);
+```
+
+### Notes and limits
+
+- `ComponentTest` renders to HTML: structure, text, classes, and ARIA are
+  covered, but live event dispatch requires a DOM (use the browser/CDP backend,
+  or `wasm-bindgen-test`).
+- `SimLayout` models a documented subset of inline styles and Tailwind
+  utilities and ignores text metrics. Use the CDP backend for pixel-accurate
+  checks.
+- `MockDb` answers `execute` and records `query`; it cannot fabricate typed rows
+  because `DbBackend::query` is generic over `T: FromRow`. Use `sqlite_memory`
+  for row-level assertions.
+
+
 ```

@@ -82,6 +82,7 @@ pub fn Home() -> impl IntoView {
         <StatsRow />
         <BentoGrid />
         <HotReload />
+        <TestFabric />
         <GoldenPath />
         <Philosophy />
         <AgentFirst />
@@ -343,7 +344,7 @@ fn Hero() -> impl IntoView {
 }
 
 #[component]
-fn CodeWindow(
+pub fn CodeWindow(
     tab: &'static str,
     #[prop(into)] body: TextProp,
 ) -> impl IntoView {
@@ -607,7 +608,103 @@ fn BentoGrid() -> impl IntoView {
 }
 
 // ---------------------------------------------------------------------------
-// Golden Path
+// Deterministic test fabric
+// ---------------------------------------------------------------------------
+
+const TESTFABRIC_SNIPPET: &str = r#"use montrs_test::prelude::*;
+
+#[test]
+fn card_is_accessible_and_fits() {
+    let view = ComponentTest::render(|| view! { <Card title="Hi" /> });
+
+    view.assert_role("button", "Save");
+    view.assert_text("Hi");
+
+    for width in [320.0, 768.0, 1280.0] {
+        SimLayout::compute(view.html(), Viewport::width(width))
+            .assert_no_horizontal_overflow();
+    }
+}"#;
+
+#[component]
+fn TestFabric() -> impl IntoView {
+    view! {
+        <section class="border-t border-border py-20">
+            <div class="page-container">
+                <div class="mx-auto max-w-2xl text-center">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
+                        <Icon glyph=Glyph::FlaskConical class="h-3.5 w-3.5" />
+                        "Deterministic Test Fabric"
+                    </div>
+                    <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+                        "Test everything without running anything."
+                    </h2>
+                    <p class="mt-4 text-muted-foreground">
+                        "Frontend, backend, APIs, databases, UI, motion, and all three
+                        deployment targets are testable in-process. No server, no
+                        browser, no external services — hermetic, reproducible, and fast."
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "In-process"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "APIs & loaders"
+                        </h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Render requests and run loaders straight through the router — assert status, headers, and JSON with no socket."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "Hermetic"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "Components & overflow"
+                        </h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Query the DOM by selector and assert layout fits every viewport width, without a browser."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">
+                                "Deterministic"
+                            </span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">
+                            "Time & motion"
+                        </h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "A controllable clock and seeded RNG make animations, retries, and rate limits exactly reproducible."
+                        </p>
+                    </div>
+                </div>
+                <div class="mx-auto mt-14 max-w-3xl">
+                    <CodeWindow tab="card_test.rs" body=move || highlight_rust(TESTFABRIC_SNIPPET) />
+                </div>
+                <div class="mt-8 flex flex-wrap justify-center gap-3">
+                    <a href="/testing" class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
+                        "Explore the test fabric"
+                        <Icon glyph=Glyph::ArrowRight class="ml-2 h-4 w-4" />
+                    </a>
+                    <a href="/docs" class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
+                        "Read the testing guide"
+                    </a>
+                </div>
+            </div>
+        </section>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Golden path
 // ---------------------------------------------------------------------------
 
 #[component]

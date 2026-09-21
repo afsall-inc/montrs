@@ -43,6 +43,7 @@ pub mod products;
 pub mod router;
 pub mod runtime;
 pub mod templates;
+pub mod testing;
 pub mod themes;
 pub mod ui;
 
@@ -61,5 +62,6 @@ pub use products::Products;
 pub use router::RouterDocs;
 pub use runtime::Runtime;
 pub use templates::Templates;
+pub use testing::Testing;
 pub use themes::Themes;
 pub use ui::Ui;

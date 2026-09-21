@@ -42,6 +42,7 @@ use montrs_ui::prelude::*;
 const NAV: &[(&str, &str, Glyph)] = &[
     ("Products", "/products", Glyph::Package),
     ("Templates", "/templates", Glyph::LayoutTemplate),
+    ("Testing", "/testing", Glyph::FlaskConical),
     ("Docs", "/docs", Glyph::BookOpen),
 ];
 
@@ -132,6 +133,7 @@ const COMMANDS: &[(&str, &str, &str)] = &[
     ("Backgrounds", "/ui/backgrounds", "Pages"),
     ("Products", "/products", "Pages"),
     ("Templates", "/templates", "Pages"),
+    ("Testing", "/testing", "Pages"),
     ("AI", "/ai", "Framework"),
     ("Auth", "/auth", "Framework"),
     ("Router", "/router", "Framework"),
