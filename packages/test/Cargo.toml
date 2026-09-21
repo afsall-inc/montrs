@@ -8,7 +8,7 @@ repository.workspace = true
 
 [package.metadata.montrs]
 layer = "2"
-allowed_deps = ["montrs-core", "montrs-orm", "montrs-bench"]
+allowed_deps = ["montrs-core", "montrs-orm", "montrs-bench", "montrs-motion"]
 
 [dependencies]
 montrs-core = { path = "../core" }

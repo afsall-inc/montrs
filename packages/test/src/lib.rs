@@ -88,6 +88,27 @@ use montrs_core::AgentError;
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
 
+/// The most commonly used testing types, in one import.
+pub mod prelude {
+    #[cfg(feature = "db")]
+    pub use crate::db::{
+        DbCall, DbCallKind, MockDb, RecordingDb, SqliteFixture,
+    };
+    #[cfg(feature = "sim-dom")]
+    pub use crate::dom::ComponentTest;
+    #[cfg(feature = "http")]
+    pub use crate::http::{TestClient, TestResponse};
+    #[cfg(feature = "layout")]
+    pub use crate::layout::{LayoutBox, SimLayout, Viewport};
+    #[cfg(feature = "motion")]
+    pub use crate::motion::{MotionTest, ScalarAnimation};
+    pub use crate::{
+        integration::{Fixture, TestEnv, TestRuntime, run_fixture_test},
+        kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng},
+        unit::{Mock, Spy, expect, simple_bench},
+    };
+}
+
 /// Remove `<!--hot-reload|…|open-->` / `…|close-->` markers from HTML so that
 /// rendered output is stable for snapshots.
 pub fn strip_hot_reload_markers(html: &str) -> String {
