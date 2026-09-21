@@ -5108,11 +5108,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "leptos",
  "montrs-bench",
  "montrs-core",
  "montrs-orm",
  "playwright-rs",
  "serde",
+ "serde_json",
  "thiserror 2.0.20",
  "tokio",
 ]

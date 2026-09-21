@@ -67,6 +67,9 @@ pub mod unit;
 #[cfg(feature = "e2e")]
 pub mod e2e;
 
+#[cfg(feature = "http")]
+pub mod http;
+
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
 pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
 use montrs_core::AgentError;

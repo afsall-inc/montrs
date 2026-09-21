@@ -223,6 +223,11 @@ where
         .with_state(options)
 }
 
+/// The raw result of an in-process render: status, headers, and body bytes.
+#[cfg(feature = "ssr")]
+pub type SsrRenderResult =
+    Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>;
+
 /// A request to render through [`SsrApp`] without binding a socket.
 #[cfg(feature = "ssr")]
 #[derive(Debug, Clone, Default)]
@@ -315,22 +320,13 @@ impl SsrApp {
         Ok(Self { app, options })
     }
 
-    /// Render a single request to `(status, headers, body)`.
-    pub fn render(
-        &self,
-        method: &str,
-        uri: &str,
-    ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
-    {
+    /// Render a single request to (status, headers, body).
+    pub fn render(&self, method: &str, uri: &str) -> SsrRenderResult {
         self.render_request(SsrRequest::new(method, uri))
     }
 
     /// Render a full request (method, URI, headers, body) without a socket.
-    pub fn render_request(
-        &self,
-        request: SsrRequest,
-    ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
-    {
+    pub fn render_request(&self, request: SsrRequest) -> SsrRenderResult {
         use axum::body::Body;
         use tower::ServiceExt;
 

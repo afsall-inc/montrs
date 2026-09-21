@@ -437,7 +437,7 @@ impl<C: AppConfig> Router<C> {
         if let Some(route) = self.exact_routes.get(path) {
             return Some(RouteRef {
                 inner: route,
-                params: serde_json::Value::Object(Default::default()),
+                params: serde_json::Value::Null,
             });
         }
 
@@ -453,14 +453,14 @@ impl<C: AppConfig> Router<C> {
         if let Some(catch_all) = self.exact_routes.get("*") {
             return Some(RouteRef {
                 inner: catch_all,
-                params: serde_json::Value::Object(Default::default()),
+                params: serde_json::Value::Null,
             });
         }
         for (path_str, _, route) in &self.routes {
             if path_str == "*" {
                 return Some(RouteRef {
                     inner: route,
-                    params: serde_json::Value::Object(Default::default()),
+                    params: serde_json::Value::Null,
                 });
             }
         }
@@ -526,6 +526,9 @@ impl<C: AppConfig> RouteRef<'_, C> {
 }
 
 fn params_to_json(params: HashMap<String, String>) -> serde_json::Value {
+    if params.is_empty() {
+        return serde_json::Value::Null;
+    }
     let mut map = serde_json::Map::new();
     for (k, v) in params {
         map.insert(k, serde_json::Value::String(v));
