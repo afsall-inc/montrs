@@ -5111,6 +5111,7 @@ dependencies = [
  "leptos",
  "montrs-bench",
  "montrs-core",
+ "montrs-motion",
  "montrs-orm",
  "playwright-rs",
  "rusqlite",
