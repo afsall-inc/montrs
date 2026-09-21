@@ -79,6 +79,9 @@ pub mod motion;
 #[cfg(feature = "sim-dom")]
 pub mod dom;
 
+#[cfg(feature = "layout")]
+pub mod layout;
+
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
 pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
 use montrs_core::AgentError;
