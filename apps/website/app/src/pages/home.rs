@@ -264,8 +264,8 @@ fn Hero() -> impl IntoView {
                             "Get Started"
                             <Icon glyph=Glyph::ArrowRight class="ml-2 h-4 w-4" />
                         </a>
-                        <a href="/packages" class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent">
-                            "Browse packages"
+                        <a href="/products" class="inline-flex items-center rounded-md border border-border px-6 py-3 text-sm font-semibold transition-colors hover:bg-accent">
+                            "Browse products"
                         </a>
                     </div>
                     <div class="mx-auto mt-12 max-w-xl">
@@ -803,7 +803,7 @@ fn AgentFirst() -> impl IntoView {
                             </div>
                         </div>
                         <a href="/ai" class="mt-6 inline-flex items-center text-sm font-medium text-primary hover:underline">
-                            "Explore the AI Kit →"
+                            "Explore AI capabilities →"
                         </a>
                     </div>
                     <div class="code-window">
@@ -889,7 +889,7 @@ fn SectionLinks() -> impl IntoView {
         (
             "/ai",
             Glyph::Bot,
-            "AI Kit",
+            "AI",
             "Agentic framework, spec snapshots, skills",
         ),
     ];
@@ -1111,12 +1111,12 @@ fn DocsCards() -> impl IntoView {
                 <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
                     <DocCard icon=Glyph::Rocket title="Application developers" subtitle="Building with MontRS" links=vec![
                             ("First 30 Minutes", "/ui/components"),
-                            ("Golden Path", "/packages"),
+                            ("Products & Packages", "/products"),
                             ("Common Mistakes", "/foundations"),
                         ] />
                     <DocCard icon=Glyph::Wrench title="Framework contributors" subtitle="Working on MontRS" links=vec![
                             ("Architecture Overview", "/runtime"),
-                            ("Package Boundaries", "/packages"),
+                            ("Products & Packages", "/products"),
                             ("Invariants & Philosophy", "/foundations"),
                         ] />
                     <DocCard icon=Glyph::Bot title="Agents" subtitle="Machine-readable context" links=vec![

@@ -69,14 +69,14 @@ pub fn Docs() -> impl IntoView {
         (
             "/ai",
             Glyph::Bot,
-            "AI Kit",
+            "AI",
             "Agent sidecar, curated tools, and MCP integration.",
         ),
         (
-            "/packages",
+            "/products",
             Glyph::Package,
-            "Packages",
-            "The 48 workspace crates and what each one owns.",
+            "Products",
+            "Publishable packages for building full-stack apps.",
         ),
         (
             "/ui",

@@ -91,11 +91,11 @@ impl RouteView for MotionView {
     }
 }
 
-pub struct PackagesView;
-impl RouteView for PackagesView {
+pub struct ProductsView;
+impl RouteView for ProductsView {
     fn render(&self) -> impl IntoView {
         view! {
-            <crate::pages::Packages />
+            <crate::pages::Products />
         }
     }
 }
@@ -204,7 +204,7 @@ view_route! { IconsRoute, "/ui/icons", IconsView }
 view_route! { MotionRoute, "/ui/motion", MotionView }
 
 // Framework sections
-view_route! { PackagesRoute, "/packages", PackagesView }
+view_route! { ProductsRoute, "/products", ProductsView }
 view_route! { AuthRoute, "/auth", AuthView }
 view_route! { RuntimeRoute, "/runtime", RuntimeView }
 view_route! { AiKitRoute, "/ai", AiKitView }
@@ -260,7 +260,7 @@ impl<C: AppConfig + 'static> Plate<C> for WebsitePlate {
         router.register(RouterRoute);
         router.register(CliRoute);
         router.register(DocsRoute);
-        router.register(PackagesRoute);
+        router.register(ProductsRoute);
         router.register(AuthRoute);
         router.register(RuntimeRoute);
         router.register(AiKitRoute);

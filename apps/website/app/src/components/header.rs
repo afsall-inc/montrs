@@ -38,11 +38,10 @@ use leptos_router::hooks::use_navigate;
 use montrs_icons::*;
 use montrs_ui::prelude::*;
 
-/// `(label, href, icon)` — top-level navigation. Framework destinations live
-/// in the dedicated "Framework" dropdown; the UI section has its own sub-nav.
+/// `(label, href, icon)` — plain top-level links that follow the dropdowns.
 const NAV: &[(&str, &str, Glyph)] = &[
+    ("Products", "/products", Glyph::Package),
     ("Templates", "/templates", Glyph::LayoutTemplate),
-    ("Packages", "/packages", Glyph::Package),
     ("Docs", "/docs", Glyph::BookOpen),
 ];
 
@@ -67,22 +66,56 @@ const FRAMEWORK: &[(&str, &str, Glyph, &str)] = &[
         "Native Rust runtime with ops and permissions.",
     ),
     (
-        "Auth",
-        "/auth",
-        Glyph::ShieldCheck,
-        "Sessions, OAuth, 2FA, and RBAC.",
-    ),
-    (
-        "AI Kit",
-        "/ai",
-        Glyph::Bot,
-        "Agent sidecar, tools, and MCP.",
-    ),
-    (
         "Foundations",
         "/foundations",
         Glyph::Blocks,
         "Plates, routes, signals, and the core model.",
+    ),
+];
+
+/// `(label, href, icon, description)` — the UI dropdown.
+const UI: &[(&str, &str, Glyph, &str)] = &[
+    (
+        "MontRS UI",
+        "/ui",
+        Glyph::LayoutDashboard,
+        "The component library overview.",
+    ),
+    (
+        "Components",
+        "/ui/components",
+        Glyph::Component,
+        "90+ accessible, styled components.",
+    ),
+    (
+        "Blocks",
+        "/ui/blocks",
+        Glyph::Blocks,
+        "Composable page sections and layouts.",
+    ),
+    (
+        "Icons",
+        "/ui/icons",
+        Glyph::Smile,
+        "22,000+ icons across nine families.",
+    ),
+    (
+        "Motion",
+        "/ui/motion",
+        Glyph::Sparkles,
+        "Springs, tweens, and gestures.",
+    ),
+    (
+        "Themes",
+        "/ui/themes",
+        Glyph::Palette,
+        "Theme tokens and the customizer.",
+    ),
+    (
+        "Backgrounds",
+        "/ui/backgrounds",
+        Glyph::Image,
+        "Decorative gradients and patterns.",
     ),
 ];
 
@@ -97,13 +130,13 @@ const COMMANDS: &[(&str, &str, &str)] = &[
     ("Motion", "/ui/motion", "Pages"),
     ("Themes", "/ui/themes", "Pages"),
     ("Backgrounds", "/ui/backgrounds", "Pages"),
-    ("Packages", "/packages", "Pages"),
+    ("Products", "/products", "Pages"),
     ("Templates", "/templates", "Pages"),
+    ("AI", "/ai", "Framework"),
+    ("Auth", "/auth", "Framework"),
     ("Router", "/router", "Framework"),
     ("CLI", "/cli", "Framework"),
-    ("Auth", "/auth", "Framework"),
     ("Runtime", "/runtime", "Framework"),
-    ("AI Kit", "/ai", "Framework"),
     ("Foundations", "/foundations", "Framework"),
     (
         "GitHub repository",
@@ -119,6 +152,7 @@ pub fn Header() -> impl IntoView {
     let mobile_open = RwSignal::new(false);
     let palette_open = RwSignal::new(false);
     let framework_open = RwSignal::new(false);
+    let ui_open = RwSignal::new(false);
     let query = RwSignal::new(String::new());
     let selected = RwSignal::new(0usize);
     let input_ref: NodeRef<leptos::html::Input> = NodeRef::new();
@@ -202,6 +236,7 @@ pub fn Header() -> impl IntoView {
                     palette_open.set(false);
                     mobile_open.set(false);
                     framework_open.set(false);
+                    ui_open.set(false);
                     return;
                 }
                 if key == "k" && (ev.meta_key() || ev.ctrl_key()) {
@@ -255,14 +290,6 @@ pub fn Header() -> impl IntoView {
                 </NavLink>
 
                 <nav class="hidden items-center gap-0.5 text-sm xl:flex" aria-label="Main">
-                    <NavLink
-                        href="/ui"
-                        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    >
-                        <Icon glyph=Glyph::Component class="h-3.5 w-3.5" />
-                        "UI"
-                    </NavLink>
-
                     // Framework dropdown
                     <div
                         class="relative"
@@ -302,6 +329,62 @@ pub fn Header() -> impl IntoView {
                             </div>
                         </Show>
                     </div>
+
+                    // UI dropdown
+                    <div
+                        class="relative"
+                        on:mouseenter=move |_| ui_open.set(true)
+                        on:mouseleave=move |_| ui_open.set(false)
+                    >
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            aria-haspopup="true"
+                            aria-expanded=move || ui_open.get()
+                            on:click=move |_| ui_open.update(|o| *o = !*o)
+                        >
+                            <Icon glyph=Glyph::Component class="h-3.5 w-3.5" />
+                            "UI"
+                            <Icon glyph=Glyph::ChevronDown class="h-3 w-3 opacity-70" />
+                        </button>
+                        <Show when=move || ui_open.get()>
+                            <div class="absolute left-0 top-full z-50 w-72 pt-2">
+                                <div class="grid gap-0.5 rounded-xl border border-border bg-popover p-2 shadow-xl">
+                                    {UI.iter().map(|(label, href, icon, desc)| {
+                                        view! {
+                                            <a
+                                                href=*href
+                                                class="flex items-start gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
+                                                on:click=move |_| ui_open.set(false)
+                                            >
+                                                <Icon glyph=*icon class="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                                                <span class="min-w-0">
+                                                    <span class="block text-sm font-medium text-foreground">{*label}</span>
+                                                    <span class="block text-xs text-muted-foreground">{*desc}</span>
+                                                </span>
+                                            </a>
+                                        }
+                                    }).collect::<Vec<_>>()}
+                                </div>
+                            </div>
+                        </Show>
+                    </div>
+
+                    <NavLink
+                        href="/ai"
+                        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                        <Icon glyph=Glyph::Bot class="h-3.5 w-3.5" />
+                        "AI"
+                    </NavLink>
+
+                    <NavLink
+                        href="/auth"
+                        class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                        <Icon glyph=Glyph::ShieldCheck class="h-3.5 w-3.5" />
+                        "Auth"
+                    </NavLink>
 
                     {NAV.iter().map(|(label, href, icon)| {
                         view! {
@@ -447,6 +530,49 @@ pub fn Header() -> impl IntoView {
                                 </a>
                             }
                         }).collect::<Vec<_>>()}
+                        <p class="mt-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            "UI"
+                        </p>
+                        {UI.iter().map(|(label, href, icon, _desc)| {
+                            view! {
+                                <a
+                                    href=*href
+                                    class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    on:click=move |ev| {
+                                        ev.prevent_default();
+                                        activate.run(href.to_string());
+                                    }
+                                >
+                                    <Icon glyph=*icon class="h-4 w-4" />
+                                    {*label}
+                                </a>
+                            }
+                        }).collect::<Vec<_>>()}
+                        <p class="mt-2 px-3 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            "More"
+                        </p>
+                        <a
+                            href="/ai"
+                            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |ev| {
+                                ev.prevent_default();
+                                activate.run("/ai".to_string());
+                            }
+                        >
+                            <Icon glyph=Glyph::Bot class="h-4 w-4" />
+                            "AI"
+                        </a>
+                        <a
+                            href="/auth"
+                            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            on:click=move |ev| {
+                                ev.prevent_default();
+                                activate.run("/auth".to_string());
+                            }
+                        >
+                            <Icon glyph=Glyph::ShieldCheck class="h-4 w-4" />
+                            "Auth"
+                        </a>
                         <div class="mt-1 flex flex-wrap items-center gap-2 border-t border-border px-2 pt-2">
                             <button
                                 type="button"
@@ -533,9 +659,19 @@ pub fn Header() -> impl IntoView {
                                     }
                                 }
                             />
-                            <kbd class="shrink-0 rounded border border-border bg-background px-1 font-mono text-[10px] text-muted-foreground">
-                                "esc"
-                            </kbd>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <kbd class="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                                    "esc"
+                                </kbd>
+                                <button
+                                    type="button"
+                                    class="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                    on:click=move |_| palette_open.set(false)
+                                    aria-label="Close search"
+                                >
+                                    <Icon glyph=Glyph::X class="h-3.5 w-3.5" />
+                                </button>
+                            </div>
                         </div>
                         <ul class="max-h-80 overflow-y-auto p-1">
                             {move || {
