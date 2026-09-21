@@ -75,20 +75,6 @@ lint = { command = "cargo clippy --workspace -- -D warnings", category = "Qualit
 test = { command = "cargo test --workspace", category = "Testing", depends = ["fmt", "lint"] }
 ship = { command = "montrs build", category = "Release", depends = ["test"] }"#;
 
-const HOTRELOAD_SNIPPET: &str = r#"// montrs.toml
-//   [serve]
-//   hotpatch = true
-
-// app/src/main.rs
-fn main() {
-    let spec = app::build_spec();
-    montrs_hotpatch::serve!(
-        spec.router,
-        || leptos::prelude::view! { <Shell /> },
-    )
-    .unwrap();
-}"#;
-
 #[component]
 pub fn Home() -> impl IntoView {
     view! {
@@ -226,9 +212,6 @@ fn HotReload() -> impl IntoView {
                     </div>
                 </div>
 
-                <div class="mx-auto mt-14 max-w-3xl">
-                    <CodeWindow tab="main.rs" body=move || highlight_rust(HOTRELOAD_SNIPPET) />
-                </div>
                 <div class="mt-8 flex justify-center">
                     <a href="/docs" class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                         "Read the live-loop guide"
