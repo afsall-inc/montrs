@@ -15,6 +15,7 @@ montrs-core = { path = "../core" }
 thiserror.workspace = true
 montrs-orm = { path = "../orm" }
 leptos = { workspace = true, optional = true }
+rusqlite = { version = "0.31", features = ["bundled"], optional = true }
 playwright = { package = "playwright-rs", version = "0.8.2", optional = true }
 serde.workspace = true
 serde_json.workspace = true
@@ -25,5 +26,6 @@ montrs-bench = { version = "0.1.0", path = "../bench" }
 
 [features]
 default = []
+db = ["montrs-orm/sqlite", "dep:rusqlite"]
 e2e = ["dep:playwright"]
 http = ["montrs-core/ssr", "dep:leptos"]

@@ -5113,6 +5113,7 @@ dependencies = [
  "montrs-core",
  "montrs-orm",
  "playwright-rs",
+ "rusqlite",
  "serde",
  "serde_json",
  "thiserror 2.0.20",

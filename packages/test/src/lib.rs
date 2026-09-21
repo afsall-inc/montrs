@@ -64,6 +64,9 @@ pub mod integration;
 pub mod kernel;
 pub mod unit;
 
+#[cfg(feature = "db")]
+pub mod db;
+
 #[cfg(feature = "e2e")]
 pub mod e2e;
 
