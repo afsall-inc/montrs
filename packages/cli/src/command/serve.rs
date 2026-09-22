@@ -45,7 +45,7 @@ use std::{
 };
 use tokio::{process::Command as TokioCommand, task::JoinHandle};
 
-pub async fn run() -> anyhow::Result<()> {
+pub async fn run(watch_workspace: bool) -> anyhow::Result<()> {
     let mut pipeline = match Pipeline::from_root(Path::new(".")) {
         Ok(p) => p,
         Err(e) => {
@@ -63,7 +63,7 @@ pub async fn run() -> anyhow::Result<()> {
     if pipeline.meta.serve.hotpatch
         || std::env::var_os("MONTRS_HOTPATCH").is_some()
     {
-        return super::serve_dylib::run().await;
+        return super::serve_dylib::run(watch_workspace).await;
     }
 
     // The dev server always builds in the dev profile. This keeps
@@ -95,49 +95,15 @@ pub async fn run() -> anyhow::Result<()> {
     let mut reload_port = pipeline.meta.serve.reload_port;
     let bin = pipeline.server_bin_path();
 
-    // Watch the app's source trees plus the workspace `packages/` tree (when
-    // present) so edits to framework crates — not just the app — trigger a
-    // rebuild. Watching the app root directly would drag in its `target/site`
-    // output and flood the watcher during every build, so watch only sources.
-    let mut watch_roots: Vec<PathBuf> = Vec::new();
-    for candidate in ["app", "src", "style", "assets"] {
-        let dir = pipeline.project_root.join(candidate);
-        if dir.exists() {
-            watch_roots.push(dir);
-        }
-    }
-    for manifest in ["Cargo.toml", "montrs.toml"] {
-        let file = pipeline.project_root.join(manifest);
-        if file.exists() {
-            watch_roots.push(file);
-        }
-    }
-    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
-        let packages = ws_root.join("packages");
-        if packages.exists() {
-            watch_roots.push(packages);
-        }
-    }
-    if watch_roots.is_empty() {
-        watch_roots.push(pipeline.project_root.clone());
-    }
+    // Watch only the app tree by default (see `dev_watch`); `--watch-workspace`
+    // or `montrs.toml [watch]` widen the scope. Watching the app root directly
+    // would drag in its `target/site` output and flood the watcher.
+    let watch_roots = super::dev_watch::watch_roots(&pipeline, watch_workspace);
+    let watch_options = super::dev_watch::watch_options(&pipeline);
 
     // Source roots scanned for `view!` macros so markup edits can be patched
-    // into the browser without a rebuild. The app plus the UI component crate
-    // are where view macros live.
-    let mut view_roots: Vec<PathBuf> = Vec::new();
-    for candidate in ["app", "src"] {
-        let dir = pipeline.project_root.join(candidate);
-        if dir.exists() {
-            view_roots.push(dir);
-        }
-    }
-    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
-        let ui = ws_root.join("packages").join("ui");
-        if ui.exists() {
-            view_roots.push(ui);
-        }
-    }
+    // into the browser without a rebuild.
+    let view_roots = super::dev_watch::view_roots(&pipeline);
     // cargo derives the `view!` stable ids from workspace-relative paths.
     let workspace_root = pipeline
         .workspace_target_dir
@@ -185,8 +151,9 @@ pub async fn run() -> anyhow::Result<()> {
                 &view_roots,
                 workspace_root,
             );
-            let _ = montrs_build::watch_paths(
+            let _ = montrs_build::watch_paths_with(
                 &watch_roots,
+                watch_options,
                 move |changed: &[PathBuf]| {
                     let mut rebuild = false;
                     let mut css_changed = false;

@@ -78,9 +78,17 @@ pub enum Commands {
     /// Build the project for production.
     Build,
     /// Serve the project for development with hot-reload.
-    Serve,
+    Serve {
+        /// Also watch the workspace `packages/` tree (framework contributor mode).
+        #[arg(long)]
+        watch_workspace: bool,
+    },
     /// Watch for changes and rebuild automatically.
-    Watch,
+    Watch {
+        /// Also watch the workspace `packages/` tree (framework contributor mode).
+        #[arg(long)]
+        watch_workspace: bool,
+    },
     /// Run cargo tests for app, client and server.
     Test {
         /// If specified, filters tests by name.
@@ -611,8 +619,12 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Build => command::build::run().await,
-        Commands::Serve => command::serve::run().await,
-        Commands::Watch => command::watch::run().await,
+        Commands::Serve { watch_workspace } => {
+            command::serve::run(watch_workspace).await
+        }
+        Commands::Watch { watch_workspace } => {
+            command::watch::run(watch_workspace).await
+        }
         Commands::Test {
             filter,
             report,

@@ -68,6 +68,8 @@ pub struct MontrsMetadata {
     #[serde(default)]
     pub serve: ServeMeta,
     #[serde(default)]
+    pub watch: WatchMeta,
+    #[serde(default)]
     pub build: BuildMeta,
     #[serde(default)]
     pub deploy: DeployMeta,
@@ -186,6 +188,34 @@ impl Default for ServeMeta {
             style_file: None,
         }
     }
+}
+
+/// Source-watch configuration for `montrs serve` / `montrs watch`.
+///
+/// By default the dev loop watches only the app directory (the one containing
+/// `montrs.toml`) plus its manifests — not the whole repository. Use this
+/// section to widen or narrow the set.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct WatchMeta {
+    /// Extra paths (relative to the project root) to watch.
+    #[serde(default)]
+    pub paths: Vec<String>,
+    /// Path substrings to ignore (in addition to `target`, `.git`, etc.).
+    #[serde(default)]
+    pub exclude: Vec<String>,
+    /// Override the watched file extensions (defaults to source-like files).
+    #[serde(default)]
+    pub extensions: Vec<String>,
+    /// Debounce window in milliseconds (default: 200).
+    #[serde(default)]
+    pub debounce_ms: Option<u64>,
+    /// Watch the workspace `packages/` tree (framework contributor mode).
+    #[serde(default)]
+    pub workspace_packages: bool,
+    /// Follow local `path` dependencies declared in `Cargo.toml` and watch them.
+    #[serde(default)]
+    pub follow_path_deps: bool,
 }
 
 /// Build configuration.

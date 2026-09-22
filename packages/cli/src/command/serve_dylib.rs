@@ -19,7 +19,7 @@ use std::{
 };
 use tokio::process::Command as TokioCommand;
 
-pub async fn run() -> anyhow::Result<()> {
+pub async fn run(watch_workspace: bool) -> anyhow::Result<()> {
     let mut pipeline = Pipeline::from_root(Path::new("."))?;
     pipeline.release = false;
     // Build the WASM client with the matching `hot` profile so both halves emit
@@ -89,39 +89,13 @@ pub async fn run() -> anyhow::Result<()> {
     std::fs::create_dir_all(&run_dir)?;
     let reload_file = run_dir.join("current");
 
-    // Watch the app sources and the workspace packages tree.
-    let mut watch_roots: Vec<PathBuf> = Vec::new();
-    for candidate in ["app", "src", "style", "assets"] {
-        let dir = pipeline.project_root.join(candidate);
-        if dir.exists() {
-            watch_roots.push(dir);
-        }
-    }
-    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
-        let packages = ws_root.join("packages");
-        if packages.exists() {
-            watch_roots.push(packages);
-        }
-    }
-    if watch_roots.is_empty() {
-        watch_roots.push(pipeline.project_root.clone());
-    }
+    // Watch only the app tree by default (see `dev_watch`).
+    let watch_roots = super::dev_watch::watch_roots(&pipeline, watch_workspace);
+    let watch_options = super::dev_watch::watch_options(&pipeline);
 
     // View roots scanned for `view!` macros so markup edits can be patched
     // live without an SSR recompile or shell reload.
-    let mut view_roots: Vec<PathBuf> = Vec::new();
-    for candidate in ["app", "src"] {
-        let dir = pipeline.project_root.join(candidate);
-        if dir.exists() {
-            view_roots.push(dir);
-        }
-    }
-    if let Some(ws_root) = pipeline.workspace_target_dir.parent() {
-        let ui = ws_root.join("packages").join("ui");
-        if ui.exists() {
-            view_roots.push(ui);
-        }
-    }
+    let view_roots = super::dev_watch::view_roots(&pipeline);
 
     let reload = match LiveReload::start(reload_port).await {
         Ok((r, port)) => {
@@ -180,8 +154,9 @@ pub async fn run() -> anyhow::Result<()> {
                 &view_roots,
                 workspace_root,
             );
-            let _ = montrs_build::watch_paths(
+            let _ = montrs_build::watch_paths_with(
                 &watch_roots,
+                watch_options,
                 move |changed: &[PathBuf]| {
                     let mut rebuild = false;
                     let mut needs_frontend = false;

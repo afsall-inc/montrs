@@ -30,6 +30,6 @@
 
 use super::serve;
 
-pub async fn run() -> anyhow::Result<()> {
-    serve::run().await
+pub async fn run(watch_workspace: bool) -> anyhow::Result<()> {
+    serve::run(watch_workspace).await
 }

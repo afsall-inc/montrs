@@ -36,6 +36,7 @@ pub mod agent;
 pub mod auth;
 pub mod bench;
 pub mod build;
+pub mod dev_watch;
 pub mod e2e;
 pub mod env;
 pub mod expand;
