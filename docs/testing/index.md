@@ -10,6 +10,90 @@ This guide covers how to leverage the `montrs-test` package and the `montrs` CLI
 
 ---
 
+## The Deterministic Test Fabric
+
+MontRS's flagship capability is a **hermetic test fabric**: every layer of the
+stack is testable **in-process**, with no server, no browser, no database server,
+no child process, and no wall clock. Results are deterministic and reproducible.
+
+Enable the backends you need:
+
+```bash
+cargo add montrs-test --features http,db,sim-dom,layout,motion
+```
+
+| Feature | Adds | What it tests |
+|---------|------|---------------|
+| (kernel) | `TestHarness`, `TestClock`, `TestRng` | deterministic time and randomness |
+| `http` | `TestClient`, `TestResponse` | APIs, loaders, actions |
+| `db` | `sqlite_memory`, `RecordingDb`, `MockDb` | query behaviour and call expectations |
+| `sim-dom` | `ComponentTest` | component structure, text, classes, ARIA |
+| `layout` | `SimLayout`, `Viewport` | box-model layout and horizontal overflow |
+| `motion` | `MotionTest` | springs, tweens, keyframes over a timeline |
+| `e2e` | `MontrsDriver` | real browser journeys (not hermetic) |
+
+### The harness
+
+```rust
+use montrs_test::prelude::*;
+
+let harness = TestHarness::new(build_spec()).seed(42).with_env("MODE", "test");
+harness.advance_ms(500); // virtual time advances only when you say so
+```
+
+### Backend and API tests (no server)
+
+`SsrApp::render_request` renders a request straight through the app's axum
+router, and `Router::route(path)` exposes a loader/action for direct execution.
+
+```rust
+let client = TestClient::new(&spec, || view! { <App /> })?;
+client.get("/health").assert_status(200);
+
+let user = harness.load("/users/:id").await?;         // runs the loader
+harness.act("/users", json!({ "name": "Ada" })).await?; // runs the action
+```
+
+### Database tests (no server)
+
+```rust
+let db = sqlite_memory()?;                        // real SQL, in memory
+let rec = RecordingDb::new(sqlite_memory()?);     // records AND delegates
+assert!(rec.ran("INSERT INTO users"));
+```
+
+### UI, layout, and overflow (no browser)
+
+```rust
+let view = ComponentTest::render(|| view! { <Card title="Hi" /> });
+view.assert_role("button", "Save");
+view.assert_text("Hi");
+
+for width in [320.0, 768.0, 1280.0] {
+    SimLayout::compute(view.html(), Viewport::width(width))
+        .assert_no_horizontal_overflow();
+}
+```
+
+### Animation timelines (deterministic)
+
+```rust
+let mut motion = MotionTest::new(Spring::new(100.0, 10.0, 1.0).with_range(0.0, 1.0));
+motion.step_ms(16);
+motion.assert_settles_within_ms(600, 0.01);
+```
+
+### Limitations to be aware of
+
+- `ComponentTest` renders to HTML; live event dispatch needs a DOM (browser/CDP
+  backend or `wasm-bindgen-test`).
+- `SimLayout` models a documented subset of inline styles and Tailwind utilities
+  and ignores text metrics; the CDP backend will be pixel-accurate.
+- `MockDb` cannot fabricate typed rows because `DbBackend::query` is generic over
+  `T: FromRow`; use `sqlite_memory` for row assertions.
+
+---
+
 ## 1. Unit Testing
 
 Unit tests in MontRS follow standard Rust testing practices but are enhanced with the `montrs-test` library for better determinism and mocking.

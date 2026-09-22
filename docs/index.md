@@ -14,6 +14,7 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [ORM Layer](orm/index.md) - Working with databases.
 - [ORM Backends](orm/backends.md) - Supported databases.
 - [Testing](testing/index.md) - Writing deterministic tests.
+- [Deterministic Test Fabric](testing/index.md#the-deterministic-test-fabric) - Test every layer in-process: APIs, DB, UI, layout/overflow, motion, targets.
 - [Benchmarking](testing/benchmarking.md) - Measuring performance.
 - [Hot Reload & Hot Patching](tooling/hot-reload.md) - The live dev loop.
 - [Deployment](community/deployment.md) - Shipping to production.
