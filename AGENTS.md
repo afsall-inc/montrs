@@ -32,6 +32,8 @@ After any change: `montrs agent check` then `montrs agent snapshot` to regenerat
 
 **Invariants**: Read scoped rules from `agent.json → packages[].invariants` for the package you're editing. Don't read all invariants by default.
 
+**MUST**: Everything MUST be **M**odular, **U**niversal, **S**imple, and **T**estable — the acceptance bar for any change. See `docs/architecture/philosophy.md` §0.
+
 ## Metadata Conventions
 
 - `@agent-tool` comment on agent-callable functions

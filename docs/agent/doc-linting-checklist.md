@@ -4,6 +4,7 @@ To ensure that MontRS documentation remains machine-readable, architecturally so
 
 ## ✅ Checklist Items
 
+- [ ] **MUST Convention**: Does the doc (and the feature it describes) satisfy **MUST** — Modular, Universal, Simple, Testable (see [Philosophy §0](../architecture/philosophy.md#0-the-must-convention))?
 - [ ] **Structural Integrity**: Does the doc use hierarchical headings (`#`, `##`, `###`)?
 - [ ] **Agent-First Annotations**: Are public framework tools marked with `@agent-tool` in code examples?
 - [ ] **Invariant Alignment**: Are new architectural rules reflected in `docs/invariants.md`?
