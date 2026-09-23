@@ -13,5 +13,7 @@ pub mod harness;
 pub mod rng;
 
 pub use clock::{Clock, SystemClock, TestClock};
-pub use harness::TestHarness;
+#[cfg(feature = "layout")]
+pub use harness::ResponsiveDefaults;
+pub use harness::{TestApp, TestHarness};
 pub use rng::{Rng, TestRng};

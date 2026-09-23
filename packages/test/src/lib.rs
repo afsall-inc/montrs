@@ -88,8 +88,10 @@ pub mod devices;
 #[cfg(feature = "layout")]
 pub mod responsive;
 
-pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
-pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
+pub use integration::{Fixture, TestEnv, run_fixture_test};
+pub use kernel::{
+    Clock, Rng, SystemClock, TestApp, TestClock, TestHarness, TestRng,
+};
 use montrs_core::AgentError;
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
@@ -107,6 +109,8 @@ pub mod prelude {
     #[cfg(feature = "http")]
     pub use crate::http::{TestClient, TestResponse};
     #[cfg(feature = "layout")]
+    pub use crate::kernel::ResponsiveDefaults;
+    #[cfg(feature = "layout")]
     pub use crate::layout::{Breakpoints, LayoutBox, SimLayout, Viewport};
     #[cfg(feature = "motion")]
     pub use crate::motion::{MotionTest, ScalarAnimation};
@@ -115,8 +119,10 @@ pub mod prelude {
         ResponsiveCheck, ResponsiveReport, Rule, Violation,
     };
     pub use crate::{
-        integration::{Fixture, TestEnv, TestRuntime, run_fixture_test},
-        kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng},
+        integration::{Fixture, TestEnv, run_fixture_test},
+        kernel::{
+            Clock, Rng, SystemClock, TestApp, TestClock, TestHarness, TestRng,
+        },
         unit::{Mock, Spy, expect, simple_bench},
     };
 }

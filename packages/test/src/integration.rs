@@ -28,36 +28,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//! Integration testing plate for MontRS.
+//! Integration testing primitives for MontRS.
 //!
-//! This plate provides tools for testing interactions between components
-//! and managing test environments.
+//! This module holds the low-level building blocks the fabric composes:
 //!
-//! It includes:
 //! - [`TestEnv`]: For mocking environment variables.
-//! - [`TestRuntime`]: For executing app logic in a controlled context.
-//! - [`Fixture`]: For managing test setup and teardown.
+//! - [`Fixture`] / [`run_fixture_test`]: For resource setup/teardown (temp
+//!   dirs, in-memory databases) with teardown guaranteed on failure.
+//!
+//! For the runtime context (app spec, clock, RNG, HTTP/DOM/layout access),
+//! use [`crate::TestHarness`] — the single entry point for app tests.
 //!
 //! # Example
 //!
 //! ```rust
-//! use montrs_core::{AppSpec, EnvConfig};
-//! use montrs_test::integration::{TestEnv, TestRuntime};
+//! use montrs_test::integration::TestEnv;
 //!
 //! // Mock the environment
 //! let env = TestEnv::new();
-//! env.set("DATABASE_URL", "postgres://localhost:5432/test");
-//!
-//! // Create a runtime (assuming you have a spec)
-//! // let runtime = TestRuntime::new(spec);
+//! env.set("DATABASE_URL", "sqlite::memory:");
 //! ```
 
-#[cfg(feature = "e2e")]
-use crate::e2e;
 use async_trait::async_trait;
-use montrs_core::{
-    AppConfig, AppSpec, EnvConfig, Owner, env::EnvError, provide_context,
-};
+use montrs_core::{EnvConfig, env::EnvError};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -230,64 +223,4 @@ where
 
     // Return the test result first, or the teardown error if test succeeded but teardown failed
     result.and(teardown_result)
-}
-
-/// A specialized runtime for executing MontRS components in a test context.
-///
-/// `TestRuntime` wraps an `AppSpec` and provides facilities to execute closures
-/// against that specification. This is useful for integration tests where you need
-/// a fully configured application state.
-pub struct TestRuntime<C: AppConfig> {
-    /// The application specification being tested.
-    pub spec: AppSpec<C>,
-}
-
-impl<C: AppConfig> TestRuntime<C> {
-    /// Creates a new `TestRuntime` with the provided `AppSpec`.
-    pub fn new(spec: AppSpec<C>) -> Self {
-        Self { spec }
-    }
-
-    /// Executes a closure within the test runtime context.
-    ///
-    /// This method allows you to run code that requires access to the application
-    /// configuration and environment.
-    ///
-    /// # Arguments
-    ///
-    /// * `f` - A closure that takes a reference to `AppSpec` and returns a result.
-    pub async fn execute<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&AppSpec<C>) -> R,
-    {
-        // Set up the Leptos reactive context for the test execution
-        let owner = Owner::new();
-        owner.with(|| {
-            // Provide the AppSpec as a global context during test execution
-            provide_context(self.spec.clone());
-
-            // Execute the test logic
-            f(&self.spec)
-        })
-    }
-}
-
-#[cfg(feature = "e2e")]
-impl<C: AppConfig> TestRuntime<C> {
-    /// Creates a new E2E driver instance.
-    ///
-    /// This provides a convenient way to access the E2E capabilities from within
-    /// a test runtime context. It automatically connects to the environment
-    /// configured for the test.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// let runtime = TestRuntime::new(spec);
-    /// let driver = runtime.driver().await?;
-    /// driver.goto("/").await?;
-    /// ```
-    pub async fn driver(&self) -> anyhow::Result<e2e::MontrsDriver> {
-        e2e::MontrsDriver::new().await
-    }
 }

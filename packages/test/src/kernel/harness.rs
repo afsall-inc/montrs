@@ -7,7 +7,7 @@
 //! environment, a controllable clock, and a seeded RNG.
 
 use crate::{
-    integration::TestEnv,
+    integration::{Fixture, TestEnv},
     kernel::{
         clock::{Clock, TestClock},
         rng::{Rng, TestRng},
@@ -15,6 +15,52 @@ use crate::{
 };
 use montrs_core::{AppConfig, AppSpec, Owner, provide_context};
 use std::{sync::Arc, time::Duration};
+
+/// An application (or test double) that can be tested without mocks.
+///
+/// Implement this for your real app type so it acts as its own mock:
+///
+/// ```rust,ignore
+/// struct MyApp;
+/// impl TestApp for MyApp {
+///     type Config = MyConfig;
+///     fn spec() -> AppSpec<Self::Config> { crate::build_spec() }
+/// }
+///
+/// let harness = TestHarness::for_app::<MyApp>();
+/// ```
+pub trait TestApp {
+    /// The app's configuration type.
+    type Config: AppConfig;
+
+    /// Build the application spec (the real one).
+    fn spec() -> AppSpec<Self::Config>;
+}
+
+/// The baked-in responsive preset: standard devices plus default breakpoints.
+#[cfg(feature = "layout")]
+#[derive(Debug, Clone)]
+pub struct ResponsiveDefaults {
+    /// Devices checked by default.
+    pub devices: Vec<crate::devices::DeviceProfile>,
+    /// Breakpoints used for responsive resolution.
+    pub breakpoints: crate::layout::Breakpoints,
+}
+
+#[cfg(feature = "layout")]
+impl ResponsiveDefaults {
+    /// Start a responsive check for `html` with these defaults applied.
+    pub fn check(&self, html: &str) -> crate::responsive::ResponsiveCheck {
+        crate::responsive::ResponsiveCheck::new(html)
+            .with_breakpoints(self.breakpoints)
+    }
+
+    /// Assert `html` is responsive on every default device.
+    #[track_caller]
+    pub fn assert_responsive(&self, html: &str) {
+        self.check(html).assert_responsive_on(&self.devices);
+    }
+}
 
 /// A configured, deterministic context for testing a MontRS application.
 ///
@@ -36,6 +82,11 @@ pub struct TestHarness<C: AppConfig> {
 }
 
 impl<C: AppConfig> TestHarness<C> {
+    /// Create a harness for an application implementing [`TestApp`].
+    pub fn for_app<A: TestApp<Config = C>>() -> Self {
+        Self::new(A::spec())
+    }
+
     /// Create a harness with a [`TestClock`] and a fixed-seed [`TestRng`].
     pub fn new(spec: AppSpec<C>) -> Self {
         Self {
@@ -97,6 +148,48 @@ impl<C: AppConfig> TestHarness<C> {
             provide_context(self.spec.clone());
             f(&self.spec)
         })
+    }
+
+    /// Run a fixture around this harness. Teardown always runs, even when the
+    /// test fails (the fixture's error is returned only if the test itself
+    /// succeeded).
+    pub async fn with_fixture<F, T, Fut>(
+        &self,
+        fixture: F,
+        test: T,
+    ) -> anyhow::Result<()>
+    where
+        F: Fixture + Send + Sync,
+        F::Context: Send,
+        T: FnOnce(&Self, &mut F::Context) -> Fut + Send,
+        Fut: std::future::Future<Output = anyhow::Result<()>> + Send,
+    {
+        let mut context = fixture.setup().await?;
+        let result = test(self, &mut context).await;
+        let teardown = fixture.teardown(&mut context).await;
+        result.and(teardown)
+    }
+
+    /// The baked-in responsive preset (standard devices + default breakpoints).
+    ///
+    /// ```rust,ignore
+    /// let devices = harness.responsive_defaults();
+    /// devices.assert_responsive(view.html());
+    /// ```
+    #[cfg(feature = "layout")]
+    pub fn responsive_defaults(&self) -> ResponsiveDefaults {
+        ResponsiveDefaults {
+            devices: crate::devices::standard_devices(),
+            breakpoints: crate::layout::Breakpoints::default(),
+        }
+    }
+}
+
+/// E2E convenience: launch a browser driver for this harness's environment.
+#[cfg(feature = "e2e")]
+impl<C: AppConfig> TestHarness<C> {
+    pub async fn driver(&self) -> anyhow::Result<crate::e2e::MontrsDriver> {
+        crate::e2e::MontrsDriver::new().await
     }
 }
 
