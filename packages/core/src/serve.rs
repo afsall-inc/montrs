@@ -392,9 +392,27 @@ function hasWarn() {
   }
   return false;
 }
+// Append a log entry, de-duplicated by (kind, message). A repeat bumps the
+// count and refreshes the frame instead of adding a duplicate row, so the same
+// error never appears twice. Entry shape: [kind, message, frame, count].
 function push(k, m, f) {
-  E.push([k, m, f || '']);
+  f = f || '';
+  for (var i = 0; i < E.length; i++) {
+    if (E[i][0] === k && E[i][1] === m) {
+      E[i][3] = (E[i][3] || 1) + 1;
+      if (f) E[i][2] = f;
+      if (typeof updateRing === 'function') updateRing();
+      if (open && typeof render === 'function') render();
+      return;
+    }
+  }
+  E.push([k, m, f, 1]);
   if (E.length > 60) E.shift();
+  if (typeof updateRing === 'function') updateRing();
+  if (open && typeof render === 'function') render();
+}
+function clearLog() {
+  E.length = 0;
   if (typeof updateRing === 'function') updateRing();
   if (open && typeof render === 'function') render();
 }
@@ -479,9 +497,10 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function copyAllText() {
   return E.map(function (e) {
     var tag = '[' + e[0].toUpperCase() + '] ';
-    var body = e[1] || '';
+    var count = e[3] && e[3] > 1 ? ' (x' + e[3] + ')' : '';
+    var body = tag + (e[1] || '') + count;
     if (e[2]) body += '\n' + e[2];
-    return tag + body;
+    return body;
   }).join('\n\n');
 }
 function render() {
@@ -500,6 +519,7 @@ function render() {
     + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">';
   if (E.length > 0) {
     out += '<button class="copy-all" title="Copy all logged messages and frames" style="' + css().ctrl + ';margin-left:auto">Copy all</button>';
+    out += '<button class="clear-log" title="Clear the log" style="' + css().ctrl + '">Clear</button>';
   }
   out += '</div>';
   if (E.length === 0) {
@@ -510,7 +530,13 @@ function render() {
       var kind = E[i][0];
       out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + '">';
       out += '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">';
+      out += '<span style="display:inline-flex;align-items:center;gap:6px;min-width:0">';
       out += '<span style="font-weight:600;font-size:10px;text-transform:uppercase;color:' + c + '">' + esc(kind) + '</span>';
+      var count = E[i][3] || 1;
+      if (count > 1) {
+        out += '<span title="Occurrences" style="padding:0 6px;border-radius:9999px;background:' + c + ';color:#0c0c0c;font-size:9px;font-weight:700">x' + count + '</span>';
+      }
+      out += '</span>';
       out += '<button class="copy-item" data-i="' + i + '" style="' + css().ctrl + ';padding:1px 6px;font-size:9px" title="Copy this message">copy</button>';
       out += '</div>';
       out += '<div style="color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
@@ -526,7 +552,8 @@ function render() {
       var i = parseInt(b.getAttribute('data-i'), 10);
       var item = E[i];
       if (!item) return;
-      var text = '[' + item[0].toUpperCase() + '] ' + item[1] + (item[2] ? '\n\n' + item[2] : '');
+      var count = item[3] && item[3] > 1 ? ' (x' + item[3] + ')' : '';
+      var text = '[' + item[0].toUpperCase() + '] ' + item[1] + count + (item[2] ? '\n\n' + item[2] : '');
       try { navigator.clipboard.writeText(text); b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy'; }, 1500); }
       catch (_) { b.textContent = 'fail'; }
     };
@@ -546,6 +573,10 @@ function render() {
       try { navigator.clipboard.writeText(all); copyAllBtn.textContent = 'Copied!'; setTimeout(function(){ copyAllBtn.textContent = 'Copy all'; }, 1500); }
       catch (_) { copyAllBtn.textContent = 'Failed'; }
     };
+  }
+  var clearBtn = panel.querySelector('.clear-log');
+  if (clearBtn) {
+    clearBtn.onclick = function () { clearLog(); };
   }
   var op = panel.querySelector('.op');
   if (op) {
