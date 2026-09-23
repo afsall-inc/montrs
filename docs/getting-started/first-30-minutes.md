@@ -149,14 +149,16 @@ In MontRS, data flows in a clear loop:
 
 ## 6. Testing & Confidence (2–3 minutes)
 
-Because MontRS is deterministic, testing is straightforward. The `TestRuntime` allows you to boot your entire application "spec" in-process.
+Because MontRS is deterministic, testing is straightforward. `TestHarness` allows you to boot your entire application "spec" in-process.
 
 ```rust
+use montrs_test::prelude::*;
+
 #[tokio::test]
 async fn test_increment() {
-    let runtime = TestRuntime::new(MyPlate);
-    let result = runtime.call_route::<CounterRoute>(json!({ "count": 5 })).await;
-    assert_eq!(result.count, 6);
+    let harness = TestHarness::new(build_spec());
+    let result = harness.act("/counter", json!({ "count": 5 })).await.unwrap();
+    assert_eq!(result["count"], 6);
 }
 ```
 

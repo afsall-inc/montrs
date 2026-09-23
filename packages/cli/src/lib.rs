@@ -105,6 +105,10 @@ pub enum Commands {
         /// Run tests in parallel jobs.
         #[arg(short = 'j', long)]
         jobs: Option<usize>,
+
+        /// Scaffold a standard `tests/app.rs` suite using `montrs::suite!`.
+        #[arg(long)]
+        init: bool,
     },
     /// Run performance benchmarks.
     Bench {
@@ -630,7 +634,8 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             report,
             output,
             jobs,
-        } => command::test::run(filter, report, output, jobs).await,
+            init,
+        } => command::test::run(filter, report, output, jobs, init).await,
         Commands::Bench {
             target,
             iterations,

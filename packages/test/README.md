@@ -8,7 +8,7 @@ Deterministic testing utilities for the MontRS ecosystem.
 `montrs-test` provides the infrastructure for writing robust unit, integration, and end-to-end tests. It emphasizes determinism, allowing developers to boot their entire application spec in-process for fast and reliable verification.
 
 ## 2. What problems it solves
-- **Flaky Tests**: By providing a deterministic `TestRuntime`, it eliminates "it works on my machine" issues caused by timing or environment variance.
+- **Flaky Tests**: By providing a deterministic `TestHarness`, it eliminates "it works on my machine" issues caused by timing or environment variance.
 - **Complex Setup**: The `Fixture` system automates the setup and teardown of external resources like databases or file systems.
 - **E2E Overhead**: Integrated Playwright support via `MontrsDriver` simplifies browser automation for full-stack tests.
 
@@ -27,7 +27,7 @@ It is the **validation layer**. It uses the `AppSpec` from `montrs-core` to spin
 
 ## 6. Deeper Documentation
 - [Testing Philosophy](../../docs/testing/index.md)
-- [Using the TestRuntime](../../docs/testing/index.md#test-runtime)
+- [Using the TestHarness](../../docs/testing/index.md#test-harness)
 - [E2E with MontrsDriver](../../docs/testing/index.md#e2e-testing)
 - [Table-Driven Testing](../../docs/testing/index.md#table-driven-tests)
 

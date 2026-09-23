@@ -18,7 +18,7 @@ MontRS introduces a paradigm shift that can be counter-intuitive for those comin
 ### ❌ Treating Loaders as Services
 - **What people do**: Writing complex business logic, database queries, or third-party API calls directly inside a `Loader`.
 - **Why it feels reasonable**: It's faster to write everything in one place.
-- **Why it breaks MontRS**: It bypasses the `Plate` boundary, making logic hard to reuse and nearly impossible to mock correctly in `TestRuntime`.
+- **Why it breaks MontRS**: It bypasses the `Plate` boundary, making logic hard to reuse and nearly impossible to mock correctly in `TestHarness`.
 - **Correct Approach**: Keep Loaders thin. Call a method on a service injected into a `Plate`.
 
 ### ❌ Direct Database Access in Loaders
@@ -125,13 +125,13 @@ MontRS introduces a paradigm shift that can be counter-intuitive for those comin
 - **What people do**: Writing 100% Playwright E2E tests for basic business logic.
 - **Why it feels reasonable**: "It's the only way to be sure it actually works."
 - **Why it breaks MontRS**: E2E tests are slow and flaky. MontRS is designed for deterministic logic testing.
-- **Correct Approach**: Test the `Loader` and `Action` logic using `TestRuntime`.
+- **Correct Approach**: Test the `Loader` and `Action` logic using `TestHarness`.
 
-### ❌ Avoiding TestRuntime / Non-Deterministic Tests
+### ❌ Avoiding TestHarness / Non-Deterministic Tests
 - **What people do**: Relying on global state, system time, or live production databases in tests.
 - **Why it feels reasonable**: "I want to test with real data."
 - **Why it breaks MontRS**: Tests become non-deterministic and flaky.
-- **Correct Approach**: Use `montrs-test` fixtures and `TestRuntime` to mock the environment.
+- **Correct Approach**: Use `montrs-test` fixtures and `TestHarness` to mock the environment.
 
 ---
 

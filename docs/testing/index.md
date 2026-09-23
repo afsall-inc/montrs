@@ -28,8 +28,9 @@ cargo add montrs-test --features http,db,sim-dom,layout,motion
 | `http` | `TestClient`, `TestResponse` | APIs, loaders, actions |
 | `db` | `sqlite_memory`, `RecordingDb`, `MockDb` | query behaviour and call expectations |
 | `sim-dom` | `ComponentTest` | component structure, text, classes, ARIA |
-| `layout` | `SimLayout`, `Viewport` | box-model layout and horizontal overflow |
+| `layout` | `SimLayout`, `Viewport`, `ResponsiveCheck`, `DeviceProfile` | layout, responsiveness, and **horizontal overflow to the pixel** |
 | `motion` | `MotionTest` | springs, tweens, keyframes over a timeline |
+| `macros` | `#[montrs::test]`, `suite!` | the app as its own mock, zero boilerplate |
 | `e2e` | `MontrsDriver` | real browser journeys (not hermetic) |
 
 ### The harness
@@ -201,38 +202,67 @@ mod tests {
 
 ## 2. Integration Testing
 
-Integration tests verify that different parts of your application work together correctly. MontRS provides the `TestRuntime` to spin up a lightweight version of your app context.
+Integration tests verify that different parts of your application work together
+correctly. `TestHarness` boots a lightweight, in-process version of your app
+context, and `Fixture` gives you setup/teardown for real resources.
 
-### Using Fixtures
+### The app is its own mock
 
-The `Fixture` trait allows you to define reusable setup and teardown logic for your tests.
+Implement `TestApp` for your app type so it can be tested without writing any
+mocks, then use `#[montrs::test]` (from `montrs-test` with the `macros`
+feature):
 
 ```rust
-use montrs_test::integration::{Fixture, run_fixture_test};
+use montrs_test::prelude::*;
 
-struct DbFixture {
-    conn_string: String,
+struct MyApp;
+
+impl TestApp for MyApp {
+    type Config = MyConfig;
+    fn spec() -> AppSpec<Self::Config> { crate::build_spec() }
 }
+
+#[montrs_test::test]
+async fn api_and_loader() {
+    // `harness` and `spec` are injected; no setup boilerplate.
+    let user = harness.load("/users/:id").await.unwrap();
+    assert_eq!(user["name"], "Ada");
+}
+
+// Generate smoke tests for the whole app (spec builds, routes resolve):
+montrs_test::suite!(crate::build_spec);
+```
+
+Run `montrs test --init` to scaffold `tests/app.rs` with this shape.
+
+### Fixtures
+
+The `Fixture` trait defines reusable setup and teardown. Teardown always runs,
+even when the test fails.
+
+```rust
+use montrs_test::prelude::*;
+
+struct DbFixture;
 
 #[async_trait::async_trait]
 impl Fixture for DbFixture {
-    async fn setup() -> anyhow::Result<Self> {
-        // Spin up a test DB or use an in-memory one
-        Ok(Self { conn_string: "sqlite::memory:".to_string() })
-    }
+    type Context = montrs_orm::SqliteBackend;
 
-    async fn teardown(&mut self) -> anyhow::Result<()> {
-        // Cleanup logic
-        Ok(())
+    async fn setup(&self) -> anyhow::Result<Self::Context> {
+        Ok(montrs_test::db::sqlite_memory()?)
     }
 }
 
-#[tokio::test]
-async fn test_database_interaction() {
-    run_fixture_test::<DbFixture, _>(|fixture| async move {
-        assert_eq!(fixture.conn_string, "sqlite::memory:");
-        Ok(())
-    }).await.unwrap();
+#[montrs_test::test]
+async fn database_interaction() {
+    harness
+        .with_fixture(DbFixture, |_harness, db| async move {
+            db.execute("CREATE TABLE t (id INTEGER)", &[]).await?;
+            Ok(())
+        })
+        .await
+        .unwrap();
 }
 ```
 

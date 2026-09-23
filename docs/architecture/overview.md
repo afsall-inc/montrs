@@ -40,7 +40,7 @@ Every `Loader` and `Action` receives a `Context`. This object is the "glue" that
 MontRS does not rely on global state or hidden registration. Instead, it uses **Heuristic Discovery**. The CLI scans your `src/` directory for implementations of `Plate`, `Loader`, and `Action`. This ensures that the `AppSpec` is always a true reflection of your code.
 
 ### Deterministic Runtimes
-In a standard run, the `Context` provides access to real services. In a test run, the `TestRuntime` replaces these with mocks. Because your logic only interacts with traits (via `Context`), it remains unaware of whether it is running in production or a test environment.
+In a standard run, the `Context` provides access to real services. In a test run, the `TestHarness` replaces these with mocks. Because your logic only interacts with traits (via `Context`), it remains unaware of whether it is running in production or a test environment.
 
 ---
 

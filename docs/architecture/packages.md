@@ -36,7 +36,7 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 
 ## 📦 `montrs-test`
 - **Responsibility**: Deterministic test runtime, fixtures, and E2E drivers.
-- **Key Components**: `TestRuntime`, `FixtureManager`.
+- **Key Components**: `TestHarness`, `FixtureManager`.
 - **Boundary**: Provides the "Validation Infrastructure." It allows testing of `Loader` and `Action` logic without needing a real network or database.
 - **When to modify**: When improving the testability of the framework or adding new mocking capabilities.
 

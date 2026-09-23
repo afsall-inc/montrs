@@ -6,7 +6,7 @@ This guide helps agents write and run tests in MontRS.
 
 ### 1. TestHarness (start here)
 One object owns the app spec, mocked env, clock, and RNG. Prefer it over the raw
-`TestRuntime`.
+`TestHarness`.
 
 ```rust
 use montrs_test::prelude::*;
