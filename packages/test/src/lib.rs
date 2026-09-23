@@ -93,8 +93,44 @@ pub use kernel::{
     Clock, Rng, SystemClock, TestApp, TestClock, TestHarness, TestRng,
 };
 use montrs_core::AgentError;
+#[cfg(feature = "macros")]
+pub use montrs_test_macros::{suite, test};
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
+
+/// Run an async future to completion on a single-threaded tokio runtime.
+/// Used by generated tests so individual tests do not need `#[tokio::test]`.
+pub fn block_on<F: std::future::Future>(f: F) -> F::Output {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to start tokio runtime for test")
+        .block_on(f)
+}
+
+/// Helper for generated tests: unwrap a test outcome, asserting success if it
+/// is a `Result`.
+pub trait TestOutcome {
+    fn assert_passed(self);
+}
+
+impl TestOutcome for () {
+    fn assert_passed(self) {}
+}
+
+impl<T, E: std::fmt::Debug> TestOutcome for Result<T, E> {
+    #[track_caller]
+    fn assert_passed(self) {
+        if let Err(e) = self {
+            panic!("test returned an error: {:?}", e);
+        }
+    }
+}
+
+/// Assert a test's outcome succeeded (transparent for `()` or `Result`).
+pub fn assert_passed<O: TestOutcome>(outcome: O) {
+    outcome.assert_passed();
+}
 
 /// The most commonly used testing types, in one import.
 pub mod prelude {

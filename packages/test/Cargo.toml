@@ -26,6 +26,7 @@ tokio.workspace = true
 async-trait.workspace = true
 anyhow.workspace = true
 montrs-bench = { version = "0.1.0", path = "../bench" }
+montrs-test-macros = { path = "../test-macros", optional = true }
 
 [features]
 default = []
@@ -33,5 +34,6 @@ db = ["montrs-orm/sqlite", "dep:rusqlite"]
 e2e = ["dep:playwright"]
 http = ["montrs-core/ssr", "dep:leptos"]
 layout = ["sim-dom", "dep:taffy"]
+macros = ["dep:montrs-test-macros"]
 motion = ["dep:montrs-motion"]
 sim-dom = ["montrs-core/ssr", "dep:leptos", "dep:scraper"]
