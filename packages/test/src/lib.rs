@@ -82,6 +82,12 @@ pub mod dom;
 #[cfg(feature = "layout")]
 pub mod layout;
 
+#[cfg(feature = "layout")]
+pub mod devices;
+
+#[cfg(feature = "layout")]
+pub mod responsive;
+
 pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
 pub use kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng};
 use montrs_core::AgentError;
@@ -94,14 +100,20 @@ pub mod prelude {
     pub use crate::db::{
         DbCall, DbCallKind, MockDb, RecordingDb, SqliteFixture,
     };
+    #[cfg(feature = "layout")]
+    pub use crate::devices::{DeviceCategory, DeviceProfile, standard_devices};
     #[cfg(feature = "sim-dom")]
     pub use crate::dom::ComponentTest;
     #[cfg(feature = "http")]
     pub use crate::http::{TestClient, TestResponse};
     #[cfg(feature = "layout")]
-    pub use crate::layout::{LayoutBox, SimLayout, Viewport};
+    pub use crate::layout::{Breakpoints, LayoutBox, SimLayout, Viewport};
     #[cfg(feature = "motion")]
     pub use crate::motion::{MotionTest, ScalarAnimation};
+    #[cfg(feature = "layout")]
+    pub use crate::responsive::{
+        ResponsiveCheck, ResponsiveReport, Rule, Violation,
+    };
     pub use crate::{
         integration::{Fixture, TestEnv, TestRuntime, run_fixture_test},
         kernel::{Clock, Rng, SystemClock, TestClock, TestHarness, TestRng},
