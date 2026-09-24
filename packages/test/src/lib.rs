@@ -76,6 +76,12 @@ pub mod http;
 #[cfg(feature = "motion")]
 pub mod motion;
 
+#[cfg(feature = "scene")]
+pub mod scene;
+
+#[cfg(feature = "vision")]
+pub mod vision;
+
 #[cfg(feature = "sim-dom")]
 pub mod dom;
 
@@ -154,6 +160,10 @@ pub mod prelude {
     pub use crate::responsive::{
         ResponsiveCheck, ResponsiveReport, Rule, Violation,
     };
+    #[cfg(feature = "scene")]
+    pub use crate::scene::{Aabb, Camera, Mat4, Mesh, Scene, Vec3, Wireframe};
+    #[cfg(feature = "vision")]
+    pub use crate::vision::{A11yNode, AgentVision, Observation, ObservedBox};
     pub use crate::{
         integration::{Fixture, TestEnv, run_fixture_test},
         kernel::{
