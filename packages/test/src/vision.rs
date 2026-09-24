@@ -217,6 +217,106 @@ fn implicit_role(tag: &str) -> &'static str {
     }
 }
 
+// ---------------------------------------------------------------------------
+// CSS effect inspection (EffectSim)
+// ---------------------------------------------------------------------------
+
+/// A CSS visual effect declared on an element.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Effect {
+    /// Element tag name (lowercase).
+    pub tag: String,
+    /// Which effect class.
+    pub kind: EffectKind,
+    /// The raw declaration value.
+    pub value: String,
+}
+
+/// The kinds of visual effect `EffectSim` recognises.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EffectKind {
+    /// `box-shadow` / `drop-shadow(...)`.
+    Shadow,
+    /// `filter: blur(...)` / `backdrop-filter`.
+    Blur,
+    /// `background`/`background-image` gradient.
+    Gradient,
+    /// `transform`.
+    Transform,
+    /// `opacity`.
+    Opacity,
+}
+
+/// Inspect CSS effects declared through inline `style` (hermetic, no browser).
+pub struct EffectSim;
+
+impl EffectSim {
+    /// Every effect found in `html`'s inline styles.
+    pub fn collect(html: &str) -> Vec<Effect> {
+        let cleaned = strip_hot_reload_markers(html);
+        let doc = Html::parse_fragment(&cleaned);
+        let Ok(sel) = Selector::parse("[style]") else {
+            return Vec::new();
+        };
+        let mut out = Vec::new();
+        for el in doc.select(&sel) {
+            let tag = el.value().name().to_ascii_lowercase();
+            let Some(style) = el.value().attr("style") else {
+                continue;
+            };
+            for decl in style.split(';') {
+                let Some((prop, value)) = decl.split_once(':') else {
+                    continue;
+                };
+                let (prop, value) = (prop.trim(), value.trim());
+                let kind = match prop {
+                    "box-shadow" | "filter"
+                        if prop == "box-shadow"
+                            || value.contains("drop-shadow") =>
+                    {
+                        Some(EffectKind::Shadow)
+                    }
+                    "filter" | "backdrop-filter" if value.contains("blur") => {
+                        Some(EffectKind::Blur)
+                    }
+                    "background" | "background-image"
+                        if value.contains("gradient") =>
+                    {
+                        Some(EffectKind::Gradient)
+                    }
+                    "transform" => Some(EffectKind::Transform),
+                    "opacity" => Some(EffectKind::Opacity),
+                    _ => None,
+                };
+                if let Some(kind) = kind {
+                    out.push(Effect {
+                        tag: tag.clone(),
+                        kind,
+                        value: value.to_string(),
+                    });
+                }
+            }
+        }
+        out
+    }
+
+    /// Whether any element declares an effect of `kind`.
+    pub fn has(html: &str, kind: EffectKind) -> bool {
+        Self::collect(html).iter().any(|e| e.kind == kind)
+    }
+
+    /// Assert an effect of `kind` is present.
+    #[track_caller]
+    pub fn assert_has(html: &str, kind: EffectKind) {
+        assert!(
+            Self::has(html, kind),
+            "expected a {:?} effect; found {:?}",
+            kind,
+            Self::collect(html)
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -254,5 +354,17 @@ mod tests {
         let obs = AgentVision::observe(&html, &iphone_15());
         assert!(!obs.is_responsive());
         assert!(obs.violations[0].contains("horizontal-overflow"));
+    }
+
+    #[test]
+    fn effect_sim_detects_shadow_and_gradient() {
+        let html = view! {
+            <div style="box-shadow: 0 8px 24px rgba(0,0,0,0.25)"></div>
+            <div style="background-image: linear-gradient(red, blue)"></div>
+        }
+        .to_html();
+        EffectSim::assert_has(&html, EffectKind::Shadow);
+        EffectSim::assert_has(&html, EffectKind::Gradient);
+        assert!(!EffectSim::has(&html, EffectKind::Blur));
     }
 }
