@@ -11,12 +11,19 @@
 //!
 //! ## Rules
 //!
+//! Enabled by default (layout correctness):
+//!
 //! - [`Rule::HorizontalOverflow`] — a box's right edge exceeds the viewport.
 //! - [`Rule::OffScreen`] — a box starts left of the viewport.
-//! - [`Rule::TapTarget`] — a `button`/`input` smaller than 44×44 CSS px.
 //! - [`Rule::ClippedText`] — text wider than a clipping box (`overflow-hidden`
 //!   without `truncate`/`overflow-auto`). Estimated from a deterministic text
 //!   metric (approximate; see the module docs for limits).
+//!
+//! Opt-in (accessibility policy — enable with
+//! [`ResponsiveCheck::with_rules`], because it flags legitimate compact
+//! designs):
+//!
+//! - [`Rule::TapTarget`] — a `button`/`input` smaller than 44×44 CSS px.
 //!
 //! ## Limits
 //!
@@ -155,6 +162,12 @@ pub struct ResponsiveCheck {
     html: String,
     breakpoints: Breakpoints,
     container: Option<f32>,
+    rules: Vec<Rule>,
+}
+
+/// The rules enabled by default (layout correctness only).
+pub fn default_rules() -> Vec<Rule> {
+    vec![Rule::HorizontalOverflow, Rule::OffScreen, Rule::ClippedText]
 }
 
 impl ResponsiveCheck {
@@ -164,7 +177,26 @@ impl ResponsiveCheck {
             html: crate::strip_hot_reload_markers(html),
             breakpoints: Breakpoints::default(),
             container: None,
+            rules: default_rules(),
         }
+    }
+
+    /// Replace the enabled rule set (e.g. add [`Rule::TapTarget`]).
+    pub fn with_rules(mut self, rules: &[Rule]) -> Self {
+        self.rules = rules.to_vec();
+        self
+    }
+
+    /// Enable [`Rule::TapTarget`] in addition to the defaults.
+    pub fn with_tap_targets(mut self) -> Self {
+        if !self.rules.contains(&Rule::TapTarget) {
+            self.rules.push(Rule::TapTarget);
+        }
+        self
+    }
+
+    fn has(&self, rule: Rule) -> bool {
+        self.rules.contains(&rule)
     }
 
     /// Start checking a component rendered in-process.
@@ -206,7 +238,7 @@ impl ResponsiveCheck {
             if bx.width <= 0.0 && bx.height <= 0.0 {
                 continue;
             }
-            if bx.right() > width + 0.5 {
+            if bx.right() > width + 0.5 && self.has(Rule::HorizontalOverflow) {
                 out.push(Violation {
                     rule: Rule::HorizontalOverflow,
                     element: element_desc(&bx.tag, &bx.class),
@@ -219,7 +251,7 @@ impl ResponsiveCheck {
                     width,
                 });
             }
-            if bx.x < -0.5 {
+            if bx.x < -0.5 && self.has(Rule::OffScreen) {
                 out.push(Violation {
                     rule: Rule::OffScreen,
                     element: element_desc(&bx.tag, &bx.class),
@@ -228,7 +260,8 @@ impl ResponsiveCheck {
                     width,
                 });
             }
-            if is_tap_target(&bx.tag)
+            if self.has(Rule::TapTarget)
+                && is_tap_target(&bx.tag)
                 && bx.displayed()
                 && bx.sized
                 && (bx.width < 44.0 || bx.height < 44.0)
@@ -245,7 +278,8 @@ impl ResponsiveCheck {
                     width,
                 });
             }
-            if clips_text(&bx.class)
+            if self.has(Rule::ClippedText)
+                && clips_text(&bx.class)
                 && let Some((text, overflow_px)) = clipped_text(&self.html, bx)
             {
                 out.push(Violation {
@@ -541,15 +575,28 @@ mod tests {
     }
 
     #[test]
-    fn small_buttons_violate_the_tap_target_rule() {
+    fn tap_target_rule_is_opt_in() {
         let html = render(|| view! { <button class="w-4 h-4">"x"</button> });
-        let check = ResponsiveCheck::new(&html);
-        let report = check.report(400.0);
+        // Off by default: no violation.
+        let default = ResponsiveCheck::new(&html).report(400.0);
+        assert!(default.is_responsive(), "{}", default.render());
+
+        // Enabled explicitly: flagged.
+        let strict = ResponsiveCheck::new(&html).with_tap_targets();
+        let report = strict.report(400.0);
         assert!(
             report.violations.iter().any(|v| v.rule == Rule::TapTarget),
             "{}",
             report.render()
         );
+    }
+
+    #[test]
+    fn with_rules_replaces_the_default_set() {
+        let html = render(|| view! { <div style="width: 600px" /> });
+        let check = ResponsiveCheck::new(&html).with_rules(&[Rule::OffScreen]);
+        let report = check.report(320.0);
+        assert!(report.is_responsive(), "{}", report.render());
     }
 
     #[test]
