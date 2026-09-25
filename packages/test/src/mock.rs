@@ -384,6 +384,31 @@ const CITIES: &[&str] = &[
     "Bilbao",
 ];
 
+const DOMAINS: &[&str] = &["example.com", "test.dev", "montrs.rs", "mail.io"];
+
+const WORDS: &[&str] = &[
+    "deterministic",
+    "hermetic",
+    "modular",
+    "universal",
+    "simple",
+    "testable",
+    "framework",
+    "reactive",
+    "signal",
+    "route",
+    "plate",
+    "loader",
+    "action",
+    "component",
+    "render",
+    "stream",
+    "server",
+    "client",
+    "state",
+    "schema",
+];
+
 /// A deterministic generator of realistic values.
 #[derive(Clone)]
 pub struct MockData {

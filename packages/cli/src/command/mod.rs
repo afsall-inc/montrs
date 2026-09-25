@@ -56,6 +56,7 @@ pub mod spec;
 pub mod test;
 pub mod ui_init;
 pub mod upgrade;
+pub mod verify;
 pub mod watch;
 
 /// What kind of rebuild a source change triggered.
