@@ -11,7 +11,7 @@
 //! regressions deterministically across devices.
 
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, time::Duration};
+use std::collections::BTreeMap;
 
 /// Declared performance budget for a target, route, or component.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -39,7 +39,7 @@ pub mod workspace;
 
 // Backward-compatibility: `TaskRunner` orchestration wrapper.
 pub use cache::TaskRunCache;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 pub use types::*;
 
 /// A simple wrapper around a task map, preserving the legacy API.
@@ -65,14 +65,54 @@ impl TaskRunner {
         Self { tasks: map }
     }
 
+    /// The configured tasks, by name.
+    pub fn tasks(&self) -> &HashMap<String, Task> {
+        &self.tasks
+    }
+
+    /// Run `task_name` and its transitive dependencies.
     pub async fn run(&self, task_name: &str) -> anyhow::Result<()> {
+        self.run_filtered(task_name, |_| true).await
+    }
+
+    /// Run `task_name` and its dependencies, skipping (and assuming up to date)
+    /// any task for which `include` returns `false`.
+    ///
+    /// Tasks are grouped into dependency levels; each level runs concurrently
+    /// under a bounded semaphore.
+    pub async fn run_filtered<F>(
+        &self,
+        task_name: &str,
+        include: F,
+    ) -> anyhow::Result<()>
+    where
+        F: Fn(&Task) -> bool,
+    {
+        if !self.tasks.contains_key(task_name) {
+            anyhow::bail!("Task '{}' not found in configuration", task_name);
+        }
+
         let all_tasks: Vec<Task> = self.tasks.values().cloned().collect();
-        let task = self.tasks.get(task_name).ok_or_else(|| {
-            anyhow::anyhow!("Task '{}' not found in configuration", task_name)
-        })?;
+        let mut scheduler = scheduler::Scheduler::new(&all_tasks, 4);
+        let needed = scheduler.deps.closure(task_name);
+        scheduler.deps.retain(&needed);
+
         let config = executor::TaskExecutorConfig::default();
-        let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(4));
-        executor::execute_task(task, &all_tasks, &config, semaphore).await?;
+        for level in scheduler.topological_sort() {
+            let futures = level
+                .iter()
+                .filter_map(|name| self.tasks.get(name))
+                .filter(|t| include(t))
+                .map(|t| {
+                    executor::execute_task(
+                        t,
+                        &all_tasks,
+                        &config,
+                        Arc::clone(&scheduler.semaphore),
+                    )
+                });
+            futures::future::try_join_all(futures).await?;
+        }
         Ok(())
     }
 

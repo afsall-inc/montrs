@@ -189,6 +189,15 @@ pub enum Commands {
     Run {
         /// Name of the task to run.
         task: String,
+        /// Only run tasks whose declared sources changed (or are new).
+        #[arg(long)]
+        affected: bool,
+        /// Git revision to compare against for `--affected` (default: uncommitted only).
+        #[arg(long)]
+        since: Option<String>,
+        /// Disable the task run cache for this invocation.
+        #[arg(long)]
+        no_cache: bool,
     },
     /// List available tasks.
     Tasks,
@@ -702,7 +711,12 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             }
             Ok(())
         }
-        Commands::Run { task } => command::run::run(task).await,
+        Commands::Run {
+            task,
+            affected,
+            since,
+            no_cache,
+        } => command::run::run(task, affected, since, no_cache).await,
         Commands::Tasks => command::run::list().await,
         Commands::Completions { shell } => {
             use clap::CommandFactory;

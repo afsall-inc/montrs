@@ -99,6 +99,29 @@ impl Deps {
         self.did_work.insert(task.to_string());
     }
 
+    /// Keep only the given tasks, dropping edges to any task not kept.
+    pub fn retain(&mut self, keep: &HashSet<String>) {
+        self.graph.retain(|name, _| keep.contains(name));
+        for edges in self.graph.values_mut() {
+            edges.retain(|dep| keep.contains(dep));
+        }
+    }
+
+    /// The target task plus every task it transitively depends on.
+    pub fn closure(&self, target: &str) -> HashSet<String> {
+        let mut seen = HashSet::new();
+        let mut stack = vec![target.to_string()];
+        while let Some(name) = stack.pop() {
+            if !seen.insert(name.clone()) {
+                continue;
+            }
+            if let Some(deps) = self.graph.get(&name) {
+                stack.extend(deps.iter().cloned());
+            }
+        }
+        seen
+    }
+
     pub fn all_done(&self) -> bool {
         self.graph.is_empty()
     }

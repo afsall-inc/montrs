@@ -1,0 +1,20 @@
+[package]
+name = "montrs-scm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Minimal, deterministic git change detection for MontRS"
+
+[package.metadata.montrs]
+layer = "2"
+allowed_deps = []
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+montrs-core = { path = "../core" }
+
+[dev-dependencies]
+tempfile = "3"

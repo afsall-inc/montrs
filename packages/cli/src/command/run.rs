@@ -32,12 +32,41 @@ use crate::config::MontrsConfig;
 use montrs_runner::TaskRunner;
 use std::path::Path;
 
-pub async fn run(task_name: String) -> anyhow::Result<()> {
+pub async fn run(
+    task_name: String,
+    affected: bool,
+    since: Option<String>,
+    no_cache: bool,
+) -> anyhow::Result<()> {
     let config = MontrsConfig::load()?;
     let runner =
         TaskRunner::from_config_tasks(config.meta.tasks, Path::new("."));
-    runner.run(&task_name).await?;
-    Ok(())
+
+    if no_cache {
+        // SAFETY: set before any task executes; the process is single-threaded
+        // at this point on the CLI's startup path.
+        unsafe { std::env::set_var("MONTRS_NO_CACHE", "1") };
+    }
+
+    if affected {
+        let changed =
+            montrs_scm::changed_files(Path::new("."), since.as_deref());
+        if changed.is_empty() {
+            println!("No affected files — nothing to run.");
+            return Ok(());
+        }
+        println!(
+            "Running tasks affected by {} changed file(s).",
+            changed.len()
+        );
+        return runner
+            .run_filtered(&task_name, |t| {
+                montrs_scm::matches_any(&changed, &t.sources)
+            })
+            .await;
+    }
+
+    runner.run(&task_name).await
 }
 
 pub async fn list() -> anyhow::Result<()> {

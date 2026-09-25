@@ -4636,6 +4636,7 @@ dependencies = [
  "montrs-log",
  "montrs-metadata",
  "montrs-runner",
+ "montrs-scm",
  "montrs-services",
  "montrs-shell",
  "montrs-test",
@@ -5080,6 +5081,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "console",
+ "futures",
  "glob",
  "globset",
  "hex",
@@ -5122,6 +5124,16 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "montrs-scm"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "montrs-core",
+ "tempfile",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
