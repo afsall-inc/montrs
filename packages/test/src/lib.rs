@@ -70,14 +70,23 @@ pub mod db;
 #[cfg(feature = "e2e")]
 pub mod e2e;
 
+#[cfg(feature = "fuzz")]
+pub mod fuzz;
+
 #[cfg(feature = "http")]
 pub mod http;
 
 #[cfg(feature = "motion")]
 pub mod motion;
 
+#[cfg(feature = "mock")]
+pub mod mock;
+
 #[cfg(feature = "scene")]
 pub mod scene;
+
+#[cfg(feature = "traffic")]
+pub mod traffic;
 
 #[cfg(feature = "vision")]
 pub mod vision;
@@ -154,6 +163,8 @@ pub mod prelude {
     pub use crate::kernel::ResponsiveDefaults;
     #[cfg(feature = "layout")]
     pub use crate::layout::{Breakpoints, LayoutBox, SimLayout, Viewport};
+    #[cfg(feature = "mock")]
+    pub use crate::mock::MockData;
     #[cfg(feature = "motion")]
     pub use crate::motion::{MotionTest, ScalarAnimation};
     #[cfg(feature = "layout")]
@@ -162,6 +173,8 @@ pub mod prelude {
     };
     #[cfg(feature = "scene")]
     pub use crate::scene::{Aabb, Camera, Mat4, Mesh, Scene, Vec3, Wireframe};
+    #[cfg(feature = "traffic")]
+    pub use crate::traffic::{Traffic, TrafficProfile, TrafficReport};
     #[cfg(feature = "vision")]
     pub use crate::vision::{A11yNode, AgentVision, Observation, ObservedBox};
     pub use crate::{

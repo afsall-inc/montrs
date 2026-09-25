@@ -28,14 +28,19 @@ anyhow.workspace = true
 montrs-bench = { version = "0.1.0", path = "../bench" }
 montrs-test-macros = { path = "../test-macros", optional = true }
 
+proptest = { version = "1.5", optional = true }
+
 [features]
 default = []
 db = ["montrs-orm/sqlite", "dep:rusqlite"]
 e2e = ["dep:playwright"]
+fuzz = ["dep:proptest"]
 http = ["montrs-core/ssr", "dep:leptos"]
 layout = ["sim-dom", "dep:taffy"]
 macros = ["dep:montrs-test-macros"]
 motion = ["dep:montrs-motion"]
+mock = []
 scene = []
 sim-dom = ["montrs-core/ssr", "dep:leptos", "dep:scraper"]
+traffic = ["http"]
 vision = ["layout"]
