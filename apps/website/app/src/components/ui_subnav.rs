@@ -68,9 +68,11 @@ pub fn UiSubNav() -> impl IntoView {
 
     view! {
         <Show when=move || visible()>
-            <nav class="page-container" aria-label="UI sections">
-                <FloatingTabBar items=items.clone() active=path on_select=on_select />
-            </nav>
+            <div class="sticky top-14 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <nav class="page-container py-2" aria-label="UI sections">
+                    <FloatingTabBar sticky=false items=items.clone() active=path on_select=on_select />
+                </nav>
+            </div>
         </Show>
     }
 }

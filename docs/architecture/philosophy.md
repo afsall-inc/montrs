@@ -2,6 +2,35 @@
 
 MontRS is built on a set of core principles that guide every architectural decision. Understanding these will help you contribute to the framework and build better apps.
 
+## 0. The MUST Convention
+
+Everything in MontRS — every crate, trait, feature, and test — **MUST** be
+**Modular, Universal, Simple, and Testable**. This is not a slogan; it is the
+acceptance bar. A change that fails any letter is not finished.
+
+- **Modular** — One isolated, composable unit behind an explicit boundary (a
+  trait or a small type). No hidden coupling, no cross-cutting reach. It can be
+  adopted, replaced, or **omitted** without disturbing anything else.
+- **Universal** — One API serves every target (*web, desktop, mobile, TUI*) and
+  every layer (*API, DOM, pixels, motion*). No per-target forks, no
+  special-cases that only work in one place.
+- **Simple** — The smallest concept that does the job. Explicit over clever, no
+  magic, no surprising side effects. If a feature needs a paragraph of
+  justification to exist, it does not ship.
+- **Testable** — Hermetically verifiable in-process and deterministic by
+  construction: seeded randomness, an injectable clock, no required
+  server/browser/DB. Every feature ships with the means to prove itself — and,
+  where possible, **the artifact _is_ the test** (a budget, a snapshot, a spec).
+
+**Rule of thumb:** if it can't be tested in-process, it isn't finished; if it
+only works on one target, it isn't universal; if it needs a new concept to
+explain, it isn't simple; if it can't be removed, it isn't modular.
+
+**How it is enforced:** reviewed at PR time; checked by `montrs agent check`
+against package invariants; and demonstrated by the deterministic test fabric,
+which makes MUST *observable* rather than aspirational. Regression against the
+expected output is gated by `montrs verify` (see `docs/testing/regression.md`).
+
 ## 1. Determinism by Default
 
 We believe that a framework should be predictable. Given the same input and environment, a MontRS component should produce the same output. This makes testing, debugging, and agent-assisted development significantly more reliable.

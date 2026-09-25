@@ -223,6 +223,73 @@ where
         .with_state(options)
 }
 
+/// The raw result of an in-process render: status, headers, and body bytes.
+#[cfg(feature = "ssr")]
+pub type SsrRenderResult =
+    Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>;
+
+/// A request to render through [`SsrApp`] without binding a socket.
+#[cfg(feature = "ssr")]
+#[derive(Debug, Clone, Default)]
+pub struct SsrRequest {
+    /// HTTP method (defaults to `GET`).
+    pub method: String,
+    /// Request URI, e.g. `/api/users?active=true`.
+    pub uri: String,
+    /// Request headers.
+    pub headers: Vec<(String, String)>,
+    /// Request body bytes.
+    pub body: Vec<u8>,
+}
+
+#[cfg(feature = "ssr")]
+impl SsrRequest {
+    /// A `GET` request for `uri`.
+    pub fn get(uri: impl Into<String>) -> Self {
+        Self {
+            method: "GET".to_string(),
+            uri: uri.into(),
+            ..Default::default()
+        }
+    }
+
+    /// A request with an explicit method and `uri`.
+    pub fn new(method: impl Into<String>, uri: impl Into<String>) -> Self {
+        Self {
+            method: method.into(),
+            uri: uri.into(),
+            ..Default::default()
+        }
+    }
+
+    /// Set the request body.
+    pub fn with_body(mut self, body: impl Into<Vec<u8>>) -> Self {
+        self.body = body.into();
+        self
+    }
+
+    /// Set a JSON body and `content-type` header.
+    pub fn with_json<T: serde::Serialize>(
+        mut self,
+        value: &T,
+    ) -> Result<Self, serde_json::Error> {
+        self.body = serde_json::to_vec(value)?;
+        self.headers
+            .push(("content-type".to_string(), "application/json".to_string()));
+        Ok(self)
+    }
+
+    /// Add a header.
+    pub fn with_header(
+        mut self,
+        name: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
+        self.headers.push((name.into(), value.into()));
+        self
+    }
+}
+
 /// An SSR app that can render individual requests **without** binding a socket.
 ///
 /// Used by the dev shell's hot-swappable app dylib: the shell owns the HTTP
@@ -253,13 +320,13 @@ impl SsrApp {
         Ok(Self { app, options })
     }
 
-    /// Render a single request to `(status, headers, body)`.
-    pub fn render(
-        &self,
-        method: &str,
-        uri: &str,
-    ) -> Result<(u16, Vec<(String, String)>, Vec<u8>), Box<dyn std::error::Error>>
-    {
+    /// Render a single request to (status, headers, body).
+    pub fn render(&self, method: &str, uri: &str) -> SsrRenderResult {
+        self.render_request(SsrRequest::new(method, uri))
+    }
+
+    /// Render a full request (method, URI, headers, body) without a socket.
+    pub fn render_request(&self, request: SsrRequest) -> SsrRenderResult {
         use axum::body::Body;
         use tower::ServiceExt;
 
@@ -268,14 +335,16 @@ impl SsrApp {
             .build()?;
         let local = tokio::task::LocalSet::new();
         let app = self.app.clone();
-        let method = axum::http::Method::from_bytes(method.as_bytes())?;
-        let uri = uri.to_string();
+        let method = axum::http::Method::from_bytes(request.method.as_bytes())?;
+        let uri = request.uri.clone();
 
         rt.block_on(local.run_until(async move {
-            let req = axum::http::Request::builder()
-                .method(method)
-                .uri(uri)
-                .body(Body::empty())?;
+            let mut builder =
+                axum::http::Request::builder().method(method).uri(uri);
+            for (name, value) in &request.headers {
+                builder = builder.header(name.as_str(), value.as_str());
+            }
+            let req = builder.body(Body::from(request.body))?;
             let res = app.oneshot(req).await?;
             let status = res.status().as_u16();
             let headers = res
@@ -309,10 +378,50 @@ if (window.__montrsDevOverlay) return; window.__montrsDevOverlay = 1;
 // iterations pin old bundles in Chrome even across a hard refresh.
 try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) { navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }); } if (window.caches && caches.keys) { caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); }); } } catch (_) {}
 var E = [];
-function push(k, m, f) { E.push([k, m, f || '']); if (E.length > 60) E.shift(); }
+function hasError() {
+  for (var i = 0; i < E.length; i++) {
+    var k = E[i][0];
+    if (k === 'error' || k === 'rejection' || k === 'build' || k === 'server') return true;
+  }
+  return false;
+}
+function hasWarn() {
+  for (var i = 0; i < E.length; i++) {
+    var k = E[i][0];
+    if (k === 'warn' || k === 'console' || k === 'warning') return true;
+  }
+  return false;
+}
+// Append a log entry, de-duplicated by (kind, message). A repeat bumps the
+// count and refreshes the frame instead of adding a duplicate row, so the same
+// error never appears twice. Entry shape: [kind, message, frame, count].
+function push(k, m, f) {
+  f = f || '';
+  for (var i = 0; i < E.length; i++) {
+    if (E[i][0] === k && E[i][1] === m) {
+      E[i][3] = (E[i][3] || 1) + 1;
+      if (f) E[i][2] = f;
+      if (typeof updateRing === 'function') updateRing();
+      if (open && typeof render === 'function') render();
+      return;
+    }
+  }
+  E.push([k, m, f, 1]);
+  if (E.length > 60) E.shift();
+  if (typeof updateRing === 'function') updateRing();
+  if (open && typeof render === 'function') render();
+}
+function clearLog() {
+  E.length = 0;
+  if (typeof updateRing === 'function') updateRing();
+  if (open && typeof render === 'function') render();
+}
 window.addEventListener('error', function (e) { push('error', (e && e.message) || String(e.error || 'Error')); });
 window.addEventListener('unhandledrejection', function (e) { var r = e && e.reason; push('rejection', r ? String(r) : 'Promise rejected'); });
-try { (function (ce) { console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); }; })(console.error); } catch (_) {}
+try { (function (ce, cw) {
+  console.error = function () { push('console', Array.prototype.map.call(arguments, String).join(' ')); return ce.apply(console, arguments); };
+  if (cw) { console.warn = function () { push('warn', Array.prototype.map.call(arguments, String).join(' ')); return cw.apply(console, arguments); }; }
+})(console.error, console.warn); } catch (_) {}
 // User preferences: which side the button floats on, and how opaque it is.
 // Never fully transparent, so it can always be found and reopened.
 var MIN_OPACITY = 0.2;
@@ -352,6 +461,21 @@ try { var l = document.querySelector('link[rel="icon"]'); if (l && l.href) logo 
 if (!logo) {
   btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="#ff6310" stroke-width="2"/><path d="M7 17 V7 L12 13 L17 7 V17" fill="none" stroke="#ff6310" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
+// Red ring when anything failed, amber ring when only warnings are present,
+// no ring when the log is clean. Drawn as an outline so it survives the logo
+// background and stays visible at any opacity.
+function updateRing() {
+  if (!btn) return;
+  var err = hasError(), warn = hasWarn();
+  var ring = err ? '#e5484d' : (warn ? '#d29922' : '');
+  btn.style.outline = ring ? '2px solid ' + ring : 'none';
+  btn.style.outlineOffset = '2px';
+  var shadow = '0 8px 24px rgba(0,0,0,0.25)';
+  if (ring) shadow += ',0 0 0 4px ' + (err ? 'rgba(229,72,77,0.25)' : 'rgba(210,153,34,0.25)');
+  btn.style.boxShadow = shadow;
+  var n = err ? 'error(s)' : (warn ? 'warning(s)' : '');
+  btn.title = 'MontRS dev console' + (n ? ' — ' + n + ' logged' : '') + ' — open to move it or change opacity';
+}
 function styleBtn() {
   btn.style.cssText = css().btn;
   if (logo) {
@@ -360,11 +484,25 @@ function styleBtn() {
     btn.style.backgroundRepeat = 'no-repeat';
     btn.style.backgroundPosition = 'center';
   }
+  updateRing();
 }
 styleBtn();
 var panel = null, open = false;
-function badge(k){ return k==='error' ? '#e5484d' : k==='rejection' ? '#b7791f' : '#60a5fa'; }
-function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function badge(k){
+  if (k === 'error' || k === 'build' || k === 'server') return '#e5484d';
+  if (k === 'rejection' || k === 'warn' || k === 'warning') return '#d29922';
+  return '#60a5fa';
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function copyAllText() {
+  return E.map(function (e) {
+    var tag = '[' + e[0].toUpperCase() + '] ';
+    var count = e[3] && e[3] > 1 ? ' (x' + e[3] + ')' : '';
+    var body = tag + (e[1] || '') + count;
+    if (e[2]) body += '\n' + e[2];
+    return body;
+  }).join('\n\n');
+}
 function render() {
   if (!panel) return;
   var sep = dark() ? '#333' : '#eee';
@@ -378,27 +516,68 @@ function render() {
     + '<button class="pos-toggle" title="Move the console to the other side" style="' + css().ctrl + '">'
     + (settings.pos === 'left' ? 'Right ▸' : '◂ Left') + '</button>'
     + '<span style="opacity:0.7;white-space:nowrap">Opacity</span>'
-    + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">'
-    + '</div>';
+    + '<input class="op" type="range" min="' + MIN_OPACITY + '" max="1" step="0.05" value="' + settings.opacity + '" style="flex:1;accent-color:#ff6310" title="Drag to make the console more transparent (min ' + Math.round(MIN_OPACITY * 100) + '%)">';
+  if (E.length > 0) {
+    out += '<button class="copy-all" title="Copy all logged messages and frames" style="' + css().ctrl + ';margin-left:auto">Copy all</button>';
+    out += '<button class="clear-log" title="Clear the log" style="' + css().ctrl + '">Clear</button>';
+  }
+  out += '</div>';
   if (E.length === 0) {
     out += '<div style="padding:10px;opacity:0.7">No errors. Edits reload after the build.</div>';
   } else {
     for (var i = 0; i < E.length; i++) {
       var c = badge(E[i][0]);
-      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + ';color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
-      if (E[i][2]) {
-        out += '<pre style="position:relative">' + esc(E[i][2]) + '<button class="copy" style="' + css().copy + '" data-i="' + i + '">copy</button></pre>';
+      var kind = E[i][0];
+      out += '<div style="padding:6px 10px;border-bottom:1px solid ' + (dark() ? '#2a2a2a' : '#f0f0f0') + '">';
+      out += '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px">';
+      out += '<span style="display:inline-flex;align-items:center;gap:6px;min-width:0">';
+      out += '<span style="font-weight:600;font-size:10px;text-transform:uppercase;color:' + c + '">' + esc(kind) + '</span>';
+      var count = E[i][3] || 1;
+      if (count > 1) {
+        out += '<span title="Occurrences" style="padding:0 6px;border-radius:9999px;background:' + c + ';color:#0c0c0c;font-size:9px;font-weight:700">x' + count + '</span>';
       }
+      out += '</span>';
+      out += '<button class="copy-item" data-i="' + i + '" style="' + css().ctrl + ';padding:1px 6px;font-size:9px" title="Copy this message">copy</button>';
+      out += '</div>';
+      out += '<div style="color:' + c + ';white-space:pre-wrap;word-break:break-word">' + esc(E[i][1]) + '</div>';
+      if (E[i][2]) {
+        out += '<pre style="position:relative;margin:6px 0 0;' + css().frame + '">' + esc(E[i][2]) + '<button class="copy-frame" style="' + css().copy + '" data-i="' + i + '">copy frame</button></pre>';
+      }
+      out += '</div>';
     }
   }
   panel.innerHTML = out;
-  panel.querySelectorAll && panel.querySelectorAll('.copy').forEach(function (b) {
+  panel.querySelectorAll && panel.querySelectorAll('.copy-item').forEach(function (b) {
+    b.onclick = function () {
+      var i = parseInt(b.getAttribute('data-i'), 10);
+      var item = E[i];
+      if (!item) return;
+      var count = item[3] && item[3] > 1 ? ' (x' + item[3] + ')' : '';
+      var text = '[' + item[0].toUpperCase() + '] ' + item[1] + count + (item[2] ? '\n\n' + item[2] : '');
+      try { navigator.clipboard.writeText(text); b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy'; }, 1500); }
+      catch (_) { b.textContent = 'fail'; }
+    };
+  });
+  panel.querySelectorAll && panel.querySelectorAll('.copy-frame').forEach(function (b) {
     b.onclick = function () {
       var i = parseInt(b.getAttribute('data-i'), 10);
       var t = E[i] && E[i][2] || '';
-      try { navigator.clipboard.writeText(t); b.textContent = 'copied'; } catch (_) { b.textContent = 'fail'; }
+      try { navigator.clipboard.writeText(t); b.textContent = 'copied'; setTimeout(function(){ b.textContent = 'copy frame'; }, 1500); }
+      catch (_) { b.textContent = 'fail'; }
     };
   });
+  var copyAllBtn = panel.querySelector('.copy-all');
+  if (copyAllBtn) {
+    copyAllBtn.onclick = function () {
+      var all = copyAllText();
+      try { navigator.clipboard.writeText(all); copyAllBtn.textContent = 'Copied!'; setTimeout(function(){ copyAllBtn.textContent = 'Copy all'; }, 1500); }
+      catch (_) { copyAllBtn.textContent = 'Failed'; }
+    };
+  }
+  var clearBtn = panel.querySelector('.clear-log');
+  if (clearBtn) {
+    clearBtn.onclick = function () { clearLog(); };
+  }
   var op = panel.querySelector('.op');
   if (op) {
     op.oninput = function () {

@@ -40,6 +40,8 @@ use deadpool_postgres::{Config, Pool, Runtime};
 use montrs_core::AgentError;
 #[cfg(feature = "sqlite")]
 use rusqlite::Connection;
+#[cfg(feature = "sqlite")]
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 #[cfg(feature = "postgres")]
 use tokio_postgres::NoTls;

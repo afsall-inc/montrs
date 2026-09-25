@@ -56,12 +56,16 @@ fn test_commands_variants() {
         Commands::Build => {}
         _ => panic!("expected Build"),
     }
-    match Commands::Serve {
-        Commands::Serve => {}
+    match (Commands::Serve {
+        watch_workspace: false,
+    }) {
+        Commands::Serve { .. } => {}
         _ => panic!("expected Serve"),
     }
-    match Commands::Watch {
-        Commands::Watch => {}
+    match (Commands::Watch {
+        watch_workspace: false,
+    }) {
+        Commands::Watch { .. } => {}
         _ => panic!("expected Watch"),
     }
 }

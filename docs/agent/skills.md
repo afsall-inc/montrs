@@ -19,7 +19,7 @@ steps = [
     "Check montrs.toml for database configuration section",
     "If no database configured, guide user to add [database] section with backend and URL",
     "Run `cargo add` for the chosen backend driver",
-    "Verify connection with TestRuntime",
+    "Verify connection with TestHarness",
 ]
 
 [context]

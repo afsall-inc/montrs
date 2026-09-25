@@ -16,6 +16,7 @@ You are currently in **Framework Contributor Mode**.
 ---
 
 ## 🏗️ Framework Principles you MUST Uphold
+- **MUST (Modular · Universal · Simple · Testable)**: The acceptance bar for every crate, trait, feature, and test. A change that fails any letter is not finished. See [Philosophy §0](../architecture/philosophy.md#0-the-must-convention).
 - **Determinism**: The framework must be predictable. Avoid non-deterministic behavior in core packages.
 - **Zero-Cost Abstractions**: MontRS should be fast. Use Rust's type system to enforce rules at compile-time whenever possible.
 - **Package Boundaries & Internal Invariants**: Respect the responsibilities of each crate. Every framework package has a `docs/invariants.md` that defines its internal "rules of engagement" and boundary constraints. You MUST consult these before and after any change to ensure framework integrity.

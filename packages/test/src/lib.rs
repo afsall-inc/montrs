@@ -61,15 +61,149 @@
 //! ```
 
 pub mod integration;
+pub mod kernel;
 pub mod unit;
+
+#[cfg(feature = "db")]
+pub mod db;
 
 #[cfg(feature = "e2e")]
 pub mod e2e;
 
-pub use integration::{Fixture, TestEnv, TestRuntime, run_fixture_test};
+#[cfg(feature = "fuzz")]
+pub mod fuzz;
+
+#[cfg(feature = "http")]
+pub mod http;
+
+#[cfg(feature = "motion")]
+pub mod motion;
+
+#[cfg(feature = "mock")]
+pub mod mock;
+
+#[cfg(feature = "scene")]
+pub mod scene;
+
+#[cfg(feature = "traffic")]
+pub mod traffic;
+
+#[cfg(feature = "vision")]
+pub mod vision;
+
+#[cfg(feature = "sim-dom")]
+pub mod dom;
+
+#[cfg(feature = "layout")]
+pub mod layout;
+
+#[cfg(feature = "layout")]
+pub mod devices;
+
+#[cfg(feature = "layout")]
+pub mod responsive;
+
+pub use integration::{Fixture, TestEnv, run_fixture_test};
+pub use kernel::{
+    Clock, Rng, SystemClock, TestApp, TestClock, TestHarness, TestRng,
+};
 use montrs_core::AgentError;
+#[cfg(feature = "macros")]
+pub use montrs_test_macros::{suite, test};
 use thiserror::Error;
 pub use unit::{Mock, Spy, expect, simple_bench};
+
+/// Run an async future to completion on a single-threaded tokio runtime.
+/// Used by generated tests so individual tests do not need `#[tokio::test]`.
+pub fn block_on<F: std::future::Future>(f: F) -> F::Output {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to start tokio runtime for test")
+        .block_on(f)
+}
+
+/// Helper for generated tests: unwrap a test outcome, asserting success if it
+/// is a `Result`.
+pub trait TestOutcome {
+    fn assert_passed(self);
+}
+
+impl TestOutcome for () {
+    fn assert_passed(self) {}
+}
+
+impl<T, E: std::fmt::Debug> TestOutcome for Result<T, E> {
+    #[track_caller]
+    fn assert_passed(self) {
+        if let Err(e) = self {
+            panic!("test returned an error: {:?}", e);
+        }
+    }
+}
+
+/// Assert a test's outcome succeeded (transparent for `()` or `Result`).
+pub fn assert_passed<O: TestOutcome>(outcome: O) {
+    outcome.assert_passed();
+}
+
+/// The most commonly used testing types, in one import.
+pub mod prelude {
+    #[cfg(feature = "db")]
+    pub use crate::db::{
+        DbCall, DbCallKind, MockDb, RecordingDb, SqliteFixture,
+    };
+    #[cfg(feature = "layout")]
+    pub use crate::devices::{DeviceCategory, DeviceProfile, standard_devices};
+    #[cfg(feature = "sim-dom")]
+    pub use crate::dom::ComponentTest;
+    #[cfg(feature = "http")]
+    pub use crate::http::{TestClient, TestResponse};
+    #[cfg(feature = "layout")]
+    pub use crate::kernel::ResponsiveDefaults;
+    #[cfg(feature = "layout")]
+    pub use crate::layout::{Breakpoints, LayoutBox, SimLayout, Viewport};
+    #[cfg(feature = "mock")]
+    pub use crate::mock::MockData;
+    #[cfg(feature = "motion")]
+    pub use crate::motion::{MotionTest, ScalarAnimation};
+    #[cfg(feature = "layout")]
+    pub use crate::responsive::{
+        ResponsiveCheck, ResponsiveReport, Rule, Violation,
+    };
+    #[cfg(feature = "scene")]
+    pub use crate::scene::{Aabb, Camera, Mat4, Mesh, Scene, Vec3, Wireframe};
+    #[cfg(feature = "traffic")]
+    pub use crate::traffic::{Traffic, TrafficProfile, TrafficReport};
+    #[cfg(feature = "vision")]
+    pub use crate::vision::{A11yNode, AgentVision, Observation, ObservedBox};
+    pub use crate::{
+        integration::{Fixture, TestEnv, run_fixture_test},
+        kernel::{
+            Clock, Rng, SystemClock, TestApp, TestClock, TestHarness, TestRng,
+        },
+        unit::{Mock, Spy, expect, simple_bench},
+    };
+}
+
+/// Remove `<!--hot-reload|…|open-->` / `…|close-->` markers from HTML so that
+/// rendered output is stable for snapshots.
+pub fn strip_hot_reload_markers(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(start) = rest.find("<!--hot-reload|") {
+        out.push_str(&rest[..start]);
+        match rest[start..].find("-->") {
+            Some(end) => rest = &rest[start + end + 3..],
+            None => {
+                rest = "";
+                break;
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
 
 /// Errors that can occur during testing.
 #[derive(Error, Debug)]

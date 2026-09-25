@@ -36,6 +36,7 @@ pub mod agent;
 pub mod auth;
 pub mod bench;
 pub mod build;
+pub mod dev_watch;
 pub mod e2e;
 pub mod env;
 pub mod expand;
@@ -55,6 +56,7 @@ pub mod spec;
 pub mod test;
 pub mod ui_init;
 pub mod upgrade;
+pub mod verify;
 pub mod watch;
 
 /// What kind of rebuild a source change triggered.

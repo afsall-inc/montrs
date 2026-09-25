@@ -158,9 +158,11 @@ impl BenchRunner {
             println!("Report saved to {}", style(path).blue());
         }
 
-        if let Some(path) = &self.config.generate_weights {
-            report.save_weights(path)?;
-            println!("Weights generated at {}", style(path).blue());
+        if let Some(path) = &self.config.save_baseline {
+            let device = std::env::var("MONTRS_DEVICE")
+                .unwrap_or_else(|_| "host".to_string());
+            report.save_baselines(path, &device)?;
+            println!("Baselines saved to {}", style(path).blue());
         }
 
         Ok(())

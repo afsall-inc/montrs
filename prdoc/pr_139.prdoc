@@ -1,0 +1,18 @@
+---
+title: Hotpatch - Testability
+author: balqaasem
+pr: 139
+
+doc:
+  - audience: Developer
+    description: |
+      Changes for PR #139
+
+crates:
+  - name: montrs-core
+    bump: minor
+  - name: montrs-hot-reload
+    bump: minor
+  - name: website
+    bump: minor
+---

@@ -63,8 +63,8 @@ pub fn Footer() -> impl IntoView {
                             </h3>
                             <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
                                 <li>
-                                    <NavLink class="transition-colors hover:text-foreground" href="/packages">
-                                        "Packages"
+                                    <NavLink class="transition-colors hover:text-foreground" href="/products">
+                                        "Products"
                                     </NavLink>
                                 </li>
                                 <li>
@@ -79,7 +79,7 @@ pub fn Footer() -> impl IntoView {
                                 </li>
                                 <li>
                                     <NavLink class="transition-colors hover:text-foreground" href="/ai">
-                                        "AI Kit"
+                                        "AI"
                                     </NavLink>
                                 </li>
                             </ul>

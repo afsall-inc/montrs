@@ -8,19 +8,39 @@ repository.workspace = true
 
 [package.metadata.montrs]
 layer = "2"
-allowed_deps = ["montrs-core", "montrs-orm", "montrs-bench"]
+allowed_deps = ["montrs-core", "montrs-orm", "montrs-bench", "montrs-motion"]
 
 [dependencies]
 montrs-core = { path = "../core" }
 thiserror.workspace = true
 montrs-orm = { path = "../orm" }
+leptos = { workspace = true, optional = true }
+montrs-motion = { path = "../motion", optional = true }
+rusqlite = { version = "0.31", features = ["bundled"], optional = true }
+scraper = { version = "0.20", optional = true }
+taffy = { version = "0.7", optional = true }
 playwright = { package = "playwright-rs", version = "0.8.2", optional = true }
 serde.workspace = true
+serde_json.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
 anyhow.workspace = true
 montrs-bench = { version = "0.1.0", path = "../bench" }
+montrs-test-macros = { path = "../test-macros", optional = true }
+
+proptest = { version = "1.5", optional = true }
 
 [features]
 default = []
+db = ["montrs-orm/sqlite", "dep:rusqlite"]
 e2e = ["dep:playwright"]
+fuzz = ["dep:proptest"]
+http = ["montrs-core/ssr", "dep:leptos"]
+layout = ["sim-dom", "dep:taffy"]
+macros = ["dep:montrs-test-macros"]
+motion = ["dep:montrs-motion"]
+mock = []
+scene = []
+sim-dom = ["montrs-core/ssr", "dep:leptos", "dep:scraper"]
+traffic = ["http"]
+vision = ["layout"]

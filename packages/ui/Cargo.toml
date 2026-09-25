@@ -22,6 +22,7 @@ montrs-icons = { path = "../icons" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+montrs-test = { path = "../test", features = ["layout"] }
 
 [features]
 default = ["csr"]

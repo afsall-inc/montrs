@@ -44,27 +44,26 @@
 use leptos_hot_reload::ViewMacros;
 pub use leptos_hot_reload::diff::Patches;
 use std::{
-    collections::HashMap,
-    hash::{Hash, Hasher},
+    collections::{BTreeMap, HashMap},
     path::{Path, PathBuf},
 };
-use syn::{spanned::Spanned, visit::Visit};
+use syn::visit_mut::VisitMut;
 use walkdir::WalkDir;
 
-/// Per-file hot-reload state: the parsed `view!` baseline and a hash of the
-/// file's non-view "skeleton".
+/// Per-file hot-reload state: the parsed `view!` baseline and a multiset of the
+/// file's non-view tokens (its "skeleton").
 pub struct ViewPatcher {
     baselines: HashMap<PathBuf, ViewMacros>,
-    skeletons: HashMap<PathBuf, u64>,
+    skeletons: HashMap<PathBuf, BTreeMap<String, usize>>,
     /// Root the compiler used to derive stable ids (cargo's workspace root).
     /// Ids are rewritten to match it because we key files by absolute path.
     workspace_root: Option<PathBuf>,
 }
 
 impl ViewPatcher {
-    /// Snapshot the `view!` macros and skeleton hashes of every `.rs` file
-    /// under `roots`. Files that fail to parse are skipped (edits to them fall
-    /// back to a full rebuild).
+    /// Snapshot the `view!` macros and skeletons of every `.rs` file under
+    /// `roots`. Files that fail to parse are skipped (edits to them fall back
+    /// to a full rebuild).
     pub fn new(roots: &[PathBuf], workspace_root: Option<PathBuf>) -> Self {
         let mut baselines = HashMap::new();
         let mut skeletons = HashMap::new();
@@ -88,7 +87,7 @@ impl ViewPatcher {
                     baselines.insert(canon.clone(), vm);
                 }
                 if let Ok(src) = std::fs::read_to_string(&canon) {
-                    skeletons.insert(canon, skeleton_hash(&src));
+                    skeletons.insert(canon, skeleton_tokens(&src));
                 }
             }
         }
@@ -138,8 +137,15 @@ impl ViewPatcher {
         )
     }
 
-    /// Whether the file changed only inside its `view!` macros. Updates the
-    /// stored skeleton hash, so call once per change.
+    /// Whether the change can be hot-patched without recompiling.
+    ///
+    /// True when the file's non-`view!` tokens are unchanged (markup-only
+    /// edits, comment/formatting changes), or when the only non-`view!` change
+    /// is a *removal* — deleting code cannot introduce new behaviour, and any
+    /// visible effect is already carried by the `view!` patch. Additions or
+    /// in-place edits to non-view code return false and trigger a rebuild.
+    ///
+    /// Updates the stored skeleton, so call once per change.
     pub fn is_view_only(&mut self, path: &Path) -> bool {
         let Some(canon) = canonical(path) else {
             return false;
@@ -147,10 +153,23 @@ impl ViewPatcher {
         let Ok(src) = std::fs::read_to_string(&canon) else {
             return false;
         };
-        let new_hash = skeleton_hash(&src);
-        let previous = self.skeletons.insert(canon, new_hash);
-        previous == Some(new_hash)
+        let new = skeleton_tokens(&src);
+        let previous = self.skeletons.insert(canon, new.clone());
+        match previous {
+            Some(old) => old == new || is_token_subset(&new, &old),
+            None => false,
+        }
     }
+}
+
+/// Whether every token in `new` occurs at least as often in `old` — i.e. the
+/// change added no new code (it may only have removed some).
+fn is_token_subset(
+    new: &BTreeMap<String, usize>,
+    old: &BTreeMap<String, usize>,
+) -> bool {
+    new.iter()
+        .all(|(token, count)| old.get(token).copied().unwrap_or(0) >= *count)
 }
 
 /// Canonical form used as a stable key for both the baseline map and notify's
@@ -159,58 +178,47 @@ fn canonical(path: &Path) -> Option<PathBuf> {
     std::fs::canonicalize(path).ok()
 }
 
-/// Hash of a source file with every `view!` macro's lines blanked out.
+/// Multiset of tokens in a source file's AST with every `view!` macro stripped.
 ///
-/// Two versions of a file hash the same when only their `view!` content
-/// differs — i.e. the change is markup-only and can be hot-patched.
-fn skeleton_hash(src: &str) -> u64 {
-    let lines: Vec<&str> = src.lines().collect();
-    let mut blank = vec![false; lines.len()];
+/// Because this uses the parsed Rust AST rather than raw text lines:
+/// - Whitespace and indentation changes do NOT change the token counts
+/// - Comments (which rustc does not see) do NOT change the token counts
+/// - Adding/removing/modifying markup inside `view!` does NOT change the token counts
+/// - Renumbering lines inside a `view!` does NOT change the token counts
+/// - Only non-`view!` Rust code changes will affect the token bag
+fn skeleton_tokens(src: &str) -> BTreeMap<String, usize> {
+    let Ok(mut ast) = syn::parse_file(src) else {
+        // Unparseable file: count raw words as fallback
+        let mut bag = BTreeMap::new();
+        for word in src.split_whitespace() {
+            *bag.entry(word.to_string()).or_insert(0) += 1;
+        }
+        return bag;
+    };
 
-    if let Ok(ast) = syn::parse_file(src) {
-        let mut visitor = ViewSpanVisitor::default();
-        visitor.visit_file(&ast);
-        for (start, end) in visitor.spans {
-            for line in start..=end {
-                if line >= 1 && line <= blank.len() {
-                    blank[line - 1] = true;
-                }
+    struct StripView;
+    impl VisitMut for StripView {
+        fn visit_macro_mut(&mut self, mac: &mut syn::Macro) {
+            let is_view = mac
+                .path
+                .segments
+                .last()
+                .is_some_and(|seg| seg.ident == "view");
+            if is_view {
+                mac.tokens = proc_macro2::TokenStream::new();
             }
+            syn::visit_mut::visit_macro_mut(self, mac);
         }
     }
 
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    for (i, line) in lines.iter().enumerate() {
-        if blank.get(i).copied().unwrap_or(false) {
-            continue;
-        }
-        line.hash(&mut hasher);
-    }
-    hasher.finish()
-}
+    StripView.visit_file_mut(&mut ast);
 
-/// Collects the line spans of every `view!` macro invocation.
-#[derive(Default)]
-struct ViewSpanVisitor {
-    spans: Vec<(usize, usize)>,
-}
-
-impl<'ast> Visit<'ast> for ViewSpanVisitor {
-    fn visit_macro(&mut self, mac: &'ast syn::Macro) {
-        let is_view = mac
-            .path
-            .segments
-            .last()
-            .is_some_and(|seg| seg.ident == "view");
-        if is_view {
-            let start = mac.span().start().line;
-            let end = mac.span().end().line;
-            if start >= 1 {
-                self.spans.push((start, end.max(start)));
-            }
-        }
-        syn::visit::visit_macro(self, mac);
+    let ts = quote::quote!(#ast);
+    let mut bag = BTreeMap::new();
+    for token in ts {
+        *bag.entry(token.to_string()).or_insert(0) += 1;
     }
+    bag
 }
 
 #[cfg(test)]
@@ -233,7 +241,7 @@ fn Card() -> impl IntoView {
     view! { <div class="b">"world"</div> }
 }
 "#;
-        assert_eq!(skeleton_hash(a), skeleton_hash(b));
+        assert_eq!(skeleton_tokens(a), skeleton_tokens(b));
     }
 
     #[test]
@@ -250,7 +258,51 @@ fn Card() -> impl IntoView {
     view! { <div>"hi"</div> }
 }
 "#;
-        assert_ne!(skeleton_hash(a), skeleton_hash(b));
+        assert_ne!(skeleton_tokens(a), skeleton_tokens(b));
+    }
+
+    #[test]
+    fn comment_only_edit_keeps_skeleton() {
+        let a = r#"
+// old wording
+fn Card() -> impl IntoView {
+    view! { <div>"hi"</div> }
+}
+"#;
+        let b = r#"
+// new wording
+fn Card() -> impl IntoView {
+    view! { <div>"hi"</div> }
+}
+"#;
+        assert_eq!(skeleton_tokens(a), skeleton_tokens(b));
+    }
+
+    #[test]
+    fn whitespace_and_formatting_edit_keeps_skeleton() {
+        let a = "fn Card() -> impl IntoView {\n    view! { <div>\"hi\"</div> \
+                 }\n}\n";
+        let b = "fn Card() -> impl IntoView {\n\n      view! { \
+                 <div>\"hi\"</div> }\n}\n";
+        assert_eq!(skeleton_tokens(a), skeleton_tokens(b));
+    }
+
+    #[test]
+    fn removing_a_constant_is_subset_so_it_is_view_only() {
+        let a = r#"
+const UNUSED: &str = "foo";
+fn Card() -> impl IntoView {
+    view! { <div>"hi"</div> }
+}
+"#;
+        let b = r#"
+fn Card() -> impl IntoView {
+    view! { <div>"hi"</div> }
+}
+"#;
+        let old = skeleton_tokens(a);
+        let new = skeleton_tokens(b);
+        assert!(is_token_subset(&new, &old));
     }
 
     #[test]
@@ -306,12 +358,9 @@ fn Card() -> impl IntoView {
     }
 
     #[test]
-    fn view_line_shift_is_conservative() {
-        // Inserting a line above the view! shifts its line numbers, which
-        // changes the skeleton hash (blanked lines move). This is the safe
-        // direction: the classifier falls back to a rebuild.
+    fn comments_above_view_keep_skeleton() {
         let a = "fn a() -> impl IntoView { view! { <div></div> } }\n";
         let b = "// note\nfn a() -> impl IntoView { view! { <div></div> } }\n";
-        assert_ne!(skeleton_hash(a), skeleton_hash(b));
+        assert_eq!(skeleton_tokens(a), skeleton_tokens(b));
     }
 }

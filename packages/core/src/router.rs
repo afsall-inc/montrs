@@ -429,6 +429,45 @@ impl<C: AppConfig> Router<C> {
             .collect()
     }
 
+    /// Resolve `path` to a [`RouteRef`] for inspection, loader/action execution,
+    /// and rendering — without going through HTTP.
+    ///
+    /// Returns `None` when no route (not even a `*` catch-all) matches.
+    pub fn route(&self, path: &str) -> Option<RouteRef<'_, C>> {
+        if let Some(route) = self.exact_routes.get(path) {
+            return Some(RouteRef {
+                inner: route,
+                params: serde_json::Value::Null,
+            });
+        }
+
+        for (_, segments, route) in &self.routes {
+            if let Some(params) = match_path(segments, path) {
+                return Some(RouteRef {
+                    inner: route,
+                    params: params_to_json(params),
+                });
+            }
+        }
+
+        if let Some(catch_all) = self.exact_routes.get("*") {
+            return Some(RouteRef {
+                inner: catch_all,
+                params: serde_json::Value::Null,
+            });
+        }
+        for (path_str, _, route) in &self.routes {
+            if path_str == "*" {
+                return Some(RouteRef {
+                    inner: route,
+                    params: serde_json::Value::Null,
+                });
+            }
+        }
+
+        None
+    }
+
     pub fn spec(&self) -> RouterSpec {
         let mut routes = HashMap::new();
         for (path, _, route) in &self.routes {
@@ -438,10 +477,68 @@ impl<C: AppConfig> Router<C> {
     }
 }
 
+/// A resolved route, for inspection and in-process execution.
+///
+/// Obtained from [`Router::route`]. Lets tests (and tooling) run a route's
+/// loader or action and render its view without a running server.
+pub struct RouteRef<'a, C: AppConfig> {
+    inner: &'a Arc<dyn RouteInfo<C>>,
+    params: serde_json::Value,
+}
+
+impl<C: AppConfig> RouteRef<'_, C> {
+    /// The route's path pattern (e.g. `/users/:id`).
+    pub fn path(&self) -> &'static str {
+        self.inner.path()
+    }
+
+    /// The extracted path parameters as JSON.
+    pub fn params(&self) -> &serde_json::Value {
+        &self.params
+    }
+
+    /// Render the route's view.
+    pub fn render(&self) -> AnyView {
+        (self.inner.render())()
+    }
+
+    /// Route metadata (loader/action descriptions).
+    pub fn metadata(&self) -> RouteMetadata {
+        self.inner.metadata()
+    }
+
+    /// Execute the route's loader in-process.
+    pub async fn load(
+        &self,
+        ctx: RouteContext<'_, C>,
+    ) -> Result<serde_json::Value, RouteError> {
+        self.inner.handle_load(ctx, self.params.clone()).await
+    }
+
+    /// Execute the route's action in-process.
+    pub async fn act(
+        &self,
+        ctx: RouteContext<'_, C>,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, RouteError> {
+        self.inner.handle_act(ctx, self.params.clone(), input).await
+    }
+}
+
+fn params_to_json(params: HashMap<String, String>) -> serde_json::Value {
+    if params.is_empty() {
+        return serde_json::Value::Null;
+    }
+    let mut map = serde_json::Map::new();
+    for (k, v) in params {
+        map.insert(k, serde_json::Value::String(v));
+    }
+    serde_json::Value::Object(map)
+}
+
 // ---------------------------------------------------------------------------
 // Reactive client-side components
 // ---------------------------------------------------------------------------
-
 /// Reads the MontRS Router from Leptos context.
 pub fn use_montrs_router<C: AppConfig + 'static>() -> Router<C> {
     use_context::<Router<C>>().expect(

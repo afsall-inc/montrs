@@ -168,7 +168,7 @@ async fn bench_appspec_load(
     println!("  Median:  {:.4} ms", stats.median * 1000.0);
     println!("  Ops/sec: {:.2}", stats.ops_per_sec);
 
-    if let Some(weight_path) = generate_weights {
+    if let Some(baseline_path) = generate_weights {
         let mut report = Report::new();
         report.add_result(
             "appspec_load".to_string(),
@@ -176,8 +176,8 @@ async fn bench_appspec_load(
             iterations,
             total_duration.as_secs_f64(),
         );
-        report.save_weights(&weight_path)?;
-        println!("Weights generated at {}", style(weight_path).blue());
+        report.save_baselines(&baseline_path, "host")?;
+        println!("Baselines saved to {}", style(baseline_path).blue());
     }
 
     Ok(())
@@ -263,7 +263,7 @@ async fn bench_executable(
     println!("  Ops/sec: {:.2}", stats.ops_per_sec);
     println!("  Total:   {:.2} s", total_duration.as_secs_f64());
 
-    if let Some(weight_path) = generate_weights {
+    if let Some(baseline_path) = generate_weights {
         let mut report = Report::new();
         let name = path.file_name().unwrap().to_string_lossy().to_string();
         report.add_result(
@@ -272,8 +272,8 @@ async fn bench_executable(
             iterations,
             total_duration.as_secs_f64(),
         );
-        report.save_weights(&weight_path)?;
-        println!("Weights generated at {}", style(weight_path).blue());
+        report.save_baselines(&baseline_path, "host")?;
+        println!("Baselines saved to {}", style(baseline_path).blue());
     }
 
     Ok(())

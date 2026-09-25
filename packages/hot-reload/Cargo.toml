@@ -17,5 +17,6 @@ serde_json.workspace = true
 camino = "1"
 leptos_hot_reload = "0.8"
 proc-macro2 = { version = "1", features = ["span-locations"] }
-syn = { version = "2", features = ["full", "visit"] }
+quote = "1"
+syn = { version = "2", features = ["full", "visit-mut"] }
 walkdir = "2"

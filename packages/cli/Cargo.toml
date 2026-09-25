@@ -57,6 +57,7 @@ montrs-lockfile = { path = "../lockfile" }
 montrs-shell = { path = "../shell" }
 montrs-services = { path = "../services" }
 montrs-log = { path = "../log" }
+montrs-test = { path = "../test", features = ["mock", "layout"] }
 montrs-auth = { path = "../auth", optional = true }
 syn = { version = "2.0", features = ["full", "extra-traits"] }
 quote = "1.0"

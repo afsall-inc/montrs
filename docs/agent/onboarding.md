@@ -84,7 +84,7 @@ impl Action<UpdateEmailInput, ()> for UpdateEmailAction {
 
 ### 7. Testing & Determinism
 
-- **TestRuntime**: Use `TestRuntime` to mock environment variables, DB, and time.
+- **TestHarness**: Use `TestHarness` to mock environment variables, DB, and time.
 - **Predictability**: Avoid `SystemTime::now()` or random numbers without a seedable generator provided by the runtime.
 - **Testable Code**: Write logic that accepts traits instead of concrete implementations to allow mocking.
 

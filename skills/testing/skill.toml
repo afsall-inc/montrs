@@ -1,27 +1,33 @@
 [skill]
 name = "testing"
-version = "1.0.0"
-description = "Guides the agent through writing and running tests for MontRS applications."
+version = "1.1.0"
+description = "Guides the agent through writing and running deterministic, hermetic tests for MontRS applications."
 author = "MontRS"
-tags = ["testing", "quality", "verification"]
+tags = ["testing", "quality", "verification", "deterministic", "hermetic"]
 
 [workflow]
 steps = [
-    "Identify the target: unit test, integration test, or E2E test",
+    "Identify the layer: API/route, database, UI structure, layout/overflow, motion, time/RNG, or E2E",
+    "Prefer the hermetic backends: enable `montrs-test` features http/db/sim-dom/layout/motion as needed",
+    "For APIs and loaders: use TestClient and TestHarness::load/act (no server)",
+    "For databases: use sqlite_memory for real SQL, or RecordingDb/MockDb for call expectations",
+    "For UI structure and a11y: use ComponentTest and assert_role/assert_text/assert_class",
+    "For layout: use SimLayout with Viewport to assert_no_horizontal_overflow",
+    "For animation: use MotionTest to step a virtual timeline; use TestClock/TestRng for time and randomness",
     "For unit tests: use the test crate's expect() and table_test() macros",
-    "For integration tests: use TestRuntime and Fixture traits",
-    "For E2E tests: use playwright-rs with the e2e crate",
-    "Run tests with `montrs test` or `cargo test --workspace`",
-    "Check test output for failures and iterate",
+    "Reach for the E2E feature (Playwright) only when a real browser interaction is required",
+    "Run tests with `montrs test` or `cargo test --workspace` and iterate on failures",
 ]
 
 [context]
 prompts = [
-    "What type of test are you writing? (unit, integration, e2e)",
+    "Which layer are you testing? (API, DB, UI, layout, motion, time/RNG, e2e)",
+    "Can this be tested in-process (hermetic) instead of with a real server or browser?",
     "What is the expected behavior you want to verify?",
 ]
 invariants = [
-    "Tests must be deterministic and hermetic",
-    "Integration tests must use TestRuntime for in-process execution",
-    "E2E tests must be tagged with #[cfg(feature = \"e2e\")]",
+    "Tests must be deterministic and hermetic by default; opt into real browsers/external services explicitly",
+    "In-process execution: use TestHarness/TestClient/ComponentTest/SimLayout/MotionTest rather than a live server",
+    "Never depend on the wall clock or unseeded randomness; use TestClock and TestRng",
+    "E2E tests must be tagged with #[cfg(feature = \"e2e\")] and are not part of the hermetic suite",
 ]

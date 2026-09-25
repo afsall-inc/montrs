@@ -254,6 +254,69 @@ impl<T: Debug + PartialEq> Expectation<Vec<T>> {
     }
 }
 
+impl Expectation<String> {
+    pub fn to_contain_str(&self, needle: &str) {
+        let contains = self.value.contains(needle);
+        if self.negated {
+            if contains {
+                panic!(
+                    "Expected string NOT to contain {:?}, but it did.",
+                    needle
+                );
+            }
+        } else if !contains {
+            panic!(
+                "Expected string to contain {:?}, but it did not: {:?}",
+                needle, self.value
+            );
+        }
+    }
+
+    pub fn to_start_with(&self, prefix: &str) {
+        let starts = self.value.starts_with(prefix);
+        if self.negated {
+            if starts {
+                panic!(
+                    "Expected string NOT to start with {:?}, but it did.",
+                    prefix
+                );
+            }
+        } else if !starts {
+            panic!(
+                "Expected string to start with {:?}, but found {:?}",
+                prefix, self.value
+            );
+        }
+    }
+
+    pub fn to_end_with(&self, suffix: &str) {
+        let ends = self.value.ends_with(suffix);
+        if self.negated {
+            if ends {
+                panic!(
+                    "Expected string NOT to end with {:?}, but it did.",
+                    suffix
+                );
+            }
+        } else if !ends {
+            panic!(
+                "Expected string to end with {:?}, but found {:?}",
+                suffix, self.value
+            );
+        }
+    }
+
+    pub fn to_be_empty(&self) {
+        if self.negated {
+            if self.value.is_empty() {
+                panic!("Expected string NOT to be empty, but it was.");
+            }
+        } else if !self.value.is_empty() {
+            panic!("Expected empty string, but found {:?}", self.value);
+        }
+    }
+}
+
 // =============================================================================
 //  Spies & Mocks
 // =============================================================================
@@ -427,4 +490,24 @@ macro_rules! table_test {
             )*
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn string_assertions() {
+        expect("hello world".to_string()).to_contain_str("world");
+        expect("hello".to_string()).to_start_with("he");
+        expect("hello".to_string()).to_end_with("lo");
+        expect(String::new()).to_be_empty();
+        expect("x".to_string()).not().to_contain_str("y");
+    }
+
+    #[test]
+    fn collection_assertions() {
+        expect(vec![1, 2, 3]).to_contain(&2);
+        expect(vec![1, 2, 3]).to_have_length(3);
+    }
 }

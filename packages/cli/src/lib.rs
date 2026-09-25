@@ -78,9 +78,17 @@ pub enum Commands {
     /// Build the project for production.
     Build,
     /// Serve the project for development with hot-reload.
-    Serve,
+    Serve {
+        /// Also watch the workspace `packages/` tree (framework contributor mode).
+        #[arg(long)]
+        watch_workspace: bool,
+    },
     /// Watch for changes and rebuild automatically.
-    Watch,
+    Watch {
+        /// Also watch the workspace `packages/` tree (framework contributor mode).
+        #[arg(long)]
+        watch_workspace: bool,
+    },
     /// Run cargo tests for app, client and server.
     Test {
         /// If specified, filters tests by name.
@@ -97,6 +105,10 @@ pub enum Commands {
         /// Run tests in parallel jobs.
         #[arg(short = 'j', long)]
         jobs: Option<usize>,
+
+        /// Scaffold a standard `tests/app.rs` suite using `montrs::suite!`.
+        #[arg(long)]
+        init: bool,
     },
     /// Run performance benchmarks.
     Bench {
@@ -290,6 +302,24 @@ pub enum Commands {
     },
     /// Rebuild all tool shims.
     Reshim,
+    /// Verify deterministic test fabric and baseline invariants.
+    Verify {
+        /// Update existing baselines to current measured values.
+        #[arg(long)]
+        update: bool,
+        /// Show detailed diagnostic report.
+        #[arg(long)]
+        report: bool,
+        /// Check only UI & layout.
+        #[arg(long)]
+        ui: bool,
+        /// Check only API & route schemas.
+        #[arg(long)]
+        api: bool,
+        /// Run determinism self-consistency checks.
+        #[arg(long)]
+        self_check: bool,
+    },
     /// Manage services (daemons) defined in montrs.toml.
     Services {
         #[command(subcommand)]
@@ -611,14 +641,19 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Build => command::build::run().await,
-        Commands::Serve => command::serve::run().await,
-        Commands::Watch => command::watch::run().await,
+        Commands::Serve { watch_workspace } => {
+            command::serve::run(watch_workspace).await
+        }
+        Commands::Watch { watch_workspace } => {
+            command::watch::run(watch_workspace).await
+        }
         Commands::Test {
             filter,
             report,
             output,
             jobs,
-        } => command::test::run(filter, report, output, jobs).await,
+            init,
+        } => command::test::run(filter, report, output, jobs, init).await,
         Commands::Bench {
             target,
             iterations,
@@ -759,6 +794,22 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
             command::shell::deactivate(&shell).await
         }
         Commands::Reshim => command::shell::reshim().await,
+        Commands::Verify {
+            update,
+            report,
+            ui,
+            api,
+            self_check,
+        } => {
+            command::verify::run(command::verify::VerifyOptions {
+                update,
+                report,
+                ui,
+                api,
+                self_check,
+            })
+            .await
+        }
         Commands::Services { subcommand } => match subcommand {
             ServicesSubcommand::List => command::services::list().await,
             ServicesSubcommand::Start { name, all } => {
