@@ -112,6 +112,18 @@ MontRS is organized as a modular workspace. Each package has a specific responsi
 - **Boundary**: Layer 2. No Leptos, browser, or UI dependency. Commands have stable IDs and case-insensitive search.
 - **When to modify**: When adding search algorithms, sorting strategies, or metadata fields.
 
+## 📦 `montrs-cache`
+- **Responsibility**: Content-addressed incremental cache. Keys a unit of work by a namespace plus the content hash of its inputs (files, directories, globs, env vars, tool versions, inline values), and records the fingerprint of its outputs.
+- **Key Components**: `Cache`, `CacheKey`, `CacheKeyBuilder`, `Input`, `CacheManifest`, `OutputFingerprint`.
+- **Boundary**: No `montrs-*` dependencies except `montrs-core` (for `AgentError`). Deterministic and portable; **when in doubt it misses**.
+- **When to modify**: When adding a new kind of cache input or a remote cache backend.
+
+## 📦 `montrs-scm`
+- **Responsibility**: Minimal git change detection for `--affected` task filtering.
+- **Key Components**: `changed_files`, `is_repo`, `head_rev`, `matches_any`.
+- **Boundary**: Shells out to the `git` binary; no daemon, no heavy git library. Returns sorted, repo-relative paths.
+- **When to modify**: When adding SCM providers or richer change metadata.
+
 ## 📦 `montrs-build-core`
 - **Responsibility**: `BuildPipeline` trait and `BuildConfig` types — the interface for the build system.
 - **Key Components**: `BuildPipeline`, `BuildStep`, `BuildConfig`, `find_workspace_target_dir`.

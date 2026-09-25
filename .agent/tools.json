@@ -209,6 +209,14 @@
       }
     },
     {
+      "description": "Capability provided by package cache. Refer to its README for details.",
+      "name": "montrs_pkg_cache",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package cli. MUST follow invariants defined in agent.json under packages['cli'].invariants",
       "name": "montrs_pkg_cli",
       "parameters": {
@@ -475,6 +483,14 @@
     {
       "description": "Capability provided by package runtime. MUST follow invariants defined in agent.json under packages['runtime'].invariants",
       "name": "montrs_pkg_runtime",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
+      "description": "Capability provided by package scm. Refer to its README for details.",
+      "name": "montrs_pkg_scm",
       "parameters": {
         "properties": {},
         "type": "object"

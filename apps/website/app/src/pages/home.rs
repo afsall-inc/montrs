@@ -83,6 +83,7 @@ pub fn Home() -> impl IntoView {
         <BentoGrid />
         <HotReload />
         <TestFabric />
+        <BuildCache />
         <GoldenPath />
         <Philosophy />
         <AgentFirst />
@@ -696,6 +697,97 @@ fn TestFabric() -> impl IntoView {
                     </a>
                     <a href="/docs" class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent">
                         "Read the testing guide"
+                    </a>
+                </div>
+            </div>
+        </section>
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Incremental builds
+// ---------------------------------------------------------------------------
+
+const BUILD_CACHE_SNIPPET: &str = r#"$ montrs build
+ Building frontend (WASM): up to date (cached)
+ Bundling WASM with wasm-bindgen: up to date (cached)
+ Processing Tailwind CSS: up to date (cached)
+ Copying assets: up to date (cached)
+ Generating index.html: up to date (cached)
+ Building SSR server: up to date (cached)
+ Build complete            # the second build is instant
+
+$ montrs run test --affected
+Running tasks affected by 3 changed file(s).
+[test] cache hit (up to date)"#;
+
+#[component]
+fn BuildCache() -> impl IntoView {
+    view! {
+        <section class="border-t border-border py-20">
+            <div class="page-container">
+                <div class="mx-auto max-w-2xl text-center">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
+                        <Icon glyph=Glyph::Zap class="h-3.5 w-3.5" />
+                        "Incremental builds"
+                    </div>
+                    <h2 class="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+                        "Build only what changed."
+                    </h2>
+                    <p class="mt-4 text-muted-foreground">
+                        "Every build step is keyed by a content hash of its inputs. Nothing
+                        changed means nothing re-runs — and independent steps run in
+                        parallel. No JavaScript, no daemon: just Rust and a local cache."
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">"Content-addressed"</span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">"Hash-keyed steps"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Sources, env, tool versions, and dependency hashes form the key. Outputs are verified by fingerprint."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">"Parallel"</span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">"Independent steps overlap"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Tailwind and asset copying run alongside the WASM → bindgen → server chain."
+                        </p>
+                    </div>
+                    <div class="showcase-card p-6">
+                        <span class="pill">
+                            <span class="pill-accent">"--affected"</span>
+                        </span>
+                        <h3 class="mt-4 font-semibold">"Only what you touched"</h3>
+                        <p class="mt-2 text-sm text-muted-foreground">
+                            "Git change detection runs only the tasks whose declared sources changed."
+                        </p>
+                    </div>
+                </div>
+                <div class="mx-auto mt-14 max-w-3xl">
+                    <div class="code-window">
+                        <div class="code-window-bar">
+                            <span class="traffic-light traffic-light-red" />
+                            <span class="traffic-light traffic-light-yellow" />
+                            <span class="traffic-light traffic-light-green" />
+                            <span class="code-window-tab">"terminal"</span>
+                        </div>
+                        <pre class="code-window-body text-left">
+                            {BUILD_CACHE_SNIPPET}
+                        </pre>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-center">
+                    <a
+                        href="/docs"
+                        class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                    >
+                        "Read the incremental-build guide"
                     </a>
                 </div>
             </div>

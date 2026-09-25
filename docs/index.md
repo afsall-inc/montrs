@@ -21,6 +21,8 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [Mock Data & Traffic](testing/mocks.md) - Multi-cultural datasets, in-process load testing, and fuzzing.
 - [Benchmarking](testing/benchmarking.md) - Measuring performance.
 - [Hot Reload & Hot Patching](tooling/hot-reload.md) - The live dev loop.
+- [Incremental Builds](tooling/incremental-builds.md) - Content-addressed caching for build steps.
+- [The Task Graph](tooling/task-graph.md) - Dependencies, run caching, and `--affected`.
 - [Deployment](community/deployment.md) - Shipping to production.
 
 ### For Framework Contributors
