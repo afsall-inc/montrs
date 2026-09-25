@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use montrs_bench::{Parameter, Weight, stats::BenchStats};
+use montrs_bench::{Parameter, stats::BenchStats};
 
 #[test]
 fn test_linear_regression_stats() {
@@ -62,23 +62,6 @@ fn test_linear_regression_stats() {
         "Intercept mismatch: {} != 1e-7",
         intercept
     );
-}
-
-#[test]
-fn test_weight_calculation() {
-    // Cost = Base + (Slope * N)
-    // Base = 1000ns
-    // Slope = 10ns/item
-
-    let weight = Weight::from_ns(1000, 10);
-
-    assert_eq!(weight.calc(0), 1000);
-    assert_eq!(weight.calc(1), 1010);
-    assert_eq!(weight.calc(100), 2000);
-
-    // Test saturation
-    let huge_weight = Weight::from_ns(u64::MAX - 10, 10);
-    assert_eq!(huge_weight.calc(10), u64::MAX); // Should saturate
 }
 
 #[test]

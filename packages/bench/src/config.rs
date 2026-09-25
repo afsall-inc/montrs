@@ -68,10 +68,10 @@ struct CliArgs {
     #[arg(long = "json-output")]
     json_output: Option<String>,
 
-    /// Path to generate weights file (Substrate-style).
-    /// Env: MONTRS_BENCH_GENERATE_WEIGHTS
-    #[arg(long = "generate-weights")]
-    generate_weights: Option<String>,
+    /// Path to save baseline JSON for regression tracking.
+    /// Env: MONTRS_BENCH_SAVE_BASELINE
+    #[arg(long = "save-baseline")]
+    save_baseline: Option<String>,
 }
 
 /// Configuration for benchmark execution.
@@ -100,8 +100,8 @@ pub struct BenchConfig {
     /// Path to export JSON report.
     pub json_output: Option<String>,
 
-    /// Path to generate weights file (Substrate-style).
-    pub generate_weights: Option<String>,
+    /// Path to save baseline JSON for regression tracking.
+    pub save_baseline: Option<String>,
 }
 
 impl BenchConfig {
@@ -169,8 +169,8 @@ impl BenchConfig {
             Self::fetch_env_string("MONTRS_BENCH_JSON_OUTPUT", &env_loader)
         });
 
-        let generate_weights = args.generate_weights.or_else(|| {
-            Self::fetch_env_string("MONTRS_BENCH_GENERATE_WEIGHTS", &env_loader)
+        let save_baseline = args.save_baseline.or_else(|| {
+            Self::fetch_env_string("MONTRS_BENCH_SAVE_BASELINE", &env_loader)
         });
 
         Self {
@@ -179,7 +179,7 @@ impl BenchConfig {
             duration,
             filter,
             json_output,
-            generate_weights,
+            save_baseline,
         }
     }
 
@@ -214,7 +214,7 @@ impl Default for BenchConfig {
             duration: Some(Duration::from_secs(5)),
             filter: None,
             json_output: None,
-            generate_weights: None,
+            save_baseline: None,
         }
     }
 }

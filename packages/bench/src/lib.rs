@@ -35,22 +35,21 @@
 //! This crate provides tools for measuring performance, gathering system statistics,
 //! and generating detailed reports.
 
+pub mod budget;
 pub mod config;
 pub mod parameter;
 pub mod report;
 pub mod runner;
 pub mod stats;
 pub mod sys;
-pub mod weights;
 
+pub use budget::{BaselineStore, BenchmarkBaseline, Budget};
 pub use config::BenchConfig;
 use montrs_core::AgentError;
 pub use parameter::{Parameter, ParametricBench};
 pub use report::Report;
 pub use runner::{BenchRunner, Benchmark};
-use std::future::Future;
 use thiserror::Error;
-pub use weights::Weight;
 
 /// Errors that can occur during benchmarking.
 #[derive(Error, Debug)]
