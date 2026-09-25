@@ -4540,10 +4540,13 @@ dependencies = [
  "montrs-build-core",
  "montrs-build-serve",
  "montrs-build-watch",
+ "montrs-cache",
  "montrs-metadata",
  "serde",
  "serde_json",
+ "tempfile",
  "tracing",
+ "walkdir",
 ]
 
 [[package]]

@@ -47,3 +47,7 @@ Desktop.ini
 
 # Standalone codegen crate's own cargo target (outside the workspace target)
 packages/icons/codegen/target
+
+# MontRS incremental build cache
+.montrs/cache/
+

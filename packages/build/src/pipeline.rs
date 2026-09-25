@@ -31,6 +31,7 @@
 use crate::{copy_dir, run_cargo, run_tailwind};
 use anyhow::{Result, anyhow};
 use montrs_build_core::{BuildPipeline, find_workspace_target_dir};
+use montrs_cache::{Cache, CacheKey, Input};
 use montrs_metadata::MontrsMetadata;
 use std::{
     path::{Path, PathBuf},
@@ -54,6 +55,8 @@ pub struct Pipeline {
     pub tailwind_bin: Option<PathBuf>,
     /// Path to the wasm-bindgen binary (managed install override).
     pub wasm_bindgen_bin: Option<PathBuf>,
+    /// Content-addressed cache; disabled when `MONTRS_NO_CACHE` is set.
+    pub cache: Cache,
 }
 
 impl Pipeline {
@@ -83,7 +86,260 @@ impl Pipeline {
             hot_reload: false,
             tailwind_bin: None,
             wasm_bindgen_bin: None,
+            cache: if std::env::var_os("MONTRS_NO_CACHE").is_some() {
+                Cache::disabled()
+            } else {
+                Cache::local(&root)
+            },
         })
+    }
+
+    /// Disable the incremental cache for this pipeline.
+    pub fn without_cache(mut self) -> Self {
+        self.cache = Cache::disabled();
+        self
+    }
+
+    /// Run a step through the cache: skip when fresh, otherwise run and record.
+    ///
+    /// Returns `Ok(true)` on a cache hit.
+    fn cached_step<F>(
+        &self,
+        namespace: &str,
+        inputs: Vec<Input>,
+        outputs: Vec<PathBuf>,
+        label: &str,
+        run: F,
+    ) -> Result<bool>
+    where
+        F: FnOnce() -> Result<()>,
+    {
+        if !self.cache.is_enabled() {
+            run()?;
+            return Ok(false);
+        }
+        let key = CacheKey::new(namespace, &inputs).map_err(|e| anyhow!(e))?;
+        if self.cache.is_fresh(&key) {
+            println!(" {label}: up to date (cached)");
+            return Ok(true);
+        }
+        run()?;
+        if let Err(e) = self.cache.record(&key, &outputs) {
+            // A cache write failure must never fail the build.
+            eprintln!(" warning: could not record {namespace} in cache: {e}");
+        }
+        Ok(false)
+    }
+
+    /// Inputs shared by every Rust build step: the app sources, manifests, and
+    /// the environment/profile that select the output.
+    fn rust_inputs(&self) -> Vec<Input> {
+        let mut inputs = vec![
+            Input::dir(self.project_root.join("app").join("src")),
+            Input::file(self.project_root.join("Cargo.toml")),
+            Input::file(self.project_root.join("montrs.toml")),
+            Input::env("PROFILE"),
+            Input::env("LEPTOS_WATCH"),
+            Input::env("RUSTFLAGS"),
+            Input::value(self.release.to_string()),
+            Input::value(self.hot_reload.to_string()),
+        ];
+        // Workspace manifests that change what gets compiled.
+        if let Some(ws_root) = self.workspace_target_dir.parent() {
+            let packages = ws_root.join("packages");
+            if packages.exists() {
+                inputs.push(Input::glob(&packages, "*/src/**/*.rs"));
+                inputs.push(Input::glob(&packages, "*/Cargo.toml"));
+            }
+        }
+        inputs
+    }
+
+    /// The compiled WASM artifact for the active profile.
+    fn wasm_artifact(&self) -> PathBuf {
+        let lib_name = self
+            .meta
+            .serve
+            .package
+            .as_deref()
+            .unwrap_or("app")
+            .replace('-', "_");
+        let wasm_profile = if self.hot_reload { "hot" } else { "release" };
+        self.workspace_target_dir
+            .join("wasm32-unknown-unknown")
+            .join(wasm_profile)
+            .join(format!("{lib_name}.wasm"))
+    }
+
+    /// The compiled SSR server artifact for the active profile.
+    fn server_artifact(&self) -> PathBuf {
+        self.server_bin_path()
+    }
+
+    fn tool_version(name: &str, bin: Option<&Path>) -> String {
+        let program = match bin {
+            Some(path) => path.as_os_str(),
+            None => std::ffi::OsStr::new(name),
+        };
+        let mut cmd = Command::new(program);
+        cmd.arg("--version");
+        match cmd.output() {
+            Ok(out) if out.status.success() => {
+                String::from_utf8_lossy(&out.stdout).trim().to_string()
+            }
+            _ => "unknown".to_string(),
+        }
+    }
+
+    /// `cargo build` of the WASM frontend, cached by sources + tool version.
+    fn step_wasm(&self) -> Result<bool> {
+        let mut inputs = self.rust_inputs();
+        inputs.push(Input::tool("rustc", Self::tool_version("rustc", None)));
+        let out = self.wasm_artifact();
+        self.cached_step(
+            "wasm",
+            inputs,
+            vec![out],
+            "Building frontend (WASM)",
+            || {
+                println!(" Building frontend (WASM)...");
+                run_cargo(&self.build_frontend_args(), self.hot_reload)
+            },
+        )
+    }
+
+    /// `wasm-bindgen` bundling, cached by the wasm artifact + tool version.
+    fn step_bindgen(&self) -> Result<bool> {
+        let inputs = vec![
+            Input::file(self.wasm_artifact()),
+            Input::tool(
+                "wasm-bindgen",
+                Self::tool_version(
+                    "wasm-bindgen",
+                    self.wasm_bindgen_bin.as_deref(),
+                ),
+            ),
+            Input::value("front"),
+        ];
+        self.cached_step(
+            "bindgen",
+            inputs,
+            vec![
+                self.pkg_dir.join("front.js"),
+                self.pkg_dir.join("front_bg.wasm"),
+            ],
+            "Bundling WASM with wasm-bindgen",
+            || self.bundle_wasm(),
+        )
+    }
+
+    /// Tailwind CSS, cached by the input stylesheet, scanned sources, and the
+    /// Tailwind binary version.
+    fn step_tailwind(&self) -> Result<bool> {
+        let Some(tw_input) = &self.meta.serve.tailwind_input_file else {
+            return Ok(false);
+        };
+        let input = self.project_root.join(tw_input);
+        if !input.exists() {
+            return Ok(false);
+        }
+        let mut inputs = vec![
+            Input::file(&input),
+            Input::tool(
+                "tailwindcss",
+                Self::tool_version("tailwindcss", self.tailwind_bin.as_deref()),
+            ),
+        ];
+        if let Some(ws_root) = self.workspace_target_dir.parent() {
+            let ui = ws_root.join("packages").join("ui").join("src");
+            if ui.exists() {
+                inputs.push(Input::dir(ui));
+            }
+            let icons = ws_root.join("packages").join("icons").join("src");
+            if icons.exists() {
+                inputs.push(Input::dir(icons));
+            }
+        }
+        let app = self.project_root.join("app").join("src");
+        if app.exists() {
+            inputs.push(Input::dir(app));
+        }
+        let output = self.site_root.join("main.css");
+        self.cached_step(
+            "tailwind",
+            inputs,
+            vec![output],
+            "Processing Tailwind CSS",
+            || self.process_tailwind(),
+        )
+    }
+
+    /// Static assets, cached by the assets directory contents.
+    fn step_assets(&self) -> Result<bool> {
+        let Some(assets) = &self.meta.serve.assets_dir else {
+            return Ok(false);
+        };
+        let src = self.project_root.join(assets);
+        if !src.exists() {
+            return Ok(false);
+        }
+        let outputs: Vec<PathBuf> = walkdir::WalkDir::new(&src)
+            .into_iter()
+            .filter_map(Result::ok)
+            .filter(|e| e.file_type().is_file())
+            .map(|e| {
+                let rel = e.path().strip_prefix(&src).unwrap_or(e.path());
+                self.site_root.join(rel)
+            })
+            .collect();
+        self.cached_step(
+            "assets",
+            vec![Input::dir(&src)],
+            outputs,
+            "Copying assets",
+            || self.copy_assets(),
+        )
+    }
+
+    /// `index.html`, cached by its render inputs.
+    fn step_index_html(&self) -> Result<bool> {
+        let inputs = vec![
+            Input::value(format!(
+                "{:?}",
+                self.meta.project.name.as_deref().unwrap_or("MontRS App")
+            )),
+            Input::value(
+                self.meta
+                    .serve
+                    .output_name
+                    .clone()
+                    .unwrap_or_else(|| "website".to_string()),
+            ),
+        ];
+        self.cached_step(
+            "index-html",
+            inputs,
+            vec![self.site_root.join("index.html")],
+            "Generating index.html",
+            || self.generate_index_html(),
+        )
+    }
+
+    /// SSR server, cached by sources + rustc version + profile.
+    fn step_server(&self) -> Result<bool> {
+        let mut inputs = self.rust_inputs();
+        inputs.push(Input::tool("rustc", Self::tool_version("rustc", None)));
+        let out = self.server_artifact();
+        self.cached_step(
+            "server",
+            inputs,
+            vec![out],
+            "Building SSR server",
+            || {
+                println!(" Building SSR server...");
+                run_cargo(&self.server_args(), self.hot_reload)
+            },
+        )
     }
 
     /// Directory that cargo builds artifacts into for the current profile.
@@ -220,18 +476,12 @@ impl Pipeline {
 
 impl BuildPipeline for Pipeline {
     fn build_server(&self) -> Result<()> {
-        println!(" Building SSR server...");
-        run_cargo(&self.server_args(), self.hot_reload)?;
-        println!(" SSR server built successfully");
-        Ok(())
+        self.step_server().map(|_| ())
     }
 
     fn build_frontend(&self) -> Result<()> {
-        println!(" Building frontend (WASM)...");
-        run_cargo(&self.build_frontend_args(), self.hot_reload)?;
-        println!(" Bundling WASM with wasm-bindgen...");
-        self.bundle_wasm()?;
-        println!(" Frontend built successfully");
+        self.step_wasm()?;
+        self.step_bindgen()?;
         Ok(())
     }
 
@@ -254,6 +504,7 @@ impl BuildPipeline for Pipeline {
             let src = self.project_root.join(assets);
             if src.exists() {
                 println!(" Copying assets...");
+                std::fs::create_dir_all(&self.site_root)?;
                 copy_dir(&src, &self.site_root)?;
                 println!(" Assets copied");
             }
@@ -297,17 +548,28 @@ impl BuildPipeline for Pipeline {
         std::fs::create_dir_all(&self.site_root)?;
         std::fs::create_dir_all(&self.pkg_dir)?;
 
-        // Build the WASM frontend first. It never touches the native server
-        // binary, so a server link failure (e.g. the running `*-ssr.exe` is
-        // locked on Windows) can no longer discard a freshly built client
-        // bundle. The dev supervisor also stops the server before rebuilding,
-        // but keeping the cheap, lock-free artifacts first makes the pipeline
-        // resilient when called directly (e.g. `montrs build`).
-        self.build_frontend()?;
-        self.process_tailwind()?;
-        self.copy_assets()?;
-        self.generate_index_html()?;
-        self.build_server()?;
+        // Steps whose inputs are unrelated run concurrently: Tailwind and asset
+        // copying overlap the Rust build chain. `cargo` serializes itself via
+        // its own build-directory lock, so the WASM → bindgen → server chain
+        // stays ordered on this thread while the CSS/asset steps run alongside.
+        std::thread::scope(|scope| -> Result<()> {
+            let tailwind = scope.spawn(|| self.step_tailwind());
+            let assets = scope.spawn(|| self.step_assets());
+
+            self.step_wasm()?;
+            self.step_bindgen()?;
+            self.step_server()?;
+
+            tailwind
+                .join()
+                .map_err(|_| anyhow!("tailwind step panicked"))??;
+            assets
+                .join()
+                .map_err(|_| anyhow!("assets step panicked"))??;
+
+            self.step_index_html()?;
+            Ok(())
+        })?;
 
         println!(" Build complete");
         Ok(())
@@ -318,8 +580,12 @@ impl BuildPipeline for Pipeline {
     /// path for non-view `.rs` edits (server logic, comments, non-markup code).
     fn build_server_only(&self) -> Result<()> {
         std::fs::create_dir_all(&self.site_root)?;
-        self.build_server()?;
-        println!(" Server rebuilt (client unchanged)");
+        let hit = self.step_server()?;
+        if hit {
+            println!(" Server unchanged (cached)");
+        } else {
+            println!(" Server rebuilt (client unchanged)");
+        }
         Ok(())
     }
 
@@ -417,6 +683,52 @@ fn server_build_args(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn write_min_project(dir: &Path) {
+        std::fs::write(
+            dir.join("montrs.toml"),
+            "[project]\nname = \"t\"\n\n[serve]\npackage = \"t\"\nassets-dir \
+             = \"assets\"\n",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn asset_and_index_steps_are_cached_by_content() {
+        let dir = tempfile::tempdir().unwrap();
+        write_min_project(dir.path());
+        let assets = dir.path().join("assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        std::fs::write(assets.join("logo.svg"), "<svg/>").unwrap();
+
+        let pipeline = Pipeline::from_root(dir.path()).unwrap();
+
+        // First run: misses and copies.
+        assert!(!pipeline.step_assets().unwrap());
+        assert!(pipeline.step_assets().unwrap(), "second run is a cache hit");
+
+        // Editing an asset invalidates the step.
+        std::fs::write(assets.join("logo.svg"), "<svg id='x'/>").unwrap();
+        assert!(!pipeline.step_assets().unwrap());
+
+        // index.html is cached too.
+        assert!(!pipeline.step_index_html().unwrap());
+        assert!(pipeline.step_index_html().unwrap());
+    }
+
+    #[test]
+    fn disabling_cache_forces_work() {
+        let dir = tempfile::tempdir().unwrap();
+        write_min_project(dir.path());
+        let assets = dir.path().join("assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        std::fs::write(assets.join("a.txt"), "x").unwrap();
+
+        let pipeline = Pipeline::from_root(dir.path()).unwrap().without_cache();
+        assert!(!pipeline.step_assets().unwrap());
+        // Without a cache, the step always runs.
+        assert!(!pipeline.step_assets().unwrap());
+    }
 
     #[test]
     fn frontend_args_keep_features_flag_with_value() {
