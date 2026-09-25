@@ -43,16 +43,12 @@ const LAST_NAMES: &[&str] = &[
     "Sharif", "Bashir", "Siddiqui", "Farooqi", "Ansari", "Qureshi", "Khan", "Singh",
     "Adeyemi", "Okonkwo", "Balogun", "Okafor", "Danjuma", "Bello", "Abba", "Gambo",
     "Eze", "Abiola", "Oyekan", "Nwosu", "Babangida", "Ogunleye", "Chukwu", "Oluwole",
-    // Chinese
     "Wang", "Li", "Zhang", "Liu", "Chen", "Yang", "Huang", "Zhao", "Wu", "Zhou",
-    "Xu", "Sun", "Ma", "Zhu", "Hu", "Guo", "He", "Gao", "Lin", "Luo",
-    // Indonesian
+    "Xu", "Sun", "Ma", "Zhu", "Hu", "Guo", "He", "Gao", "Lin", "Luo", "Sambo",
     "Kusuma", "Pratama", "Wijaya", "Saputra", "Setiawan", "Utomo", "Santoso",
     "Hidayat", "Wahyudi", "Gunawan", "Siregar", "Nasution", "Suryono",
-    // French
     "Martin", "Bernard", "Dubois", "Thomas", "Robert", "Richard", "Petit",
     "Durand", "Leroy", "Moreau", "Simon", "Laurent", "Lefebvre", "Michel",
-    // Spanish
     "Garcia", "Rodriguez", "Gonzalez", "Fernandez", "Lopez", "Martinez",
     "Sanchez", "Perez", "Gomez", "Martin", "Jimenez", "Ruiz", "Hernandez",
 ];
