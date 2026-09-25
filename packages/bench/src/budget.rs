@@ -11,8 +11,7 @@
 //! regressions deterministically across devices.
 
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::time::Duration;
+use std::{collections::BTreeMap, time::Duration};
 
 /// Declared performance budget for a target, route, or component.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -76,8 +75,15 @@ impl BaselineStore {
             let max_allowed = baseline.p95_ms * (1.0 + tolerance_pct / 100.0);
             if current.p95_ms > max_allowed {
                 return Err(format!(
-                    "Performance regression in '{}' on device '{}': P95 is {:.2}ms, baseline is {:.2}ms (allowed: {:.2}ms with {:.1}% tolerance)",
-                    current.name, current.device, current.p95_ms, baseline.p95_ms, max_allowed, tolerance_pct
+                    "Performance regression in '{}' on device '{}': P95 is \
+                     {:.2}ms, baseline is {:.2}ms (allowed: {:.2}ms with \
+                     {:.1}% tolerance)",
+                    current.name,
+                    current.device,
+                    current.p95_ms,
+                    baseline.p95_ms,
+                    max_allowed,
+                    tolerance_pct
                 ));
             }
         }
