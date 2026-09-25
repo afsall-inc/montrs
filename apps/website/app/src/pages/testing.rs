@@ -102,8 +102,24 @@ fn spring_settles_quickly() {
     motion.assert_settles_within_ms(600, 0.01);
 }"#;
 
-const CLI_SNIPPET: &str =
-    "cargo add montrs-test --features http,db,sim-dom,layout,motion";
+const REGRESSION_SNIPPET: &str = r#"# Run regression checks against committed baselines
+montrs verify
+
+# Check only responsive layout and overflow
+montrs verify --ui
+
+# Check only API contracts and route schemas
+montrs verify --api
+
+# Run determinism self-consistency (execute twice, assert byte-identical)
+montrs verify --self-check
+
+# Update baselines with newly validated values
+montrs verify --update"#;
+
+const CLI_SNIPPET: &str = "cargo add montrs-test --features \
+                           http,db,sim-dom,layout,motion,mock,traffic,fuzz,\
+                           macros";
 
 #[component]
 pub fn Testing() -> impl IntoView {
@@ -220,6 +236,25 @@ pub fn Testing() -> impl IntoView {
                             </span>
                         </li>
                     </ul>
+                </section>
+                <section class="lg:col-span-2">
+                    <div class="rounded-2xl border border-border/80 bg-card/60 p-6 backdrop-blur sm:p-8">
+                        <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            <Icon glyph=Glyph::CheckCheck class="h-3.5 w-3.5" />
+                            "Deterministic Regression CI"
+                        </div>
+                        <h3 class="mt-3 text-2xl font-bold tracking-tight">
+                            "montrs verify — Gate regressions before they land"
+                        </h3>
+                        <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+                            "Available both in the MontRS framework itself and for any application built with MontRS. Developers and CI pipelines run <code>montrs verify</code> to evaluate performance budgets, responsive constraints, and API schemas against committed <code>.montrs/baselines/</code>."
+                        </p>
+                        <div class="mt-6">
+                            <pre class="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4 font-mono text-xs text-foreground">
+                                {REGRESSION_SNIPPET}
+                            </pre>
+                        </div>
+                    </div>
                 </section>
             </div>
         </div>
