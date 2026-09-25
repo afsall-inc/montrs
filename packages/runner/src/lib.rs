@@ -28,7 +28,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+pub mod cache;
 pub mod executor;
+pub mod hash;
 pub mod parser;
 pub mod scheduler;
 pub mod template;
@@ -36,6 +38,7 @@ pub mod types;
 pub mod workspace;
 
 // Backward-compatibility: `TaskRunner` orchestration wrapper.
+pub use cache::TaskRunCache;
 use std::collections::HashMap;
 pub use types::*;
 

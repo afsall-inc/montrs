@@ -45,6 +45,8 @@ pub struct TaskExecutorConfig {
     pub continue_on_error: bool,
     pub dry_run: bool,
     pub skip_deps: bool,
+    /// Disable the task run cache for this execution.
+    pub no_cache: bool,
 }
 
 /// Executes a single task.
@@ -69,6 +71,29 @@ pub async fn execute_task(
     if config.dry_run {
         println!("[dry-run] Would run task: {}", task.name);
         return Ok(true);
+    }
+
+    // Task run cache: skip when inputs and declared outputs are unchanged.
+    // `--force` and `no_cache` bypass it; non-cacheable tasks return `None`.
+    let run_cache = if config.no_cache || config.force {
+        crate::cache::TaskRunCache::disabled()
+    } else {
+        match task.config_root.as_deref() {
+            Some(root) => crate::cache::TaskRunCache::for_project(root),
+            None => crate::cache::TaskRunCache::disabled(),
+        }
+    };
+    let dep_hashes = std::collections::BTreeMap::new();
+    if let Some(true) = run_cache.is_fresh(task, &dep_hashes) {
+        if !matches!(task.output, Some(TaskOutput::Quiet | TaskOutput::Silent))
+        {
+            println!(
+                "{} {}",
+                console::style(format!("[{}]", task.name)).cyan().bold(),
+                console::style("cache hit (up to date)").dim()
+            );
+        }
+        return Ok(false);
     }
 
     // Resolve the working directory
@@ -152,6 +177,10 @@ pub async fn execute_task(
     if config.timings {
         let elapsed = start.elapsed();
         println!("  {} completed in {:?}", task.name, elapsed);
+    }
+
+    if let Err(e) = run_cache.record(task, &dep_hashes) {
+        eprintln!("  warning: could not cache task '{}': {e}", task.name);
     }
 
     Ok(true)

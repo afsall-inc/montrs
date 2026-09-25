@@ -171,30 +171,32 @@ impl Scheduler {
     }
 
     pub fn topological_sort(&self) -> Vec<Vec<String>> {
-        let all_names: Vec<Task> = self
-            .deps
-            .graph
-            .keys()
-            .map(|name| Task {
-                name: name.clone(),
-                depends: vec![],
-                ..Default::default()
-            })
-            .collect();
+        // Edges are `task -> dependency`. A task is ready once every one of its
+        // dependencies has been emitted. Each round emits one level; ties are
+        // sorted for determinism. Cycles are handled by the builder/validator,
+        // but a cycle here simply leaves the remaining nodes unemitted.
+        let mut remaining = self.deps.graph.clone();
+        let mut done: HashSet<String> = HashSet::new();
         let mut levels = Vec::new();
-        let mut deps_copy = Deps::new(&all_names);
-        // Rebuild edges
-        // We can't easily iterate edges from DiGraph, so we skip for now
-        while !deps_copy.is_empty() {
-            let leaves = deps_copy.leaf_tasks();
-            if leaves.is_empty() {
+
+        while !remaining.is_empty() {
+            let mut ready: Vec<String> = remaining
+                .iter()
+                .filter(|(_, deps)| deps.iter().all(|d| done.contains(d)))
+                .map(|(name, _)| name.clone())
+                .collect();
+            if ready.is_empty() {
+                // Only a cycle (or a dependency on an unknown task) remains.
                 break;
             }
-            levels.push(leaves.clone());
-            for leaf in &leaves {
-                deps_copy.remove(leaf);
+            ready.sort();
+            for name in &ready {
+                remaining.remove(name);
+                done.insert(name.clone());
             }
+            levels.push(ready);
         }
+
         levels
     }
 }
@@ -210,4 +212,60 @@ pub fn resolve_output(
 /// Whether a task needs a semaphore permit.
 pub fn task_needs_permit(task: &Task) -> bool {
     !task.command.is_empty() || task.file.is_some()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::TaskDep;
+
+    fn task(name: &str, depends: &[&str]) -> Task {
+        Task {
+            name: name.to_string(),
+            depends: depends
+                .iter()
+                .map(|d| TaskDep::Simple(d.to_string()))
+                .collect(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn topological_sort_respects_dependencies() {
+        let tasks = vec![
+            task("ship", &["test", "build"]),
+            task("test", &["build"]),
+            task("build", &[]),
+            task("lint", &[]),
+        ];
+        let scheduler = Scheduler::new(&tasks, 4);
+        let levels = scheduler.topological_sort();
+
+        assert_eq!(levels.len(), 3, "levels: {levels:?}");
+        // Level 0: no dependencies.
+        assert_eq!(levels[0], vec!["build".to_string(), "lint".to_string()]);
+        // Level 1: test depends on build.
+        assert_eq!(levels[1], vec!["test".to_string()]);
+        // Level 2: ship depends on test + build.
+        assert_eq!(levels[2], vec!["ship".to_string()]);
+    }
+
+    #[test]
+    fn topological_sort_handles_missing_dependency() {
+        // A dependency on an unregistered task is ignored (no edge added), so
+        // the task is a root.
+        let tasks = vec![task("a", &["does-not-exist"])];
+        let levels = Scheduler::new(&tasks, 2).topological_sort();
+        assert_eq!(levels, vec![vec!["a".to_string()]]);
+    }
+
+    #[test]
+    fn topological_sort_stops_on_cycle() {
+        let tasks = vec![task("a", &["b"]), task("b", &["a"])];
+        let levels = Scheduler::new(&tasks, 2).topological_sort();
+        assert!(
+            levels.iter().flatten().all(|n| n != "a" && n != "b"),
+            "a cycle must emit nothing: {levels:?}"
+        );
+    }
 }
