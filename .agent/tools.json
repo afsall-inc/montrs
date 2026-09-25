@@ -537,6 +537,14 @@
       }
     },
     {
+      "description": "Capability provided by package test-macros. Refer to its README for details.",
+      "name": "montrs_pkg_test-macros",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    {
       "description": "Capability provided by package tool. MUST follow invariants defined in agent.json under packages['tool'].invariants",
       "name": "montrs_pkg_tool",
       "parameters": {

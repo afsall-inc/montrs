@@ -39,8 +39,10 @@ pub async fn run(opts: VerifyOptions) -> Result<()> {
     let mut checks_passed = 0;
     let mut total_checks = 0;
 
+    let run_all = !opts.ui && !opts.api;
+
     // 1. Determinism Self-Check
-    if opts.self_check || (!opts.ui && !opts.api) {
+    if opts.self_check || run_all {
         total_checks += 1;
         print!("Checking determinism self-consistency... ");
         let pass = verify_determinism_self_check()?;
@@ -59,7 +61,7 @@ pub async fn run(opts: VerifyOptions) -> Result<()> {
     }
 
     // 2. Responsive Layout & Overflow Verification
-    if opts.ui || (!opts.ui && !opts.api) {
+    if opts.ui || run_all {
         total_checks += 1;
         print!("Checking responsive baseline invariants... ");
         println!("PASS (0 layout overflows detected)");
@@ -67,7 +69,7 @@ pub async fn run(opts: VerifyOptions) -> Result<()> {
     }
 
     // 3. API & Contract Invariants
-    if opts.api || (!opts.ui && !opts.api) {
+    if opts.api || run_all {
         total_checks += 1;
         print!("Checking API contracts and route schemas... ");
         println!("PASS (schemas and routes intact)");

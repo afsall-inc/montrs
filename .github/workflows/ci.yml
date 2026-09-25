@@ -43,6 +43,15 @@ jobs:
     - name: Run tests
       run: cargo test --workspace
 
+    - name: Run Test Fabric features
+      run: cargo test --package montrs-test --features http,db,sim-dom,layout,motion,macros,scene,vision,mock,traffic,fuzz
+
+    - name: Run UI responsive catalog test
+      run: cargo test --package montrs-ui --test responsive
+
+    - name: Deterministic Regression Check (montrs verify)
+      run: cargo run --package montrs-cli --bin montrs -- verify --self-check
+
     - name: Check templates
       run: cargo test --package montrs-cli --test template_check -- --ignored --nocapture
 

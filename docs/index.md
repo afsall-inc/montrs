@@ -15,6 +15,10 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [ORM Backends](orm/backends.md) - Supported databases.
 - [Testing](testing/index.md) - Writing deterministic tests.
 - [Deterministic Test Fabric](testing/index.md#the-deterministic-test-fabric) - Test every layer in-process: APIs, DB, UI, layout/overflow, motion, targets.
+- [Responsive Testing](testing/responsive.md) - Exact-pixel sweep, device catalog, and container queries.
+- [Deterministic Regression CI](testing/regression.md) - `montrs verify`, baseline gating, and self-checks.
+- [Agent Vision & 3D](testing/simulation.md) - A11y trees, wireframe projection, and effect inspection without a GPU.
+- [Mock Data & Traffic](testing/mocks.md) - Multi-cultural datasets, in-process load testing, and fuzzing.
 - [Benchmarking](testing/benchmarking.md) - Measuring performance.
 - [Hot Reload & Hot Patching](tooling/hot-reload.md) - The live dev loop.
 - [Deployment](community/deployment.md) - Shipping to production.
