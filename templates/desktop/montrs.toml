@@ -3,7 +3,8 @@ name = "{{project-name}}"
 version = "0.1.0"
 
 [deploy]
-mode = "desktop"
+mode = "production"
+target = "desktop"
 
 [env]
 MONTRS_LOG = "info"

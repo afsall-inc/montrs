@@ -76,7 +76,12 @@ pub struct MontrsCli {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Build the project for production.
-    Build,
+    Build {
+        /// Build in development mode (dev overlay, debug assertions) instead of
+        /// production. Overrides `[deploy] mode`.
+        #[arg(long)]
+        dev: bool,
+    },
     /// Serve the project for development with hot-reload.
     Serve,
     /// Watch for changes and rebuild automatically.
@@ -610,7 +615,7 @@ pub async fn run(cli: MontrsCli) -> anyhow::Result<()> {
     config.features = cli.features.clone();
 
     match cli.command {
-        Commands::Build => command::build::run().await,
+        Commands::Build { dev } => command::build::run(dev).await,
         Commands::Serve => command::serve::run().await,
         Commands::Watch => command::watch::run().await,
         Commands::Test {

@@ -126,8 +126,13 @@ fn configure_leptos_options() -> (leptos::prelude::LeptosOptions, String) {
         std::env::set_var("LEPTOS_SITE_PKG_DIR", &pkg_dir);
         std::env::set_var("LEPTOS_RELOAD_PORT", &reload_port);
         // Leptos only injects the live-reload script (which opens the
-        // WebSocket to the reload port) when LEPTOS_WATCH is set.
-        std::env::set_var("LEPTOS_WATCH", "1");
+        // WebSocket to the reload port) when LEPTOS_WATCH is set. Only do this
+        // in development: a production build must not ship the reload client.
+        if ServeMode::resolve().is_development() {
+            std::env::set_var("LEPTOS_WATCH", "1");
+        } else {
+            std::env::remove_var("LEPTOS_WATCH");
+        }
     }
 
     let mut conf = get_configuration(None).unwrap();
@@ -187,7 +192,9 @@ where
     // app) so it appears in every MontRS app during `montrs serve`/`watch`.
     // `/_dioxus` bridges to the CLI's hot-patch socket so a Leptos
     // `connect_to_hot_patch_messages` client (which targets that path) works.
-    if std::env::var("LEPTOS_WATCH").is_ok() {
+    // Neither is present in production.
+    let mode = ServeMode::resolve();
+    if mode.is_development() {
         app = app
             .route("/_dioxus", axum::routing::get(devtools_bridge))
             .layer(axum::middleware::from_fn(inject_dev_overlay));
@@ -198,29 +205,109 @@ where
         // rendering are the intended false positives the non-reactive zone
         // covers; this silences Leptos's debug-mode untracked-read warnings.
         .layer(axum::middleware::from_fn(non_reactive_zone))
-        // Dev servers must never serve stale bundles. The hydration entry
-        // (`/pkg/front.js`, `/pkg/front_bg.wasm`) and stylesheets use fixed
-        // URLs, so Chrome's WASM/JS code caches keep serving old bytes unless
-        // we forbid storing entirely. `no-store` (unlike `no-cache`) also
-        // defeats the back/forward and disk caches.
-        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
-            axum::http::header::CACHE_CONTROL,
-            axum::http::header::HeaderValue::from_static(
-                "no-store, no-cache, must-revalidate",
-            ),
-        ))
-        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
-            axum::http::header::PRAGMA,
-            axum::http::header::HeaderValue::from_static("no-cache"),
-        ))
-        .layer(tower_http::set_header::SetResponseHeaderLayer::overriding(
-            axum::http::header::EXPIRES,
-            axum::http::header::HeaderValue::from_static("0"),
+        // Cache policy depends on the mode (see `cache_headers`). In
+        // development nothing is stored, so a fixed-URL bundle never goes
+        // stale. In production the content-addressed `/pkg/*` bundle and the
+        // stylesheet are immutable, while HTML stays revalidated.
+        .layer(axum::middleware::from_fn(
+            move |req: axum::extract::Request, next: axum::middleware::Next| {
+                cache_headers(mode, req, next)
+            },
         ))
         // Compress static assets (notably the multi-megabyte WASM bundle)
         // on the fly when the client advertises `Accept-Encoding: gzip`.
         .layer(tower_http::compression::CompressionLayer::new())
         .with_state(options)
+}
+
+/// Set `Cache-Control` (plus `Pragma`/`Expires` in development) per request.
+#[cfg(feature = "ssr")]
+async fn cache_headers(
+    mode: ServeMode,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    use axum::http::{HeaderValue, header};
+
+    let immutable = req.uri().path().starts_with("/pkg/")
+        || req.uri().path().ends_with("/main.css");
+    let mut res = next.run(req).await;
+    let headers = res.headers_mut();
+
+    if mode.is_development() {
+        headers.insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("no-store, no-cache, must-revalidate"),
+        );
+        headers.insert(header::PRAGMA, HeaderValue::from_static("no-cache"));
+        headers.insert(header::EXPIRES, HeaderValue::from_static("0"));
+    } else if immutable {
+        headers.insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("public, max-age=31536000, immutable"),
+        );
+    } else {
+        headers.insert(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("no-cache"),
+        );
+    }
+    res
+}
+
+/// Whether the server runs in development or production behavior.
+///
+/// Resolved from the `MONTRS_MODE` environment variable (`development`/`dev`,
+/// `production`/`prod`), falling back to `debug_assertions`: a debug build is
+/// development, a release build is production. `montrs serve` always exports
+/// `MONTRS_MODE=development` to the server it spawns.
+#[cfg(feature = "ssr")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ServeMode {
+    /// Dev overlay, live reload, and uncached assets.
+    Development,
+    /// No dev tooling; hashed assets are immutably cached.
+    Production,
+}
+
+#[cfg(feature = "ssr")]
+impl ServeMode {
+    /// Parse a `MONTRS_MODE` value.
+    pub fn parse(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "dev" | "development" => Some(Self::Development),
+            "prod" | "production" => Some(Self::Production),
+            _ => None,
+        }
+    }
+
+    /// The stable lowercase name.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Development => "development",
+            Self::Production => "production",
+        }
+    }
+
+    /// Whether this is development.
+    pub fn is_development(self) -> bool {
+        matches!(self, Self::Development)
+    }
+
+    /// Resolve the mode: `MONTRS_MODE` if set and valid, otherwise inferred
+    /// from `debug_assertions`.
+    pub fn resolve() -> Self {
+        if let Ok(value) = std::env::var("MONTRS_MODE")
+            && let Some(mode) = Self::parse(&value)
+        {
+            return mode;
+        }
+        if cfg!(debug_assertions) {
+            Self::Development
+        } else {
+            Self::Production
+        }
+    }
 }
 
 /// An SSR app that can render individual requests **without** binding a socket.

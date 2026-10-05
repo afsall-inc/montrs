@@ -19,6 +19,13 @@ package = "website"
 output-name = "front"
 assets-dir = "assets"
 
+# Deployment behavior. `mode` is the declared default when `MONTRS_MODE` is
+# unset: `montrs serve` always runs development, `montrs build` defaults to
+# production (pass `--dev` to build deliberately in development).
+[deploy]
+mode = "production"
+target = "ssr"
+
 [tasks]
 dev = "montrs serve"
 build = "montrs build"

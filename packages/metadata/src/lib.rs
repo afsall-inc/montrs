@@ -207,25 +207,95 @@ impl Default for BuildMeta {
     }
 }
 
-/// Deployment mode configuration.
+/// Deployment configuration.
+///
+/// Two orthogonal choices:
+/// - [`DeployMode`] — `development` or `production` *behavior* (dev overlay,
+///   live reload, cache headers). Overridable at runtime by `MONTRS_MODE`.
+/// - [`DeployTarget`] — the artifact *shape* (`ssr`, `static`, `desktop`,
+///   `mobile`). File-only; not an environment concern.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct DeployMeta {
-    /// Deployment mode: "ssr" | "static" | "desktop" | "mobile"
-    #[serde(default = "default_deploy_mode")]
-    pub mode: String,
+    /// Development vs production behavior. Defaults to `production`; the
+    /// `MONTRS_MODE` environment variable overrides it at runtime.
+    #[serde(default)]
+    pub mode: DeployMode,
+    /// The artifact shape to produce. Defaults to `ssr`.
+    #[serde(default)]
+    pub target: DeployTarget,
 }
 
 impl Default for DeployMeta {
     fn default() -> Self {
         Self {
-            mode: default_deploy_mode(),
+            mode: DeployMode::default(),
+            target: DeployTarget::default(),
         }
     }
 }
 
-fn default_deploy_mode() -> String {
-    "ssr".to_string()
+/// Development vs production behavior.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum DeployMode {
+    /// Development: dev overlay, live reload, uncached assets.
+    #[serde(alias = "dev")]
+    Development,
+    /// Production: no dev tooling, immutable asset caching.
+    #[serde(alias = "prod")]
+    #[default]
+    Production,
+}
+
+impl DeployMode {
+    /// Stable lowercase name (`development` / `production`).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Development => "development",
+            Self::Production => "production",
+        }
+    }
+
+    /// Parse from `MONTRS_MODE`-style input (`dev`/`development`/`prod`/`production`).
+    pub fn parse(value: &str) -> Option<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "dev" | "development" => Some(Self::Development),
+            "prod" | "production" => Some(Self::Production),
+            _ => None,
+        }
+    }
+}
+
+/// The artifact shape a project produces.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum DeployTarget {
+    /// Server-rendered app (SSR binary + site bundle).
+    #[default]
+    Ssr,
+    /// Static export.
+    Static,
+    /// Native desktop app.
+    Desktop,
+    /// Native mobile app.
+    Mobile,
+}
+
+impl DeployTarget {
+    /// Stable lowercase name.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Ssr => "ssr",
+            Self::Static => "static",
+            Self::Desktop => "desktop",
+            Self::Mobile => "mobile",
+        }
+    }
 }
 
 /// Environment variable section in montrs.toml.
@@ -452,5 +522,51 @@ impl MontrsMetadata {
         }
 
         Ok(meta)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deploy_mode_parses_aliases() {
+        assert_eq!(DeployMode::parse("dev"), Some(DeployMode::Development));
+        assert_eq!(
+            DeployMode::parse("Development"),
+            Some(DeployMode::Development)
+        );
+        assert_eq!(DeployMode::parse("prod"), Some(DeployMode::Production));
+        assert_eq!(
+            DeployMode::parse("PRODUCTION"),
+            Some(DeployMode::Production)
+        );
+        assert_eq!(DeployMode::parse("staging"), None);
+    }
+
+    #[test]
+    fn deploy_defaults_are_production_ssr() {
+        let meta = DeployMeta::default();
+        assert_eq!(meta.mode, DeployMode::Production);
+        assert_eq!(meta.target, DeployTarget::Ssr);
+    }
+
+    #[test]
+    fn deploy_section_deserializes_aliases() {
+        let meta: MontrsMetadata =
+            toml::from_str("[deploy]\nmode = \"dev\"\ntarget = \"static\"\n")
+                .expect("parses");
+        assert_eq!(meta.deploy.mode, DeployMode::Development);
+        assert_eq!(meta.deploy.target, DeployTarget::Static);
+    }
+
+    #[test]
+    fn deploy_section_is_optional() {
+        let meta: MontrsMetadata =
+            toml::from_str("[project]\nname = \"x\"\n").expect("parses");
+        assert_eq!(meta.deploy.mode, DeployMode::Production);
+        assert_eq!(meta.deploy.target, DeployTarget::Ssr);
+        assert_eq!(meta.deploy.mode.as_str(), "production");
+        assert_eq!(meta.deploy.target.as_str(), "ssr");
     }
 }

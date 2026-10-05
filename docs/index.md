@@ -16,6 +16,7 @@ Welcome to the MontRS documentation. This folder contains deep-dive guides for b
 - [Testing](testing/index.md) - Writing deterministic tests.
 - [Benchmarking](testing/benchmarking.md) - Measuring performance.
 - [Hot Reload & Hot Patching](tooling/hot-reload.md) - The live dev loop.
+- [Operating Profiles](tooling/profiles.md) - Development vs production mode and the `MONTRS_MODE` switch.
 - [Deployment](community/deployment.md) - Shipping to production.
 
 ### For Framework Contributors

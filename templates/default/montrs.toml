@@ -16,6 +16,10 @@ lib-default-features = false
 [build]
 target = "index.html"
 
+[deploy]
+mode = "production"
+target = "ssr"
+
 [tasks]
 hello = "echo 'Hello from MontRS!'"
 lint = { command = "cargo clippy --workspace -- -D warnings", category = "Quality" }

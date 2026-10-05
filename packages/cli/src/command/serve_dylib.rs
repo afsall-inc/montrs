@@ -341,6 +341,8 @@ fn spawn_shell(
         .env("MONTRS_RELOAD_PORT", reload_port.to_string())
         .env("MONTRS_APP_DYLIB", dylib)
         .env("MONTRS_RELOAD_FILE", reload_file)
+        // Dev shell hosts the app in development mode.
+        .env("MONTRS_MODE", "development")
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
         .kill_on_drop(true)

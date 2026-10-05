@@ -14,6 +14,10 @@ lib-default-features = false
 [build]
 target = "index.html"
 
+[deploy]
+mode = "production"
+target = "ssr"
+
 [env]
 MONTRS_LOG = "info"
 DATABASE_URL = "sqlite:./data/saas.db"

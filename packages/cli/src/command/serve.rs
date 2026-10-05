@@ -477,6 +477,9 @@ fn spawn_server(
         .env("MONTRS_SITE_ADDR", addr)
         .env("MONTRS_RELOAD_PORT", reload_port.to_string())
         .env("MONTRS_OUTPUT_NAME", output_name)
+        // The dev server always runs the app in development mode: dev overlay,
+        // live reload, uncached assets.
+        .env("MONTRS_MODE", "development")
         .stdout(std::process::Stdio::inherit())
         .stderr(std::process::Stdio::inherit())
         .kill_on_drop(true)

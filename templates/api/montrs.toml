@@ -6,6 +6,10 @@ version = "0.1.0"
 site-addr = "0.0.0.0:3000"
 reload-port = 3001
 
+[deploy]
+mode = "production"
+target = "ssr"
+
 [env]
 MONTRS_LOG = "info"
 DATABASE_URL = "sqlite:./data/api.db"

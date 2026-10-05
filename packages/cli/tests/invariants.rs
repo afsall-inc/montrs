@@ -40,7 +40,7 @@ use montrs_cli::*;
 #[test]
 fn test_montrs_cli_debug() {
     let cli = MontrsCli {
-        command: Commands::Build,
+        command: Commands::Build { dev: false },
         release: false,
         hot_reload: false,
         features: Vec::new(),
@@ -52,8 +52,8 @@ fn test_montrs_cli_debug() {
 
 #[test]
 fn test_commands_variants() {
-    match Commands::Build {
-        Commands::Build => {}
+    match (Commands::Build { dev: false }) {
+        Commands::Build { .. } => {}
         _ => panic!("expected Build"),
     }
     match Commands::Serve {

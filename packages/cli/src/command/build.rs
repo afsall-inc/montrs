@@ -29,12 +29,69 @@
 // SOFTWARE.
 
 use montrs_build::{BuildPipeline, Pipeline};
+use montrs_metadata::{DeployMode, DeployTarget};
 use std::path::Path;
 
-pub async fn run() -> anyhow::Result<()> {
+/// Resolve the build mode.
+///
+/// Precedence: `--dev` flag > `MONTRS_MODE` env > `[deploy] mode` > production.
+/// Returns `(mode, is_release)`.
+fn resolve_build_mode(
+    pipeline: &Pipeline,
+    dev_flag: bool,
+    release_flag: bool,
+) -> anyhow::Result<(DeployMode, bool)> {
+    if dev_flag && release_flag {
+        anyhow::bail!("--dev and --release are mutually exclusive");
+    }
+
+    let mode = if dev_flag {
+        DeployMode::Development
+    } else if let Ok(value) = std::env::var("MONTRS_MODE") {
+        DeployMode::parse(&value).ok_or_else(|| {
+            anyhow::anyhow!(
+                "invalid MONTRS_MODE {value:?}: expected development/dev or \
+                 production/prod"
+            )
+        })?
+    } else {
+        pipeline.meta.deploy.mode
+    };
+
+    // A production build must not silently ship the dev overlay. Require an
+    // explicit `--dev` to build in development mode.
+    if mode == DeployMode::Development && !dev_flag {
+        anyhow::bail!(
+            "refusing to build in development mode: [deploy] mode = \
+             \"development\" (or MONTRS_MODE=development). Pass `--dev` to \
+             build deliberately, or set mode = \"production\"."
+        );
+    }
+
+    let is_release = release_flag || mode == DeployMode::Production;
+    Ok((mode, is_release))
+}
+
+/// Only the `ssr` deployment target is implemented today.
+fn check_target(target: DeployTarget) -> anyhow::Result<()> {
+    if target != DeployTarget::Ssr {
+        anyhow::bail!(
+            "[deploy] target = \"{}\" is not implemented yet; only \"ssr\" is \
+             supported (static export, desktop, and mobile targets are \
+             planned).",
+            target.as_str()
+        );
+    }
+    Ok(())
+}
+
+pub async fn run(dev: bool) -> anyhow::Result<()> {
     let mut pipeline = Pipeline::from_root(Path::new("."))?;
-    // `--release` on the CLI forces release; otherwise use [serve] release config.
-    pipeline.release |= crate::config::current_release();
+    check_target(pipeline.meta.deploy.target)?;
+    let (mode, is_release) =
+        resolve_build_mode(&pipeline, dev, crate::config::current_release())?;
+    pipeline.release = is_release;
+    println!("Building in {} mode", mode.as_str());
     crate::command::resolve_pipeline_bins(&mut pipeline);
     pipeline.build_all()
 }
